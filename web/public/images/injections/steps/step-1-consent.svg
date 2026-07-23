@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 300" width="100%" height="100%">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#F8FAFC"/>
+  <!-- Grid Pattern -->
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#E2E8F0"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#grid)"/>
+
+  <!-- Left: Medical Clipboard -->
+  <g transform="translate(180, 40)">
+    <!-- Clipboard Shadow -->
+    <rect x="5" y="10" width="140" height="190" rx="8" fill="#000" opacity="0.04"/>
+    <!-- Clipboard Body -->
+    <rect x="0" y="5" width="140" height="190" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+    <!-- Clipboard Top Clip -->
+    <path d="M50,5 L90,5 L90,20 L50,20 Z" fill="#0B2D4D" rx="2"/>
+    <circle cx="70" cy="12" r="3" fill="#00AFC8"/>
+    <!-- Paper Content Lines -->
+    <rect x="20" y="45" width="100" height="8" rx="2" fill="#0B2D4D" opacity="0.8"/>
+    <rect x="20" y="65" width="80" height="6" rx="1.5" fill="#94A3B8"/>
+    <rect x="20" y="80" width="100" height="6" rx="1.5" fill="#94A3B8"/>
+    <rect x="20" y="95" width="90" height="6" rx="1.5" fill="#94A3B8"/>
+    
+    <!-- Signature Line & Checkmark -->
+    <line x1="20" y1="150" x2="80" y2="150" stroke="#0B2D4D" stroke-width="2" stroke-dasharray="3,3"/>
+    <path d="M90,135 L105,150 L130,120" fill="none" stroke="#00AFC8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Pulse Line in background of paper -->
+    <path d="M20,125 L45,125 L50,115 L55,135 L60,120 L65,125 L85,125" fill="none" stroke="#E2E8F0" stroke-width="2"/>
+  </g>
+
+  <!-- Right: Conversation / Discussion Symbol -->
+  <g transform="translate(420, 50)">
+    <!-- Speech Bubble 1 (Doctor) -->
+    <path d="M0,30 C0,13.4 15.7,0 35,0 C54.3,0 70,13.4 70,30 C70,46.6 54.3,60 35,60 C30,60 25,58.8 20,57 L0,65 L5,50 C1.8,44.2 0,37.3 0,30 Z" fill="#0B2D4D"/>
+    <!-- Cross/Plus icon in Doctor Bubble -->
+    <path d="M30,30 H40 M35,25 V35" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Speech Bubble 2 (Patient) -->
+    <path d="M130,70 C130,53.4 114.3,40 95,40 C75.7,40 60,53.4 60,70 C60,86.6 75.7,100 95,100 C100,100 105,98.8 110,97 L130,105 L125,90 C128.2,84.2 130,77.3 130,70 Z" fill="#00AFC8"/>
+    <!-- Check/Question icon in Patient Bubble -->
+    <circle cx="95" cy="70" r="10" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+    <path d="M95,67 V71 M95,75 H95.01" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <!-- Connection / Flow Arrow -->
+  <path d="M340,110 L370,110 L370,130 L395,105 L370,80 L370,100 L340,100 Z" fill="#00AFC8" opacity="0.2"/>
+</svg>

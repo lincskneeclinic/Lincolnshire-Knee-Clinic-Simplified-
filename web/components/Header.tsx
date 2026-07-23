@@ -1,0 +1,186 @@
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Button } from "./Button";
+
+export const Header: React.FC = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+  const pathname = usePathname();
+
+  const mainNavigation = [
+    { name: "Home", href: "/" },
+    { name: "Symptoms", href: "/symptoms" },
+    { name: "Conditions", href: "/conditions" },
+    { name: "Treatments", href: "/treatments" },
+    { name: "Injections", href: "/injections" },
+    { name: "Education & Blog", href: "/education" },
+    { name: "Clinics", href: "/clinics" },
+    { name: "Contact", href: "/contact" },
+  ];
+
+  const utilityNavigation = [
+    { name: "Urgent Advice", href: "/urgent-advice", urgent: true },
+    { name: "Patient Portal", href: "/portal" },
+    { name: "Contact", href: "/contact" },
+  ];
+
+  const isActive = (href: string) => {
+    if (href === "/") {
+      return pathname === "/";
+    }
+    return pathname.startsWith(href);
+  };
+
+  return (
+    <header className="relative w-full z-40 bg-white border-b border-border-clinical shadow-[0_2px_15px_rgba(0,43,69,0.03)]">
+      {/* Utility Navigation Bar (Desktop Only) */}
+      <div className="hidden md:block bg-soft-blue-grey border-b border-border-clinical">
+        <div className="max-w-7xl mx-auto px-6 md:px-8 py-2 flex justify-end gap-6 text-xs font-sans text-text-secondary">
+          {utilityNavigation.map((link, idx) => (
+            <Link
+              key={idx}
+              href={link.href}
+              className={`hover:text-deep-navy font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-clinical-teal ${
+                link.urgent ? "text-status-error font-bold" : ""
+              }`}
+            >
+              {link.name}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Header Bar */}
+      <div className="max-w-7xl mx-auto px-6 md:px-8 py-4 flex items-center justify-between gap-4">
+        {/* Logo Lockup - Left Side */}
+        <Link
+          href="/"
+          className="flex items-center gap-3 shrink-0 group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clinical-teal"
+          aria-label="Lincolnshire Knee Clinic"
+        >
+          <div className="w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
+            {logoError ? (
+              // Clean fall-back abstract teal K SVG if image has error
+              <svg className="w-9 h-9 text-clinical-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 3v18" />
+                <path d="M18 4l-10 8 10 8" />
+              </svg>
+            ) : (
+              <img
+                src="/brand/lkc-logo-k-transparent.png"
+                alt="Lincolnshire Knee Clinic"
+                className="w-10 h-10 object-contain"
+                onError={() => setLogoError(true)}
+              />
+            )}
+          </div>
+          <span className="font-serif text-xl md:text-2xl font-bold text-deep-navy tracking-tight leading-none whitespace-nowrap">
+            Lincolnshire Knee Clinic
+          </span>
+        </Link>
+
+        {/* Main Navigation Links - Horizontally Aligned in the Middle (Desktop Only) */}
+        {/* Breakpoint is set to xl:flex (1280px) to prevent overlaps on smaller laptop screens */}
+        <nav className="hidden xl:flex items-center justify-center flex-1 gap-3 xl:gap-4 2xl:gap-6 px-2">
+          {mainNavigation.map((link, idx) => (
+            <Link
+              key={idx}
+              href={link.href}
+              className={`font-sans text-xs xl:text-sm 2xl:text-base font-semibold py-1.5 transition-colors relative whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-clinical-teal ${
+                isActive(link.href)
+                  ? "text-deep-navy font-bold border-b-2 border-clinical-teal"
+                  : "text-text-secondary hover:text-deep-navy"
+              }`}
+            >
+              {link.name}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Action Button & Hamburger Toggle - Far Right */}
+        <div className="flex items-center gap-4 shrink-0">
+          <Button
+            href="/book-appointment"
+            className="hidden sm:inline-flex text-sm py-2 px-5 min-h-[44px] shadow-[0_2px_4px_rgba(0,175,200,0.08)]"
+            variant="teal"
+          >
+            Book Appointment
+          </Button>
+
+          {/* Mobile Menu Hamburger Button - collapses at xl:block to avoid text crowding */}
+          <button
+            type="button"
+            className="xl:hidden p-2 text-deep-navy rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-expanded={mobileMenuOpen}
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Drawer (Collapsed Layout) */}
+      {mobileMenuOpen && (
+        <div className="xl:hidden absolute top-full left-0 w-full bg-white border-b border-border-clinical shadow-md py-4 px-4 flex flex-col gap-4">
+          <nav className="flex flex-col gap-3">
+            {mainNavigation.map((link, idx) => (
+              <Link
+                key={idx}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`font-sans text-base font-semibold py-2 px-3 rounded-md transition-colors ${
+                  isActive(link.href)
+                    ? "bg-soft-blue text-deep-navy font-bold"
+                    : "text-text-secondary hover:bg-warm-off-white hover:text-deep-navy"
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </nav>
+
+          <hr className="border-border-clinical" />
+
+          {/* Mobile Utility Navigation */}
+          <div className="flex flex-col gap-3 px-3">
+            {utilityNavigation.map((link, idx) => (
+              <Link
+                key={idx}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`font-sans text-sm font-semibold transition-colors ${
+                  link.urgent ? "text-status-error font-bold" : "text-text-secondary hover:text-deep-navy"
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </div>
+
+          <div className="pt-2">
+            <Button
+              href="/book-appointment"
+              className="w-full"
+              variant="teal"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Book Appointment
+            </Button>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+};

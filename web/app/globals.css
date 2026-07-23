@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  /* Restrained Clinical Palette - Modern Healthcare UI */
+  --color-deep-navy: #082F49; /* Deep Navy footer & backgrounds */
+  --color-primary-navy: #003B5C; /* Medical Navy */
+  --color-dark-overlay-navy: #0B2D4D; /* Dark Hero Overlay Navy */
+  --color-clinical-teal: #00AFC8; /* Teal brand accent */
+  --color-clinical-teal-hover: #0891B2; /* Teal hover */
+  --color-soft-blue: #EAF6FA; /* Soft blue card background */
+  --color-pale-clinical-blue: #F3FAFC; /* Pale clinical blue background */
+  --color-warm-off-white: #FAF8F5; /* Warm Off-White background */
+  --color-border-clinical: #D7E0E5; /* Soft clinical border */
+
+  /* Standard Text Colors */
+  --color-text-main: #102A43; /* Primary Text */
+  --color-text-secondary: #526D82; /* Muted Text */
+  --color-text-muted: #627D98;
+
+  /* Restrained Warning / Urgent */
+  --color-status-error: #B42318;
+  --color-status-error-bg: #FFF5F5;
+  
+  /* Fonts */
+  --font-serif: var(--font-serif), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+}
+
+/* Base resets & styles */
+:root {
+  --background: #ffffff;
+  --foreground: #102A43; /* Primary Text */
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+@layer base {
+  h1, h2 {
+    font-family: var(--font-serif);
+  }
+
+  h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 700;
+  }
+}
+
+/* Accessibility focus styles across the site */
+*:focus-visible {
+  outline: 2px solid #00AFC8; /* Teal focus ring */
+  outline-offset: 2px;
+}
+
+/* Skip link styling for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: #082F49;
+  color: #ffffff;
+  padding: 1rem 1.5rem;
+  z-index: 100;
+  transition: top 0.2s ease;
+  font-weight: 600;
+  border-bottom-right-radius: 4px;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 2px solid #00AFC8;
+  outline-offset: 2px;
+}

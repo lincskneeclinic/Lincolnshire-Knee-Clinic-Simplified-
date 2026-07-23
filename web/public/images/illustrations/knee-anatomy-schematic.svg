@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Lincolnshire Knee Clinic — Knee Anatomy Schematic (Radiolucent View)
+  ===================================================================
+  A high-fidelity educational schematic diagram of the knee joint.
+
+  CLINICAL REVIEW STATUS: Awaiting clinical review
+  Do NOT use this as a clinical reference until reviewed.
+
+  Attribution: Internal — Lincolnshire Knee Clinic
+  Licence: All rights reserved — Lincolnshire Knee Clinic
+
+  Accessibility:
+  - Includes <title> and <desc> elements
+  - Labelled regions use <text> elements (not raster text)
+  - data-region attributes enable JS interaction
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 400 480"
+  role="img"
+  aria-labelledby="knee-schema-title"
+  aria-describedby="knee-schema-desc"
+  focusable="false"
+  style="font-family: sans-serif; background-color: #071324;"
+>
+  <title id="knee-schema-title">Schematic diagram of the knee joint — radiolucent view</title>
+  <desc id="knee-schema-desc">
+    An educational schematic of the right knee joint viewed from the front, showing bones in a translucent radiolucent style, revealing internal ligaments and cartilage.
+  </desc>
+
+  <rect width="400" height="480" fill="#071324" rx="12"/>
+
+  <!-- Grid backdrop -->
+  <defs>
+    <pattern id="kg" width="16" height="16" patternUnits="userSpaceOnUse">
+      <path d="M 16 0 L 0 0 0 16" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <pattern id="pathology-stripes" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#F97316" stroke-width="2" opacity="0.4"/>
+    </pattern>
+  </defs>
+  <rect width="400" height="480" fill="url(#kg)" rx="12" aria-hidden="true"/>
+
+  <!-- Fibula -->
+  <g data-region="fibula" aria-label="Fibula">
+    <path d="M 268 280 C 274 280, 284 284, 284 296 C 284 308, 276 314, 272 318 L 272 460 L 255 460 L 255 318 C 251 314, 251 308, 254 298 L 254 288 Z" fill="rgba(255, 255, 255, 0.1)" stroke="rgba(148, 163, 184, 0.6)" stroke-width="1.5"/>
+  </g>
+
+  <!-- Tibia -->
+  <g data-region="tibia" aria-label="Tibia">
+    <path d="M 125 260 C 130 252, 160 250, 195 255 C 205 255, 230 250, 265 260 C 275 265, 275 275, 265 282 C 255 288, 238 290, 222 290 C 218 300, 216 320, 216 350 L 216 460 L 178 460 L 178 350 C 178 320, 176 300, 172 290 C 156 290, 142 288, 133 282 C 123 275, 123 265, 125 260 Z" fill="rgba(255, 255, 255, 0.1)" stroke="rgba(148, 163, 184, 0.6)" stroke-width="1.5"/>
+  </g>
+
+  <!-- Femur -->
+  <g data-region="femur" aria-label="Femur">
+    <path d="M 170 20 L 230 20 L 230 110 C 230 120, 245 125, 255 130 C 275 140, 280 155, 280 170 C 280 190, 265 205, 240 208 C 228 208, 220 195, 200 195 C 180 195, 172 208, 160 208 C 135 205, 120 190, 120 170 C 120 155, 125 140, 145 130 C 155 125, 170 120, 170 110 Z" fill="rgba(255, 255, 255, 0.1)" stroke="rgba(148, 163, 184, 0.6)" stroke-width="1.5"/>
+  </g>
+
+  <!-- Articular Cartilage -->
+  <g data-region="articular-cartilage" aria-label="Articular Cartilage">
+    <path d="M 122 170 C 125 186, 155 190, 161 185 C 163 180, 150 170, 122 170 Z" fill="rgba(0, 175, 200, 0.2)" stroke="rgba(0, 175, 200, 0.8)" stroke-width="1.5"/>
+    <path d="M 239 185 C 245 190, 275 186, 278 170 C 250 170, 237 180, 239 185 Z" fill="rgba(0, 175, 200, 0.2)" stroke="rgba(0, 175, 200, 0.8)" stroke-width="1.5"/>
+    <path d="M 126 261 C 135 255, 170 255, 185 261 Z" fill="rgba(0, 175, 200, 0.2)" stroke="rgba(0, 175, 200, 0.8)" stroke-width="1.5"/>
+    <path d="M 215 261 C 230 255, 265 255, 274 261 Z" fill="rgba(0, 175, 200, 0.2)" stroke="rgba(0, 175, 200, 0.8)" stroke-width="1.5"/>
+  </g>
+
+  <!-- PCL -->
+  <g data-region="pcl" aria-label="Posterior Cruciate Ligament">
+    <path d="M 182 195 C 185 205, 208 238, 218 250 L 226 250 C 218 238, 195 205, 190 195 Z" fill="none" stroke="rgba(0, 175, 200, 0.6)" stroke-width="4" stroke-dasharray="3,2"/>
+  </g>
+
+  <!-- ACL -->
+  <g data-region="acl" aria-label="Anterior Cruciate Ligament">
+    <path d="M 218 195 C 215 205, 188 238, 182 250 L 195 250 C 202 238, 228 205, 230 195 Z" fill="none" stroke="rgba(0, 175, 200, 0.6)" stroke-width="4"/>
+  </g>
+
+  <!-- Medial Meniscus -->
+  <g data-region="medial-meniscus" aria-label="Medial Meniscus">
+    <path d="M 120 245 C 120 238, 185 238, 185 245 C 185 252, 177 254, 170 254 C 155 254, 130 252, 120 245 Z" fill="rgba(14, 165, 233, 0.2)" stroke="rgba(56, 189, 248, 0.8)" stroke-width="1.5"/>
+  </g>
+
+  <!-- Lateral Meniscus -->
+  <g data-region="lateral-meniscus" aria-label="Lateral Meniscus">
+    <path d="M 215 245 C 215 238, 280 238, 280 245 C 280 252, 270 254, 263 254 C 245 254, 225 252, 215 245 Z" fill="rgba(14, 165, 233, 0.2)" stroke="rgba(56, 189, 248, 0.8)" stroke-width="1.5"/>
+  </g>
+
+  <!-- Quadriceps Tendon -->
+  <g data-region="quadriceps-tendon" aria-label="Quadriceps Tendon">
+    <path d="M 180 130 L 178 80 L 222 80 L 220 130 Z" fill="rgba(255, 255, 255, 0.2)" stroke="rgba(203, 213, 225, 0.8)" stroke-width="1.5"/>
+  </g>
+
+  <!-- Patella -->
+  <g data-region="patella" aria-label="Patella">
+    <path d="M 178 140 C 178 130, 222 130, 222 140 C 222 165, 210 190, 200 195 C 190 190, 178 165, 178 140 Z" fill="rgba(255, 255, 255, 0.1)" stroke="rgba(148, 163, 184, 0.6)" stroke-width="1.5"/>
+  </g>
+
+  <!-- Patellar Tendon -->
+  <g data-region="patellar-tendon" aria-label="Patellar Tendon">
+    <path d="M 194 195 L 188 260 L 202 260 L 206 195 Z" fill="rgba(255, 255, 255, 0.2)" stroke="rgba(203, 213, 225, 0.8)" stroke-width="1.5"/>
+  </g>
+
+  <!-- Leader lines and annotations -->
+  <line x1="330" y1="215" x2="260" y2="185" stroke="#00AFC8" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="335" y="218" fill="#a5f3fc" font-size="9" font-weight="bold">Cartilage</text>
+
+  <line x1="330" y1="235" x2="225" y2="220" stroke="#00AFC8" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="335" y="238" fill="#a5f3fc" font-size="9" font-weight="bold">ACL</text>
+
+  <line x1="330" y1="255" x2="270" y2="246" stroke="#38bdf8" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="335" y="258" fill="#7dd3fc" font-size="9" font-weight="bold">Lat Meniscus</text>
+
+  <line x1="70" y1="245" x2="130" y2="245" stroke="#38bdf8" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="65" y="248" text-anchor="end" fill="#7dd3fc" font-size="9" font-weight="bold">Med Meniscus</text>
+
+  <line x1="70" y1="265" x2="190" y2="250" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="65" y="268" text-anchor="end" fill="#cbd5e1" font-size="9" font-weight="bold">Patellar Tendon</text>
+
+  <line x1="70" y1="225" x2="190" y2="210" stroke="#00AFC8" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="65" y="228" text-anchor="end" fill="#a5f3fc" font-size="9" font-weight="bold">PCL</text>
+
+  <!-- Watermark banner -->
+  <rect x="0" y="445" width="400" height="35" fill="#1e293b" rx="0"/>
+  <rect x="0" y="445" width="4" height="35" fill="#f97316"/>
+  <text x="12" y="458" font-size="8" font-weight="bold" fill="#fdba74">AWAITING CLINICAL REVIEW — Educational schematic only.</text>
+  <text x="12" y="470" font-size="7" fill="#cbd5e1">Not a clinical reference. Not for diagnosis. All rights reserved.</text>
+</svg>
