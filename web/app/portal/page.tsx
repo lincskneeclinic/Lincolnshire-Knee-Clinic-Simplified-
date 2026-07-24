@@ -1526,31 +1526,105 @@ export default function PatientPortal() {
                 </div>
               </div>
 
-              {/* Sync Agent Logs */}
+              {/* Sync Agent Logs & Dashboard */}
               <div className="space-y-6">
-                <div className="bg-[#0B132B] border border-slate-800 text-emerald-400 p-5 rounded-2xl shadow-lg font-mono text-xs h-[450px] flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-center text-slate-400 border-b border-slate-800 pb-2 mb-4">
-                      <span>ANTIGRAVITY SYNC AGENT</span>
-                      <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-emerald-300">Live Status</span>
+                {syncStatus === "done" ? (
+                  <div className="bg-white border border-border-clinical p-6 rounded-2xl shadow-sm h-[450px] flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-3 border-b border-border-clinical/60 pb-3 mb-4">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-bold shrink-0">
+                          ✓
+                        </div>
+                        <div>
+                          <h3 className="font-serif font-bold text-deep-navy text-sm md:text-base">Intake Assessment Sync</h3>
+                          <p className="text-[10px] text-text-secondary">Logged in Patient Registry</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        {/* Oxford Score Metric */}
+                        <div className="bg-pale-clinical-blue/20 p-3 rounded-xl border border-border-clinical/30 flex justify-between items-center">
+                          <div>
+                            <span className="text-xs text-text-secondary block font-semibold">Oxford Knee Score</span>
+                            <span className={`text-sm font-bold ${getOxfordScoreAssessment(totalOxfordScore).color}`}>
+                              {getOxfordScoreAssessment(totalOxfordScore).rating}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xl font-bold text-deep-navy">{totalOxfordScore}</span>
+                            <span className="text-xs text-text-secondary font-semibold">/48</span>
+                          </div>
+                        </div>
+
+                        {/* Surgery Details */}
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div className="border border-border-clinical/30 p-2.5 rounded-xl bg-slate-50/50">
+                            <span className="text-text-secondary block font-semibold mb-0.5">Assigned Pathway</span>
+                            <span className="font-bold text-deep-navy truncate block">{currentPatient.surgery || "Standard Orthopedics"}</span>
+                          </div>
+                          <div className="border border-border-clinical/30 p-2.5 rounded-xl bg-slate-50/50">
+                            <span className="text-text-secondary block font-semibold mb-0.5">Consent Verification</span>
+                            <span className="font-bold text-emerald-600 block">E-Signed & Approved</span>
+                          </div>
+                        </div>
+
+                        {/* Medical Summary Details */}
+                        <div className="text-xs space-y-1.5 border-t border-border-clinical/40 pt-3">
+                          {medHistory && (
+                            <div className="flex justify-between gap-4">
+                              <span className="text-text-secondary font-semibold">History:</span>
+                              <span className="text-deep-navy font-bold truncate max-w-[200px]">{medHistory}</span>
+                            </div>
+                          )}
+                          {medications && (
+                            <div className="flex justify-between gap-4">
+                              <span className="text-text-secondary font-semibold">Medications:</span>
+                              <span className="text-deep-navy font-bold truncate max-w-[200px]">{medications}</span>
+                            </div>
+                          )}
+                          {allergies && (
+                            <div className="flex justify-between gap-4">
+                              <span className="text-text-secondary font-semibold">Allergies:</span>
+                              <span className="text-status-error font-bold truncate max-w-[200px]">{allergies}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="space-y-2 overflow-y-auto max-h-[340px]">
-                      {syncStatus === "idle" && (
-                        <span className="text-slate-500">Awaiting digital intake submission to trigger registry sync...</span>
-                      )}
-                      {syncLogs.map((log, idx) => (
-                        <div key={idx} className="leading-relaxed animate-fade-in">{log}</div>
-                      ))}
-                    </div>
+                    <Button
+                      onClick={() => setActiveTab("recovery")}
+                      className="w-full justify-center mt-2"
+                      variant="primary"
+                    >
+                      Access Recovery Companion
+                    </Button>
                   </div>
+                ) : (
+                  <div className="bg-[#0B132B] border border-slate-800 text-emerald-400 p-5 rounded-2xl shadow-lg font-mono text-xs h-[450px] flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-center text-slate-400 border-b border-slate-800 pb-2 mb-4">
+                        <span>ANTIGRAVITY SYNC AGENT</span>
+                        <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-emerald-300">Live Status</span>
+                      </div>
 
-                  {syncStatus === "done" && (
-                    <div className="text-center bg-emerald-500/10 border border-emerald-500/20 py-2 rounded text-emerald-300 text-xs">
-                      ✔ Sync registry operations logged successfully!
+                      <div className="space-y-2 overflow-y-auto max-h-[340px]">
+                        {syncStatus === "idle" && (
+                          <span className="text-slate-500">Awaiting digital intake submission to trigger registry sync...</span>
+                        )}
+                        {syncLogs.map((log, idx) => (
+                          <div key={idx} className="leading-relaxed animate-fade-in">{log}</div>
+                        ))}
+                      </div>
                     </div>
-                  )}
-                </div>
+
+                    {syncStatus === "running" && (
+                      <div className="text-center bg-clinical-teal/10 border border-clinical-teal/20 py-2 rounded text-clinical-teal text-xs animate-pulse">
+                        🔄 Syncing in progress...
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
