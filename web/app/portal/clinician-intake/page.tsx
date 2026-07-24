@@ -8,16 +8,11 @@ export default function ClinicianIntakePage() {
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState("");
 
-  // Form Fields
+  // Only strictly required fields
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [dob, setDob] = useState("");
-  const [patientId, setPatientId] = useState("");
   const [surgery, setSurgery] = useState("Total Knee Replacement (Left)");
   const [surgeryDate, setSurgeryDate] = useState(new Date().toISOString().split("T")[0]);
-  const [balanceDue, setBalanceDue] = useState("0");
-  const [insuranceProvider, setInsuranceProvider] = useState("");
-  const [insurancePreAuth, setInsurancePreAuth] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
@@ -48,28 +43,18 @@ export default function ClinicianIntakePage() {
         body: JSON.stringify({
           name,
           email,
-          dob,
-          patientId,
           surgery,
           surgeryDate,
-          balanceDue: parseFloat(balanceDue) || 0,
-          insuranceProvider,
-          insurancePreAuth,
           pin,
         }),
       });
 
       const data = await response.json();
       if (response.ok && data.success) {
-        setSuccessMsg(`Patient ${name} successfully synced to Portal!`);
-        // Reset form
+        setSuccessMsg(`✓ ${name} registered — portal invite ready.`);
+        // Reset form for next patient
         setName("");
         setEmail("");
-        setDob("");
-        setPatientId("");
-        setBalanceDue("0");
-        setInsuranceProvider("");
-        setInsurancePreAuth("");
       } else {
         setErrorMsg(data.error || "Failed to register patient");
       }
@@ -115,7 +100,6 @@ export default function ClinicianIntakePage() {
             </button>
           </form>
 
-          {/* Clinician helpful note */}
           <div className="mt-8 text-center">
             <Link href="/portal" className="text-xs text-clinical-teal hover:underline font-semibold">
               Return to Patient Portal
@@ -138,7 +122,7 @@ export default function ClinicianIntakePage() {
           />
           <div className="leading-tight">
             <h1 className="text-sm font-bold tracking-wider font-serif">Lincolnshire Knee Clinic</h1>
-            <span className="text-[10px] text-clinical-teal font-semibold">Theatre & Clinic Registry Flow</span>
+            <span className="text-[10px] text-clinical-teal font-semibold">Quick Patient Registration</span>
           </div>
         </div>
         <button
@@ -153,7 +137,6 @@ export default function ClinicianIntakePage() {
       <main className="w-full sm:max-w-md p-3 sm:p-4 space-y-4">
         {successMsg && (
           <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-emerald-800 text-sm font-medium flex items-center space-x-2">
-            <span>✅</span>
             <span>{successMsg}</span>
           </div>
         )}
@@ -165,10 +148,10 @@ export default function ClinicianIntakePage() {
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-4 sm:p-6 space-y-4">
-          <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
-            <h2 className="font-serif font-bold text-slate-950 text-base">New Patient Registration</h2>
-            <span className="text-[10px] bg-slate-100 text-slate-600 font-mono px-2 py-0.5 rounded font-bold">Mobile View</span>
+        <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-4 sm:p-6 space-y-5">
+          <div className="border-b border-slate-100 pb-3">
+            <h2 className="font-serif font-bold text-slate-950 text-base">Register Patient</h2>
+            <p className="text-[11px] text-slate-400 mt-1">Patient completes remaining details on first portal login.</p>
           </div>
 
           <form onSubmit={handleRegisterPatient} className="space-y-4 text-slate-900">
@@ -181,54 +164,30 @@ export default function ClinicianIntakePage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. John Henderson"
-                className="w-full px-3.5 py-2 border border-slate-200 rounded-lg focus:border-clinical-teal focus:outline-none bg-slate-50 text-slate-950"
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:border-clinical-teal focus:outline-none bg-slate-50 text-slate-950"
               />
             </div>
 
             {/* Patient Email */}
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Email Address (Login Username) *</label>
+              <label className="text-xs font-bold text-slate-700">Email Address *</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="e.g. patient@example.com"
-                className="w-full px-3.5 py-2 border border-slate-200 rounded-lg focus:border-clinical-teal focus:outline-none bg-slate-50 text-slate-950"
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:border-clinical-teal focus:outline-none bg-slate-50 text-slate-950"
               />
             </div>
 
-            {/* DOB & Patient ID */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">DOB (DD/MM/YYYY)</label>
-                <input
-                  type="text"
-                  value={dob}
-                  onChange={(e) => setDob(e.target.value)}
-                  placeholder="01/01/1980"
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-lg focus:border-clinical-teal focus:outline-none bg-slate-50 text-slate-950"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">Patient ID</label>
-                <input
-                  type="text"
-                  value={patientId}
-                  onChange={(e) => setPatientId(e.target.value)}
-                  placeholder="e.g. LKC-90211"
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-lg focus:border-clinical-teal focus:outline-none bg-slate-50 text-slate-950"
-                />
-              </div>
-            </div>
-
-            {/* Surgery/Pathway Dropdown */}
+            {/* Treatment Pathway */}
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-700">Treatment Pathway *</label>
               <select
                 value={surgery}
                 onChange={(e) => setSurgery(e.target.value)}
-                className="w-full px-3.5 py-2 border border-slate-200 rounded-lg focus:border-clinical-teal focus:outline-none bg-slate-50 text-slate-950 font-sans"
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:border-clinical-teal focus:outline-none bg-slate-50 text-slate-950 font-sans"
               >
                 <option value="Total Knee Replacement (Left)">Total Knee Replacement (Left)</option>
                 <option value="Total Knee Replacement (Right)">Total Knee Replacement (Right)</option>
@@ -242,58 +201,23 @@ export default function ClinicianIntakePage() {
               </select>
             </div>
 
-            {/* Date of Surgery & Balance */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">Treatment Date</label>
-                <input
-                  type="date"
-                  value={surgeryDate}
-                  onChange={(e) => setSurgeryDate(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-lg focus:border-clinical-teal focus:outline-none bg-slate-50 text-slate-950"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">Outstanding Balance (£)</label>
-                <input
-                  type="number"
-                  value={balanceDue}
-                  onChange={(e) => setBalanceDue(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-lg focus:border-clinical-teal focus:outline-none bg-slate-50 text-slate-950"
-                />
-              </div>
-            </div>
-
-            {/* Insurance details */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">Insurance Provider</label>
-                <input
-                  type="text"
-                  value={insuranceProvider}
-                  onChange={(e) => setInsuranceProvider(e.target.value)}
-                  placeholder="e.g. Bupa"
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-lg focus:border-clinical-teal focus:outline-none bg-slate-50 text-slate-950"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">Pre-Auth Reference</label>
-                <input
-                  type="text"
-                  value={insurancePreAuth}
-                  onChange={(e) => setInsurancePreAuth(e.target.value)}
-                  placeholder="e.g. BI-992019"
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-lg focus:border-clinical-teal focus:outline-none bg-slate-50 text-slate-950"
-                />
-              </div>
+            {/* Treatment Date */}
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">Treatment Date *</label>
+              <input
+                type="date"
+                value={surgeryDate}
+                onChange={(e) => setSurgeryDate(e.target.value)}
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:border-clinical-teal focus:outline-none bg-slate-50 text-slate-950"
+              />
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-md transition-colors cursor-pointer text-sm"
+              className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-md transition-colors cursor-pointer text-sm mt-2"
             >
-              {isSubmitting ? "Writing Registry..." : "Register & Sync Portal"}
+              {isSubmitting ? "Registering..." : "Register Patient"}
             </button>
           </form>
         </div>
