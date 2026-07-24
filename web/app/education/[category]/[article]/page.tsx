@@ -6,6 +6,7 @@ import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { Button } from "@/components/Button";
 import { blogArticles } from "@/data/articles";
 import { FaqAccordion } from "@/components/FaqAccordion";
+import Link from "next/link";
 
 interface PageProps {
   params: Promise<{
@@ -96,7 +97,7 @@ export default async function ArticlePage({ params }: PageProps) {
       {/* Article Banner Image */}
       {data.image && (
         <div className="w-full h-60 sm:h-80 md:h-[400px] relative rounded-2xl overflow-hidden mb-10 border border-border-clinical/30 bg-pale-clinical-blue/10">
-          <img src={data.image} alt={data.title} className="object-cover w-full h-full" />
+          <img src={data.image} alt={data.title} className="object-contain w-full h-full bg-white" />
         </div>
       )}
 
@@ -145,6 +146,40 @@ export default async function ArticlePage({ params }: PageProps) {
                   
                   <div className="space-y-4">
                     {paragraphs.map((para, pIdx) => {
+                      const renderTextWithLinks = (text: string) => {
+                        const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
+                        const parts = [];
+                        let lastIndex = 0;
+                        let match;
+
+                        while ((match = regex.exec(text)) !== null) {
+                          const [fullMatch, linkText, url] = match;
+                          const index = match.index;
+
+                          if (index > lastIndex) {
+                            parts.push(text.substring(lastIndex, index));
+                          }
+
+                          parts.push(
+                            <Link
+                              key={index}
+                              href={url}
+                              className="text-clinical-teal hover:underline font-bold"
+                            >
+                              {linkText}
+                            </Link>
+                          );
+
+                          lastIndex = index + fullMatch.length;
+                        }
+
+                        if (lastIndex < text.length) {
+                          parts.push(text.substring(lastIndex));
+                        }
+
+                        return parts.length > 0 ? parts : text;
+                      };
+
                       if (para.includes("\n1. ") || para.includes("\n- ") || para.startsWith("1. ") || para.startsWith("- ")) {
                         const lines = para.split("\n").filter(Boolean);
                         return (
@@ -152,7 +187,7 @@ export default async function ArticlePage({ params }: PageProps) {
                             {lines.map((line, lIdx) => (
                               <li key={lIdx} className="flex items-start gap-2 font-medium text-text-secondary">
                                 <span className="text-clinical-teal font-bold shrink-0 mt-0.5">&bull;</span>
-                                <span>{line.replace(/^(\d+\.|\-)\s*/, "")}</span>
+                                <span>{renderTextWithLinks(line.replace(/^(\d+\.|\-)\s*/, ""))}</span>
                               </li>
                             ))}
                           </ul>
@@ -161,7 +196,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
                       return (
                         <p key={pIdx} className="font-medium text-text-secondary leading-relaxed text-sm md:text-base">
-                          {para}
+                          {renderTextWithLinks(para)}
                         </p>
                       );
                     })}
@@ -173,7 +208,7 @@ export default async function ArticlePage({ params }: PageProps) {
                       <img
                         src={section.inlineImage}
                         alt={section.heading || data.title}
-                        className="w-full h-auto object-cover max-h-[380px]"
+                        className="w-full h-auto object-contain max-h-[380px] bg-white"
                       />
                       {section.inlineImageCaption && (
                         <figcaption className="text-center text-xs text-text-muted italic p-3 bg-white/90 border-t border-border-clinical/20 font-medium">

@@ -295,7 +295,7 @@ export const symptomsData: Record<string, SymptomData> = {
       "A loose piece of cartilage moving around the joint, causing variable blocks"
     ],
     durationPattern: "Locking episodes are typically sudden and unpredictable. The knee may remain locked for hours or days, or catch momentarily during specific movements.",
-    possibleCauses: ["meniscal-tear", "cartilage-injury", "knee-arthritis"],
+    possibleCauses: ["meniscal-tear", "cartilage-injury", "loose-bodies", "knee-arthritis"],
     warningSigns: [
       "The knee is physically locked and cannot be straightened even with gentle assist",
       "Locking occurred immediately after a twisting injury",

@@ -744,6 +744,65 @@ export const conditionsData: Record<string, ConditionData> = {
     metadataTitle: "Patellar Instability and Kneecap Dislocation | Lincolnshire Knee Clinic",
     metadataDescription: "Learn about kneecap instability and patellar dislocation, including symptoms, assessment, investigations, rehabilitation and possible treatment options.",
     reviewStatus: "Draft - Awaiting clinical review"
+  },
+  "loose-bodies": {
+    slug: "loose-bodies",
+    name: "Loose Bodies",
+    alternateName: "Loose Bodies in the Knee Joint",
+    shortDescription: "Fragments of bone or cartilage that float freely within the knee joint, potentially causing locking, catching, or sudden pain.",
+    introduction: "Loose bodies are small fragments of cartilage or bone that break off and float freely inside the knee joint, which can cause sudden pain, locking, or swelling.",
+    whatIs: "Loose bodies are fragments of cartilage or bone (or both) that have detached from the joint surfaces or other structures and float freely within the joint cavity. They can range in size from a few millimeters to several centimeters. When a loose body becomes caught between the moving surfaces of the knee joint, it can act like a wedge, causing sudden pain, clicking, or mechanical locking where the knee cannot be bent or straightened. Wording is cautious: loose bodies do not always cause symptoms, but if they cause mechanical block or damage to the surrounding cartilage, intervention is usually considered.",
+    symptoms: [
+      "Mechanical locking (knee gets stuck in one position)",
+      "Sudden, sharp pain during movement",
+      "Feeling something moving or shifting inside the joint",
+      "Intermittent swelling and stiffness",
+      "Catching or clicking sensations"
+    ],
+    causes: [
+      "Osteochondral fracture (injury to cartilage and bone)",
+      "Osteochondritis dissecans (OCD)",
+      "Severe osteoarthritis where bone spurs (osteophytes) break off",
+      "Synovial chondromatosis (rare condition causing multiple cartilage nodules)"
+    ],
+    assessment: [
+      "History of sudden locking or catching episodes",
+      "Physical examination of knee movement and palpation of any movable fragments",
+      "Evaluation of potential cartilage or bone wear"
+    ],
+    investigations: [
+      "Standard X-rays (useful for detecting bony/calcified loose bodies)",
+      "MRI scan (ideal for detecting non-calcified cartilage loose bodies)"
+    ],
+    treatments: [
+      "Observation (if small and not causing symptoms)",
+      "Activity modification to avoid triggering symptoms",
+      "Arthroscopic surgery (keyhole) to remove the loose bodies and address any underlying cartilage damage"
+    ],
+    surgeryTitle: "Arthroscopic Removal of Loose Bodies",
+    surgeryDetails: [
+      "A keyhole surgery to locate and extract the loose fragments",
+      "Shaving or smoothing of any damaged cartilage edges (chondroplasty)",
+      "Usually performed as a day-case procedure under general or regional anaesthetic"
+    ],
+    faqs: [
+      {
+        question: "Do all loose bodies need to be removed?",
+        answer: "No. If a loose body is small and does not cause locking, pain, or damage to the joint surfaces, it may be monitored. However, if it causes mechanical symptoms or threatens joint cartilage, surgical removal is typically recommended."
+      },
+      {
+        question: "How are loose bodies diagnosed?",
+        answer: "They are diagnosed through a combination of clinical history and imaging. X-rays can show calcified or bony loose bodies, but an MRI is usually required to see cartilage fragments that do not show up on standard X-rays."
+      }
+    ],
+    relatedSymptoms: ["Locked Knee", "Clicking or Grinding", "Swollen Knee", "Knee Pain"],
+    relatedConditions: ["cartilage-injury", "meniscal-tear", "knee-arthritis"],
+    relatedTreatments: ["Physiotherapy", "Book Appointment"],
+    imagePath: "/images/conditions/loose-bodies/overview.png",
+    imageAltText: "Illustration of loose bony or cartilage fragments floating in the knee joint cavity",
+    metadataTitle: "Loose Bodies in the Knee: Causes, Symptoms & Removal | Lincolnshire Knee Clinic",
+    metadataDescription: "Learn about loose bodies in the knee joint. Find out how fragments of bone or cartilage cause locking, pain, or catching, and how they are diagnosed and removed.",
+    reviewStatus: "Draft - Awaiting clinical review"
   }
 };
 
