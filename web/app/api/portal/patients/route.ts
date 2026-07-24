@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     } = body;
 
     // Simple security validation
-    if (pin !== "202611") {
+    if (pin !== "230670") {
       return NextResponse.json({ error: "Invalid clinician credentials" }, { status: 401 });
     }
 

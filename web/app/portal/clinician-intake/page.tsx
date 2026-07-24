@@ -26,7 +26,7 @@ export default function ClinicianIntakePage() {
   // Handle PIN Pad authentication
   const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pin === "202611") {
+    if (pin === "230670") {
       setIsAuthenticated(true);
       setPinError("");
     } else {
