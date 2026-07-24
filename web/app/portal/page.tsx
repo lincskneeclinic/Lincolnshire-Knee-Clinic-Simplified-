@@ -932,7 +932,7 @@ export default function PatientPortal() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="border-b border-border-clinical flex flex-wrap gap-2">
+          <div className="border-b border-border-clinical flex overflow-x-auto whitespace-nowrap scrollbar-none gap-1 md:gap-2 -mx-4 px-4 md:mx-0 md:px-0">
             {[
               { id: "overview" as const, label: "Overview & Timeline", icon: "📋" },
               { id: "appointments" as const, label: "Schedule & Telehealth", icon: "📅" },
@@ -1665,7 +1665,7 @@ export default function PatientPortal() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* List of exercises */}
-                    <div className="space-y-3">
+                    <div className="space-y-3 order-2 md:order-1">
                       {exercises.map((ex) => (
                         <div
                           key={ex.id}
@@ -1690,7 +1690,7 @@ export default function PatientPortal() {
                     </div>
 
                     {/* Media simulator window */}
-                    <div className="md:col-span-2 space-y-4">
+                    <div className="md:col-span-2 space-y-4 order-1 md:order-2">
                       {selectedExercise && (
                         <div className="bg-[#0F172A] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between h-[450px] text-white p-4 relative border border-slate-800">
                           {/* Top video title */}
