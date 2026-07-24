@@ -430,15 +430,19 @@ export default function PatientPortal() {
       timer = setInterval(() => {
         setVideoProgress((prev) => {
           if (prev >= 100) {
-            setVideoPlaying(false);
-            return 0;
+            // Only auto-pause for simulated/non-videoUrl exercises
+            if (!selectedExercise?.videoUrl) {
+              setVideoPlaying(false);
+              return 0;
+            }
+            return 100; // Keep at 100% for real video streams
           }
           return prev + 2;
         });
       }, 150);
     }
     return () => clearInterval(timer);
-  }, [videoPlaying]);
+  }, [videoPlaying, selectedExercise]);
 
   // Telehealth Duration Timer
   useEffect(() => {
