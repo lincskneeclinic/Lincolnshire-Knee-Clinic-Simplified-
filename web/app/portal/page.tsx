@@ -229,7 +229,7 @@ const mockPatients: Record<string, PatientInfo> = {
     insurancePreAuth: "BI-992019-X",
     accessTier: "Surgery",
     exercises: [
-      { id: "qs", name: "Quad Sets (Static Quads)", description: "Lie flat, push the back of your knee down into the bed to tighten your thigh. Hold 5s. 10 reps, 4-6x daily.", completed: false, videoTips: ["Focus on quad contraction", "Keep heel flat", "Do not hold breath"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=40" },
+      { id: "qs", name: "Quad Sets (Static Quads)", description: "Lie flat, push the back of your knee down into the bed to tighten your thigh. Hold 5s. 10 reps, 4-6x daily.", completed: false, videoTips: ["Focus on quad contraction", "Keep heel flat", "Do not hold breath"], videoUrl: "https://www.youtube.com/embed/shSiZn5x9R8" },
       { id: "hs", name: "Heel Slides", description: "Gently slide your heel toward your buttocks, bending your knee as far as comfortable. Hold 5s. 3 sets of 10.", completed: false, videoTips: ["Use a strap if needed", "Do not force bending", "Slide smoothly"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=75" },
       { id: "pm", name: "Patellar Mobilisation", description: "Use your fingers to gently push your kneecap up, down, and side to side. 2-3 minutes, twice daily.", completed: false, videoTips: ["Keep quadricep relaxed", "Use light pressure", "Cover all 4 directions"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=40" },
       { id: "slr", name: "Straight Leg Raises", description: "Tighten thigh, lift leg 6 inches, hold for 5s. 3 sets of 10.", completed: false, videoTips: ["Ensure knee is locked straight", "Hold for a full 5 count", "Control lowering"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=120" },
@@ -252,7 +252,7 @@ const mockPatients: Record<string, PatientInfo> = {
     balanceDue: 2150.0,
     accessTier: "Surgery",
     exercises: [
-      { id: "sqc", name: "Static Quadriceps Contractions", description: "Sit or lie flat, tighten your thigh muscle, and pull your kneecap upwards. Hold for 5 seconds. 10 reps, 4-6x daily.", completed: false, videoTips: ["Squeeze thigh muscles hard", "Keep ankle flexed", "Hold contraction"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=40" },
+      { id: "sqc", name: "Static Quadriceps Contractions", description: "Sit or lie flat, tighten your thigh muscle, and pull your kneecap upwards. Hold for 5 seconds. 10 reps, 4-6x daily.", completed: false, videoTips: ["Squeeze thigh muscles hard", "Keep ankle flexed", "Hold contraction"], videoUrl: "https://www.youtube.com/embed/shSiZn5x9R8" },
       { id: "slrb", name: "Straight Leg Raises in Brace", description: "Perform straight leg raises ONLY while the brace is locked in full extension. 3 sets of 10.", completed: false, videoTips: ["Check brace lock first", "Keep leg locked completely", "Do not swing leg"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=120" },
       { id: "rhs", name: "Restricted Knee Bending", description: "Slide heel back to bend knee to maximum degree permitted (typically 60 or 90 degrees). 10 reps, 3x daily.", completed: false, videoTips: ["Stay within brace limitations", "Hold bend for 3-5 seconds", "Slide slowly"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=75" },
       { id: "chs", name: "Calf and Hamstring Stretches", description: "Use a towel looped around your foot to gently stretch calf/hamstring. Hold 20-30s, repeat 3 times.", completed: false, videoTips: ["Stretch should be gentle", "Keep knee straight", "Breath deeply"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=120" },
@@ -1787,7 +1787,7 @@ export default function PatientPortal() {
 
                       {/* Video permissions disclaimer */}
                       <p className="text-[10px] text-text-secondary/70 italic text-center mt-2">
-                        Note: Rehabilitation demonstration videos are public educational resources courtesy of the NHS, embedded under YouTube's standard terms of service.
+                        Note: Rehabilitation demonstration videos are public educational resources courtesy of the NHS and independent clinicians, embedded under YouTube's standard terms of service allowing third-party iframe playback.
                       </p>
                     </div>
                   </div>
