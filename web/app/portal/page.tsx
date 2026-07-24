@@ -205,10 +205,10 @@ const mockPatients: Record<string, PatientInfo> = {
     accessTier: "Surgery",
     exercises: [
       { id: "slr", name: "Straight Leg Raises", description: "Tighten thigh muscle, lift leg 6 inches, hold for 5s. 3 sets of 10.", completed: false, videoTips: ["Keep back flat", "Engage your core", "Control the descent slowly"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=120" },
-      { id: "kb", name: "Seated Knee Bends", description: "Sit on chair, slide foot back under seat as far as possible, hold 5s. 3 sets of 10.", completed: false, videoTips: ["Keep hips level", "Slide slowly", "Hold at maximum comfortable stretch"], videoUrl: "https://www.youtube.com/embed/R9tGfJ-S1xM?start=0" },
+      { id: "kb", name: "Seated Knee Bends", description: "Sit on chair, slide foot back under seat as far as possible, hold 5s. 3 sets of 10.", completed: false, videoTips: ["Keep hips level", "Slide slowly", "Hold at maximum comfortable stretch"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=75" },
       { id: "ap", name: "Ankle Pumps", description: "Move foot up and down rapidly to promote circulation. 10 reps every hour.", completed: false, videoTips: ["Contract calf fully", "Flex toes towards shin", "Move briskly"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=0" },
       { id: "ie", name: "Ice & Elevation", description: "Elevate leg above heart level, apply cold pack. 15-20 minutes, 4x daily.", completed: false, videoTips: ["Use pillows for support", "Keep knee straight during elevation", "Wrap ice in a cloth"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=150" },
-      { id: "w", name: "Short Walks", description: "Walk inside or outside using crutches/walker as tolerated. 5-10 mins, 3x daily.", completed: false, videoTips: ["Maintain heel-toe gait", "Stand tall", "Use walking aids safely"], videoUrl: "https://www.youtube.com/embed/R9tGfJ-S1xM?start=105" }
+      { id: "w", name: "Short Walks", description: "Walk inside or outside using crutches/walker as tolerated. 5-10 mins, 3x daily.", completed: false, videoTips: ["Maintain heel-toe gait", "Stand tall", "Use walking aids safely"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=0" }
     ],
     documents: [
       { title: "Total Knee Replacement Recovery Guide", filename: "total-knee-replacement-recovery-guide.pdf", date: "11/07/2026", type: "Guide" },
@@ -231,7 +231,7 @@ const mockPatients: Record<string, PatientInfo> = {
     exercises: [
       { id: "qs", name: "Quad Sets (Static Quads)", description: "Lie flat, push the back of your knee down into the bed to tighten your thigh. Hold 5s. 10 reps, 4-6x daily.", completed: false, videoTips: ["Focus on quad contraction", "Keep heel flat", "Do not hold breath"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=40" },
       { id: "hs", name: "Heel Slides", description: "Gently slide your heel toward your buttocks, bending your knee as far as comfortable. Hold 5s. 3 sets of 10.", completed: false, videoTips: ["Use a strap if needed", "Do not force bending", "Slide smoothly"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=75" },
-      { id: "pm", name: "Patellar Mobilisation", description: "Use your fingers to gently push your kneecap up, down, and side to side. 2-3 minutes, twice daily.", completed: false, videoTips: ["Keep quadricep relaxed", "Use light pressure", "Cover all 4 directions"], videoUrl: "https://www.youtube.com/embed/R9tGfJ-S1xM?start=105" },
+      { id: "pm", name: "Patellar Mobilisation", description: "Use your fingers to gently push your kneecap up, down, and side to side. 2-3 minutes, twice daily.", completed: false, videoTips: ["Keep quadricep relaxed", "Use light pressure", "Cover all 4 directions"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=40" },
       { id: "slr", name: "Straight Leg Raises", description: "Tighten thigh, lift leg 6 inches, hold for 5s. 3 sets of 10.", completed: false, videoTips: ["Ensure knee is locked straight", "Hold for a full 5 count", "Control lowering"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=120" },
       { id: "eh", name: "Extension Hangs", description: "Rest heel on a rolled towel, allowing gravity to gently stretch the knee flat. 5-10 minutes.", completed: false, videoTips: ["Let muscles relax completely", "Gravity does the work", "Stop if sharp pain occurs"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=150" }
     ],
@@ -255,7 +255,7 @@ const mockPatients: Record<string, PatientInfo> = {
       { id: "sqc", name: "Static Quadriceps Contractions", description: "Sit or lie flat, tighten your thigh muscle, and pull your kneecap upwards. Hold for 5 seconds. 10 reps, 4-6x daily.", completed: false, videoTips: ["Squeeze thigh muscles hard", "Keep ankle flexed", "Hold contraction"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=40" },
       { id: "slrb", name: "Straight Leg Raises in Brace", description: "Perform straight leg raises ONLY while the brace is locked in full extension. 3 sets of 10.", completed: false, videoTips: ["Check brace lock first", "Keep leg locked completely", "Do not swing leg"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=120" },
       { id: "rhs", name: "Restricted Knee Bending", description: "Slide heel back to bend knee to maximum degree permitted (typically 60 or 90 degrees). 10 reps, 3x daily.", completed: false, videoTips: ["Stay within brace limitations", "Hold bend for 3-5 seconds", "Slide slowly"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=75" },
-      { id: "chs", name: "Calf and Hamstring Stretches", description: "Use a towel looped around your foot to gently stretch calf/hamstring. Hold 20-30s, repeat 3 times.", completed: false, videoTips: ["Stretch should be gentle", "Keep knee straight", "Breath deeply"], videoUrl: "https://www.youtube.com/embed/R9tGfJ-S1xM?start=60" },
+      { id: "chs", name: "Calf and Hamstring Stretches", description: "Use a towel looped around your foot to gently stretch calf/hamstring. Hold 20-30s, repeat 3 times.", completed: false, videoTips: ["Stretch should be gentle", "Keep knee straight", "Breath deeply"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=120" },
       { id: "ap", name: "Ankle Pumps", description: "Move foot up and down rapidly to promote circulation. 10-15 reps every hour.", completed: false, videoTips: ["Pump continuously", "Promotes blood circulation", "Can be done in bed"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=0" }
     ],
     documents: [
@@ -1685,6 +1685,7 @@ export default function PatientPortal() {
                           <div className="flex flex-col items-center justify-center flex-1 my-4 h-[310px] relative w-full overflow-hidden">
                             {selectedExercise.videoUrl ? (
                               <iframe
+                                key={selectedExercise.id}
                                 className="absolute inset-0 w-full h-full rounded-lg"
                                 src={selectedExercise.videoUrl}
                                 title={selectedExercise.name}
