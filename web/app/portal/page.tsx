@@ -192,7 +192,7 @@ const oxfordQuestions: OxfordQuestion[] = [
 ];
 
 // Mock patients database
-const mockPatients: Record<string, PatientInfo> = {
+const INITIAL_MOCK_PATIENTS: Record<string, PatientInfo> = {
   "patient@lincsknee.com": {
     name: "Mr. John Henderson",
     dob: "14/05/1971",
@@ -304,6 +304,26 @@ export default function PatientPortal() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [patients, setPatients] = useState<Record<string, PatientInfo>>(INITIAL_MOCK_PATIENTS);
+
+  // Fetch dynamic patients on load
+  useEffect(() => {
+    async function fetchDynamicPatients() {
+      try {
+        const res = await fetch("/api/portal/patients");
+        if (res.ok) {
+          const dynamicData = await res.json();
+          setPatients(prev => ({
+            ...prev,
+            ...dynamicData
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to load dynamic patients:", err);
+      }
+    }
+    fetchDynamicPatients();
+  }, []);
 
   // Loaded Patient info states
   const [currentPatient, setCurrentPatient] = useState<PatientInfo | null>(null);
@@ -391,8 +411,8 @@ export default function PatientPortal() {
     e.preventDefault();
     const cleanEmail = email.trim().toLowerCase();
 
-    if (mockPatients[cleanEmail] && password === "KneeRecovery2026!") {
-      const patient = mockPatients[cleanEmail];
+    if (patients[cleanEmail] && password === "KneeRecovery2026!") {
+      const patient = patients[cleanEmail];
       setCurrentPatient(patient);
       setExercises(patient.exercises);
       if (patient.exercises.length > 0) {
