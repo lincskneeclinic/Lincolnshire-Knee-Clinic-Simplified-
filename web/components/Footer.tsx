@@ -203,6 +203,13 @@ export const Footer: React.FC = () => {
             <p>&copy; {new Date().getFullYear()} Lincolnshire Knee Clinic. All rights reserved.</p>
             <p className="mt-1 text-[10px] italic text-[#D7E0E5]/40">
               Draft/template content requiring legal review before publication.
+              {" · "}
+              <Link
+                href="/portal/clinician-intake"
+                className="not-italic hover:text-clinical-teal/60 transition-colors"
+              >
+                Clinician Portal
+              </Link>
             </p>
           </div>
           <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 font-medium" aria-label="Legal navigation">
