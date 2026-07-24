@@ -12,6 +12,7 @@ interface Exercise {
   description: string;
   completed: boolean;
   videoTips?: string[];
+  videoUrl?: string;
 }
 
 interface RecoveryDoc {
@@ -203,11 +204,11 @@ const mockPatients: Record<string, PatientInfo> = {
     balanceDue: 250.0,
     accessTier: "Surgery",
     exercises: [
-      { id: "slr", name: "Straight Leg Raises", description: "Tighten thigh muscle, lift leg 6 inches, hold for 5s. 3 sets of 10.", completed: false, videoTips: ["Keep back flat", "Engage your core", "Control the descent slowly"] },
-      { id: "kb", name: "Seated Knee Bends", description: "Sit on chair, slide foot back under seat as far as possible, hold 5s. 3 sets of 10.", completed: false, videoTips: ["Keep hips level", "Slide slowly", "Hold at maximum comfortable stretch"] },
-      { id: "ap", name: "Ankle Pumps", description: "Move foot up and down rapidly to promote circulation. 10 reps every hour.", completed: false, videoTips: ["Contract calf fully", "Flex toes towards shin", "Move briskly"] },
-      { id: "ie", name: "Ice & Elevation", description: "Elevate leg above heart level, apply cold pack. 15-20 minutes, 4x daily.", completed: false, videoTips: ["Use pillows for support", "Keep knee straight during elevation", "Wrap ice in a cloth"] },
-      { id: "w", name: "Short Walks", description: "Walk inside or outside using crutches/walker as tolerated. 5-10 mins, 3x daily.", completed: false, videoTips: ["Maintain heel-toe gait", "Stand tall", "Use walking aids safely"] }
+      { id: "slr", name: "Straight Leg Raises", description: "Tighten thigh muscle, lift leg 6 inches, hold for 5s. 3 sets of 10.", completed: false, videoTips: ["Keep back flat", "Engage your core", "Control the descent slowly"], videoUrl: "https://www.youtube.com/embed/JgM77Jp9tF4" },
+      { id: "kb", name: "Seated Knee Bends", description: "Sit on chair, slide foot back under seat as far as possible, hold 5s. 3 sets of 10.", completed: false, videoTips: ["Keep hips level", "Slide slowly", "Hold at maximum comfortable stretch"], videoUrl: "https://www.youtube.com/embed/3_X0mC3H8iM" },
+      { id: "ap", name: "Ankle Pumps", description: "Move foot up and down rapidly to promote circulation. 10 reps every hour.", completed: false, videoTips: ["Contract calf fully", "Flex toes towards shin", "Move briskly"], videoUrl: "https://www.youtube.com/embed/5W9V6Q0z6t0" },
+      { id: "ie", name: "Ice & Elevation", description: "Elevate leg above heart level, apply cold pack. 15-20 minutes, 4x daily.", completed: false, videoTips: ["Use pillows for support", "Keep knee straight during elevation", "Wrap ice in a cloth"], videoUrl: "https://www.youtube.com/embed/4o98X4o9yYI" },
+      { id: "w", name: "Short Walks", description: "Walk inside or outside using crutches/walker as tolerated. 5-10 mins, 3x daily.", completed: false, videoTips: ["Maintain heel-toe gait", "Stand tall", "Use walking aids safely"], videoUrl: "https://www.youtube.com/embed/Z-4c-69_t-s" }
     ],
     documents: [
       { title: "Total Knee Replacement Recovery Guide", filename: "total-knee-replacement-recovery-guide.pdf", date: "11/07/2026", type: "Guide" },
@@ -228,11 +229,11 @@ const mockPatients: Record<string, PatientInfo> = {
     insurancePreAuth: "BI-992019-X",
     accessTier: "Surgery",
     exercises: [
-      { id: "qs", name: "Quad Sets (Static Quads)", description: "Lie flat, push the back of your knee down into the bed to tighten your thigh. Hold 5s. 10 reps, 4-6x daily.", completed: false, videoTips: ["Focus on quad contraction", "Keep heel flat", "Do not hold breath"] },
-      { id: "hs", name: "Heel Slides", description: "Gently slide your heel toward your buttocks, bending your knee as far as comfortable. Hold 5s. 3 sets of 10.", completed: false, videoTips: ["Use a strap if needed", "Do not force bending", "Slide smoothly"] },
-      { id: "pm", name: "Patellar Mobilisation", description: "Use your fingers to gently push your kneecap up, down, and side to side. 2-3 minutes, twice daily.", completed: false, videoTips: ["Keep quadricep relaxed", "Use light pressure", "Cover all 4 directions"] },
-      { id: "slr", name: "Straight Leg Raises", description: "Tighten thigh, lift leg 6 inches, hold for 5s. 3 sets of 10.", completed: false, videoTips: ["Ensure knee is locked straight", "Hold for a full 5 count", "Control lowering"] },
-      { id: "eh", name: "Extension Hangs", description: "Rest heel on a rolled towel, allowing gravity to gently stretch the knee flat. 5-10 minutes.", completed: false, videoTips: ["Let muscles relax completely", "Gravity does the work", "Stop if sharp pain occurs"] }
+      { id: "qs", name: "Quad Sets (Static Quads)", description: "Lie flat, push the back of your knee down into the bed to tighten your thigh. Hold 5s. 10 reps, 4-6x daily.", completed: false, videoTips: ["Focus on quad contraction", "Keep heel flat", "Do not hold breath"], videoUrl: "https://www.youtube.com/embed/FhS8bFkYq3Q" },
+      { id: "hs", name: "Heel Slides", description: "Gently slide your heel toward your buttocks, bending your knee as far as comfortable. Hold 5s. 3 sets of 10.", completed: false, videoTips: ["Use a strap if needed", "Do not force bending", "Slide smoothly"], videoUrl: "https://www.youtube.com/embed/807s73Xg7X8" },
+      { id: "pm", name: "Patellar Mobilisation", description: "Use your fingers to gently push your kneecap up, down, and side to side. 2-3 minutes, twice daily.", completed: false, videoTips: ["Keep quadricep relaxed", "Use light pressure", "Cover all 4 directions"], videoUrl: "https://www.youtube.com/embed/q_7_7e8u-qg" },
+      { id: "slr", name: "Straight Leg Raises", description: "Tighten thigh, lift leg 6 inches, hold for 5s. 3 sets of 10.", completed: false, videoTips: ["Ensure knee is locked straight", "Hold for a full 5 count", "Control lowering"], videoUrl: "https://www.youtube.com/embed/JgM77Jp9tF4" },
+      { id: "eh", name: "Extension Hangs", description: "Rest heel on a rolled towel, allowing gravity to gently stretch the knee flat. 5-10 minutes.", completed: false, videoTips: ["Let muscles relax completely", "Gravity does the work", "Stop if sharp pain occurs"], videoUrl: "https://www.youtube.com/embed/W-YfXW6Z3zY" }
     ],
     documents: [
       { title: "ACL Reconstruction Recovery Guide", filename: "acl-reconstruction-recovery-guide.pdf", date: "15/07/2026", type: "Guide" },
@@ -251,11 +252,11 @@ const mockPatients: Record<string, PatientInfo> = {
     balanceDue: 2150.0,
     accessTier: "Surgery",
     exercises: [
-      { id: "sqc", name: "Static Quadriceps Contractions", description: "Sit or lie flat, tighten your thigh muscle, and pull your kneecap upwards. Hold for 5 seconds. 10 reps, 4-6x daily.", completed: false, videoTips: ["Squeeze thigh muscles hard", "Keep ankle flexed", "Hold contraction"] },
-      { id: "slrb", name: "Straight Leg Raises in Brace", description: "Perform straight leg raises ONLY while the brace is locked in full extension. 3 sets of 10.", completed: false, videoTips: ["Check brace lock first", "Keep leg locked completely", "Do not swing leg"] },
-      { id: "rhs", name: "Restricted Knee Bending", description: "Slide heel back to bend knee to maximum degree permitted (typically 60 or 90 degrees). 10 reps, 3x daily.", completed: false, videoTips: ["Stay within brace limitations", "Hold bend for 3-5 seconds", "Slide slowly"] },
-      { id: "chs", name: "Calf and Hamstring Stretches", description: "Use a towel looped around your foot to gently stretch calf/hamstring. Hold 20-30s, repeat 3 times.", completed: false, videoTips: ["Stretch should be gentle", "Keep knee straight", "Breath deeply"] },
-      { id: "ap", name: "Ankle Pumps", description: "Move foot up and down rapidly to promote circulation. 10-15 reps every hour.", completed: false, videoTips: ["Pump continuously", "Promotes blood circulation", "Can be done in bed"] }
+      { id: "sqc", name: "Static Quadriceps Contractions", description: "Sit or lie flat, tighten your thigh muscle, and pull your kneecap upwards. Hold for 5 seconds. 10 reps, 4-6x daily.", completed: false, videoTips: ["Squeeze thigh muscles hard", "Keep ankle flexed", "Hold contraction"], videoUrl: "https://www.youtube.com/embed/FhS8bFkYq3Q" },
+      { id: "slrb", name: "Straight Leg Raises in Brace", description: "Perform straight leg raises ONLY while the brace is locked in full extension. 3 sets of 10.", completed: false, videoTips: ["Check brace lock first", "Keep leg locked completely", "Do not swing leg"], videoUrl: "https://www.youtube.com/embed/JgM77Jp9tF4" },
+      { id: "rhs", name: "Restricted Knee Bending", description: "Slide heel back to bend knee to maximum degree permitted (typically 60 or 90 degrees). 10 reps, 3x daily.", completed: false, videoTips: ["Stay within brace limitations", "Hold bend for 3-5 seconds", "Slide slowly"], videoUrl: "https://www.youtube.com/embed/807s73Xg7X8" },
+      { id: "chs", name: "Calf and Hamstring Stretches", description: "Use a towel looped around your foot to gently stretch calf/hamstring. Hold 20-30s, repeat 3 times.", completed: false, videoTips: ["Stretch should be gentle", "Keep knee straight", "Breath deeply"], videoUrl: "https://www.youtube.com/embed/5X9_tJq9tE8" },
+      { id: "ap", name: "Ankle Pumps", description: "Move foot up and down rapidly to promote circulation. 10-15 reps every hour.", completed: false, videoTips: ["Pump continuously", "Promotes blood circulation", "Can be done in bed"], videoUrl: "https://www.youtube.com/embed/5W9V6Q0z6t0" }
     ],
     documents: [
       { title: "Patellar Stabilisation Recovery Guide", filename: "patellar-stabilisation-recovery-guide.pdf", date: "18/07/2026", type: "Guide" },
@@ -288,8 +289,8 @@ const mockPatients: Record<string, PatientInfo> = {
     balanceDue: 2150.0,
     accessTier: "Injection",
     exercises: [
-      { id: "ap", name: "Ankle Pumps", description: "Move foot up and down rapidly to promote circulation. 10 reps every hour.", completed: false, videoTips: ["Contract calf fully", "Flex toes towards shin", "Move briskly"] },
-      { id: "ie", name: "Ice & Elevation", description: "Elevate leg above heart level, apply cold pack. 15-20 minutes, 4x daily.", completed: false, videoTips: ["Use pillows for support", "Keep knee straight during elevation", "Wrap ice in a cloth"] }
+      { id: "ap", name: "Ankle Pumps", description: "Move foot up and down rapidly to promote circulation. 10 reps every hour.", completed: false, videoTips: ["Contract calf fully", "Flex toes towards shin", "Move briskly"], videoUrl: "https://www.youtube.com/embed/5W9V6Q0z6t0" },
+      { id: "ie", name: "Ice & Elevation", description: "Elevate leg above heart level, apply cold pack. 15-20 minutes, 4x daily.", completed: false, videoTips: ["Use pillows for support", "Keep knee straight during elevation", "Wrap ice in a cloth"], videoUrl: "https://www.youtube.com/embed/4o98X4o9yYI" }
     ],
     documents: [
       { title: "Arthrosamid® Post-Injection Care Guide", filename: "arthrosamid-post-injection-guide.pdf", date: "18/07/2026", type: "Guide" },
@@ -1676,31 +1677,41 @@ export default function PatientPortal() {
                             <span className="text-xs text-slate-400 font-mono">1080p Stream</span>
                           </div>
 
-                          {/* Center playback area with animated knee diagram */}
-                          <div className="flex flex-col items-center justify-center flex-1 my-4">
+                          {/* Center playback area with real YouTube player or animated knee diagram */}
+                          <div className="flex flex-col items-center justify-center flex-1 my-4 h-[160px] relative w-full overflow-hidden">
                             {videoPlaying ? (
-                              <div className="text-center space-y-4 w-full px-8">
-                                {/* SVG Knee flexion animation */}
-                                <svg width="100" height="100" className="mx-auto text-clinical-teal fill-none stroke-current" viewBox="0 0 100 100">
-                                  <circle cx="50" cy="50" r="45" className="stroke-slate-800" strokeWidth="3" />
-                                  <line x1="50" y1="50" x2="50" y2="15" strokeWidth="4" strokeLinecap="round" />
-                                  <line
-                                    x1="50"
-                                    y1="50"
-                                    x2="85"
-                                    y2="50"
-                                    strokeWidth="4"
-                                    strokeLinecap="round"
-                                    className="origin-[50px_50px] transition-transform duration-1000"
-                                    style={{ transform: `rotate(${(Math.sin(videoProgress * 0.1) * 35 + 30).toFixed(0)}deg)` }}
-                                  />
-                                </svg>
-                                <p className="text-xs text-clinical-teal font-mono">Performing {selectedExercise.name} (Simulated video loop)</p>
-                              </div>
+                              selectedExercise.videoUrl ? (
+                                <iframe
+                                  className="absolute inset-0 w-full h-full rounded-lg"
+                                  src={`${selectedExercise.videoUrl}?autoplay=1&mute=1&enablejsapi=1`}
+                                  title={selectedExercise.name}
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                ></iframe>
+                              ) : (
+                                <div className="text-center space-y-4 w-full px-8">
+                                  {/* SVG Knee flexion animation */}
+                                  <svg width="80" height="80" className="mx-auto text-clinical-teal fill-none stroke-current" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="45" className="stroke-slate-800" strokeWidth="3" />
+                                    <line x1="50" y1="50" x2="50" y2="15" strokeWidth="4" strokeLinecap="round" />
+                                    <line
+                                      x1="50"
+                                      y1="50"
+                                      x2="85"
+                                      y2="50"
+                                      strokeWidth="4"
+                                      strokeLinecap="round"
+                                      className="origin-[50px_50px] transition-transform duration-1000"
+                                      style={{ transform: `rotate(${(Math.sin(videoProgress * 0.1) * 35 + 30).toFixed(0)}deg)` }}
+                                    />
+                                  </svg>
+                                  <p className="text-[10px] text-clinical-teal font-mono">Performing {selectedExercise.name} (Simulated video loop)</p>
+                                </div>
+                              )
                             ) : (
                               <button
                                 onClick={() => setVideoPlaying(true)}
-                                className="w-16 h-16 rounded-full bg-clinical-teal hover:bg-clinical-teal-hover hover:scale-105 transition-all flex items-center justify-center text-white text-2xl shadow-lg cursor-pointer"
+                                className="w-16 h-16 rounded-full bg-clinical-teal hover:bg-clinical-teal-hover hover:scale-105 transition-all flex items-center justify-center text-white text-2xl shadow-lg cursor-pointer z-10"
                               >
                                 ▶
                               </button>
