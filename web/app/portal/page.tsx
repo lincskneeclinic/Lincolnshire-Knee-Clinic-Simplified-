@@ -2137,15 +2137,84 @@ export default function PatientPortal() {
                       <p className="leading-relaxed">
                         Dear Colleague,
                       </p>
-                      <p className="leading-relaxed">
-                        I had the pleasure of reviewing this patient following their recent procedure of <strong>{currentPatient.surgery}</strong>. 
-                        The surgical incisions are healing appropriately without evidence of local erythema or active drainage. Clips remain secure and are scheduled for removal at the 14-day mark.
-                      </p>
-                      <p className="leading-relaxed">
-                        Active range of motion shows satisfactory extension and early flexion progress. Pain control is currently managed through standard paracetamol and ice pack applications. 
-                        I have cleared the patient for progressive weight-bearing exercises as supervised by our clinic physiotherapy team.
-                      </p>
-                      <p className="leading-relaxed font-sans text-xs italic text-text-secondary mt-8">
+                      
+                      {viewingDoc.filename.includes("discharge-henderson") ? (
+                        <div className="space-y-3">
+                          <p className="leading-relaxed font-bold text-deep-navy text-[13px]">
+                            RE: Mr. John Henderson &bull; Left Total Knee Replacement Discharge Summary
+                          </p>
+                          <p className="leading-relaxed">
+                            I had the pleasure of discharging this patient following an uncomplicated Left Total Knee Replacement utilizing an Attune Primary Cemented TKA implant. 
+                            Post-operative radiographs show excellent component alignment and a solid cementing profile. The patient mobilised on the day of surgery with physical therapy assistance.
+                          </p>
+                          <p className="leading-relaxed">
+                            Active range of motion on discharge was measured at 0-85° of flexion. Wound staples are clean, intact, and scheduled for removal in primary care at the 14-day mark. 
+                            Discharge medication includes Rivaroxaban 10mg daily for 14 days for DVT prophylaxis, alongside standard paracetamol and codeine for pain control.
+                          </p>
+                        </div>
+                      ) : viewingDoc.filename.includes("post-op-summary-jenkins") ? (
+                        <div className="space-y-3">
+                          <p className="leading-relaxed font-bold text-deep-navy text-[13px]">
+                            RE: Ms. Sarah Jenkins &bull; 8-Day Post-Op ACL Reconstruction Assessment
+                          </p>
+                          <p className="leading-relaxed">
+                            This patient was reviewed today. She is progressing well following a Right ACL Reconstruction using a quadrupled semitendinosus/gracilis autograft. 
+                            Diagnostic arthroscopy also revealed a stable lateral meniscus and a small vertical tear of the medial meniscus posterior horn, which was successfully repaired using one inside-out suture.
+                          </p>
+                          <p className="leading-relaxed">
+                            Incisions are clean and dry with sutures intact. Flexion is currently restricted to 90° inside the locked extension brace. 
+                            Quadriceps control is satisfactory with minimal active extension lag. She is cleared to progress weight-bearing as tolerated.
+                          </p>
+                        </div>
+                      ) : viewingDoc.filename.includes("assessment-morrison") ? (
+                        <div className="space-y-3">
+                          <p className="leading-relaxed font-bold text-deep-navy text-[13px]">
+                            RE: Mr. James Morrison &bull; 5-Day Post-Op MPFL & Tubercle Osteotomy Summary
+                          </p>
+                          <p className="leading-relaxed">
+                            I reviewed this patient following Left Medial Patellofemoral Ligament (MPFL) Reconstruction and a Tibial Tubercle Osteotomy (distal realignment). 
+                            Rigid fixation of the osteotomy was achieved using two 4.5mm compression screws. Post-operative radiographs show correct tibial tubercle medialisation.
+                          </p>
+                          <p className="leading-relaxed">
+                            The patient is experiencing expected post-operative pain, managed with codeine and ice. Range of motion is limited strictly to 0-60° in the locked brace to protect the MPFL graft and osteotomy site. 
+                            Staples will be removed at 14 days.
+                          </p>
+                        </div>
+                      ) : viewingDoc.filename.includes("consultation-vance") ? (
+                        <div className="space-y-3">
+                          <p className="leading-relaxed font-bold text-deep-navy text-[13px]">
+                            RE: Mr. Robert Vance &bull; Knee Pain Assessment Consultation Letter
+                          </p>
+                          <p className="leading-relaxed">
+                            This 44-year-old active runner presented with a 6-month history of chronic anterior left knee pain, exacerbated by running downhill and prolonged sitting. 
+                            Clinical examination shows mild patellar tilt and a positive patellofemoral compression test. There is no joint effusion or ligamentous laxity.
+                          </p>
+                          <p className="leading-relaxed">
+                            My clinical impression is Patellofemoral Pain Syndrome (PFPS) secondary to quadriceps and gluteal muscle imbalance. 
+                            I have ordered an MRI of the left knee to rule out articular cartilage fissures (chondromalacia) and referred him for specialized sports physiotherapy.
+                          </p>
+                        </div>
+                      ) : viewingDoc.filename.includes("injection-summary-watson") ? (
+                        <div className="space-y-3">
+                          <p className="leading-relaxed font-bold text-deep-navy text-[13px]">
+                            RE: Mrs. Emily Watson &bull; Right Knee Arthrosamid® Injection Summary
+                          </p>
+                          <p className="leading-relaxed">
+                            This patient underwent a successful intra-articular injection of Arthrosamid® (6ml volume, 2.5% polyacrylamide hydrogel) under sterile ultrasound guidance. 
+                            The injection was performed to address chronic pain from Kellgren-Lawrence Grade II-III medial compartment knee osteoarthritis.
+                          </p>
+                          <p className="leading-relaxed">
+                            The patient tolerated the injection well without immediate post-procedural complications. She has been advised to rest the joint for 48 hours and avoid high-impact activities for the next 4 weeks.
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="leading-relaxed">
+                          I had the pleasure of reviewing this patient following their recent procedure. 
+                          The surgical incisions are healing appropriately without evidence of local erythema or active drainage. Clips remain secure.
+                        </p>
+                      )}
+                      
+                      <p className="leading-relaxed font-sans text-xs italic text-text-secondary mt-8 border-t border-border-clinical/30 pt-4">
                         Digitally signed and validated by: Mr. Ricardo J Pacheco FRCS Tr & Orth
                       </p>
                     </div>
@@ -2153,22 +2222,37 @@ export default function PatientPortal() {
 
                   {viewingDoc.type === "Order" && (
                     <div className="space-y-4">
-                      <p className="leading-relaxed font-bold">
-                        DIAGNOSTIC IMAGING ORDER & CLINICAL PROTOCOL REFERRAL
+                      <p className="leading-relaxed font-bold text-deep-navy">
+                        DIAGNOSTIC IMAGING ORDER & CLINICAL REFERRAL
                       </p>
-                      <p className="leading-relaxed">
-                        Please perform the following examination:
+                      <p className="leading-relaxed text-xs">
+                        Please perform the following examination and submit findings directly to the Lincolnshire Knee Clinic registry:
                       </p>
-                      <div className="bg-pale-clinical-blue p-4 rounded-lg border border-border-clinical/60 font-sans text-xs text-text-main space-y-1">
-                        <div><strong>Investigation Required:</strong> High-Resolution Sagittal & Coronal MRI (Left/Right Knee)</div>
-                        <div><strong>Clinical Indications:</strong> Post-operative tracking, graft tension assessment, meniscus check</div>
-                        <div><strong>Urgency:</strong> Routine post-op followup</div>
-                      </div>
-                      <p className="leading-relaxed">
-                        Send DICOM images and radiologist reports directly to the Lincolnshire Knee Clinic administration portal upon verification.
-                      </p>
-                      <p className="leading-relaxed font-sans text-xs italic text-text-secondary mt-8">
-                        Authorized signature block code: LKC-MRI-MD-REF2901
+                      
+                      {viewingDoc.filename.includes("ultrasound-referral") ? (
+                        <div className="bg-pale-clinical-blue p-4 rounded-lg border border-border-clinical/60 font-sans text-xs text-text-main space-y-2">
+                          <div><strong>Patient:</strong> Mr. John Henderson (ID: LKC-88402)</div>
+                          <div><strong>Investigation Required:</strong> Bilateral Lower Limb Venous Duplex Ultrasound</div>
+                          <div><strong>Clinical Indications:</strong> Rule out Deep Vein Thrombosis (DVT) due to left calf tenderness following Left TKR.</div>
+                          <div><strong>Urgency:</strong> Urgent (within 24 hours)</div>
+                        </div>
+                      ) : viewingDoc.filename.includes("mri-referral") ? (
+                        <div className="bg-pale-clinical-blue p-4 rounded-lg border border-border-clinical/60 font-sans text-xs text-text-main space-y-2">
+                          <div><strong>Patient:</strong> Ms. Sarah Jenkins (ID: LKC-90211)</div>
+                          <div><strong>Investigation Required:</strong> High-Resolution Sagittal, Coronal & Axial Right Knee MRI</div>
+                          <div><strong>Clinical Indications:</strong> Rule out ACL graft laxity, check medial meniscus repair healing status.</div>
+                          <div><strong>Urgency:</strong> Routine post-op followup</div>
+                        </div>
+                      ) : (
+                        <div className="bg-pale-clinical-blue p-4 rounded-lg border border-border-clinical/60 font-sans text-xs text-text-main space-y-2">
+                          <div><strong>Investigation Required:</strong> High-Resolution Sagittal & Coronal MRI (Knee Joint)</div>
+                          <div><strong>Clinical Indications:</strong> Post-operative tracking, graft tension assessment, meniscus check</div>
+                          <div><strong>Urgency:</strong> Routine post-op followup</div>
+                        </div>
+                      )}
+                      
+                      <p className="leading-relaxed font-sans text-xs italic text-text-secondary mt-8 border-t border-border-clinical/30 pt-4">
+                        Authorized clinical referral signature block: Mr. Ricardo J Pacheco FRCS Tr & Orth
                       </p>
                     </div>
                   )}
@@ -2249,6 +2333,48 @@ export default function PatientPortal() {
                               <li><strong>Brace Setting:</strong> Keep brace locked in full extension during all weight-bearing. Do not perform lateral kneecap mobilizations.</li>
                             </ul>
                           </div>
+                        </div>
+                      ) : viewingDoc.filename.includes("arthrosamid") ? (
+                        <div className="space-y-4">
+                          <div className="bg-pale-clinical-blue p-3.5 rounded-lg border border-border-clinical/40 text-text-main text-[11px]">
+                            <strong>Document Registry:</strong> LKC-PT-ART-2026-V1 &bull; <strong>Lead Surgeon:</strong> Mr. Ricardo J Pacheco FRCS Tr & Orth
+                          </div>
+                          <div className="space-y-2">
+                            <h5 className="font-bold text-deep-navy text-[11px] uppercase tracking-wide">Arthrosamid® Post-Injection Protocol</h5>
+                            <p className="text-[11px] leading-relaxed">
+                              Arthrosamid® integrates into the synovial membrane of the joint capsule to provide long-lasting cushioning and pain reduction.
+                            </p>
+                            <ul className="list-disc pl-5 space-y-1">
+                              <li><strong>Immediate Care:</strong> Avoid high-impact exercise (running, heavy squats) for 4 weeks post-injection. Rest the joint for the first 48 hours.</li>
+                              <li><strong>Expected Reactions:</strong> A temporary increase in mild joint stiffness or pain is common for 2-3 days as the hydrogel integrates. Use simple ice packs if needed.</li>
+                            </ul>
+                          </div>
+                        </div>
+                      ) : viewingDoc.filename.includes("2day") ? (
+                        <div className="space-y-4">
+                          <div className="bg-pale-clinical-blue p-3.5 rounded-lg border border-border-clinical/40 text-text-main text-[11px]">
+                            <strong>Care Phase:</strong> Immediate Post-Op (Days 1 - 3)
+                          </div>
+                          <p className="text-[11px] leading-relaxed">
+                            This plan focuses strictly on managing the acute inflammatory response following surgical trauma.
+                          </p>
+                          <ul className="list-disc pl-5 space-y-1">
+                            <li><strong>Cryotherapy Cycle:</strong> Apply ice wrapped in a damp cloth for 15-20 minutes every 2 hours.</li>
+                            <li><strong>Elevation:</strong> Elevate the operated leg above heart level using 3 pillows under the calf (keep the knee fully straight).</li>
+                          </ul>
+                        </div>
+                      ) : viewingDoc.filename.includes("7day") ? (
+                        <div className="space-y-4">
+                          <div className="bg-pale-clinical-blue p-3.5 rounded-lg border border-border-clinical/40 text-text-main text-[11px]">
+                            <strong>Care Phase:</strong> Early ROM Protocol (Days 4 - 10)
+                          </div>
+                          <p className="text-[11px] leading-relaxed">
+                            Gradually introducing safe flexion patterns to prevent early adhesion formation.
+                          </p>
+                          <ul className="list-disc pl-5 space-y-1">
+                            <li><strong>Progressive Knee Bends:</strong> Use a towel looped under your foot to gently slide the heel back until a stretching tension is felt. Hold for 5s. Repeat 10 times, 3x daily.</li>
+                            <li><strong>Extension Compliance:</strong> Ensure full extension is maintained between sessions by removing pillows from under the knee.</li>
+                          </ul>
                         </div>
                       ) : (
                         <div className="space-y-4">
