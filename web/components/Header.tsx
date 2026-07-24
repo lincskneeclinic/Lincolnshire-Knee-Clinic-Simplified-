@@ -77,7 +77,7 @@ export const Header: React.FC = () => {
               />
             )}
           </div>
-          <span className="font-serif text-xl md:text-2xl font-bold text-deep-navy tracking-tight leading-none whitespace-nowrap">
+          <span className="font-serif text-base min-[360px]:text-lg md:text-2xl font-bold text-deep-navy tracking-tight leading-none whitespace-nowrap">
             Lincolnshire Knee Clinic
           </span>
         </Link>

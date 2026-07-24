@@ -932,7 +932,7 @@ export default function PatientPortal() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="border-b border-border-clinical flex overflow-x-auto whitespace-nowrap scrollbar-none gap-1 md:gap-2 -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="border-b border-border-clinical flex overflow-x-auto whitespace-nowrap scrollbar-none gap-1 md:gap-2 -mx-4 px-4 md:mx-0 md:px-0 w-full max-w-full">
             {[
               { id: "overview" as const, label: "Overview & Timeline", icon: "📋" },
               { id: "appointments" as const, label: "Schedule & Telehealth", icon: "📅" },
