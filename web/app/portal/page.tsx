@@ -2098,10 +2098,21 @@ export default function PatientPortal() {
                 
                 {/* Simulated Doc Content */}
                 <div className="flex-1 overflow-y-auto p-8 font-serif text-sm text-text-main space-y-6 bg-[#FCFBF9] selection:bg-clinical-teal/20">
-                  <div className="text-center space-y-1">
-                    <span className="font-sans font-bold text-xs uppercase tracking-wider text-clinical-teal">Lincolnshire Knee Clinic</span>
-                    <h2 className="text-xl font-bold text-deep-navy">CLINICAL LETTER / SUMMARY REPORT</h2>
-                    <p className="font-sans text-[10px] text-text-secondary">Consultant Orthopaedic Surgeon &bull; Mr. S. R. Kempshall</p>
+                  <div className="flex flex-col items-center text-center space-y-2">
+                    <img
+                      src="/brand/lkc-logo-k-transparent.png"
+                      alt="Lincolnshire Knee Clinic Logo"
+                      className="h-16 w-auto object-contain"
+                    />
+                    <div className="space-y-0.5">
+                      <span className="font-sans font-extrabold text-[11px] uppercase tracking-widest text-clinical-teal">Lincolnshire Knee Clinic</span>
+                      <h2 className="text-lg font-serif font-bold text-deep-navy">
+                        {viewingDoc.type === "Letter" && "CLINICAL SUMMARY & DISCHARGE REPORT"}
+                        {viewingDoc.type === "Order" && "CLINICAL REFERRAL & IMAGING SCRIPT"}
+                        {viewingDoc.type === "Guide" && "REHABILITATION & PATIENT CARE PATHWAY"}
+                      </h2>
+                      <p className="font-sans text-[9px] text-text-secondary tracking-wider uppercase">Consultant Orthopaedic Surgeon &bull; Mr. S. R. Kempshall, FRCS (Tr & Orth)</p>
+                    </div>
                   </div>
 
                   <hr className="border-border-clinical" />
