@@ -2163,19 +2163,95 @@ export default function PatientPortal() {
                   )}
 
                   {viewingDoc.type === "Guide" && (
-                    <div className="space-y-4 font-sans">
+                    <div className="space-y-4 font-sans text-xs text-text-secondary">
                       <p className="leading-relaxed font-bold font-serif text-base text-deep-navy">
-                        Rehabilitation and Care Pathways Protocols
+                        {viewingDoc.title}
                       </p>
-                      <p className="leading-relaxed text-xs">
-                        This clinical guide outlines the primary criteria to ensure safety and speed recovery milestones.
-                      </p>
-                      <ul className="list-disc pl-5 space-y-2 text-xs text-text-secondary">
-                        <li><strong>Cryotherapy Cycle:</strong> Apply ice wrapped in damp cloth for 15 minutes, 4-6 times daily.</li>
-                        <li><strong>Elevation:</strong> Ensure your foot is elevated above your heart level on pillows.</li>
-                        <li><strong>Incision Care:</strong> Keep your dressing dry. Do not soak the leg in water.</li>
-                        <li><strong>Exercises:</strong> Complete the daily checklist 3 times daily as shown in the Recovery Companion video section.</li>
-                      </ul>
+                      
+                      {viewingDoc.filename.includes("acl") ? (
+                        <div className="space-y-4">
+                          <div className="bg-pale-clinical-blue p-3.5 rounded-lg border border-border-clinical/40 text-text-main text-[11px]">
+                            <strong>Document Registry:</strong> LKC-PT-ACL-2026-V2 &bull; <strong>Lead Physiologist:</strong> Mr. S. R. Kempshall
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <h5 className="font-bold text-deep-navy text-[11px] uppercase tracking-wide">Phase 1: Protection & Passive Range of Motion (Weeks 1 - 2)</h5>
+                            <p className="text-[11px] leading-relaxed">
+                              Focus is on controlling inflammation, obtaining full knee extension (matching contralateral limb), and initiating early quadricep reactivation.
+                            </p>
+                            <ul className="list-disc pl-5 space-y-1">
+                              <li><strong>Knee Extension:</strong> Prioritize extension hangs (heel supported on a towel roll with knee suspended) for 10 minutes, 3x daily to avoid flexion contractures.</li>
+                              <li><strong>Brace Protocol:</strong> The postoperative brace must remain locked in full extension during all ambulation and sleep.</li>
+                              <li><strong>Weight Bearing:</strong> Progressive weight-bearing as tolerated (PWB to FWB) with crutches, keeping the brace locked.</li>
+                            </ul>
+                          </div>
+
+                          <div className="space-y-2">
+                            <h5 className="font-bold text-deep-navy text-[11px] uppercase tracking-wide">Phase 2: Range of Motion & Early Strengthening (Weeks 2 - 6)</h5>
+                            <p className="text-[11px] leading-relaxed">
+                              Transitioning to normalized gait, unlocking the brace for controlled flexion, and introducing closed-chain strengthening.
+                            </p>
+                            <ul className="list-disc pl-5 space-y-1">
+                              <li><strong>Flexion Target:</strong> Gradual increase to 90 degrees by Week 2, progressing to 120 degrees by Week 6.</li>
+                              <li><strong>Strengthening:</strong> Seated quad sets, heel slides, closed-chain double-leg squats (limit depth to 60 degrees), and calf raises.</li>
+                              <li><strong>Gait Training:</strong> Wean from crutches once quad control is sufficient to prevent active extension lag.</li>
+                            </ul>
+                          </div>
+
+                          <div className="space-y-2">
+                            <h5 className="font-bold text-deep-navy text-[11px] uppercase tracking-wide">Clinical Warnings & Red Flags</h5>
+                            <p className="text-[11px] text-rose-600 leading-relaxed font-semibold">
+                              Notify the clinic immediately if you experience calf pain/swelling, a sudden decrease in extension range, or a temperature exceeding 38.5°C.
+                            </p>
+                          </div>
+                        </div>
+                      ) : viewingDoc.filename.includes("total-knee") ? (
+                        <div className="space-y-4">
+                          <div className="bg-pale-clinical-blue p-3.5 rounded-lg border border-border-clinical/40 text-text-main text-[11px]">
+                            <strong>Document Registry:</strong> LKC-PT-TKR-2026-V1 &bull; <strong>Lead Surgeon:</strong> Mr. S. R. Kempshall
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <h5 className="font-bold text-deep-navy text-[11px] uppercase tracking-wide">TKR Primary Rehabilitation Milestones</h5>
+                            <p className="text-[11px] leading-relaxed">
+                              Early mobilisation is critical to prevent joint arthrofibrosis and promote optimal long-term functional outcomes.
+                            </p>
+                            <ul className="list-disc pl-5 space-y-1">
+                              <li><strong>Range of Motion:</strong> Aim for 0° extension and 90° flexion by the end of Week 2. Progressive passive extension stretches must be done hourly.</li>
+                              <li><strong>Incision Care:</strong> Keep clips dry. Watertight dressing changes should only be performed by a visiting nurse.</li>
+                              <li><strong>Circulation Support:</strong> Perform 15 ankle pumps every waking hour to mitigate deep vein thrombosis (DVT) risks.</li>
+                            </ul>
+                          </div>
+                        </div>
+                      ) : viewingDoc.filename.includes("patellar") ? (
+                        <div className="space-y-4">
+                          <div className="bg-pale-clinical-blue p-3.5 rounded-lg border border-border-clinical/40 text-text-main text-[11px]">
+                            <strong>Document Registry:</strong> LKC-PT-PAT-2026-V1 &bull; <strong>Lead Surgeon:</strong> Mr. S. R. Kempshall
+                          </div>
+                          <div className="space-y-2">
+                            <h5 className="font-bold text-deep-navy text-[11px] uppercase tracking-wide">Patellar Stabilisation Guidelines</h5>
+                            <p className="text-[11px] leading-relaxed">
+                              Protecting the medial patellofemoral ligament (MPFL) reconstruction or bony osteotomy site is crucial during early tissue healing.
+                            </p>
+                            <ul className="list-disc pl-5 space-y-1">
+                              <li><strong>Range of Motion Limits:</strong> Limit flexion strictly to 0-60° for the first 2 weeks, progressing to 0-90° by Week 4, unless otherwise directed by Mr. Kempshall.</li>
+                              <li><strong>Brace Setting:</strong> Keep brace locked in full extension during all weight-bearing. Do not perform lateral kneecap mobilizations.</li>
+                            </ul>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <p className="leading-relaxed">
+                            This clinical guide outlines the primary criteria to ensure safety and speed recovery milestones.
+                          </p>
+                          <ul className="list-disc pl-5 space-y-2">
+                            <li><strong>Cryotherapy Cycle:</strong> Apply ice wrapped in damp cloth for 15 minutes, 4-6 times daily.</li>
+                            <li><strong>Elevation:</strong> Ensure your foot is elevated above your heart level on pillows.</li>
+                            <li><strong>Incision Care:</strong> Keep your dressing dry. Do not soak the leg in water.</li>
+                            <li><strong>Exercises:</strong> Complete the daily checklist 3 times daily as shown in the Recovery Companion video section.</li>
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
