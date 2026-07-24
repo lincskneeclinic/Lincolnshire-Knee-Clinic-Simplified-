@@ -1672,7 +1672,7 @@ export default function PatientPortal() {
                     {/* Media simulator window */}
                     <div className="md:col-span-2 space-y-4">
                       {selectedExercise && (
-                        <div className="bg-[#0F172A] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between h-[400px] text-white p-4 relative border border-slate-800">
+                        <div className="bg-[#0F172A] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between h-[450px] text-white p-4 relative border border-slate-800">
                           {/* Top video title */}
                           <div className="flex justify-between items-center z-10">
                             <span className="text-xs font-bold tracking-wider text-clinical-teal bg-clinical-teal/10 px-2 py-0.5 rounded uppercase border border-clinical-teal/20">
@@ -1682,12 +1682,12 @@ export default function PatientPortal() {
                           </div>
 
                           {/* Center playback area with real YouTube player or animated knee diagram */}
-                          <div className="flex flex-col items-center justify-center flex-1 my-4 h-[260px] relative w-full overflow-hidden">
+                          <div className="flex flex-col items-center justify-center flex-1 my-4 h-[310px] relative w-full overflow-hidden">
                             {videoPlaying ? (
                               selectedExercise.videoUrl ? (
                                 <iframe
                                   className="absolute inset-0 w-full h-full rounded-lg"
-                                  src={`${selectedExercise.videoUrl}?autoplay=1&enablejsapi=1`}
+                                  src={`${selectedExercise.videoUrl}?enablejsapi=1`}
                                   title={selectedExercise.name}
                                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                   allowFullScreen
