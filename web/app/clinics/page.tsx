@@ -20,7 +20,7 @@ export default function Clinics() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-16 font-sans">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 py-10 md:py-16 font-sans">
       <Breadcrumbs items={[{ label: "Clinics" }]} />
 
       <PageHeader

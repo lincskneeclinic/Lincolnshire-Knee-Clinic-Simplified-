@@ -54,11 +54,11 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Main Header Bar */}
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-4 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 py-4 flex items-center justify-between gap-3 sm:gap-4">
         {/* Logo Lockup - Left Side */}
         <Link
           href="/"
-          className="flex items-center gap-3 shrink-0 group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clinical-teal"
+          className="flex items-center gap-2 sm:gap-3 shrink-0 group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clinical-teal"
           aria-label="Lincolnshire Knee Clinic"
         >
           <div className="w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">

@@ -127,7 +127,7 @@ export default function ClinicianIntakePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center w-full">
       {/* Header bar */}
       <header className="w-full bg-slate-950 text-white p-4 flex justify-between items-center shadow-md">
         <div className="flex items-center space-x-3">
@@ -150,7 +150,7 @@ export default function ClinicianIntakePage() {
       </header>
 
       {/* Main Form container */}
-      <main className="max-w-md w-full p-4 space-y-4">
+      <main className="w-full sm:max-w-md p-3 sm:p-4 space-y-4">
         {successMsg && (
           <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-emerald-800 text-sm font-medium flex items-center space-x-2">
             <span>✅</span>
@@ -165,7 +165,7 @@ export default function ClinicianIntakePage() {
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-6 space-y-4">
+        <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-4 sm:p-6 space-y-4">
           <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
             <h2 className="font-serif font-bold text-slate-950 text-base">New Patient Registration</h2>
             <span className="text-[10px] bg-slate-100 text-slate-600 font-mono px-2 py-0.5 rounded font-bold">Mobile View</span>
