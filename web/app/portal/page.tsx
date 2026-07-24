@@ -200,7 +200,7 @@ const mockPatients: Record<string, PatientInfo> = {
     surgery: "Total Knee Replacement (Left)",
     surgeryDate: "11/07/2026",
     daysPostOp: 12,
-    surgeon: "Mr. Ricardo J Pacheco FRCS Tr&Orth",
+    surgeon: "Mr. Ricardo J Pacheco FRCS Tr & Orth",
     balanceDue: 250.0,
     accessTier: "Surgery",
     exercises: [
@@ -223,7 +223,7 @@ const mockPatients: Record<string, PatientInfo> = {
     surgery: "ACL Reconstruction (Right)",
     surgeryDate: "15/07/2026",
     daysPostOp: 8,
-    surgeon: "Mr. Ricardo J Pacheco FRCS Tr&Orth",
+    surgeon: "Mr. Ricardo J Pacheco FRCS Tr & Orth",
     balanceDue: 0.0,
     insuranceProvider: "Bupa",
     insurancePreAuth: "BI-992019-X",
@@ -248,7 +248,7 @@ const mockPatients: Record<string, PatientInfo> = {
     surgery: "Patellar Stabilisation (Left)",
     surgeryDate: "18/07/2026",
     daysPostOp: 5,
-    surgeon: "Mr. Ricardo J Pacheco FRCS Tr&Orth",
+    surgeon: "Mr. Ricardo J Pacheco FRCS Tr & Orth",
     balanceDue: 2150.0,
     accessTier: "Surgery",
     exercises: [
@@ -270,7 +270,7 @@ const mockPatients: Record<string, PatientInfo> = {
     surgery: "Knee Pain Assessment",
     surgeryDate: "N/A",
     daysPostOp: 0,
-    surgeon: "Mr. Ricardo J Pacheco FRCS Tr&Orth",
+    surgeon: "Mr. Ricardo J Pacheco FRCS Tr & Orth",
     balanceDue: 150.0,
     accessTier: "Consultation",
     exercises: [],
@@ -285,7 +285,7 @@ const mockPatients: Record<string, PatientInfo> = {
     surgery: "Arthrosamid® Injection (Right)",
     surgeryDate: "18/07/2026",
     daysPostOp: 5,
-    surgeon: "Mr. Ricardo J Pacheco FRCS Tr&Orth",
+    surgeon: "Mr. Ricardo J Pacheco FRCS Tr & Orth",
     balanceDue: 2150.0,
     accessTier: "Injection",
     exercises: [
@@ -332,7 +332,7 @@ export default function PatientPortal() {
       date: "2026-08-22",
       time: "11:15 AM",
       location: "Lincoln Private Hospital, Lincoln",
-      practitioner: "Mr. Ricardo J Pacheco FRCS Tr&Orth",
+      practitioner: "Mr. Ricardo J Pacheco FRCS Tr & Orth",
       instructions: "Standard post-operative range of motion assessment. Bring your recovery booklet."
     }
   ]);
@@ -500,7 +500,7 @@ export default function PatientPortal() {
         date: bookingDate,
         time: bookingTime,
         location: bookingLocation,
-        practitioner: "Mr. Ricardo J Pacheco FRCS Tr&Orth",
+        practitioner: "Mr. Ricardo J Pacheco FRCS Tr & Orth",
         instructions: "Please wear loose clothing or shorts for knee assessment. Arrive 10 minutes early."
       };
       setAppointments(prev => [...prev, newAppt]);
@@ -2111,7 +2111,7 @@ export default function PatientPortal() {
                         {viewingDoc.type === "Order" && "CLINICAL REFERRAL & IMAGING SCRIPT"}
                         {viewingDoc.type === "Guide" && "REHABILITATION & PATIENT CARE PATHWAY"}
                       </h2>
-                      <p className="font-sans text-[9px] text-text-secondary tracking-wider uppercase">Consultant Orthopaedic Surgeon &bull; Mr. Ricardo J Pacheco FRCS Tr&Orth</p>
+                      <p className="font-sans text-[9px] text-text-secondary tracking-wider uppercase">Consultant Orthopaedic Surgeon &bull; Mr. Ricardo J Pacheco FRCS Tr & Orth</p>
                     </div>
                   </div>
 
@@ -2146,7 +2146,7 @@ export default function PatientPortal() {
                         I have cleared the patient for progressive weight-bearing exercises as supervised by our clinic physiotherapy team.
                       </p>
                       <p className="leading-relaxed font-sans text-xs italic text-text-secondary mt-8">
-                        Digitally signed and validated by: Mr. Ricardo J Pacheco FRCS Tr&Orth
+                        Digitally signed and validated by: Mr. Ricardo J Pacheco FRCS Tr & Orth
                       </p>
                     </div>
                   )}
@@ -2182,7 +2182,7 @@ export default function PatientPortal() {
                       {viewingDoc.filename.includes("acl") ? (
                         <div className="space-y-4">
                           <div className="bg-pale-clinical-blue p-3.5 rounded-lg border border-border-clinical/40 text-text-main text-[11px]">
-                            <strong>Document Registry:</strong> LKC-PT-ACL-2026-V2 &bull; <strong>Lead Surgeon:</strong> Mr. Ricardo J Pacheco FRCS Tr&Orth
+                            <strong>Document Registry:</strong> LKC-PT-ACL-2026-V2 &bull; <strong>Lead Surgeon:</strong> Mr. Ricardo J Pacheco FRCS Tr & Orth
                           </div>
                           
                           <div className="space-y-2">
@@ -2219,7 +2219,7 @@ export default function PatientPortal() {
                       ) : viewingDoc.filename.includes("total-knee") ? (
                         <div className="space-y-4">
                           <div className="bg-pale-clinical-blue p-3.5 rounded-lg border border-border-clinical/40 text-text-main text-[11px]">
-                            <strong>Document Registry:</strong> LKC-PT-TKR-2026-V1 &bull; <strong>Lead Surgeon:</strong> Mr. Ricardo J Pacheco FRCS Tr&Orth
+                            <strong>Document Registry:</strong> LKC-PT-TKR-2026-V1 &bull; <strong>Lead Surgeon:</strong> Mr. Ricardo J Pacheco FRCS Tr & Orth
                           </div>
                           
                           <div className="space-y-2">
@@ -2237,7 +2237,7 @@ export default function PatientPortal() {
                       ) : viewingDoc.filename.includes("patellar") ? (
                         <div className="space-y-4">
                           <div className="bg-pale-clinical-blue p-3.5 rounded-lg border border-border-clinical/40 text-text-main text-[11px]">
-                            <strong>Document Registry:</strong> LKC-PT-PAT-2026-V1 &bull; <strong>Lead Surgeon:</strong> Mr. Ricardo J Pacheco FRCS Tr&Orth
+                            <strong>Document Registry:</strong> LKC-PT-PAT-2026-V1 &bull; <strong>Lead Surgeon:</strong> Mr. Ricardo J Pacheco FRCS Tr & Orth
                           </div>
                           <div className="space-y-2">
                             <h5 className="font-bold text-deep-navy text-[11px] uppercase tracking-wide">Patellar Stabilisation Guidelines</h5>
@@ -2245,7 +2245,7 @@ export default function PatientPortal() {
                               Protecting the medial patellofemoral ligament (MPFL) reconstruction or bony osteotomy site is crucial during early tissue healing.
                             </p>
                             <ul className="list-disc pl-5 space-y-1">
-                              <li><strong>Range of Motion Limits:</strong> Limit flexion strictly to 0-60° for the first 2 weeks, progressing to 0-90° by Week 4, unless otherwise directed by Mr. Ricardo J Pacheco FRCS Tr&Orth.</li>
+                              <li><strong>Range of Motion Limits:</strong> Limit flexion strictly to 0-60° for the first 2 weeks, progressing to 0-90° by Week 4, unless otherwise directed by Mr. Ricardo J Pacheco FRCS Tr & Orth.</li>
                               <li><strong>Brace Setting:</strong> Keep brace locked in full extension during all weight-bearing. Do not perform lateral kneecap mobilizations.</li>
                             </ul>
                           </div>
