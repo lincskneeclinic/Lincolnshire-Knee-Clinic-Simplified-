@@ -1,0 +1,52 @@
+[
+  {
+    "id": "SUB-101",
+    "email": "e.clarke@example.com",
+    "name": "Emma Clarke",
+    "primaryInterest": "Injections & Preservation",
+    "topics": ["Arthrosamid & PRP Injections", "Non-Surgical Joint Preservation"],
+    "pagesVisited": ["/injections/arthrosamid", "/injections/prp"],
+    "signupDate": "2026-07-20",
+    "status": "Active"
+  },
+  {
+    "id": "SUB-102",
+    "email": "m.thompson@example.com",
+    "name": "Mark Thompson",
+    "primaryInterest": "Knee Replacement & Surgery",
+    "topics": ["Total & Partial Knee Replacement", "Enhanced Recovery Protocols"],
+    "pagesVisited": ["/treatments/total-knee-replacement", "/treatments/enhanced-recovery"],
+    "signupDate": "2026-07-18",
+    "status": "Active"
+  },
+  {
+    "id": "SUB-103",
+    "email": "j.wilson@example.com",
+    "name": "James Wilson",
+    "primaryInterest": "Sports Injuries & ACL",
+    "topics": ["ACL Reconstruction", "Return to Sport Guidelines"],
+    "pagesVisited": ["/conditions/acl-injury", "/treatments/acl-reconstruction"],
+    "signupDate": "2026-07-15",
+    "status": "Active"
+  },
+  {
+    "id": "SUB-104",
+    "email": "s.davies@example.com",
+    "name": "Sarah Davies",
+    "primaryInterest": "Injections & Preservation",
+    "topics": ["Corticosteroid & Hyaluronic Acid", "Knee Arthritis Care"],
+    "pagesVisited": ["/injections/corticosteroid", "/conditions/knee-arthritis"],
+    "signupDate": "2026-07-12",
+    "status": "Active"
+  },
+  {
+    "id": "SUB-105",
+    "email": "r.harrison@example.com",
+    "name": "Richard Harrison",
+    "primaryInterest": "General Joint Health",
+    "topics": ["Knee Pain Self-Assessment", "Oxford Knee Score Guides"],
+    "pagesVisited": ["/symptoms/knee-pain", "/clinical-knowledge-hub"],
+    "signupDate": "2026-07-10",
+    "status": "Active"
+  }
+]

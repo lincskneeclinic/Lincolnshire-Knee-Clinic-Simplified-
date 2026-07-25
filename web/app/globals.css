@@ -14,13 +14,13 @@
 
   /* Standard Text Colors */
   --color-text-main: #102A43; /* Primary Text */
-  --color-text-secondary: #526D82; /* Muted Text */
-  --color-text-muted: #627D98;
+  --color-text-secondary: #3D5166; /* Muted Text — darkened from #526D82 for WCAG AA contrast */
+  --color-text-muted: #4A6278;    /* Darkened from #627D98 for WCAG AA contrast */
 
   /* Restrained Warning / Urgent */
   --color-status-error: #B42318;
   --color-status-error-bg: #FFF5F5;
-  
+
   /* Fonts */
   --font-serif: var(--font-serif), Georgia, serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;
@@ -32,30 +32,93 @@
   --foreground: #102A43; /* Primary Text */
 }
 
+html {
+  /* 17px base for mobile/tablet — improves readability for elderly patients.
+     Scales down slightly on larger desktop screens where text density is higher.
+     Users can still zoom freely (no max-font-size set). */
+  font-size: 17px;
+  scroll-behavior: smooth;
+}
+
+/* On large desktop screens, slightly reduce base to 16px.
+   Mobile/tablet keeps the more accessible 17px. */
+@media (min-width: 1024px) {
+  html {
+    font-size: 16px;
+  }
+
+  /* Sitewide desktop padding — overrides the px-6 md:px-8 Tailwind
+     utility classes used across 50+ containers. !important ensures
+     this wins regardless of utility class order. Mobile unaffected. */
+  .max-w-7xl {
+    padding-left: 4rem !important;    /* 64px */
+    padding-right: 4rem !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  .max-w-7xl {
+    padding-left: 5.5rem !important;  /* 88px — generous breathing room */
+    padding-right: 5.5rem !important;
+  }
+}
+
+@media (min-width: 1536px) {
+  .max-w-7xl {
+    padding-left: 7rem !important;    /* 112px on ultra-wide monitors */
+    padding-right: 7rem !important;
+  }
+}
+
+html,
 body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  /* Generous line height improves readability for all users, especially elderly */
+  line-height: 1.7;
 }
 
 @layer base {
   h1, h2 {
     font-family: var(--font-serif);
+    /* Tighter line-height for headings is fine — they're large enough */
+    line-height: 1.25;
   }
 
   h3, h4, h5, h6 {
     font-family: var(--font-sans);
     font-weight: 700;
+    line-height: 1.35;
+  }
+
+  /* Enforce minimum readable size on all paragraph and span text */
+  p, li, span, label, td, th {
+    font-size: max(1rem, 14px);
   }
 }
 
-/* Accessibility focus styles across the site */
+/* ──────────────────────────────────────────
+   Accessibility: Focus styles (WCAG 2.4.7)
+   Thicker ring, 3px offset, high-contrast teal
+   ────────────────────────────────────────── */
 *:focus-visible {
-  outline: 2px solid #00AFC8; /* Teal focus ring */
-  outline-offset: 2px;
+  outline: 3px solid #00AFC8;
+  outline-offset: 3px;
+  border-radius: 2px;
 }
 
-/* Skip link styling for keyboard navigation */
+/* Remove default outline only when focus-visible is supported */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ──────────────────────────────────────────
+   Skip link — keyboard navigation (WCAG 2.4.1)
+   ────────────────────────────────────────── */
 .skip-link {
   position: absolute;
   top: -100px;
@@ -65,12 +128,29 @@ body {
   padding: 1rem 1.5rem;
   z-index: 100;
   transition: top 0.2s ease;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1rem;
   border-bottom-right-radius: 4px;
+  text-decoration: none;
 }
 
 .skip-link:focus {
   top: 0;
-  outline: 2px solid #00AFC8;
-  outline-offset: 2px;
+  outline: 3px solid #00AFC8;
+  outline-offset: 3px;
+}
+
+/* ──────────────────────────────────────────
+   Reduced motion — respect user preference
+   (WCAG 2.3.3 / prefers-reduced-motion)
+   ────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

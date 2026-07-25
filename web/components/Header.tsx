@@ -38,7 +38,7 @@ export const Header: React.FC = () => {
     <header className="relative w-full z-40 bg-white border-b border-border-clinical shadow-[0_2px_15px_rgba(0,43,69,0.03)]">
       {/* Utility Navigation Bar (Desktop Only) */}
       <div className="hidden md:block bg-soft-blue-grey border-b border-border-clinical">
-        <div className="max-w-7xl mx-auto px-6 md:px-8 py-2 flex justify-end gap-6 text-xs font-sans text-text-secondary">
+        <div className="max-w-7xl mx-auto px-6 md:px-8 py-2 flex justify-end gap-6 text-sm font-sans text-text-secondary">
           {utilityNavigation.map((link, idx) => (
             <Link
               key={idx}
@@ -54,37 +54,38 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Main Header Bar */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 py-4 flex items-center justify-between gap-3 sm:gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 py-3.5 sm:py-4 flex items-center justify-between gap-2 sm:gap-4">
         {/* Logo Lockup - Left Side */}
         <Link
           href="/"
-          className="flex items-center gap-2 sm:gap-3 shrink-0 group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clinical-teal"
-          aria-label="Lincolnshire Knee Clinic"
+          className="flex items-center gap-2 sm:gap-3 min-w-0 shrink xl:shrink-0 group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clinical-teal"
+          aria-label="Lincolnshire Knee Clinic — home"
         >
-          <div className="w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden shrink-0">
             {logoError ? (
               // Clean fall-back abstract teal K SVG if image has error
-              <svg className="w-9 h-9 text-clinical-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="w-8 h-8 sm:w-9 sm:h-9 text-clinical-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M6 3v18" />
                 <path d="M18 4l-10 8 10 8" />
               </svg>
             ) : (
               <img
                 src="/brand/lkc-logo-k-transparent.png"
-                alt="Lincolnshire Knee Clinic"
-                className="w-10 h-10 object-contain"
+                alt=""
+                aria-hidden="true"
+                className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
                 onError={() => setLogoError(true)}
               />
             )}
           </div>
-          <span className="font-serif text-base min-[360px]:text-lg md:text-2xl font-bold text-deep-navy tracking-tight leading-none whitespace-nowrap">
+          <span className="font-serif text-sm min-[380px]:text-base sm:text-lg md:text-xl font-bold text-deep-navy tracking-tight leading-none truncate xl:truncate-none xl:whitespace-nowrap">
             Lincolnshire Knee Clinic
           </span>
         </Link>
 
         {/* Main Navigation Links - Horizontally Aligned in the Middle (Desktop Only) */}
         {/* Breakpoint is set to xl:flex (1280px) to prevent overlaps on smaller laptop screens */}
-        <nav className="hidden xl:flex items-center justify-center flex-1 gap-3 xl:gap-4 2xl:gap-6 px-2">
+        <nav className="hidden xl:flex items-center justify-center flex-1 gap-3 xl:gap-4 2xl:gap-6 px-2" aria-label="Main navigation">
           {mainNavigation.map((link, idx) => (
             <Link
               key={idx}
@@ -101,10 +102,10 @@ export const Header: React.FC = () => {
         </nav>
 
         {/* Action Button & Hamburger Toggle - Far Right */}
-        <div className="flex items-center gap-4 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <Button
             href="/book-appointment"
-            className="hidden sm:inline-flex text-sm py-2 px-5 min-h-[44px] shadow-[0_2px_4px_rgba(0,175,200,0.08)]"
+            className="hidden xl:inline-flex text-sm py-2 px-5 min-h-[44px] shadow-[0_2px_4px_rgba(0,175,200,0.08)]"
             variant="teal"
           >
             Book Appointment
@@ -113,10 +114,11 @@ export const Header: React.FC = () => {
           {/* Mobile Menu Hamburger Button - collapses at xl:block to avoid text crowding */}
           <button
             type="button"
-            className="xl:hidden p-2 text-deep-navy rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal"
+            className="xl:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-deep-navy rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-expanded={mobileMenuOpen}
-            aria-label="Toggle navigation menu"
+            aria-controls="mobile-menu"
+            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
           >
             {mobileMenuOpen ? (
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -133,14 +135,14 @@ export const Header: React.FC = () => {
 
       {/* Mobile Drawer (Collapsed Layout) */}
       {mobileMenuOpen && (
-        <div className="xl:hidden absolute top-full left-0 w-full bg-white border-b border-border-clinical shadow-md py-4 px-4 flex flex-col gap-4">
-          <nav className="flex flex-col gap-3">
+        <div id="mobile-menu" className="xl:hidden absolute top-full left-0 right-0 w-full bg-white border-b border-border-clinical shadow-2xl py-5 px-5 flex flex-col gap-4 z-50 max-h-[85vh] overflow-y-auto">
+          <nav className="flex flex-col gap-2.5" aria-label="Mobile navigation">
             {mainNavigation.map((link, idx) => (
               <Link
                 key={idx}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`font-sans text-base font-semibold py-2 px-3 rounded-md transition-colors ${
+                className={`font-sans text-base font-semibold py-3 px-3.5 rounded-lg transition-colors min-h-[44px] flex items-center ${
                   isActive(link.href)
                     ? "bg-soft-blue text-deep-navy font-bold"
                     : "text-text-secondary hover:bg-warm-off-white hover:text-deep-navy"
@@ -151,10 +153,10 @@ export const Header: React.FC = () => {
             ))}
           </nav>
 
-          <hr className="border-border-clinical" />
+          <hr className="border-border-clinical my-1" />
 
           {/* Mobile Utility Navigation */}
-          <div className="flex flex-col gap-3 px-3">
+          <div className="flex flex-col gap-3 px-3.5">
             {utilityNavigation.map((link, idx) => (
               <Link
                 key={idx}
@@ -172,7 +174,7 @@ export const Header: React.FC = () => {
           <div className="pt-2">
             <Button
               href="/book-appointment"
-              className="w-full"
+              className="w-full justify-center py-3 text-base shadow-md"
               variant="teal"
               onClick={() => setMobileMenuOpen(false)}
             >

@@ -1,21 +1,29 @@
 import type { Metadata } from "next";
 import { Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { UrgentAdviceBanner } from "@/components/UrgentAdviceBanner";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { LayoutShell } from "@/components/LayoutShell";
 
+/**
+ * Inter — primary sans-serif body font.
+ * Excellent legibility at all sizes; widely used in healthcare UIs.
+ * subsets: latin ensures only the characters needed are downloaded.
+ */
 const inter = Inter({
-  variable: "--font-inter",
   subsets: ["latin"],
+  variable: "--font-inter",
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
+/**
+ * Source Serif 4 — used for headings (h1, h2).
+ * High legibility serif with strong stroke contrast; good for elderly readers.
+ */
 const sourceSerif = Source_Serif_4({
-  variable: "--font-serif",
   subsets: ["latin"],
+  variable: "--font-serif",
   display: "swap",
+  weight: ["600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -32,30 +40,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${sourceSerif.variable} h-full antialiasedScroll`}
+      className={`${inter.variable} ${sourceSerif.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-white text-text-primary font-sans overflow-x-hidden">
-        {/* WCAG 2.1 AA Keyboard Access skip link */}
-        <a href="#main-content" className="skip-link">
-          Skip to Main Content
-        </a>
-
-        {/* Global Urgent Advice Banner */}
-        <UrgentAdviceBanner />
-
-        {/* Global Navigation Header */}
-        <Header />
-
-        {/* Main Content Area */}
-        <main id="main-content" className="flex-1 flex flex-col focus:outline-none" tabIndex={-1}>
-          {children}
-        </main>
-
-        {/* Global Footer */}
-        <Footer />
-
-        {/* Global floating WhatsApp Business button — administrative enquiries only */}
-        <WhatsAppButton />
+        <LayoutShell>{children}</LayoutShell>
       </body>
     </html>
   );

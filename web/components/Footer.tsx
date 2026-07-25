@@ -52,6 +52,7 @@ export const Footer: React.FC = () => {
   const linksHelp = [
     { name: "Meet Your Consultant", href: "/about" },
     { name: "Clinical Knowledge Hub", href: "/clinical-knowledge-hub" },
+    { name: "Patient Newsletter", href: "/newsletter" },
     { name: "Symptoms Hub", href: "/symptoms" },
     { name: "Conditions Hub", href: "/conditions" },
     { name: "Treatments Hub", href: "/treatments" },
@@ -68,6 +69,7 @@ export const Footer: React.FC = () => {
     { name: "Cookie Policy", href: "/cookie-policy" },
     { name: "Accessibility Statement", href: "/accessibility-statement" },
     { name: "Medical Disclaimer", href: "/medical-disclaimer" },
+    { name: "Patient Newsletter", href: "/newsletter" },
     { name: "Terms of Use", href: "/terms-of-use" },
     { name: "Professional Registrations", href: "/professional-registrations" },
     { name: "Hospital Affiliations", href: "/hospital-affiliations" },
@@ -95,46 +97,53 @@ export const Footer: React.FC = () => {
                 />
               )}
             </div>
-            <span className="font-serif text-lg font-bold tracking-tight text-white leading-tight">
-              Lincolnshire<br />Knee Clinic
+            <span className="font-serif text-lg font-bold tracking-tight text-white leading-tight whitespace-nowrap">
+              Lincolnshire Knee Clinic
             </span>
           </div>
-          <p className="text-xs text-[#D7E0E5]/75 leading-relaxed">
+          <p className="text-sm text-[#BFD0DA] leading-relaxed">
             Consultant-led specialist orthopaedic service offering evidence-aware assessment and
             treatments for knee pain, arthritis, meniscal pathology, and sports knee injuries.
           </p>
 
           {/* Social Icons */}
           <div>
-            <span className="block text-[10px] font-bold text-clinical-teal uppercase tracking-wider mb-2.5">
+            <span className="block text-xs font-bold text-clinical-teal uppercase tracking-wider mb-2.5">
               Follow Us
             </span>
-            <div className="flex gap-3">
+            <div className="flex gap-2 flex-wrap">
               {socialLinks.map((social) => (
                 <a
                   key={social.label}
                   href={social.href}
                   aria-label={social.label}
-                  title={`${social.label} — link pending`}
-                  className="w-8 h-8 rounded-lg bg-white/10 hover:bg-clinical-teal/30 text-[#D7E0E5]/70 hover:text-clinical-teal flex items-center justify-center transition-all"
+                  title={social.label}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-11 h-11 rounded-lg bg-white/10 hover:bg-clinical-teal/30 text-[#A8C0CC] hover:text-clinical-teal flex items-center justify-center transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clinical-teal"
                 >
                   {social.icon}
                 </a>
               ))}
             </div>
-            <p className="text-[10px] text-[#D7E0E5]/40 italic mt-1.5">
-              Social links pending — accounts not yet active.
-            </p>
           </div>
 
           <div className="border-t border-[#D7E0E5]/20 pt-4">
-            <span className="block text-[10px] font-bold text-clinical-teal uppercase tracking-wider mb-2">
+            <span className="block text-xs font-bold text-clinical-teal uppercase tracking-wider mb-2">
               Clinical Registrations
             </span>
-            <div className="text-xs text-[#D7E0E5]/75 flex flex-col gap-1.5 font-medium">
-              <div>Lead Consultant: <span className="text-white font-semibold">Mr Ricardo J Pacheco, FRCS (Tr &amp; Orth)</span></div>
+            <div className="text-sm text-[#BFD0DA] flex flex-col gap-1.5 font-medium">
+              <div>Lead Consultant:</div>
+              <div className="text-white font-semibold">Mr Ricardo J Pacheco</div>
+              <div className="text-white font-semibold">FRCS (Tr &amp; Orth)</div>
               <div>GMC Ref: <span className="text-white font-semibold">4145976</span></div>
-              <div>Practising Privileges: <span className="text-white font-semibold">St Hugh&apos;s, Inspire Health, Parkhill &amp; Lincoln Private</span></div>
+              <div className="mt-1">Practising Privileges:</div>
+              <ul className="list-disc list-inside text-white font-semibold space-y-1 pl-1">
+                <li>St. Hugh&apos;s Hospital</li>
+                <li>Parkhill Hospital</li>
+                <li>Lincoln Private Hospital</li>
+                <li>Inspire Health Clinic</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -144,7 +153,7 @@ export const Footer: React.FC = () => {
           <h4 className="font-sans text-sm font-bold text-white uppercase tracking-wider mb-4 border-b border-[#D7E0E5]/20 pb-2">
             Patient Resources
           </h4>
-          <ul className="grid grid-cols-1 gap-y-2.5 text-sm text-[#D7E0E5]/80 font-medium">
+          <ul className="grid grid-cols-1 gap-y-2.5 text-sm text-[#BFD0DA] font-medium">
             {linksHelp.map((link, idx) => (
               <li key={idx}>
                 <Link
@@ -163,25 +172,25 @@ export const Footer: React.FC = () => {
           <h4 className="font-sans text-sm font-bold text-white uppercase tracking-wider border-b border-[#D7E0E5]/20 pb-2">
             Clinic Contact
           </h4>
-          <div className="text-sm text-[#D7E0E5]/80 flex flex-col gap-3 font-medium">
+          <div className="text-sm text-[#BFD0DA] flex flex-col gap-3 font-medium">
             <div className="flex items-start gap-2.5">
               <svg className="w-4 h-4 text-clinical-teal shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span className="text-xs text-[#FAF8F5]/90 font-semibold">Correspondence address available on request.</span>
+              <span className="text-sm text-[#F0F6F8] font-semibold">Correspondence address available on request.</span>
             </div>
             <div className="flex items-center gap-2.5">
               <svg className="w-4 h-4 text-clinical-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
-              <span className="text-xs text-[#FAF8F5]/90 font-semibold">07770 473437</span>
+              <span className="text-sm text-[#F0F6F8] font-semibold">07770 473437</span>
             </div>
             <div className="flex items-center gap-2.5">
               <svg className="w-4 h-4 text-clinical-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              <span className="text-xs text-[#FAF8F5]/90 font-semibold">admin@lincsknee.com</span>
+              <span className="text-sm text-[#F0F6F8] font-semibold">admin@lincsknee.com</span>
             </div>
           </div>
           <div className="text-xs text-status-error bg-status-error-bg border border-status-error/10 p-3 rounded-lg mt-1">
@@ -201,15 +210,21 @@ export const Footer: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 md:px-8 flex flex-col lg:flex-row items-center justify-between gap-4 text-center lg:text-left">
           <div>
             <p>&copy; {new Date().getFullYear()} Lincolnshire Knee Clinic. All rights reserved.</p>
-            <p className="mt-1 text-[10px] italic text-[#D7E0E5]/40">
-              Draft/template content requiring legal review before publication.
-            </p>
-            <Link
-              href="/portal/clinician-intake"
-              className="mt-1.5 inline-block text-[10px] text-[#D7E0E5]/30 hover:text-clinical-teal/50 transition-colors"
-            >
-              Clinician Portal
-            </Link>
+            <div className="mt-1.5 flex items-center justify-center lg:justify-start gap-3">
+              <Link
+                href="/portal/clinician-intake"
+                className="text-xs text-[#8BA5B5] hover:text-clinical-teal transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-clinical-teal"
+              >
+                Clinician Portal
+              </Link>
+              <span className="text-xs text-[#8BA5B5]" aria-hidden="true">•</span>
+              <Link
+                href="/portal/business"
+                className="text-xs text-[#8BA5B5] hover:text-clinical-teal transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-clinical-teal"
+              >
+                Business Portal
+              </Link>
+            </div>
           </div>
           <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 font-medium" aria-label="Legal navigation">
             {linksLegal.map((link, idx) => (

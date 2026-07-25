@@ -42,11 +42,39 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
 
   const isDark = variant === "dark";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!consentChecked) return; // Do not proceed unless consent explicitly given
-    // TODO (Phase 2): Insert into Supabase marketing_consents table
-    // Only if consentChecked === true. Never store clinical data.
+    if (!consentChecked || !email) return;
+
+    // Detect primary interest from current page URL
+    let primaryInterest = "General Joint Health";
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname.toLowerCase();
+      if (path.includes("injection") || path.includes("arthrosamid") || path.includes("prp")) {
+        primaryInterest = "Injections & Preservation";
+      } else if (path.includes("replacement") || path.includes("arthroplasty") || path.includes("surgery")) {
+        primaryInterest = "Knee Replacement & Surgery";
+      } else if (path.includes("acl") || path.includes("sports") || path.includes("meniscus")) {
+        primaryInterest = "Sports Injuries & ACL";
+      }
+    }
+
+    try {
+      await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          name,
+          primaryInterest,
+          topics: ["Knee Health Updates", "Patient Education"],
+          pagesVisited: [typeof window !== "undefined" ? window.location.pathname : "/"],
+        }),
+      });
+    } catch (err) {
+      console.error("Footer newsletter signup error:", err);
+    }
+
     setSubmitted(true);
   };
 
@@ -76,44 +104,64 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
         clinic services and new educational resources.
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input
-          type="text"
-          placeholder="Your name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          className={`w-full rounded-lg px-3 py-2.5 text-sm border focus:outline-none focus:border-clinical-teal ${
-            isDark
-              ? "bg-white/10 border-white/20 text-white placeholder:text-[#D7E0E5]/50 focus:bg-white/15"
-              : "bg-white border-border-clinical text-text-primary placeholder:text-text-muted"
-          }`}
-        />
-        <input
-          type="email"
-          placeholder="Your email address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className={`w-full rounded-lg px-3 py-2.5 text-sm border focus:outline-none focus:border-clinical-teal ${
-            isDark
-              ? "bg-white/10 border-white/20 text-white placeholder:text-[#D7E0E5]/50 focus:bg-white/15"
-              : "bg-white border-border-clinical text-text-primary placeholder:text-text-muted"
-          }`}
-        />
+      <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="newsletter-name"
+            className={`text-xs font-semibold ${isDark ? "text-[#BFD0DA]" : "text-text-secondary"}`}
+          >
+            Your name
+          </label>
+          <input
+            id="newsletter-name"
+            type="text"
+            placeholder="e.g. Jane Smith"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            autoComplete="name"
+            className={`w-full rounded-lg px-3 py-2.5 text-base border focus:outline-none focus:border-clinical-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal ${
+              isDark
+                ? "bg-white/10 border-white/20 text-white placeholder:text-[#D7E0E5]/50 focus:bg-white/15"
+                : "bg-white border-border-clinical text-text-primary placeholder:text-text-muted"
+            }`}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="newsletter-email"
+            className={`text-xs font-semibold ${isDark ? "text-[#BFD0DA]" : "text-text-secondary"}`}
+          >
+            Email address
+          </label>
+          <input
+            id="newsletter-email"
+            type="email"
+            placeholder="e.g. jane@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+            className={`w-full rounded-lg px-3 py-2.5 text-base border focus:outline-none focus:border-clinical-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal ${
+              isDark
+                ? "bg-white/10 border-white/20 text-white placeholder:text-[#D7E0E5]/50 focus:bg-white/15"
+                : "bg-white border-border-clinical text-text-primary placeholder:text-text-muted"
+            }`}
+          />
+        </div>
 
         {/* Consent checkbox — MUST remain unticked by default */}
-        <div className="flex gap-2 items-start text-xs">
+        <div className="flex gap-3 items-start">
           <input
             type="checkbox"
             id="newsletter-consent"
             checked={consentChecked}
             onChange={(e) => setConsentChecked(e.target.checked)}
-            className="mt-0.5 shrink-0"
+            className="mt-1 shrink-0 w-4 h-4 accent-clinical-teal"
           />
           <label
             htmlFor="newsletter-consent"
-            className={`cursor-pointer leading-relaxed ${isDark ? "text-[#D7E0E5]/80" : "text-text-secondary"}`}
+            className={`cursor-pointer text-sm leading-relaxed ${isDark ? "text-[#BFD0DA]" : "text-text-secondary"}`}
           >
             I agree to receive occasional email updates from Lincolnshire Knee Clinic about knee health,
             clinic services and patient education. I understand I can unsubscribe at any time.
@@ -123,16 +171,17 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
         <button
           type="submit"
           disabled={!consentChecked || !name || !email}
-          className={`w-full rounded-lg py-2.5 text-sm font-bold transition-all ${
+          aria-disabled={!consentChecked || !name || !email}
+          className={`w-full rounded-lg py-3 text-base font-bold transition-all min-h-[48px] ${
             consentChecked && name && email
-              ? "bg-clinical-teal text-white hover:bg-[#009DB5] cursor-pointer shadow-sm"
+              ? "bg-clinical-teal text-white hover:bg-[#009DB5] cursor-pointer shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clinical-teal"
               : "bg-clinical-teal/30 text-white/50 cursor-not-allowed"
           }`}
         >
           Subscribe
         </button>
 
-        <p className={`text-[10px] leading-relaxed ${isDark ? "text-[#D7E0E5]/50" : "text-text-muted"}`}>
+        <p className={`text-xs leading-relaxed ${isDark ? "text-[#8BA5B5]" : "text-text-muted"}`}>
           We will only use your email for updates if you choose to opt in. You can unsubscribe at any
           time. See our{" "}
           <a

@@ -14,80 +14,89 @@ export default function Home() {
         <div className="absolute top-0 right-0 w-96 h-96 bg-clinical-teal/15 rounded-full translate-x-12 -translate-y-12 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-soft-blue/5 rounded-full -translate-x-12 translate-y-12 blur-3xl"></div>
 
-        <div className="max-w-7xl mx-auto px-6 md:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
+        <div className="max-w-7xl mx-auto px-6 md:px-8 relative z-10">
 
-          {/* Hero Left: Text, CTAs, and Trust Markers */}
-          <div className="lg:col-span-7 text-center sm:text-left">
-            <span className="text-xs md:text-sm font-bold uppercase tracking-widest text-clinical-teal block mb-3.5 font-sans">
-              Specialist Orthopaedic Practice
-            </span>
-            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold !text-white leading-tight mb-6">
-              Consultant-led knee care in Lincolnshire.
-            </h1>
-            <p className="font-sans text-lg md:text-xl text-[#DFF3F5] leading-relaxed mb-8">
-              Specialist assessment and treatment for knee pain, arthritis, sports knee injuries,
-              injections and knee replacement concerns.
-            </p>
+          {/* Top Row: Text (left) + Image (right) — image top-aligns with label */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center sm:justify-start">
-              <Button href="/book-appointment" variant="teal">
-                Book Appointment
-              </Button>
-              <Button href="/symptoms" className="text-white border-white hover:bg-white/10 bg-transparent border">
-                Explore Symptoms
-              </Button>
+            {/* Hero Left: Text & CTAs */}
+            <div className="lg:col-span-7 text-center sm:text-left pb-0">
+              <span className="text-xs md:text-sm font-bold uppercase tracking-widest text-clinical-teal block mb-3.5 font-sans">
+                Specialist Orthopaedic Practice
+              </span>
+              <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold !text-white leading-tight mb-6">
+                Consultant-led knee care in Lincolnshire.
+              </h1>
+              <p className="font-sans text-lg md:text-xl text-[#DFF3F5] leading-relaxed mb-8">
+                Specialist assessment and treatment for knee pain, arthritis, sports knee injuries,
+                injections and knee replacement concerns.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button href="/book-appointment" variant="teal">
+                  Book Appointment
+                </Button>
+                <Button href="/symptoms" className="text-white border-white hover:bg-white/10 bg-transparent border">
+                  Explore Symptoms
+                </Button>
+              </div>
             </div>
 
-            {/* Trust Markers (Verified placeholders) */}
-            <div className="mt-8 pt-6 border-t border-white/10 flex flex-wrap justify-center sm:justify-start gap-x-6 gap-y-2.5 text-xs font-semibold text-[#DFF3F5]">
-              <span className="flex items-center gap-1.5">
-                <svg className="w-4.5 h-4.5 text-clinical-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                GMC Specialist Register: 4145976
-              </span>
-              <span className="flex items-center gap-1.5">
-                <svg className="w-4.5 h-4.5 text-clinical-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Consultant Orthopaedic Knee Surgeon
-              </span>
-              <span className="flex items-center gap-1.5">
-                <svg className="w-4.5 h-4.5 text-clinical-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Clinical Lead for Elective Orthopaedics
-              </span>
-              <span className="flex items-center gap-1.5">
-                <svg className="w-4.5 h-4.5 text-clinical-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Evidence-based practice
-              </span>
-              <span className="flex items-center gap-1.5 w-full sm:w-auto text-[#DFF3F5]/75 font-medium text-[11px] mt-1">
-                Experience treating professional and recreational athletes across football, cycling, dance, motorsport and endurance sport.
-              </span>
-            </div>
-          </div>
-
-          {/* Hero Right: Premium Glassmorphic Clinical Panel */}
-          <div className="lg:col-span-5 flex justify-center">
-            <div className="relative w-full max-w-sm aspect-[4/3] rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-white/5 group">
-              <img
-                src="/images/knee-clinic-hero.png"
-                alt="Orthopaedic Consultation Room / Diagnostic Imaging Abstract Panel"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute bottom-4 left-4 right-4 bg-black/70 backdrop-blur-sm border border-white/10 p-3 rounded-lg text-left shadow-sm">
-                <span className="text-[10px] font-bold text-clinical-teal block uppercase tracking-widest">
-                  Lincolnshire Knee Clinic
-                </span>
-                <span className="text-[11px] text-[#DFF3F5]/90 block mt-0.5 font-medium">
-                  Specialist Assessment & Treatment
-                </span>
+            {/* Hero Right: Image — top-aligned with label, constrained height */}
+            <div className="lg:col-span-5 flex justify-center">
+              <div className="relative w-full max-w-sm max-h-[280px] rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-white/5 group">
+                <img
+                  src="/images/knee-clinic-hero.png"
+                  alt="Orthopaedic Consultation Room / Diagnostic Imaging Abstract Panel"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-4 left-4 right-4 bg-black/70 backdrop-blur-sm border border-white/10 p-3 rounded-lg text-center shadow-sm">
+                  <span className="text-[10px] font-bold text-clinical-teal block uppercase tracking-widest">
+                    Lincolnshire Knee Clinic
+                  </span>
+                  <span className="text-[11px] text-[#DFF3F5]/90 block mt-0.5 font-medium">
+                    Specialist Assessment & Treatment
+                  </span>
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Full-width Divider */}
+          <div className="mt-8 border-t border-white/10"></div>
+
+          {/* Full-width Trust Markers — 4-column grid across entire width */}
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2.5 text-xs font-semibold text-[#DFF3F5]">
+            <span className="flex items-center gap-1.5">
+              <svg className="w-4.5 h-4.5 text-clinical-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              GMC Specialist Register: 4145976
+            </span>
+            <span className="flex items-center gap-1.5">
+              <svg className="w-4.5 h-4.5 text-clinical-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Consultant Orthopaedic Knee Surgeon
+            </span>
+            <span className="flex items-center gap-1.5">
+              <svg className="w-4.5 h-4.5 text-clinical-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Clinical Lead for Elective Orthopaedics
+            </span>
+            <span className="flex items-center gap-1.5">
+              <svg className="w-4.5 h-4.5 text-clinical-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Evidence-based practice
+            </span>
+          </div>
+
+          {/* Full-width athlete experience text */}
+          <p className="text-[#DFF3F5]/60 font-medium text-[11px] mt-4 text-center tracking-wide">
+            Experience treating professional and recreational athletes across football, cycling, dance, motorsport and endurance sport.
+          </p>
         </div>
       </section>
 

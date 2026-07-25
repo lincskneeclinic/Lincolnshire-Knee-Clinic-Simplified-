@@ -380,7 +380,7 @@ export default function MeetYourConsultant() {
               </div>
             </div>
             <p className="pt-2">
-              Key leadership achievements include piloting and establishing the **Virtual Fracture Clinic at Scunthorpe General Hospital**, achieving a 50% reduction in face-to-face clinic pressure; implementing **same-day discharge lower-limb arthroplasty pathways at Goole District Hospital**, reducing length of stay (LOS) to a personal average of 0.87 days; and co-developing full electronic records systems at St Hugh&apos;s.
+              Key leadership achievements include piloting and establishing the <strong>Virtual Fracture Clinic at Scunthorpe General Hospital</strong>, achieving a 50% reduction in face-to-face clinic pressure; implementing <strong>same-day discharge lower-limb arthroplasty pathways at Goole District Hospital</strong>, reducing length of stay (LOS) to a personal average of 0.87 days; and co-developing full electronic records systems at St Hugh&apos;s.
             </p>
             <p className="text-[11px] text-text-muted italic border-t border-border-clinical/30 pt-4">
               NHS leadership roles and hospital governance appointments are listed for professional context and do not constitute an endorsement of this private clinic.
@@ -585,9 +585,19 @@ export default function MeetYourConsultant() {
                   </div>
                   <h3 className="font-sans text-lg font-bold text-deep-navy">NHS Practice</h3>
                 </div>
-                <p className="font-sans text-sm md:text-base text-text-secondary leading-relaxed mb-6 font-medium">
-                  Mr Ricardo J Pacheco maintains active clinical practice in the NHS sector. NHS services are conducted through **Northern Lincolnshire and Goole Hospitals NHS Foundation Trust (NLAG)** (including Scunthorpe General Hospital and Goole District Hospital) and the **Humber Health Partnership** elective hub.
-                </p>
+                <div className="font-sans text-sm md:text-base text-text-secondary leading-relaxed mb-6 font-medium space-y-3">
+                  <p>Mr Ricardo J Pacheco maintains active clinical practice in the NHS sector. NHS services are conducted through:</p>
+                  <ul className="space-y-2 pl-1">
+                    <li className="flex items-start gap-2.5">
+                      <span className="mt-1.5 w-2 h-2 rounded-full bg-clinical-teal shrink-0" aria-hidden="true" />
+                      <span><strong className="text-deep-navy font-semibold">Northern Lincolnshire and Goole Hospitals NHS Foundation Trust (NLAG)</strong> — including Scunthorpe General Hospital and Goole District Hospital</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="mt-1.5 w-2 h-2 rounded-full bg-clinical-teal shrink-0" aria-hidden="true" />
+                      <span><strong className="text-deep-navy font-semibold">Humber Health Partnership</strong> — elective orthopaedic hub</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
               <div className="text-xs font-semibold text-text-muted bg-white/70 px-4 py-2.5 rounded-lg border border-border-clinical/30">
                 GP Referral required for NHS clinical services.
@@ -606,9 +616,28 @@ export default function MeetYourConsultant() {
                   </div>
                   <h3 className="font-sans text-lg font-bold text-deep-navy">Private Practice</h3>
                 </div>
-                <p className="font-sans text-sm md:text-base text-text-secondary leading-relaxed mb-6 font-medium">
-                  Mr Ricardo J Pacheco holds practising privileges and professional affiliations at several independent hospitals and clinics, including St Hugh&apos;s Hospital (Grimsby), Inspire Health, Parkhill Hospital (Doncaster), and Lincoln Private Hospital (Lincoln). Private consultations, injections, and surgical procedures are offered at these locations.
-                </p>
+                <div className="font-sans text-sm md:text-base text-text-secondary leading-relaxed mb-6 font-medium space-y-3">
+                  <p>Mr Ricardo J Pacheco holds practising privileges at several independent hospitals and clinics:</p>
+                  <ul className="space-y-2 pl-1">
+                    <li className="flex items-start gap-2.5">
+                      <span className="mt-1.5 w-2 h-2 rounded-full bg-clinical-teal shrink-0" aria-hidden="true" />
+                      <span><strong className="text-deep-navy font-semibold">St Hugh&apos;s Hospital</strong> — Grimsby</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="mt-1.5 w-2 h-2 rounded-full bg-clinical-teal shrink-0" aria-hidden="true" />
+                      <span><strong className="text-deep-navy font-semibold">Inspire Health</strong></span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="mt-1.5 w-2 h-2 rounded-full bg-clinical-teal shrink-0" aria-hidden="true" />
+                      <span><strong className="text-deep-navy font-semibold">Parkhill Hospital</strong> — Doncaster</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="mt-1.5 w-2 h-2 rounded-full bg-clinical-teal shrink-0" aria-hidden="true" />
+                      <span><strong className="text-deep-navy font-semibold">Lincoln Private Hospital</strong> — Lincoln</span>
+                    </li>
+                  </ul>
+                  <p className="text-sm">Private consultations, injections, and surgical procedures are offered at these locations.</p>
+                </div>
               </div>
               <div className="text-xs font-semibold text-text-muted bg-white/70 px-4 py-2.5 rounded-lg border border-border-clinical/30">
                 Self-referral accepted for private assessments.

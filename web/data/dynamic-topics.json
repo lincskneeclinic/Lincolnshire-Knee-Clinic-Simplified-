@@ -1,0 +1,78 @@
+[
+  {
+    "id": "topic-1",
+    "label": "Knee Preservation & Non-Surgical Injections (Arthrosamid / PRP)",
+    "category": "Injections & Preservation",
+    "isAiDiscovered": false,
+    "enquiryCount": 45,
+    "latestQueries": [
+      "How long does single-dose Arthrosamid last compared to Hyaluronic Acid?",
+      "Can I get Arthrosamid on both knees in the same session?"
+    ]
+  },
+  {
+    "id": "topic-2",
+    "label": "Surgical Options & Recovery (Total & Partial Knee Replacement)",
+    "category": "Knee Replacement & Surgery",
+    "isAiDiscovered": false,
+    "enquiryCount": 38,
+    "latestQueries": [
+      "What is the difference between robotic partial knee replacement and total knee replacement?",
+      "How long is hospital stay after knee replacement?"
+    ]
+  },
+  {
+    "id": "topic-3",
+    "label": "Sports Knee Injuries & Ligament Rehab (ACL / Meniscus)",
+    "category": "Sports Injuries & ACL",
+    "isAiDiscovered": false,
+    "enquiryCount": 24,
+    "latestQueries": [
+      "Can an ACL tear heal without surgery through physiotherapy?",
+      "When can I return to football after meniscus repair?"
+    ]
+  },
+  {
+    "id": "topic-4",
+    "label": "General Joint Health & Oxford Knee Score Guides",
+    "category": "General Joint Health",
+    "isAiDiscovered": false,
+    "enquiryCount": 20,
+    "latestQueries": [
+      "What does an Oxford Knee Score of 24 out of 48 mean for surgery eligibility?"
+    ]
+  },
+  {
+    "id": "topic-5",
+    "label": "Returning to Driving & Work After Knee Surgery",
+    "category": "Knee Replacement & Surgery",
+    "isAiDiscovered": true,
+    "enquiryCount": 18,
+    "latestQueries": [
+      "Can I drive 4 weeks after total knee replacement if I drive an automatic car?",
+      "When can I return to desk work vs manual labor work?"
+    ]
+  },
+  {
+    "id": "topic-6",
+    "label": "Private Insurance Pre-Authorization (Bupa / AXA / Aviva)",
+    "category": "General Joint Health",
+    "isAiDiscovered": true,
+    "enquiryCount": 14,
+    "latestQueries": [
+      "Does Bupa cover Arthrosamid injections at Lincolnshire Knee Clinic?",
+      "How do I get authorization code from AXA PPP for initial consultation?"
+    ]
+  },
+  {
+    "id": "topic-7",
+    "label": "Patellofemoral Pain & Stair Climbing Discomfort",
+    "category": "Injections & Preservation",
+    "isAiDiscovered": true,
+    "enquiryCount": 9,
+    "latestQueries": [
+      "Why does my kneecap crunch and hurt when walking downstairs?",
+      "Are brace supports recommended for patellar tracking issues?"
+    ]
+  }
+]
