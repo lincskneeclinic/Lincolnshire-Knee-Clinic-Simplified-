@@ -1280,14 +1280,14 @@ export default function ClinicianIntakePage() {
                                 <div className="text-[10px] text-slate-400 font-mono pt-1 leading-tight space-y-1">
                                   <div>Sent: {inv.dateSent} &bull; Channel: {inv.channel || "WhatsApp"} &bull; Ref: {inv.id}</div>
                                   
-                                  {/* Prominent Chaser Audit Box */}
-                                  <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800 space-y-1">
-                                    <div className="text-amber-300 font-semibold font-sans text-[11px] flex items-center justify-between gap-1 flex-wrap">
+                                  {/* Sleek Compact Chaser Audit Box */}
+                                  <div className="bg-slate-950/60 p-1.5 rounded-lg border border-slate-800/80 space-y-0.5">
+                                    <div className="text-[10px] text-amber-300/90 font-medium flex items-center justify-between gap-1 flex-wrap">
                                       <span className="flex items-center gap-1">
                                         📢 <strong>Chased:</strong> {inv.chaseCount || (inv.chaseHistory ? inv.chaseHistory.length : 0)}x
                                       </span>
                                       {inv.lastChasedDate && (
-                                        <span className="text-[10px] font-mono text-cyan-300">
+                                        <span className="text-[9.5px] font-mono text-cyan-300">
                                           Last: {inv.lastChasedDate}
                                         </span>
                                       )}
@@ -1295,23 +1295,23 @@ export default function ClinicianIntakePage() {
 
                                     {/* Full Chronological Chaser Timestamp Audit Trail Dropdown Menu */}
                                     {inv.chaseHistory && inv.chaseHistory.length > 0 ? (
-                                      <details className="mt-1 group">
-                                        <summary className="text-[10px] text-cyan-400 font-bold cursor-pointer hover:text-cyan-300 transition-colors flex items-center justify-between gap-1 pt-1 border-t border-slate-900 select-none">
+                                      <details className="mt-0.5 group">
+                                        <summary className="text-[9.5px] text-slate-400 hover:text-cyan-300 font-medium cursor-pointer transition-colors flex items-center justify-between gap-1 pt-0.5 border-t border-slate-900/80 select-none">
                                           <span>📋 View Chaser Audit Trail ({inv.chaseHistory.length} logs)</span>
-                                          <span className="text-[9px] text-cyan-400/80 font-mono group-open:rotate-180 transition-transform">▼</span>
+                                          <span className="text-[8.5px] text-slate-500 font-mono group-open:rotate-180 transition-transform">▼</span>
                                         </summary>
-                                        <div className="mt-1.5 space-y-1 font-mono text-[9.5px] max-h-24 overflow-y-auto pr-1 scrollbar-thin">
+                                        <div className="mt-1 space-y-1 font-mono text-[9px] max-h-20 overflow-y-auto pr-1">
                                           {inv.chaseHistory.map((h: any, hIdx: number) => (
-                                            <div key={hIdx} className="flex justify-between items-center bg-slate-900/90 px-2 py-1 rounded border border-slate-800 text-slate-200">
-                                              <span>Chase #{inv.chaseHistory.length - hIdx}: <strong>{h.date} {h.time || ""}</strong></span>
-                                              <span className="text-emerald-400 font-bold">via {h.channel || "WHATSAPP"}</span>
+                                            <div key={hIdx} className="flex justify-between items-center bg-slate-900/90 px-1.5 py-0.5 rounded border border-slate-800/80 text-slate-300">
+                                              <span>Chase #{inv.chaseHistory.length - hIdx}: {h.date} {h.time || ""}</span>
+                                              <span className="text-emerald-400 font-bold text-[8.5px]">via {h.channel || "WHATSAPP"}</span>
                                             </div>
                                           ))}
                                         </div>
                                       </details>
                                     ) : (
-                                      <div className="text-slate-500 italic text-[10px] pt-0.5">
-                                        No chasers logged yet (Click 💬 WhatsApp to dispatch chaser)
+                                      <div className="text-slate-500 italic text-[9px] pt-0.5">
+                                        No chasers logged yet (Click 💬 WhatsApp to chase)
                                       </div>
                                     )}
                                   </div>
