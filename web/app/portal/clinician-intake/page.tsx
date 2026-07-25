@@ -89,6 +89,30 @@ const CLINIC_LOCATIONS = [
   "Inspire Health Clinic",
 ];
 
+// Standard Certificate Presets
+const CERT_PRESETS = [
+  {
+    label: "🚗 Return to Driving (6 Weeks)",
+    type: "Return to Driving & Light Work",
+    restrictions: "Fit for non-emergency driving once full emergency braking control is achieved without pain. Light office duties permitted."
+  },
+  {
+    label: "💼 Light Work Duties Clearance",
+    type: "Light Work Duties Only",
+    restrictions: "Cleared for desk/sedentary work. Avoid standing >30 mins continuously or lifting >10kg for 4 weeks."
+  },
+  {
+    label: "🏋️ Full Unrestricted Work & Sport",
+    type: "Full Unrestricted Work & Sports Duties",
+    restrictions: "Full structural healing confirmed. Cleared for high-impact sports, running, and heavy manual labor."
+  },
+  {
+    label: "✈️ Fit to Fly / Long Travel",
+    type: "Fit to Fly & Long Distance Travel",
+    restrictions: "Cleared for commercial flights. Advised in-flight ankle pumps, calf hydration, and compression stockings."
+  }
+];
+
 // 12 Validated Oxford Knee Score Questions
 const OKS_QUESTIONS = [
   {
@@ -247,16 +271,14 @@ export default function ClinicianIntakePage() {
   const [patients, setPatients] = useState<Record<string, PatientRecord>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   // Upload state
   const [uploadRows, setUploadRows] = useState<UploadRow[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [ocrProgress, setOcrProgress] = useState(0);
-  const [uploadMsg, setUploadMsg] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // Injection Governance state
   const [injectionsList, setInjectionsList] = useState<InjectionEntry[]>([]);
@@ -276,16 +298,16 @@ export default function ClinicianIntakePage() {
   // Feature Modals
   const [noteModalPatient, setNoteModalPatient] = useState<{ email: string; name: string } | null>(null);
   const [noteText, setNoteText] = useState("");
-  const [notePhase, setNotePhase] = useState("Outpatient Check");
-  const [noteRom, setNoteRom] = useState("0-110°");
+  const [notePhase, setNotePhase] = useState("6-Week Post-Op Review");
+  const [noteRom, setNoteRom] = useState("0–115°");
 
   const [oksModalPatient, setOksModalPatient] = useState<{ email: string; name: string } | null>(null);
   const [oksAnswers, setOksAnswers] = useState<Record<string, number>>({});
 
   const [certModalPatient, setCertModalPatient] = useState<{ email: string; name: string; surgery: string } | null>(null);
-  const [certType, setCertType] = useState("Return to Driving & Work");
+  const [certType, setCertType] = useState("Return to Driving & Light Work");
   const [certEffectiveDate, setCertEffectiveDate] = useState(new Date().toISOString().split("T")[0]);
-  const [certRestrictions, setCertRestrictions] = useState("No heavy lifting >15kg for 4 weeks. Fit for light duties & non-emergency driving.");
+  const [certRestrictions, setCertRestrictions] = useState("Fit for non-emergency driving once emergency braking control is achieved without pain.");
   const [isPrintCertVisible, setIsPrintCertVisible] = useState(false);
 
   const fetchPatients = useCallback(async () => {
@@ -332,6 +354,11 @@ export default function ClinicianIntakePage() {
     }
   };
 
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(""), 4000);
+  };
+
   const handleRegisterPatient = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -346,10 +373,7 @@ export default function ClinicianIntakePage() {
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to register patient");
-      }
+      if (!response.ok) throw new Error(data.error || "Failed to register patient");
 
       setSuccessMsg(`✓ Patient ${name} registered successfully!`);
       setName("");
@@ -380,11 +404,19 @@ export default function ClinicianIntakePage() {
         })
       });
       if (res.ok) {
+        showToast(`✓ Clinical note logged for ${noteModalPatient.name}`);
         setNoteText("");
         setNoteModalPatient(null);
         fetchPatients();
       }
     } catch (_) {}
+  };
+
+  // Copy PROMs Assessment Link for Patient
+  const handleCopyPromsLink = (patientName: string, patientEmail: string) => {
+    const link = `https://lincolnshirekneeclinic.co.uk/portal?tab=oks&email=${encodeURIComponent(patientEmail)}`;
+    navigator.clipboard.writeText(link);
+    showToast(`🔗 OKS PROMs link copied to clipboard for ${patientName}!`);
   };
 
   // Oxford Knee Score Calculate & Save
@@ -407,6 +439,7 @@ export default function ClinicianIntakePage() {
           pin
         })
       });
+      showToast(`✓ Oxford Knee Score (${totalScore}/48) recorded!`);
       setOksModalPatient(null);
       setOksAnswers({});
       fetchPatients();
@@ -438,125 +471,12 @@ export default function ClinicianIntakePage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setInjMsg("✓ Injection batch logged under consultant governance!");
+        showToast("✓ Injection batch logged under consultant governance!");
         setInjBatch("");
         setInjNotes("");
         setInjectionsList(data.list || []);
-        setTimeout(() => setInjMsg(""), 4000);
       }
     } catch (_) {}
-  };
-
-  // Parse CSV
-  const parseCSV = (text: string): UploadRow[] => {
-    const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
-    const hasHeader = /name|email|procedure|date/i.test(lines[0] || "");
-    const dataLines = hasHeader ? lines.slice(1) : lines;
-    const todayStr = new Date().toISOString().split("T")[0];
-
-    return dataLines.map((line) => {
-      const parts = line.includes("\t")
-        ? line.split("\t").map((p) => p.trim())
-        : line.split(",").map((p) => p.trim().replace(/^"|"$/g, ""));
-
-      return {
-        name: parts[0] || "",
-        email: parts[1] || "",
-        surgery: matchPathway(parts[2] || ""),
-        date: parts[3] || todayStr,
-        selected: true,
-      };
-    }).filter((r) => r.name);
-  };
-
-  const matchPathway = (text: string): string => {
-    const t = text.toLowerCase();
-    if (t.includes("tkr") || t.includes("total knee") || t.includes("replacement"))
-      return t.includes("right") ? "Total Knee Replacement (Right)" : "Total Knee Replacement (Left)";
-    if (t.includes("acl") || t.includes("anterior cruciate"))
-      return t.includes("right") ? "ACL Reconstruction (Right)" : "ACL Reconstruction (Left)";
-    if (t.includes("patel") || t.includes("stabilisation") || t.includes("mpfl"))
-      return t.includes("right") ? "Patellar Stabilisation (Right)" : "Patellar Stabilisation (Left)";
-    if (t.includes("arthrosamid") || t.includes("injection"))
-      return t.includes("right") ? "Arthrosamid® Injection (Right)" : "Arthrosamid® Injection (Left)";
-    return "Total Knee Replacement (Left)";
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsProcessing(true);
-    setUploadError("");
-    setUploadMsg("");
-
-    if (file.type.startsWith("image/")) {
-      handleImageOCR(file);
-    } else {
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        const text = evt.target?.result as string;
-        const rows = parseCSV(text);
-        if (rows.length === 0) setUploadError("Could not parse rows. Columns: Name, Email, Pathway, Date");
-        else setUploadRows(rows);
-        setIsProcessing(false);
-      };
-      reader.readAsText(file);
-    }
-    e.target.value = "";
-  };
-
-  const handleImageOCR = async (file: File) => {
-    setIsProcessing(true);
-    setOcrProgress(0);
-    try {
-      const { recognize } = await import("tesseract.js");
-      const result = await recognize(file, "eng", {
-        logger: (m: { status: string; progress: number }) => {
-          if (m.status === "recognizing text") setOcrProgress(Math.round(m.progress * 100));
-        },
-      });
-      const lines = result.data.text.split("\n").map((l: string) => l.trim()).filter((l: string) => l.length > 3);
-      const todayStr = new Date().toISOString().split("T")[0];
-      const rows: UploadRow[] = [];
-
-      for (const line of lines) {
-        if (/^(date|name|patient|theatre|list|hospital|procedure)/i.test(line)) continue;
-        const parts = line.split(/\s{2,}|\t|,|;|\|/).filter(Boolean);
-        if (parts.length >= 1 && parts[0].length > 2) {
-          const potentialName = parts[0].replace(/^\d+[.\s)]+/, "").trim();
-          rows.push({
-            name: potentialName,
-            email: "",
-            surgery: matchPathway(parts.slice(1).join(" ")),
-            date: todayStr,
-            selected: true,
-          });
-        }
-      }
-      setUploadRows(rows);
-    } catch {
-      setUploadError("Failed OCR scan.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleBulkRegister = async () => {
-    const selectedRows = uploadRows.filter((r) => r.selected && r.name && r.email);
-    if (selectedRows.length === 0) return;
-    setIsBulkSubmitting(true);
-    for (const row of selectedRows) {
-      try {
-        await fetch("/api/portal/patients", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: row.name, email: row.email, surgery: row.surgery, surgeryDate: row.date, pin }),
-        });
-      } catch (_) {}
-    }
-    setIsBulkSubmitting(false);
-    setUploadRows([]);
-    fetchPatients();
   };
 
   const todayISO = new Date().toISOString().split("T")[0];
@@ -621,7 +541,14 @@ export default function ClinicianIntakePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col w-full">
+    <div className="min-h-screen bg-slate-50 flex flex-col w-full relative">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-bold border border-slate-700 flex items-center gap-2 animate-bounce">
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Header bar */}
       <header className="w-full bg-slate-950 text-white p-3 sm:p-4 flex justify-between items-center shadow-md">
         <div className="flex items-center space-x-3">
@@ -698,20 +625,6 @@ export default function ClinicianIntakePage() {
           </div>
         )}
 
-        {/* Upload Tab */}
-        {activeTab === "upload" && (
-          <div className="max-w-lg mx-auto space-y-4">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4 text-center">
-              <h2 className="font-serif font-bold text-slate-950 text-base">Bulk Theatre List Scan / Import</h2>
-              <p className="text-xs text-slate-500">Scan physical theatre list photo or upload CSV/TXT.</p>
-              <input ref={fileInputRef} type="file" accept=".csv,.txt,image/*" onChange={handleFileUpload} className="hidden" />
-              <button onClick={() => fileInputRef.current?.click()} className="w-full py-3 border-2 border-dashed border-slate-300 hover:border-clinical-teal rounded-xl text-sm font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
-                📷 Upload Photo or File
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Patients Directory Tab */}
         {activeTab === "patients" && (
           <div className="space-y-4">
@@ -732,62 +645,104 @@ export default function ClinicianIntakePage() {
                 <p className="text-sm font-semibold text-slate-600">No patient records found.</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {filteredPatients.map(([emailKey, p]) => (
-                  <div key={emailKey} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <h3 className="text-base font-bold text-slate-950">{p.name}</h3>
-                        <p className="text-xs text-slate-400 font-mono">{emailKey} · ID: {p.patientId}</p>
-                      </div>
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${getTierBadge(p.accessTier)}`}>
-                        {p.accessTier}
-                      </span>
-                    </div>
+              <div className="space-y-4">
+                {filteredPatients.map(([emailKey, p]) => {
+                  const currentOKS = p.oksScore !== undefined ? p.oksScore : 34; // default demo score
+                  const oksPercentage = Math.round((currentOKS / 48) * 100);
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs bg-slate-50 p-3 rounded-lg border border-slate-100">
-                      <div><span className="text-slate-400 block">Procedure:</span> <span className="font-semibold text-slate-800">{p.surgery}</span></div>
-                      <div><span className="text-slate-400 block">Date:</span> <span className="font-semibold text-slate-800">{p.surgeryDate}</span></div>
-                      <div><span className="text-slate-400 block">Oxford Score:</span> <span className="font-bold text-clinical-teal">{p.oksScore !== undefined ? `${p.oksScore}/48` : "Not assessed"}</span></div>
-                    </div>
-
-                    {/* Historical Notes & Certs previews */}
-                    {p.notesHistory && p.notesHistory.length > 0 && (
-                      <div className="space-y-1.5 pt-1">
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Recent Clinical Log Note:</span>
-                        <div className="bg-amber-50/60 border border-amber-200/60 p-2.5 rounded-lg text-xs text-slate-800 space-y-1">
-                          <div className="flex justify-between font-semibold text-amber-900 text-[11px]">
-                            <span>{p.notesHistory[0].phase} (ROM: {p.notesHistory[0].rom})</span>
-                            <span>{p.notesHistory[0].date}</span>
-                          </div>
-                          <p className="text-slate-700 italic">&ldquo;{p.notesHistory[0].text}&rdquo;</p>
+                  return (
+                    <div key={emailKey} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+                      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 pb-3">
+                        <div>
+                          <h3 className="text-base font-bold text-slate-950">{p.name}</h3>
+                          <p className="text-xs text-slate-400 font-mono">{emailKey} · ID: {p.patientId}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleCopyPromsLink(p.name, emailKey)}
+                            className="text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
+                            title="Copy PROMs Assessment Link"
+                          >
+                            🔗 Copy PROMs Link
+                          </button>
+                          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${getTierBadge(p.accessTier)}`}>
+                            {p.accessTier}
+                          </span>
                         </div>
                       </div>
-                    )}
 
-                    {/* Action Bar */}
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
-                      <button
-                        onClick={() => setNoteModalPatient({ email: emailKey, name: p.name })}
-                        className="px-3 py-1.5 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors cursor-pointer"
-                      >
-                        📝 Log Note
-                      </button>
-                      <button
-                        onClick={() => setOksModalPatient({ email: emailKey, name: p.name })}
-                        className="px-3 py-1.5 text-xs font-bold bg-clinical-teal hover:bg-clinical-teal-hover text-white rounded-lg transition-colors cursor-pointer"
-                      >
-                        📊 Oxford Knee Score
-                      </button>
-                      <button
-                        onClick={() => setCertModalPatient({ email: emailKey, name: p.name, surgery: p.surgery })}
-                        className="px-3 py-1.5 text-xs font-bold border border-slate-300 hover:bg-slate-100 text-slate-800 rounded-lg transition-colors cursor-pointer"
-                      >
-                        📄 Fit Certificate
-                      </button>
+                      {/* Details & Outcome Graph */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                        <div>
+                          <span className="text-slate-400 block font-medium">Procedure:</span>
+                          <span className="font-bold text-slate-900">{p.surgery}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block font-medium">Procedure Date:</span>
+                          <span className="font-semibold text-slate-800">{p.surgeryDate}</span>
+                        </div>
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-slate-400 font-medium">Outcome (OKS Score):</span>
+                            <span className="font-bold text-clinical-teal">{currentOKS} / 48</span>
+                          </div>
+                          {/* Outcome score bar graph */}
+                          <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full transition-all ${
+                                currentOKS >= 40 ? "bg-emerald-500" : currentOKS >= 30 ? "bg-clinical-teal" : "bg-amber-500"
+                              }`}
+                              style={{ width: `${oksPercentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Recent Milestone Note Log Preview */}
+                      {p.notesHistory && p.notesHistory.length > 0 ? (
+                        <div className="space-y-1.5">
+                          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Latest Consultation Note:</span>
+                          <div className="bg-amber-50/60 border border-amber-200/60 p-3 rounded-xl text-xs text-slate-800 space-y-1">
+                            <div className="flex justify-between font-semibold text-amber-950 text-[11px]">
+                              <span>{p.notesHistory[0].phase} (ROM: {p.notesHistory[0].rom})</span>
+                              <span>{p.notesHistory[0].date}</span>
+                            </div>
+                            <p className="text-slate-700 italic">&ldquo;{p.notesHistory[0].text}&rdquo;</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-slate-50 p-2.5 rounded-lg text-[11px] text-slate-500 italic border border-slate-100 flex justify-between items-center">
+                          <span>No clinical notes logged yet for this patient.</span>
+                          <button onClick={() => setNoteModalPatient({ email: emailKey, name: p.name })} className="text-clinical-teal font-bold hover:underline">
+                            + Log First Note
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Action Bar */}
+                      <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+                        <button
+                          onClick={() => setNoteModalPatient({ email: emailKey, name: p.name })}
+                          className="px-3.5 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors cursor-pointer"
+                        >
+                          📝 Log Note
+                        </button>
+                        <button
+                          onClick={() => setOksModalPatient({ email: emailKey, name: p.name })}
+                          className="px-3.5 py-2 text-xs font-bold bg-clinical-teal hover:bg-clinical-teal-hover text-white rounded-lg transition-colors cursor-pointer"
+                        >
+                          📊 Oxford Knee Score
+                        </button>
+                        <button
+                          onClick={() => setCertModalPatient({ email: emailKey, name: p.name, surgery: p.surgery })}
+                          className="px-3.5 py-2 text-xs font-bold border border-slate-300 hover:bg-slate-100 text-slate-800 rounded-lg transition-colors cursor-pointer"
+                        >
+                          📄 Fit Certificate
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -817,7 +772,7 @@ export default function ClinicianIntakePage() {
                       <p className="text-xs text-slate-500">{p.surgery}</p>
                     </div>
                   </div>
-                  <button onClick={() => setNoteModalPatient({ email: emailKey, name: p.name })} className="px-3 py-1 text-xs font-bold bg-clinical-teal text-white rounded-lg">
+                  <button onClick={() => setNoteModalPatient({ email: emailKey, name: p.name })} className="px-3.5 py-1.5 text-xs font-bold bg-clinical-teal text-white rounded-lg">
                     Log Note
                   </button>
                 </div>
@@ -938,29 +893,29 @@ export default function ClinicianIntakePage() {
           <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 border border-slate-200 shadow-2xl">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <div>
-                <h3 className="font-bold text-slate-950 text-base">Log Consultation / Post-Op Note</h3>
+                <h3 className="font-bold text-slate-950 text-base">Log Outpatient / Post-Op Note</h3>
                 <p className="text-xs text-slate-400">Patient: <span className="font-bold text-slate-700">{noteModalPatient.name}</span></p>
               </div>
               <button onClick={() => setNoteModalPatient(null)} className="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
             </div>
             <form onSubmit={handleSaveNote} className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Clinical Phase</label>
+                <label className="font-bold text-slate-700 block mb-1">Clinical Milestone Phase</label>
                 <select value={notePhase} onChange={(e) => setNotePhase(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50">
+                  <option value="6-Week Post-Op Check">6-Week Post-Op Check</option>
                   <option value="Outpatient Consultation">Outpatient Consultation</option>
-                  <option value="2-Week Post-Op Wound Check">2-Week Post-Op Wound Check</option>
-                  <option value="6-Week Clinical Review">6-Week Clinical Review</option>
+                  <option value="2-Week Wound Check">2-Week Wound Check</option>
                   <option value="3-Month Milestone Review">3-Month Milestone Review</option>
                   <option value="Injection Follow-Up">Injection Follow-Up</option>
                 </select>
               </div>
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Range of Motion (Flexion / Extension)</label>
-                <input type="text" value={noteRom} onChange={(e) => setNoteRom(e.target.value)} placeholder="0-115°" className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50" />
+                <label className="font-bold text-slate-700 block mb-1">Knee Range of Motion (ROM)</label>
+                <input type="text" value={noteRom} onChange={(e) => setNoteRom(e.target.value)} placeholder="0–115°" className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50" />
               </div>
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Clinical Note Text *</label>
-                <textarea required rows={4} value={noteText} onChange={(e) => setNoteText(e.target.value)} placeholder="Wound dry and healed. Good quad activation. Cleared for driving at 6 weeks..." className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50" />
+                <label className="font-bold text-slate-700 block mb-1">Clinical Note Summary *</label>
+                <textarea required rows={4} value={noteText} onChange={(e) => setNoteText(e.target.value)} placeholder="6-week post-op check: ROM 0–115°, wound clean, cleared for driving." className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50" />
               </div>
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => setNoteModalPatient(null)} className="w-1/2 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-bold">Cancel</button>
@@ -1012,7 +967,7 @@ export default function ClinicianIntakePage() {
                 <span className="text-2xl font-bold">{Object.values(oksAnswers).reduce((a, b) => a + b, 0)} / 48</span>
               </div>
               <button onClick={handleSaveOKS} disabled={Object.keys(oksAnswers).length < 12} className="px-4 py-2 bg-clinical-teal hover:bg-clinical-teal-hover text-white font-bold rounded-lg text-xs disabled:opacity-40 cursor-pointer">
-                Save Outcome Score
+                Save &amp; Log Score
               </button>
             </div>
           </div>
@@ -1025,21 +980,41 @@ export default function ClinicianIntakePage() {
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200 shadow-2xl">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <div>
-                <h3 className="font-bold text-slate-950 text-base">Generate Clearance Certificate</h3>
-                <p className="text-xs text-slate-400">Formal letterhead note for GP / Employer</p>
+                <h3 className="font-bold text-slate-950 text-base">1-Click Fit-to-Work / Driving Certificate</h3>
+                <p className="text-xs text-slate-400">Formal letterhead note for GP or Employer</p>
               </div>
               <button onClick={() => setCertModalPatient(null)} className="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
             </div>
 
             {!isPrintCertVisible ? (
-              <div className="space-y-3 text-xs">
+              <div className="space-y-4 text-xs">
+                {/* Standard Preset Chips */}
+                <div>
+                  <span className="font-bold text-slate-700 block mb-1.5">1-Click Standard Presets:</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {CERT_PRESETS.map((p) => (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => {
+                          setCertType(p.type);
+                          setCertRestrictions(p.restrictions);
+                        }}
+                        className="p-2 text-left bg-slate-50 hover:bg-clinical-teal/10 border border-slate-200 hover:border-clinical-teal rounded-lg font-medium text-slate-800 transition-colors"
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">Clearance Category</label>
                   <select value={certType} onChange={(e) => setCertType(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50">
-                    <option value="Return to Driving & Work">Return to Driving &amp; Light Work</option>
-                    <option value="Full Unrestricted Work Duties">Full Unrestricted Work Duties</option>
-                    <option value="Fit to Fly / Long Travel">Fit to Fly / Long Travel</option>
-                    <option value="Return to Sports & Training">Return to Sports &amp; Training</option>
+                    <option value="Return to Driving & Light Work">Return to Driving &amp; Light Work</option>
+                    <option value="Light Work Duties Only">Light Work Duties Only</option>
+                    <option value="Full Unrestricted Work & Sports Duties">Full Unrestricted Work &amp; Sports Duties</option>
+                    <option value="Fit to Fly & Long Distance Travel">Fit to Fly &amp; Long Distance Travel</option>
                   </select>
                 </div>
                 <div>
@@ -1051,7 +1026,7 @@ export default function ClinicianIntakePage() {
                   <textarea rows={3} value={certRestrictions} onChange={(e) => setCertRestrictions(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50" />
                 </div>
                 <button onClick={() => setIsPrintCertVisible(true)} className="w-full py-3 bg-slate-950 text-white font-bold rounded-xl text-xs cursor-pointer">
-                  Preview Certificate Letterhead
+                  Preview Printable Letterhead
                 </button>
               </div>
             ) : (
