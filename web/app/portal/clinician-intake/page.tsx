@@ -1293,15 +1293,16 @@ export default function ClinicianIntakePage() {
                                       )}
                                     </div>
 
-                                    {/* Full Chronological Chaser Timestamp Audit Trail */}
+                                    {/* Full Chronological Chaser Timestamp Audit Trail Dropdown Menu */}
                                     {inv.chaseHistory && inv.chaseHistory.length > 0 ? (
-                                      <details open className="mt-1">
-                                        <summary className="text-[10px] text-cyan-400 font-bold cursor-pointer hover:text-cyan-300 transition-colors flex items-center gap-1 pt-0.5 border-t border-slate-900">
-                                          📋 Chronological Audit Log ({inv.chaseHistory.length} Chase Attempts):
+                                      <details className="mt-1 group">
+                                        <summary className="text-[10px] text-cyan-400 font-bold cursor-pointer hover:text-cyan-300 transition-colors flex items-center justify-between gap-1 pt-1 border-t border-slate-900 select-none">
+                                          <span>📋 View Chaser Audit Trail ({inv.chaseHistory.length} logs)</span>
+                                          <span className="text-[9px] text-cyan-400/80 font-mono group-open:rotate-180 transition-transform">▼</span>
                                         </summary>
-                                        <div className="mt-1 space-y-1 font-mono text-[9.5px]">
+                                        <div className="mt-1.5 space-y-1 font-mono text-[9.5px] max-h-24 overflow-y-auto pr-1 scrollbar-thin">
                                           {inv.chaseHistory.map((h: any, hIdx: number) => (
-                                            <div key={hIdx} className="flex justify-between items-center bg-slate-900/80 px-2 py-1 rounded border border-slate-800 text-slate-200">
+                                            <div key={hIdx} className="flex justify-between items-center bg-slate-900/90 px-2 py-1 rounded border border-slate-800 text-slate-200">
                                               <span>Chase #{inv.chaseHistory.length - hIdx}: <strong>{h.date} {h.time || ""}</strong></span>
                                               <span className="text-emerald-400 font-bold">via {h.channel || "WHATSAPP"}</span>
                                             </div>
