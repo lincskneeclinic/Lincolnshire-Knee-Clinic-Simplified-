@@ -1256,59 +1256,59 @@ export default function ClinicianIntakePage() {
                               className="flex justify-between items-center text-xs bg-slate-900 p-3 rounded-xl border border-slate-800 text-white gap-3 shadow-inner"
                             >
                               <div className="space-y-1 flex-1 min-w-0">
-                                <div>
-                                  <span className="font-mono font-extrabold text-cyan-300 text-sm">£{parseFloat(inv.amount).toFixed(2)}</span>
-                                  <span className="text-xs font-bold text-slate-200 block sm:inline sm:ml-2">({inv.type})</span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-mono font-extrabold text-cyan-300 text-xs">£{parseFloat(inv.amount).toFixed(2)}</span>
+                                  <span className="text-[11px] font-bold text-white">({inv.type})</span>
                                 </div>
-                                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                                <div className="flex items-center gap-1 flex-wrap pt-0.5">
                                   {inv.status === "PAID" && (
-                                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-bold px-1.5 py-0.2 rounded-full inline-flex items-center gap-1">
                                       ✓ PAID ({inv.dateSent})
                                     </span>
                                   )}
                                   {inv.status === "PENDING" && (
-                                    <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                    <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-bold px-1.5 py-0.2 rounded-full inline-flex items-center gap-1">
                                       ⏳ PENDING ({inv.channel || "WhatsApp"})
                                     </span>
                                   )}
                                   {inv.status === "OVERDUE" && (
-                                    <span className="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                    <span className="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[9px] font-bold px-1.5 py-0.2 rounded-full inline-flex items-center gap-1">
                                       🚨 OVERDUE 14+ DAYS
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[10px] text-slate-400 font-mono pt-1 leading-tight space-y-1">
-                                  <div>Sent: {inv.dateSent} &bull; Channel: {inv.channel || "WhatsApp"} &bull; Ref: {inv.id}</div>
+                                <div className="text-[9px] text-slate-200 font-mono pt-0.5 leading-tight space-y-0.5">
+                                  <div className="text-slate-300">Sent: <span className="text-white font-semibold">{inv.dateSent}</span> &bull; Channel: <span className="text-cyan-300 font-semibold">{inv.channel || "WhatsApp"}</span> &bull; Ref: <span className="text-slate-200 font-mono">{inv.id}</span></div>
                                   
-                                  {/* Micro Sleek Chaser Audit Box */}
-                                  <div className="bg-slate-950/80 p-1.5 rounded-md border border-slate-800/80 space-y-1">
-                                    <div className="flex items-center justify-between text-[9px] font-mono text-slate-400">
-                                      <span className="text-amber-300 font-medium">
-                                        📢 Chased: <strong className="text-white font-bold">{inv.chaseCount || (inv.chaseHistory ? inv.chaseHistory.length : 0)}x</strong>
+                                  {/* Micro High-Contrast Chaser Audit Box */}
+                                  <div className="bg-slate-950/90 p-1.5 rounded-md border border-slate-800 space-y-0.5 mt-1">
+                                    <div className="flex items-center justify-between text-[8px] font-mono">
+                                      <span className="text-amber-300 font-bold">
+                                        📢 Chased: <strong className="text-white font-extrabold">{inv.chaseCount || (inv.chaseHistory ? inv.chaseHistory.length : 0)}x</strong>
                                       </span>
                                       {inv.lastChasedDate && (
-                                        <span className="text-cyan-400 font-semibold">Last: {inv.lastChasedDate}</span>
+                                        <span className="text-cyan-300 font-mono font-medium">Last: {inv.lastChasedDate}</span>
                                       )}
                                     </div>
 
                                     {inv.chaseHistory && inv.chaseHistory.length > 0 ? (
-                                      <details className="group border-t border-slate-900 pt-0.5">
-                                        <summary className="text-[8.5px] text-slate-400 hover:text-cyan-300 font-sans cursor-pointer transition-colors flex items-center justify-between select-none">
-                                          <span>📋 Audit Trail ({inv.chaseHistory.length} logs)</span>
-                                          <span className="text-[8px] text-slate-500 font-mono group-open:rotate-180 transition-transform">▼</span>
+                                      <details className="group border-t border-slate-850 pt-0.5">
+                                        <summary className="text-[8px] text-cyan-300 hover:text-white font-mono cursor-pointer transition-colors flex items-center justify-between select-none">
+                                          <span>📋 Audit Log ({inv.chaseHistory.length})</span>
+                                          <span className="text-[7.5px] text-slate-400 group-open:rotate-180 transition-transform">▼</span>
                                         </summary>
-                                        <div className="mt-1 space-y-0.5 font-mono text-[8.5px] max-h-16 overflow-y-auto pr-0.5">
+                                        <div className="mt-0.5 space-y-0.5 font-mono text-[7.5px] max-h-14 overflow-y-auto pr-0.5">
                                           {inv.chaseHistory.map((h: any, hIdx: number) => (
-                                            <div key={hIdx} className="flex justify-between items-center bg-slate-900 px-1 py-0.5 rounded text-slate-300 text-[8px]">
+                                            <div key={hIdx} className="flex justify-between items-center bg-slate-900 px-1 py-0.5 rounded border border-slate-800 text-slate-200">
                                               <span>#{inv.chaseHistory.length - hIdx}: {h.date} {h.time || ""}</span>
-                                              <span className="text-emerald-400 font-bold">via {h.channel || "WHATSAPP"}</span>
+                                              <span className="text-emerald-400 font-bold text-[7.5px]">via {h.channel || "WHATSAPP"}</span>
                                             </div>
                                           ))}
                                         </div>
                                       </details>
                                     ) : (
-                                      <div className="text-slate-500 italic text-[8.5px] border-t border-slate-900 pt-0.5">
-                                        No chasers logged yet
+                                      <div className="text-slate-400 italic text-[7.5px] border-t border-slate-800 pt-0.5">
+                                        No chasers logged
                                       </div>
                                     )}
                                   </div>
