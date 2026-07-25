@@ -102,6 +102,18 @@
         "timestamp": "10:15 AM",
         "read": false
       }
+    ],
+    "invoices": [
+      {
+        "id": "INV-1784954700138",
+        "dateSent": "2026-07-25",
+        "amount": "250",
+        "type": "Insurance Excess",
+        "status": "PENDING",
+        "channel": "EMAIL",
+        "description": "Lincolnshire Knee Clinic Insurance Excess",
+        "sentBy": "Mr Ricardo J Pacheco"
+      }
     ]
   },
   "acl@lincsknee.com": {

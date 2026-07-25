@@ -1318,21 +1318,21 @@ export default function ClinicianIntakePage() {
                     </div>
 
                     {/* Action buttons */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs">
+                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs">
                       <button
                         onClick={() => setNoteModalPatient({ email: emailKey, name: p.name })}
-                        className="py-2 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer text-center truncate"
+                        className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer text-center flex items-center justify-center gap-1.5"
                       >
-                        📝 Log Note
+                        <span>📝 Log Note</span>
                       </button>
                       <button
                         onClick={() => {
                           setCertModalPatient({ email: emailKey, name: p.name, surgery: p.surgery });
                           setIsPrintCertVisible(false);
                         }}
-                        className="py-2 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer text-center truncate"
+                        className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer text-center flex items-center justify-center gap-1.5"
                       >
-                        📜 Fit Cert
+                        <span>📜 Fit Cert</span>
                       </button>
                       <button
                         onClick={() => {
@@ -1340,9 +1340,9 @@ export default function ClinicianIntakePage() {
                           setDiagClinicalHistory(`Specialist investigation for ${p.surgery}. Assess joint cartilage thickness, ligament integrity, and alignment.`);
                           setIsPrintDiagVisible(false);
                         }}
-                        className="py-2 px-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 font-bold rounded-xl border border-cyan-500/30 cursor-pointer text-center truncate"
+                        className="py-2.5 px-3 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 font-bold rounded-xl border border-cyan-500/30 cursor-pointer text-center flex items-center justify-center gap-1.5"
                       >
-                        🔬 Scan Script
+                        <span>🔬 Scan Script</span>
                       </button>
                       <button
                         onClick={() => {
@@ -1354,18 +1354,18 @@ export default function ClinicianIntakePage() {
                           });
                           setInvoiceAmount(String(p.balanceDue || 200));
                         }}
-                        className="py-2 px-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/40 cursor-pointer text-center truncate"
+                        className="py-2.5 px-3 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/40 cursor-pointer text-center flex items-center justify-center gap-1.5"
                       >
-                        💳 Send Invoice
+                        <span>💳 Send Invoice</span>
                       </button>
                       <button
                         onClick={() => {
                           setSelectedMsgEmail(emailKey);
                           setActiveTab("messages");
                         }}
-                        className="py-2 px-3 bg-clinical-teal hover:bg-clinical-teal-hover text-white font-bold rounded-xl cursor-pointer col-span-2 sm:col-span-4 text-center shadow-xs"
+                        className="py-2.5 px-3 bg-clinical-teal hover:bg-clinical-teal-hover text-white font-bold rounded-xl cursor-pointer col-span-2 text-center shadow-xs flex items-center justify-center gap-1.5"
                       >
-                        💬 Direct Message Patient
+                        <span>💬 Direct Message Patient</span>
                       </button>
                     </div>
                   </div>
