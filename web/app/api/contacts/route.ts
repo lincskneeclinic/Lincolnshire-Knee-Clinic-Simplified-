@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { isSupabaseConfigured, saveContactToSupabase } from "@/lib/supabase";
 
 const NEWSLETTER_DB_PATH = path.join(process.cwd(), "data", "newsletter-subscribers.json");
 
@@ -10,7 +11,7 @@ function readSubscribers(): any[] {
     const content = fs.readFileSync(NEWSLETTER_DB_PATH, "utf8");
     return JSON.parse(content || "[]");
   } catch (error) {
-    console.error("Failed to read subscribers database:", error);
+    console.error("Failed to read local subscribers database:", error);
     return [];
   }
 }
@@ -24,7 +25,7 @@ function writeSubscribers(subscribers: any[]): boolean {
     fs.writeFileSync(NEWSLETTER_DB_PATH, JSON.stringify(subscribers, null, 2), "utf8");
     return true;
   } catch (error) {
-    console.error("Failed to write subscribers database:", error);
+    console.error("Failed to write local subscribers database:", error);
     return false;
   }
 }
@@ -74,16 +75,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const subscribers = readSubscribers();
-
-    // Check if subscriber already exists by email
-    const existingIndex = subscribers.findIndex(
-      (sub: any) => sub.email && sub.email.toLowerCase() === cleanEmail
-    );
-
     const subscriberRecord = {
-      id: existingIndex >= 0 ? subscribers[existingIndex].id : `SUB-${Date.now()}`,
-      name: name ? String(name).trim() : (existingIndex >= 0 ? subscribers[existingIndex].name : ""),
+      id: `SUB-${Date.now()}`,
+      name: name ? String(name).trim() : "",
       email: cleanEmail,
       mobileNumber: (mobile || mobileNumber) ? String(mobile || mobileNumber).trim() : undefined,
       marketingConsent: true,
@@ -94,23 +88,39 @@ export async function POST(request: Request) {
       pagesVisited: Array.isArray(pagesVisited) && pagesVisited.length > 0 ? pagesVisited : ["/"],
     };
 
-    if (existingIndex >= 0) {
-      subscribers[existingIndex] = { ...subscribers[existingIndex], ...subscriberRecord };
-    } else {
-      subscribers.push(subscriberRecord);
+    // 1. Try writing to Supabase if configured
+    let savedToSupabase = false;
+    if (isSupabaseConfigured()) {
+      savedToSupabase = await saveContactToSupabase({
+        name: subscriberRecord.name,
+        email: subscriberRecord.email,
+        mobile_number: subscriberRecord.mobileNumber,
+        marketing_consent: true,
+        consent_given_at: subscriberRecord.consentGivenAt,
+        consent_source: subscriberRecord.consentSource,
+        primary_interest: subscriberRecord.primaryInterest,
+        topics: subscriberRecord.topics,
+        pages_visited: subscriberRecord.pagesVisited,
+      });
     }
 
-    const written = writeSubscribers(subscribers);
-    if (!written) {
-      return NextResponse.json(
-        { success: false, message: "Failed to save subscription data." },
-        { status: 500 }
-      );
+    // 2. Always persist/sync to local disk JSON file as fallback/cache
+    const localSubscribers = readSubscribers();
+    const existingIndex = localSubscribers.findIndex(
+      (sub: any) => sub.email && sub.email.toLowerCase() === cleanEmail
+    );
+
+    if (existingIndex >= 0) {
+      localSubscribers[existingIndex] = { ...localSubscribers[existingIndex], ...subscriberRecord };
+    } else {
+      localSubscribers.push(subscriberRecord);
     }
+    writeSubscribers(localSubscribers);
 
     return NextResponse.json({
       success: true,
       message: "Thank you for subscribing! You will receive knee health blogs, newsletters, and updates from Lincolnshire Knee Clinic.",
+      storage: savedToSupabase ? "supabase" : "local_file",
     });
   } catch (error) {
     console.error("Error processing contact signup:", error);

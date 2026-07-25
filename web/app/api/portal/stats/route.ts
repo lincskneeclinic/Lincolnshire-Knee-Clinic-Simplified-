@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { isSupabaseConfigured, fetchContactsFromSupabase } from "@/lib/supabase";
 
 const NEWSLETTER_PATH = path.join(process.cwd(), "data", "newsletter-subscribers.json");
 const TOPICS_PATH = path.join(process.cwd(), "data", "dynamic-topics.json");
@@ -19,7 +20,32 @@ function readJsonFile(filePath: string, fallback: any) {
 }
 
 export async function GET() {
-  const subscribers = readJsonFile(NEWSLETTER_PATH, []);
+  let subscribers: any[] = [];
+  let storageSource = "local_file";
+
+  if (isSupabaseConfigured()) {
+    const supabaseContacts = await fetchContactsFromSupabase();
+    if (supabaseContacts.length > 0) {
+      subscribers = supabaseContacts.map((c) => ({
+        id: c.id,
+        name: c.name,
+        email: c.email,
+        mobileNumber: c.mobile_number,
+        marketingConsent: c.marketing_consent,
+        consentGivenAt: c.consent_given_at,
+        consentSource: c.consent_source,
+        primaryInterest: c.primary_interest,
+        topics: c.topics,
+        pagesVisited: c.pages_visited,
+      }));
+      storageSource = "supabase";
+    }
+  }
+
+  if (subscribers.length === 0) {
+    subscribers = readJsonFile(NEWSLETTER_PATH, []);
+  }
+
   const topicsList = readJsonFile(TOPICS_PATH, []);
   const pollData = readJsonFile(POLL_PATH, {
     votes: {
@@ -68,7 +94,7 @@ export async function GET() {
 
     // Date grouping
     if (sub.consentGivenAt) {
-      const dateKey = sub.consentGivenAt.split("T")[0];
+      const dateKey = String(sub.consentGivenAt).split("T")[0];
       growthByDate[dateKey] = (growthByDate[dateKey] || 0) + 1;
     }
   });
@@ -82,6 +108,8 @@ export async function GET() {
     success: true,
     data: {
       analyticsConnected: Boolean(process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID),
+      supabaseConfigured: isSupabaseConfigured(),
+      storageSource,
       newsletter: {
         totalSignups: subscribers.length,
         subscribersList: subscribers,

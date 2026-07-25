@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { UrgentAdviceBanner } from "@/components/UrgentAdviceBanner";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { ClarityAnalytics } from "@/components/ClarityAnalytics";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 
 // Routes that should render fullscreen without the global header/footer/banner
 const FULLSCREEN_ROUTES = ["/portal/clinician-intake", "/portal/business"];
@@ -54,6 +55,9 @@ export const LayoutShell: React.FC<{ children: React.ReactNode }> = ({
 
       {/* Global floating WhatsApp Business button */}
       <WhatsAppButton />
+
+      {/* UK GDPR Cookie Consent Banner */}
+      <CookieConsentBanner />
     </>
   );
 };

@@ -7,20 +7,33 @@ export const ClarityAnalytics: React.FC = () => {
     const projectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
     if (!projectId) return;
 
-    (function (c: any, l: any, a: any, r: any, i: any) {
-      c[a] =
-        c[a] ||
-        function () {
-          (c[a].q = c[a].q || []).push(arguments);
-        };
-      const t = l.createElement(r);
-      t.async = 1;
-      t.src = "https://www.clarity.ms/tag/" + i;
-      const y = l.getElementsByTagName(r)[0];
-      if (y && y.parentNode) {
-        y.parentNode.insertBefore(t, y);
-      }
-    })(window, document, "clarity", "script", projectId);
+    const initClarity = () => {
+      const consent = localStorage.getItem("lkc_cookie_consent");
+      if (consent !== "accepted") return;
+
+      // Prevent duplicate script injection
+      if ((window as any).clarity) return;
+
+      (function (c: any, l: any, a: any, r: any, i: any) {
+        c[a] =
+          c[a] ||
+          function () {
+            (c[a].q = c[a].q || []).push(arguments);
+          };
+        const t = l.createElement(r);
+        t.async = 1;
+        t.src = "https://www.clarity.ms/tag/" + i;
+        const y = l.getElementsByTagName(r)[0];
+        if (y && y.parentNode) {
+          y.parentNode.insertBefore(t, y);
+        }
+      })(window, document, "clarity", "script", projectId);
+    };
+
+    initClarity();
+
+    window.addEventListener("lkc_cookie_consent_change", initClarity);
+    return () => window.removeEventListener("lkc_cookie_consent_change", initClarity);
   }, []);
 
   return null;
