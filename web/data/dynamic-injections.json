@@ -1,0 +1,44 @@
+[
+  {
+    "id": "INJ-1001",
+    "patientName": "Margaret Henderson",
+    "patientId": "LKC-78219",
+    "kneeSide": "Left Knee",
+    "product": "Arthrosamid® Hydrogel",
+    "batchNumber": "ARTH-2026-889B",
+    "expiryDate": "2027-11-30",
+    "dose": "6.0 ml",
+    "adminDate": "2026-07-15",
+    "clinicLocation": "St. Hugh's Hospital",
+    "clinician": "Mr Ricardo J Pacheco",
+    "notes": "Administered intra-articularly under ultrasound guidance. No immediate reaction."
+  },
+  {
+    "id": "INJ-1002",
+    "patientName": "David Jenkins",
+    "patientId": "LKC-44912",
+    "kneeSide": "Right Knee",
+    "product": "Platelet-Rich Plasma (PRP)",
+    "batchNumber": "PRP-CENT-402",
+    "expiryDate": "2026-07-20",
+    "dose": "5.0 ml",
+    "adminDate": "2026-07-20",
+    "clinicLocation": "Lincoln Private Hospital",
+    "clinician": "Mr Ricardo J Pacheco",
+    "notes": "Dual spin autologous PRP concentrate. Medial compartment injection."
+  },
+  {
+    "id": "INJ-1003",
+    "patientName": "Robert Vance",
+    "patientId": "LKC-10928",
+    "kneeSide": "Right Knee",
+    "product": "Durolane® Hyaluronic Acid",
+    "batchNumber": "DUR-99120-X",
+    "expiryDate": "2027-04-15",
+    "dose": "3.0 ml",
+    "adminDate": "2026-07-22",
+    "clinicLocation": "Parkhill Hospital",
+    "clinician": "Mr Ricardo J Pacheco",
+    "notes": "Single injection viscoelastic supplement for Grade II OA."
+  }
+]

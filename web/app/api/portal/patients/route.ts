@@ -161,3 +161,78 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { email, clinicalNote, oksScore, fitForWorkCert, pin } = body;
+
+    if (pin !== "230670") {
+      return NextResponse.json({ error: "Invalid clinician credentials" }, { status: 401 });
+    }
+
+    if (!email) {
+      return NextResponse.json({ error: "Patient email is required" }, { status: 400 });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const db = readDb();
+
+    if (!db[cleanEmail]) {
+      // Initialize dynamic record if not exists
+      db[cleanEmail] = {
+        name: cleanEmail.split("@")[0],
+        email: cleanEmail,
+        patientId: `LKC-${Math.floor(10000 + Math.random() * 90000)}`,
+        surgery: "Consultation & Assessment",
+        surgeryDate: new Date().toISOString().split("T")[0],
+        notesHistory: [],
+        oksHistory: []
+      };
+    }
+
+    const patient = db[cleanEmail];
+    if (!patient.notesHistory) patient.notesHistory = [];
+    if (!patient.oksHistory) patient.oksHistory = [];
+
+    if (clinicalNote) {
+      patient.notesHistory.unshift({
+        id: `NOTE-${Date.now()}`,
+        date: new Date().toISOString().split("T")[0],
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        text: clinicalNote.text,
+        phase: clinicalNote.phase || "Outpatient Consultation",
+        rom: clinicalNote.rom || "N/A",
+        clinician: "Mr Ricardo J Pacheco"
+      });
+    }
+
+    if (oksScore !== undefined) {
+      patient.oksScore = oksScore.totalScore;
+      patient.oksHistory.unshift({
+        date: new Date().toISOString().split("T")[0],
+        score: oksScore.totalScore,
+        category: oksScore.category,
+        answers: oksScore.answers
+      });
+    }
+
+    if (fitForWorkCert) {
+      if (!patient.certificates) patient.certificates = [];
+      patient.certificates.unshift({
+        id: `CERT-${Date.now()}`,
+        issuedDate: new Date().toISOString().split("T")[0],
+        clearanceType: fitForWorkCert.clearanceType,
+        effectiveDate: fitForWorkCert.effectiveDate,
+        restrictions: fitForWorkCert.restrictions,
+        issuedBy: "Mr Ricardo J Pacheco FRCS (Tr & Orth)"
+      });
+    }
+
+    writeDb(db);
+    return NextResponse.json({ success: true, patient });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
