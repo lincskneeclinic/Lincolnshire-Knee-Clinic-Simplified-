@@ -48,4 +48,7 @@ next-env.d.ts
 /data/dynamic-injections.json
 /data/dynamic-topics.json
 /data/newsletter-subscribers.json
+/data/event-counters.json
+/data/newsletter-poll.json
+
 

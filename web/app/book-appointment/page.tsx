@@ -146,7 +146,18 @@ export default function BookAppointment() {
                     [Clinic Reception Phone Number]
                   </Button>
                 ) : (
-                  <Button href={`tel:${clinic.phone}`} variant="teal" className="flex-1 text-xs py-2 h-10 min-h-[40px]">
+                  <Button
+                    href={`tel:${clinic.phone}`}
+                    onClick={() => {
+                      fetch("/api/events", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ eventType: "call_now" }),
+                      }).catch(() => {});
+                    }}
+                    variant="teal"
+                    className="flex-1 text-xs py-2 h-10 min-h-[40px]"
+                  >
                     Call Clinic Reception
                   </Button>
                 )}

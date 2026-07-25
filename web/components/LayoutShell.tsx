@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { UrgentAdviceBanner } from "@/components/UrgentAdviceBanner";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { ClarityAnalytics } from "@/components/ClarityAnalytics";
 
 // Routes that should render fullscreen without the global header/footer/banner
 const FULLSCREEN_ROUTES = ["/portal/clinician-intake", "/portal/business"];
@@ -21,6 +22,7 @@ export const LayoutShell: React.FC<{ children: React.ReactNode }> = ({
   if (isFullscreen) {
     return (
       <>
+        <ClarityAnalytics />
         <main id="main-content" className="flex-1 flex flex-col focus:outline-none" tabIndex={-1}>
           {children}
         </main>
@@ -30,6 +32,7 @@ export const LayoutShell: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <>
+      <ClarityAnalytics />
       {/* WCAG 2.1 AA Keyboard Access skip link */}
       <a href="#main-content" className="skip-link">
         Skip to Main Content

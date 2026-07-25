@@ -147,4 +147,7 @@ vite.config.ts.timestamp-*
 /web/data/dynamic-injections.json
 /web/data/dynamic-topics.json
 /web/data/newsletter-subscribers.json
+/web/data/event-counters.json
+/web/data/newsletter-poll.json
+
 

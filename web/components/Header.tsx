@@ -104,6 +104,13 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Button
             href="/book-appointment"
+            onClick={() => {
+              fetch("/api/events", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ eventType: "book_appointment" }),
+              }).catch(() => {});
+            }}
             className="hidden xl:inline-flex text-xs 2xl:text-sm py-2 px-3.5 2xl:px-5 min-h-[40px] shadow-[0_2px_4px_rgba(0,175,200,0.08)] whitespace-nowrap"
             variant="teal"
           >

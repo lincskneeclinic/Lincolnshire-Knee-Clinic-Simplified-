@@ -20,9 +20,22 @@ const WHATSAPP_NUMBER = "447770473437";
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=Hello%20I%20would%20like%20to%20enquire%20about%20a%20consultation.`;
 
 export const WhatsAppButton: React.FC = () => {
+  const trackClick = () => {
+    try {
+      fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventType: "whatsapp_click" }),
+      });
+    } catch (err) {
+      // non-blocking
+    }
+  };
+
   return (
     <a
       href={WHATSAPP_URL}
+      onClick={trackClick}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Contact us on WhatsApp — administrative enquiries only"
