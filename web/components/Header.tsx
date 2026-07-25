@@ -22,7 +22,7 @@ export const Header: React.FC = () => {
   });
 
   const navRef = useRef<HTMLElement>(null);
-  const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const linkMapRef = useRef<Map<number, HTMLAnchorElement>>(new Map());
 
   const mainNavigation = [
     { name: "Home", href: "/" },
@@ -62,15 +62,12 @@ export const Header: React.FC = () => {
           ? activeIndex
           : null;
 
-      if (targetIdx !== null && linkRefs.current[targetIdx] && navRef.current) {
-        const linkEl = linkRefs.current[targetIdx];
-        const navEl = navRef.current;
-        if (linkEl && navEl) {
-          const linkRect = linkEl.getBoundingClientRect();
-          const navRect = navEl.getBoundingClientRect();
+      if (targetIdx !== null) {
+        const el = linkMapRef.current.get(targetIdx);
+        if (el) {
           setIndicatorStyle({
-            left: linkRect.left - navRect.left,
-            width: linkRect.width,
+            left: el.offsetLeft,
+            width: el.offsetWidth,
             opacity: 1,
           });
           return;
@@ -155,15 +152,23 @@ export const Header: React.FC = () => {
         >
           {mainNavigation.map((link, idx) => {
             const active = isActive(link.href);
-            const isHighlighted = hoveredIndex === idx || (hoveredIndex === null && active);
+            const isHighlighted =
+              hoveredIndex === idx || (hoveredIndex === null && active);
             return (
               <Link
                 key={idx}
                 ref={(el) => {
-                  linkRefs.current[idx] = el;
+                  if (el) {
+                    linkMapRef.current.set(idx, el);
+                  } else {
+                    linkMapRef.current.delete(idx);
+                  }
                 }}
                 href={link.href}
-                onMouseEnter={() => setHoveredIndex(idx)}
+                onMouseEnter={() => {
+                  setHoveredIndex(idx);
+                  updateIndicator(idx);
+                }}
                 className={`font-sans text-[11px] xl:text-xs 2xl:text-sm font-semibold py-1.5 transition-colors whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-clinical-teal ${
                   isHighlighted
                     ? "text-deep-navy font-bold"
@@ -179,7 +184,7 @@ export const Header: React.FC = () => {
           <span
             className="absolute bottom-0 h-[2.5px] bg-clinical-teal rounded-full transition-all duration-300 ease-out pointer-events-none"
             style={{
-              transform: `translateX(${indicatorStyle.left}px)`,
+              left: `${indicatorStyle.left}px`,
               width: `${indicatorStyle.width}px`,
               opacity: indicatorStyle.opacity,
             }}
