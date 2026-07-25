@@ -250,6 +250,25 @@ export async function PATCH(request: Request) {
       }
     }
 
+    if (body.logChaser) {
+      if (patient.invoices) {
+        const inv = patient.invoices.find((i: any) => i.id === body.logChaser.id);
+        if (inv) {
+          const today = new Date().toISOString().split("T")[0];
+          const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          inv.lastChasedDate = `${today} ${time}`;
+          inv.chaseCount = (inv.chaseCount || 0) + 1;
+          if (!inv.chaseHistory) inv.chaseHistory = [];
+          inv.chaseHistory.unshift({
+            date: today,
+            time: time,
+            channel: body.logChaser.channel || "WHATSAPP",
+            by: "Mr Ricardo J Pacheco"
+          });
+        }
+      }
+    }
+
     writeDb(db);
     return NextResponse.json({ success: true, patient });
   } catch (error: any) {

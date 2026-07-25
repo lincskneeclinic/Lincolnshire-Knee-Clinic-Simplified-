@@ -1277,18 +1277,42 @@ export default function ClinicianIntakePage() {
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[10px] text-slate-400 font-mono pt-0.5 leading-tight">
-                                  Sent: {inv.dateSent} &bull; Channel: {inv.channel || "WhatsApp"}<br />
-                                  Ref: {inv.id}
+                                <div className="text-[10px] text-slate-400 font-mono pt-0.5 leading-tight space-y-0.5">
+                                  <div>Sent: {inv.dateSent} &bull; Channel: {inv.channel || "WhatsApp"} &bull; Ref: {inv.id}</div>
+                                  {inv.lastChasedDate ? (
+                                    <div className="text-amber-300 font-semibold font-sans text-[10.5px] flex items-center gap-1">
+                                      <span>📢 Last Chased:</span>
+                                      <span className="font-mono text-cyan-300">{inv.lastChasedDate}</span>
+                                      <span className="bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded border border-amber-500/30 text-[9.5px]">
+                                        {inv.chaseCount || 1}x Chased
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="text-slate-500 italic text-[10px]">No chasers logged yet</div>
+                                  )}
                                 </div>
                               </div>
 
                               {inv.status !== "PAID" && (
                                 <div className="flex flex-col gap-1.5 shrink-0 min-w-[100px] justify-center self-center">
                                   <button
-                                    onClick={() => {
+                                    onClick={async () => {
                                       const text = encodeURIComponent(`Lincolnshire Knee Clinic Reminder: Dear ${p.name}, your ${inv.type} invoice of £${inv.amount} remains outstanding. Pay online securely: https://lincolnshirekneeclinic.co.uk/portal or BACS Ref: ${inv.id}. Thank you.`);
                                       window.open(`https://wa.me/447700900123?text=${text}`, "_blank");
+
+                                      // Log chaser timestamp to EHR database
+                                      await fetch("/api/portal/patients", {
+                                        method: "PATCH",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                          email: emailKey,
+                                          pin: "230670",
+                                          logChaser: { id: inv.id, channel: "WHATSAPP" }
+                                        })
+                                      });
+
+                                      const res = await fetch("/api/portal/patients");
+                                      if (res.ok) setPatients(await res.json());
                                     }}
                                     className="w-full py-1.5 px-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-lg cursor-pointer shadow-xs text-center"
                                   >

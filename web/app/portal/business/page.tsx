@@ -926,16 +926,17 @@ export default function BusinessDashboardPage() {
                           <th className="py-3 px-4">Billing Category</th>
                           <th className="py-3 px-4">Amount Billed</th>
                           <th className="py-3 px-4">Sent Date &amp; Channel</th>
+                          <th className="py-3 px-4">Last Chased Audit</th>
                           <th className="py-3 px-4">Status</th>
                           <th className="py-3 px-4 text-right rounded-r-lg">Chaser Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800">
                         {[
-                          { id: "INV-90412", name: "David Miller", email: "david.miller@gmail.com", type: "Insurance Policy Excess", amount: "£200.00", date: "2026-07-22", channel: "WhatsApp 💬", status: "PENDING" },
-                          { id: "INV-90408", name: "Sarah Jenkins", email: "sarah.j@outlook.com", type: "Post-Op Surgical Balance", amount: "£450.00", date: "2026-07-15", channel: "Email 📧", status: "OVERDUE" },
-                          { id: "INV-90399", name: "Robert Taylor", email: "rtaylor@lincoln.co.uk", type: "Vista Diagnostic Fee", amount: "£350.00", date: "2026-07-10", channel: "WhatsApp 💬", status: "PAID" },
-                          { id: "INV-90385", name: "Emma Watson", email: "emma.w@louthphysio.co.uk", type: "Injection Therapy Fee", amount: "£450.00", date: "2026-07-08", channel: "WhatsApp 💬", status: "PAID" },
+                          { id: "INV-90412", name: "David Miller", email: "david.miller@gmail.com", type: "Insurance Policy Excess", amount: "£200.00", date: "2026-07-22", channel: "WhatsApp 💬", lastChased: "2026-07-25 05:57", chaseCount: 2, status: "PENDING" },
+                          { id: "INV-90408", name: "Sarah Jenkins", email: "sarah.j@outlook.com", type: "Post-Op Surgical Balance", amount: "£450.00", date: "2026-07-15", channel: "Email 📧", lastChased: "2026-07-24 14:15", chaseCount: 3, status: "OVERDUE" },
+                          { id: "INV-90399", name: "Robert Taylor", email: "rtaylor@lincoln.co.uk", type: "Vista Diagnostic Fee", amount: "£350.00", date: "2026-07-10", channel: "WhatsApp 💬", lastChased: "2026-07-11 11:20", chaseCount: 1, status: "PAID" },
+                          { id: "INV-90385", name: "Emma Watson", email: "emma.w@louthphysio.co.uk", type: "Injection Therapy Fee", amount: "£450.00", date: "2026-07-08", channel: "WhatsApp 💬", lastChased: "None Required", chaseCount: 0, status: "PAID" },
                         ].map((inv, idx) => (
                           <tr key={idx} className="hover:bg-slate-800/50 transition-colors">
                             <td className="py-3.5 px-4 font-mono font-bold text-cyan-300">{inv.id}</td>
@@ -948,6 +949,18 @@ export default function BusinessDashboardPage() {
                             <td className="py-3.5 px-4 text-slate-400">
                               <div>{inv.date}</div>
                               <div className="text-[10px] text-cyan-400">{inv.channel}</div>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              {inv.chaseCount > 0 ? (
+                                <div className="space-y-0.5">
+                                  <div className="font-mono text-cyan-300 font-bold text-[11px]">{inv.lastChased}</div>
+                                  <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9.5px] font-bold px-1.5 py-0.2 rounded inline-block">
+                                    {inv.chaseCount}x Chased
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-slate-500 italic text-[11px]">Direct Paid</span>
+                              )}
                             </td>
                             <td className="py-3.5 px-4">
                               {inv.status === "PAID" && (
