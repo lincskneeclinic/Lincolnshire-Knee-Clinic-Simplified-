@@ -880,6 +880,124 @@ export default function BusinessDashboardPage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Dedicated Master Invoices & Accounts Receivable Telemetry Card */}
+                <div className="border-t border-slate-800 pt-6 space-y-4">
+                  <div className="flex justify-between items-center flex-wrap gap-2">
+                    <div>
+                      <h3 className="text-base font-bold text-white font-serif flex items-center gap-2">
+                        💳 Master Invoices &amp; Accounts Receivable Ledger
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Central telemetry for tracking dispatched insurance excesses, consultation fees, and diagnostic billing statements
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold px-3 py-1 rounded-full">
+                        ✓ 88% Collection Rate
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Total Outstanding AR</span>
+                      <span className="font-mono text-lg font-bold text-amber-400">£1,450.00</span>
+                      <span className="text-[10px] text-slate-400 block">Pending Clearance</span>
+                    </div>
+                    <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Collected This Month</span>
+                      <span className="font-mono text-lg font-bold text-emerald-400">£14,800.00</span>
+                      <span className="text-[10px] text-emerald-300/80 block font-semibold">100% Cleared</span>
+                    </div>
+                    <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Overdue Chaser Queue</span>
+                      <span className="font-mono text-lg font-bold text-rose-400">3 Statements</span>
+                      <span className="text-[10px] text-rose-300/80 block font-semibold">14+ Days Notice</span>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-slate-300">
+                      <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold">
+                        <tr>
+                          <th className="py-3 px-4 rounded-l-lg">Invoice ID</th>
+                          <th className="py-3 px-4">Patient Name &amp; Email</th>
+                          <th className="py-3 px-4">Billing Category</th>
+                          <th className="py-3 px-4">Amount Billed</th>
+                          <th className="py-3 px-4">Sent Date &amp; Channel</th>
+                          <th className="py-3 px-4">Status</th>
+                          <th className="py-3 px-4 text-right rounded-r-lg">Chaser Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {[
+                          { id: "INV-90412", name: "David Miller", email: "david.miller@gmail.com", type: "Insurance Policy Excess", amount: "£200.00", date: "2026-07-22", channel: "WhatsApp 💬", status: "PENDING" },
+                          { id: "INV-90408", name: "Sarah Jenkins", email: "sarah.j@outlook.com", type: "Post-Op Surgical Balance", amount: "£450.00", date: "2026-07-15", channel: "Email 📧", status: "OVERDUE" },
+                          { id: "INV-90399", name: "Robert Taylor", email: "rtaylor@lincoln.co.uk", type: "Vista Diagnostic Fee", amount: "£350.00", date: "2026-07-10", channel: "WhatsApp 💬", status: "PAID" },
+                          { id: "INV-90385", name: "Emma Watson", email: "emma.w@louthphysio.co.uk", type: "Injection Therapy Fee", amount: "£450.00", date: "2026-07-08", channel: "WhatsApp 💬", status: "PAID" },
+                        ].map((inv, idx) => (
+                          <tr key={idx} className="hover:bg-slate-800/50 transition-colors">
+                            <td className="py-3.5 px-4 font-mono font-bold text-cyan-300">{inv.id}</td>
+                            <td className="py-3.5 px-4">
+                              <div className="font-bold text-white">{inv.name}</div>
+                              <div className="text-[11px] text-slate-400 font-mono">{inv.email}</div>
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-300 font-medium">{inv.type}</td>
+                            <td className="py-3.5 px-4 font-mono font-bold text-white">{inv.amount}</td>
+                            <td className="py-3.5 px-4 text-slate-400">
+                              <div>{inv.date}</div>
+                              <div className="text-[10px] text-cyan-400">{inv.channel}</div>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              {inv.status === "PAID" && (
+                                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+                                  ✓ PAID
+                                </span>
+                              )}
+                              {inv.status === "PENDING" && (
+                                <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+                                  ⏳ PENDING
+                                </span>
+                              )}
+                              {inv.status === "OVERDUE" && (
+                                <span className="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1 animate-pulse">
+                                  🚨 OVERDUE
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              {inv.status !== "PAID" ? (
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    onClick={() => {
+                                      const text = encodeURIComponent(`Lincolnshire Knee Clinic Reminder: Dear ${inv.name}, your ${inv.type} invoice of ${inv.amount} remains outstanding (Ref: ${inv.id}). Secure payment link: https://lincolnshirekneeclinic.co.uk/portal. Thank you.`);
+                                      window.open(`https://wa.me/447700900123?text=${text}`, "_blank");
+                                    }}
+                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] rounded-lg shadow cursor-pointer"
+                                  >
+                                    💬 WhatsApp Chaser
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setToastMessage(`✓ Dispatched payment reminder email for invoice ${inv.id} to ${inv.email}`);
+                                      setTimeout(() => setToastMessage(""), 4000);
+                                    }}
+                                    className="px-2.5 py-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[11px] rounded-lg shadow cursor-pointer"
+                                  >
+                                    📧 Email
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-[11px] text-slate-500 font-mono">Receipt Dispatched</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             )}
 
