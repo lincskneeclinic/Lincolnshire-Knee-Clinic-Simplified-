@@ -223,6 +223,33 @@ export async function PATCH(request: Request) {
       });
     }
 
+    if (body.newInvoice) {
+      if (!patient.invoices) patient.invoices = [];
+      patient.invoices.unshift({
+        id: `INV-${Date.now()}`,
+        dateSent: new Date().toISOString().split("T")[0],
+        amount: body.newInvoice.amount,
+        type: body.newInvoice.type || "Insurance Excess",
+        status: body.newInvoice.status || "PENDING",
+        channel: body.newInvoice.channel || "WHATSAPP",
+        description: body.newInvoice.description || "Lincolnshire Knee Clinic Invoice Notice",
+        sentBy: "Mr Ricardo J Pacheco"
+      });
+    }
+
+    if (body.updateInvoiceStatus) {
+      if (patient.invoices) {
+        const inv = patient.invoices.find((i: any) => i.id === body.updateInvoiceStatus.id);
+        if (inv) {
+          inv.status = body.updateInvoiceStatus.status;
+          inv.lastReminderDate = new Date().toISOString().split("T")[0];
+          if (body.updateInvoiceStatus.status === "PAID") {
+            patient.balanceDue = 0.0;
+          }
+        }
+      }
+    }
+
     writeDb(db);
     return NextResponse.json({ success: true, patient });
   } catch (error: any) {

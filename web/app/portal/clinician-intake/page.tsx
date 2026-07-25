@@ -60,6 +60,7 @@ interface PatientRecord {
   oksScore?: number;
   oksHistory?: OKSRecord[];
   certificates?: CertRecord[];
+  invoices?: any[];
   messages?: ChatMessage[];
 }
 
@@ -221,6 +222,14 @@ export default function ClinicianIntakePage() {
   const [selectedMsgEmail, setSelectedMsgEmail] = useState<string | null>(null);
   const [msgInputText, setMsgInputText] = useState("");
   const [isSendingMsg, setIsSendingMsg] = useState(false);
+
+  // Invoice & Excess Dispatch Modal State
+  const [invoiceModalPatient, setInvoiceModalPatient] = useState<{ email: string; name: string; balanceDue: number; phone?: string; insuranceProvider?: string } | null>(null);
+  const [invoiceType, setInvoiceType] = useState("Insurance Excess");
+  const [invoiceAmount, setInvoiceAmount] = useState("");
+  const [invoiceChannel, setInvoiceChannel] = useState<"WHATSAPP" | "EMAIL">("WHATSAPP");
+  const [invoiceNotes, setInvoiceNotes] = useState("");
+  const [isSendingInvoice, setIsSendingInvoice] = useState(false);
 
   // Upload State
   const [uploadRows, setUploadRows] = useState<UploadRow[]>([]);
@@ -1234,13 +1243,85 @@ export default function ClinicianIntakePage() {
                           ))}
                         </div>
                       )}
+                      {/* Issued Invoices & Telemetry Status Ledger */}
+                      {p.invoices && p.invoices.length > 0 && (
+                        <div className="mt-3 space-y-1.5 border-t border-slate-200 dark:border-slate-800 pt-2.5">
+                          <div className="flex justify-between items-center text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                            <span>INVOICES &amp; EXCESS LEDGER:</span>
+                            <span className="text-[10px] text-cyan-400 font-normal">Auto-Tracked Telemetry</span>
+                          </div>
+                          {p.invoices.map((inv: any) => (
+                            <div
+                              key={inv.id}
+                              className="flex flex-col sm:flex-row sm:items-center justify-between text-xs bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-white gap-2"
+                            >
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono font-bold text-cyan-300">£{parseFloat(inv.amount).toFixed(2)}</span>
+                                  <span className="text-[11px] font-semibold text-slate-300">({inv.type})</span>
+                                  {inv.status === "PAID" && (
+                                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                      ✓ PAID ({inv.dateSent})
+                                    </span>
+                                  )}
+                                  {inv.status === "PENDING" && (
+                                    <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                      ⏳ PENDING ({inv.channel || "WhatsApp"})
+                                    </span>
+                                  )}
+                                  {inv.status === "OVERDUE" && (
+                                    <span className="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                      🚨 OVERDUE 14+ DAYS
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-slate-400">
+                                  Sent: {inv.dateSent} &bull; Channel: {inv.channel || "WhatsApp"} &bull; Ref: {inv.id}
+                                </div>
+                              </div>
+
+                              {inv.status !== "PAID" && (
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <button
+                                    onClick={() => {
+                                      const text = encodeURIComponent(`Lincolnshire Knee Clinic Reminder: Dear ${p.name}, your ${inv.type} invoice of £${inv.amount} remains outstanding. Pay online securely: https://lincolnshirekneeclinic.co.uk/portal or BACS Ref: ${inv.id}. Thank you.`);
+                                      window.open(`https://wa.me/447700900123?text=${text}`, "_blank");
+                                    }}
+                                    className="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg cursor-pointer"
+                                  >
+                                    💬 WhatsApp
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      await fetch("/api/portal/patients", {
+                                        method: "PATCH",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                          email: emailKey,
+                                          pin: "230670",
+                                          updateInvoiceStatus: { id: inv.id, status: "PAID" }
+                                        })
+                                      });
+                                      const res = await fetch("/api/portal/patients");
+                                      if (res.ok) setPatients(await res.json());
+                                    }}
+                                    className="px-2 py-1 bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold rounded-lg cursor-pointer"
+                                  >
+                                    ✓ Mark Paid
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* Action buttons */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs">
                       <button
                         onClick={() => setNoteModalPatient({ email: emailKey, name: p.name })}
-                        className="py-2 px-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer text-center truncate"
+                        className="py-2 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer text-center truncate"
                       >
                         📝 Log Note
                       </button>
@@ -1249,7 +1330,7 @@ export default function ClinicianIntakePage() {
                           setCertModalPatient({ email: emailKey, name: p.name, surgery: p.surgery });
                           setIsPrintCertVisible(false);
                         }}
-                        className="py-2 px-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer text-center truncate"
+                        className="py-2 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer text-center truncate"
                       >
                         📜 Fit Cert
                       </button>
@@ -1259,16 +1340,30 @@ export default function ClinicianIntakePage() {
                           setDiagClinicalHistory(`Specialist investigation for ${p.surgery}. Assess joint cartilage thickness, ligament integrity, and alignment.`);
                           setIsPrintDiagVisible(false);
                         }}
-                        className="py-2 px-2.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 font-bold rounded-xl border border-cyan-500/30 cursor-pointer text-center truncate col-span-2 sm:col-span-1"
+                        className="py-2 px-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 font-bold rounded-xl border border-cyan-500/30 cursor-pointer text-center truncate"
                       >
                         🔬 Scan Script
+                      </button>
+                      <button
+                        onClick={() => {
+                          setInvoiceModalPatient({
+                            email: emailKey,
+                            name: p.name,
+                            balanceDue: p.balanceDue || 200,
+                            insuranceProvider: p.insuranceProvider
+                          });
+                          setInvoiceAmount(String(p.balanceDue || 200));
+                        }}
+                        className="py-2 px-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-bold rounded-xl border border-emerald-500/40 cursor-pointer text-center truncate"
+                      >
+                        💳 Send Invoice
                       </button>
                       <button
                         onClick={() => {
                           setSelectedMsgEmail(emailKey);
                           setActiveTab("messages");
                         }}
-                        className="py-2 px-3 bg-clinical-teal hover:bg-clinical-teal-hover text-white font-bold rounded-xl cursor-pointer col-span-2 sm:col-span-3 text-center shadow-xs"
+                        className="py-2 px-3 bg-clinical-teal hover:bg-clinical-teal-hover text-white font-bold rounded-xl cursor-pointer col-span-2 sm:col-span-4 text-center shadow-xs"
                       >
                         💬 Direct Message Patient
                       </button>
@@ -1804,6 +1899,171 @@ export default function ClinicianIntakePage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* Interactive Invoice & Excess Dispatcher Modal */}
+      {invoiceModalPatient && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 text-white">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-white flex items-center gap-2">
+                  💳 Send Invoice / Excess Notice
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Dispatch billing statements &amp; insurance excess requisitions via WhatsApp or Email
+                </p>
+              </div>
+              <button
+                onClick={() => setInvoiceModalPatient(null)}
+                className="text-slate-400 hover:text-white text-lg font-bold p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setIsSendingInvoice(true);
+
+                try {
+                  const res = await fetch("/api/portal/patients", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      email: invoiceModalPatient.email,
+                      pin: "230670",
+                      newInvoice: {
+                        amount: invoiceAmount,
+                        type: invoiceType,
+                        status: "PENDING",
+                        channel: invoiceChannel,
+                        description: invoiceNotes || `Lincolnshire Knee Clinic ${invoiceType}`
+                      }
+                    })
+                  });
+
+                  if (res.ok) {
+                    const updated = await fetch("/api/portal/patients");
+                    if (updated.ok) setPatients(await updated.json());
+
+                    if (invoiceChannel === "WHATSAPP") {
+                      const msgText = encodeURIComponent(
+                        `Lincolnshire Knee Clinic Invoice Notice:\nDear ${invoiceModalPatient.name},\nYour ${invoiceType} statement of £${parseFloat(invoiceAmount).toFixed(2)} is ready for settlement.\n\nPay online securely: https://lincolnshirekneeclinic.co.uk/portal\nOr BACS Transfer to Lincolnshire Knee Clinic Ltd.\n\nThank you,\nMr Ricardo J Pacheco FRCS (Tr & Orth)`
+                      );
+                      window.open(`https://wa.me/447700900123?text=${msgText}`, "_blank");
+                    }
+
+                    setToastMessage(`✓ ${invoiceType} statement sent successfully!`);
+                    setTimeout(() => setToastMessage(""), 4000);
+                    setInvoiceModalPatient(null);
+                  }
+                } catch (err: any) {
+                  alert("Failed to send invoice: " + err.message);
+                } finally {
+                  setIsSendingInvoice(false);
+                }
+              }}
+              className="space-y-4 text-xs"
+            >
+              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 text-[10px] uppercase font-bold">Patient Name</span>
+                  <span className="text-cyan-400 font-mono text-[11px]">{invoiceModalPatient.email}</span>
+                </div>
+                <span className="font-bold text-sm text-white block">{invoiceModalPatient.name}</span>
+                {invoiceModalPatient.insuranceProvider && (
+                  <span className="text-[11px] text-slate-300 block">Insurer: <strong>{invoiceModalPatient.insuranceProvider}</strong></span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-300 block mb-1">Billing Category</label>
+                  <select
+                    value={invoiceType}
+                    onChange={(e) => setInvoiceType(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-medium"
+                  >
+                    <option value="Insurance Excess">Insurance Policy Excess</option>
+                    <option value="Self-Pay Consultation">Consultation Fee</option>
+                    <option value="Post-Op Surgical Balance">Post-Op Surgical Fee</option>
+                    <option value="Diagnostic Imaging Fee">Vista Health Diagnostic Fee</option>
+                    <option value="Injection Therapy">Injection Procedure Fee</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-300 block mb-1">Amount Due (£)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={invoiceAmount}
+                    onChange={(e) => setInvoiceAmount(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-cyan-300 font-mono font-bold text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-300 block mb-1">Delivery Channel</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setInvoiceChannel("WHATSAPP")}
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 cursor-pointer ${
+                      invoiceChannel === "WHATSAPP"
+                        ? "bg-emerald-600 text-white border-emerald-500 shadow-md"
+                        : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
+                    }`}
+                  >
+                    <span>💬 WhatsApp Instant</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInvoiceChannel("EMAIL")}
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 cursor-pointer ${
+                      invoiceChannel === "EMAIL"
+                        ? "bg-cyan-600 text-white border-cyan-500 shadow-md"
+                        : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
+                    }`}
+                  >
+                    <span>📧 Direct Email</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-300 block mb-1">Custom Notes / Payment Terms</label>
+                <textarea
+                  rows={2}
+                  value={invoiceNotes}
+                  onChange={(e) => setInvoiceNotes(e.target.value)}
+                  placeholder="Optional BACS reference or payment deadline notes..."
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setInvoiceModalPatient(null)}
+                  className="px-4 py-2 border border-slate-800 rounded-xl text-slate-400 hover:text-white font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSendingInvoice}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl cursor-pointer shadow-md flex items-center gap-1.5"
+                >
+                  <span>{isSendingInvoice ? "Dispatching..." : `Dispatch via ${invoiceChannel === "WHATSAPP" ? "WhatsApp 💬" : "Email 📧"}`}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
