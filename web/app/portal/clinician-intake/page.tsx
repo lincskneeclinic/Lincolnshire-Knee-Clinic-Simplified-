@@ -1277,38 +1277,43 @@ export default function ClinicianIntakePage() {
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[10px] text-slate-400 font-mono pt-0.5 leading-tight space-y-0.5">
+                                <div className="text-[10px] text-slate-400 font-mono pt-1 leading-tight space-y-1">
                                   <div>Sent: {inv.dateSent} &bull; Channel: {inv.channel || "WhatsApp"} &bull; Ref: {inv.id}</div>
-                                  {inv.lastChasedDate ? (
-                                    <div className="space-y-1 pt-0.5">
-                                      <div className="text-amber-300 font-semibold font-sans text-[10.5px] flex items-center gap-1 flex-wrap">
-                                        <span>📢 Last Chased:</span>
-                                        <span className="font-mono text-cyan-300">{inv.lastChasedDate}</span>
-                                        <span className="bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded border border-amber-500/30 text-[9.5px] font-bold">
-                                          {inv.chaseCount || 1}x Chased
+                                  
+                                  {/* Prominent Chaser Audit Box */}
+                                  <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800 space-y-1">
+                                    <div className="text-amber-300 font-semibold font-sans text-[11px] flex items-center justify-between gap-1 flex-wrap">
+                                      <span className="flex items-center gap-1">
+                                        📢 <strong>Chased:</strong> {inv.chaseCount || (inv.chaseHistory ? inv.chaseHistory.length : 0)}x
+                                      </span>
+                                      {inv.lastChasedDate && (
+                                        <span className="text-[10px] font-mono text-cyan-300">
+                                          Last: {inv.lastChasedDate}
                                         </span>
-                                      </div>
-
-                                      {/* Full Chronological Chaser Timestamp Audit Trail */}
-                                      {inv.chaseHistory && inv.chaseHistory.length > 0 && (
-                                        <details className="mt-1 group">
-                                          <summary className="text-[10px] text-cyan-400 font-semibold cursor-pointer hover:text-cyan-300 transition-colors flex items-center gap-1">
-                                            📋 View Full Chaser Audit History ({inv.chaseHistory.length} Chase Logs)
-                                          </summary>
-                                          <div className="mt-1 p-2 bg-slate-950 rounded-lg border border-slate-800 space-y-1 font-mono text-[9.5px]">
-                                            {inv.chaseHistory.map((h: any, hIdx: number) => (
-                                              <div key={hIdx} className="flex justify-between items-center text-slate-300 border-b border-slate-900 pb-0.5 last:border-0">
-                                                <span>Chase #{inv.chaseHistory.length - hIdx}: {h.date} {h.time || ""}</span>
-                                                <span className="text-emerald-400 font-bold">via {h.channel || "WHATSAPP"}</span>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </details>
                                       )}
                                     </div>
-                                  ) : (
-                                    <div className="text-slate-500 italic text-[10px]">No chasers logged yet</div>
-                                  )}
+
+                                    {/* Full Chronological Chaser Timestamp Audit Trail */}
+                                    {inv.chaseHistory && inv.chaseHistory.length > 0 ? (
+                                      <details open className="mt-1">
+                                        <summary className="text-[10px] text-cyan-400 font-bold cursor-pointer hover:text-cyan-300 transition-colors flex items-center gap-1 pt-0.5 border-t border-slate-900">
+                                          📋 Chronological Audit Log ({inv.chaseHistory.length} Chase Attempts):
+                                        </summary>
+                                        <div className="mt-1 space-y-1 font-mono text-[9.5px]">
+                                          {inv.chaseHistory.map((h: any, hIdx: number) => (
+                                            <div key={hIdx} className="flex justify-between items-center bg-slate-900/80 px-2 py-1 rounded border border-slate-800 text-slate-200">
+                                              <span>Chase #{inv.chaseHistory.length - hIdx}: <strong>{h.date} {h.time || ""}</strong></span>
+                                              <span className="text-emerald-400 font-bold">via {h.channel || "WHATSAPP"}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </details>
+                                    ) : (
+                                      <div className="text-slate-500 italic text-[10px] pt-0.5">
+                                        No chasers logged yet (Click 💬 WhatsApp to dispatch chaser)
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
 

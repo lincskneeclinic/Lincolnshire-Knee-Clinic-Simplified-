@@ -112,7 +112,23 @@
         "status": "PENDING",
         "channel": "EMAIL",
         "description": "Lincolnshire Knee Clinic Insurance Excess",
-        "sentBy": "Mr Ricardo J Pacheco"
+        "sentBy": "Mr Ricardo J Pacheco",
+        "lastChasedDate": "2026-07-25 05:57",
+        "chaseCount": 2,
+        "chaseHistory": [
+          {
+            "date": "2026-07-25",
+            "time": "05:57 AM",
+            "channel": "WHATSAPP",
+            "by": "Mr Ricardo J Pacheco"
+          },
+          {
+            "date": "2026-07-22",
+            "time": "09:30 AM",
+            "channel": "EMAIL",
+            "by": "Mr Ricardo J Pacheco"
+          }
+        ]
       }
     ]
   },
