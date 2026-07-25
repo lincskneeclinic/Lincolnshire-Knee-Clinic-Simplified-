@@ -42,3 +42,10 @@ next-env.d.ts
 
 # large media files
 /public/videos/
+
+# runtime data files (never commit real subscriber/patient data)
+/data/dynamic-patients.json
+/data/dynamic-injections.json
+/data/dynamic-topics.json
+/data/newsletter-subscribers.json
+

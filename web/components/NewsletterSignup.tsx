@@ -56,6 +56,7 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
           email: email.trim(),
           mobile: mobile.trim() || undefined,
           consentChecked,
+          consentSource: "newsletter-signup-component",
         }),
       });
 

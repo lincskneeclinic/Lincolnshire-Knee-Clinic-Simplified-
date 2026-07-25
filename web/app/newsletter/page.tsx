@@ -83,7 +83,7 @@ export default function NewsletterPage() {
     setStatusMsg("");
 
     try {
-      const res = await fetch("/api/newsletter", {
+      const res = await fetch("/api/contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -92,15 +92,17 @@ export default function NewsletterPage() {
           primaryInterest,
           topics: selectedTopics,
           pagesVisited: [window.location.pathname],
+          consentChecked: gdprConsent,
+          consentSource: "newsletter-page-detailed-form",
         }),
       });
 
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setIsSuccess(true);
         setStatusMsg("Thank you for subscribing! You will receive tailored knee care updates.");
       } else {
-        setStatusMsg(data.error || "Failed to subscribe. Please try again.");
+        setStatusMsg(data.message || data.error || "Failed to subscribe. Please try again.");
       }
     } catch (err) {
       console.error(err);

@@ -141,3 +141,10 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# runtime data files (never commit real subscriber/patient data)
+/web/data/dynamic-patients.json
+/web/data/dynamic-injections.json
+/web/data/dynamic-topics.json
+/web/data/newsletter-subscribers.json
+
