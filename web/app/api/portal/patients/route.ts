@@ -45,8 +45,12 @@ export async function POST(request: Request) {
       surgery,
       surgeryDate,
       balanceDue,
+      accessTier: passedAccessTier,
       insuranceProvider,
+      policyNumber,
       insurancePreAuth,
+      preAuthCode,
+      ubrn,
       pin,
     } = body;
 
@@ -65,10 +69,9 @@ export async function POST(request: Request) {
     // Map default exercises and documents based on pathway
     let exercises: any[] = [];
     let documents: any[] = [];
-    let accessTier = "Surgery";
+    let accessTier = passedAccessTier || "Surgery";
 
     if (surgery.includes("Total Knee")) {
-      accessTier = "Surgery";
       exercises = [
         { id: "sqc", name: "Static Quadriceps Contractions", description: "Sit or lie flat, tighten your thigh muscle, and pull your kneecap upwards. Hold for 5 seconds. 10 reps, 4-6x daily.", completed: false, videoTips: ["Squeeze thigh muscles hard", "Keep ankle flexed", "Hold contraction"], videoUrl: "https://www.youtube.com/embed/shSiZn5x9R8" },
         { id: "hs", name: "Heel Slides", description: "Gently slide your heel toward your buttocks, bending your knee as far as comfortable. Hold 5s. 3 sets of 10.", completed: false, videoTips: ["Use a strap if needed", "Do not force bending", "Slide smoothly"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=75" },
@@ -77,19 +80,6 @@ export async function POST(request: Request) {
       ];
       documents = [
         { title: "Total Knee Replacement Recovery Guide", filename: "total-knee-replacement-recovery-guide.pdf", date: surgeryDate, type: "Guide" },
-        { title: "Clinical Summary Letter (Discharge)", filename: "lkc-discharge-henderson.pdf", date: surgeryDate, type: "Letter" },
-        { title: "Diagnostic Ultrasound Referral Script", filename: "lkc-ultrasound-referral.pdf", date: surgeryDate, type: "Order" }
-      ];
-    } else if (surgery.includes("ACL")) {
-      accessTier = "Surgery";
-      exercises = [
-        { id: "qs", name: "Quad Sets (Static Quads)", description: "Lie flat, push the back of your knee down into the bed to tighten your thigh. Hold 5s. 10 reps, 4-6x daily.", completed: false, videoTips: ["Focus on quad contraction", "Keep heel flat", "Do not hold breath"], videoUrl: "https://www.youtube.com/embed/shSiZn5x9R8" },
-        { id: "hs", name: "Heel Slides", description: "Gently slide your heel toward your buttocks, bending your knee as far as comfortable. Hold 5s. 3 sets of 10.", completed: false, videoTips: ["Use a strap if needed", "Do not force bending", "Slide smoothly"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=75" },
-        { id: "pm", name: "Patellar Mobilisation", description: "Use your fingers to gently push your kneecap up, down, and side to side. 2-3 minutes, twice daily.", completed: false, videoTips: ["Keep quadricep relaxed", "Use light pressure", "Cover all 4 directions"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=40" },
-        { id: "slr", name: "Straight Leg Raises", description: "Tighten thigh, lift leg 6 inches, hold for 5s. 3 sets of 10.", completed: false, videoTips: ["Ensure knee is locked straight", "Hold for a full 5 count", "Control lowering"], videoUrl: "https://www.youtube.com/embed/2iB8pcKzJgo?start=120" }
-      ];
-      documents = [
-        { title: "ACL Reconstruction Recovery Guide", filename: "acl-reconstruction-recovery-guide.pdf", date: surgeryDate, type: "Guide" },
         { title: "Post-Op Consultation Summary Letter", filename: "lkc-post-op-summary-jenkins.pdf", date: surgeryDate, type: "Letter" },
         { title: "Referral Script: Post-Op MRI Assessment", filename: "lkc-mri-referral-jenkins.pdf", date: surgeryDate, type: "Order" }
       ];
@@ -145,8 +135,12 @@ export async function POST(request: Request) {
       daysPostOp,
       surgeon: "Mr. Ricardo J Pacheco FRCS Tr & Orth",
       balanceDue: parseFloat(balanceDue) || 0.0,
-      insuranceProvider: insuranceProvider || null,
-      insurancePreAuth: insurancePreAuth || null,
+      insuranceProvider: insuranceProvider || "Self-Pay",
+      policyNumber: policyNumber || null,
+      insurancePreAuth: insurancePreAuth || preAuthCode || null,
+      ubrn: ubrn || null,
+      referringGp: body.referringGp || "Lindum Medical Practice",
+      referringPhysio: body.referringPhysio || "Louth County Physio Clinic",
       accessTier,
       exercises,
       documents

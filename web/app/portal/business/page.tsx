@@ -3,15 +3,144 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 
+// SVG Visual Chart Component: Revenue Growth & 90-Day Forecast
+const RevenueForecastChart = () => {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul (Now)", "Aug (Fcst)", "Sep (Fcst)", "Oct (Fcst)"];
+  const actuals = [62, 74, 88, 95, 110, 118, 128, 135, 142, 150];
+  const height = 140;
+  const width = 600;
+  const maxVal = 160;
+
+  const points = actuals
+    .map((v, i) => {
+      const x = (i / (actuals.length - 1)) * (width - 40) + 20;
+      const y = height - (v / maxVal) * (height - 30) - 10;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between items-center text-xs">
+        <span className="font-bold text-white uppercase tracking-wider">Practice Monthly Revenue &amp; 90-Day Trend Forecast (£k)</span>
+        <span className="text-cyan-400 font-mono font-bold">Target: £150k / Month</span>
+      </div>
+      <div className="w-full bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-inner">
+        <svg viewBox={`0 0 ${width} ${height + 25}`} className="w-full h-auto overflow-visible">
+          <defs>
+            <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {[0.25, 0.5, 0.75, 1].map((ratio, idx) => (
+            <line
+              key={idx}
+              x1="20"
+              y1={height - ratio * (height - 30) - 10}
+              x2={width - 20}
+              y2={height - ratio * (height - 30) - 10}
+              stroke="#1e293b"
+              strokeDasharray="4 4"
+            />
+          ))}
+          <polygon points={`20,${height - 10} ${points} ${width - 20},${height - 10}`} fill="url(#revGrad)" />
+          <polyline points={points} fill="none" stroke="#06b6d4" strokeWidth="3" strokeLinecap="round" />
+          {actuals.map((v, i) => {
+            const x = (i / (actuals.length - 1)) * (width - 40) + 20;
+            const y = height - (v / maxVal) * (height - 30) - 10;
+            const isForecast = i >= 7;
+            return (
+              <g key={i}>
+                <circle cx={x} cy={y} r="4" fill={isForecast ? "#10b981" : "#06b6d4"} stroke="#0f172a" strokeWidth="2" />
+                <text x={x} y={y - 8} textAnchor="middle" fill={isForecast ? "#34d399" : "#67e8f9"} fontSize="9" fontWeight="bold">
+                  £{v}k
+                </text>
+                <text x={x} y={height + 14} textAnchor="middle" fill="#94a3b8" fontSize="9">
+                  {months[i]}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    </div>
+  );
+};
+
+// SVG Visual Chart Component: Acquisition Donut Breakdown
+const ReferralDonutChart = () => {
+  const channels = [
+    { label: "Google Organic Search", value: 42, color: "#06b6d4" },
+    { label: "Bupa Directory", value: 24, color: "#3b82f6" },
+    { label: "AXA / Aviva Finder", value: 16, color: "#8b5cf6" },
+    { label: "GP & Physio Network", value: 11, color: "#10b981" },
+    { label: "Direct / Word-of-Mouth", value: 7, color: "#f59e0b" },
+  ];
+
+  return (
+    <div className="p-5 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
+      <h4 className="text-xs font-bold text-white uppercase tracking-wider">Acquisition Channel Split</h4>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+        <div className="relative flex justify-center items-center">
+          <svg viewBox="0 0 36 36" className="w-32 h-32 transform -rotate-90">
+            <circle cx="18" cy="18" r="15.915" fill="none" stroke="#1e293b" strokeWidth="3.8" />
+            {(() => {
+              let cumulative = 0;
+              return channels.map((c, i) => {
+                const strokeDasharray = `${c.value} ${100 - c.value}`;
+                const strokeDashoffset = 100 - cumulative;
+                cumulative += c.value;
+                return (
+                  <circle
+                    key={i}
+                    cx="18"
+                    cy="18"
+                    r="15.915"
+                    fill="none"
+                    stroke={c.color}
+                    strokeWidth="3.8"
+                    strokeDasharray={strokeDasharray}
+                    strokeDashoffset={strokeDashoffset}
+                  />
+                );
+              });
+            })()}
+          </svg>
+          <div className="absolute text-center">
+            <div className="text-sm font-bold text-white font-mono">3,940</div>
+            <div className="text-[9px] text-slate-400">Visitors</div>
+          </div>
+        </div>
+        <div className="space-y-2 text-xs">
+          {channels.map((c, i) => (
+            <div key={i} className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: c.color }} />
+                <span className="text-slate-300 text-[11px]">{c.label}</span>
+              </div>
+              <span className="font-mono font-bold text-white text-[11px]">{c.value}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function BusinessDashboardPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
   const [timeframe, setTimeframe] = useState<"7d" | "30d" | "ytd">("30d");
-  const [activeTab, setActiveTab] = useState<"overview" | "acquisition" | "recovery" | "journeys" | "revenue" | "newsletter">("overview");
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "yield" | "referrals" | "recall" | "acquisition" | "recovery" | "journeys" | "revenue" | "newsletter"
+  >("overview");
   const [statsData, setStatsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [sentFollowUps, setSentFollowUps] = useState<{ [key: string]: boolean }>({});
+  const [sentRecalls, setSentRecalls] = useState<{ [key: string]: boolean }>({});
+  const [sentReferrals, setSentReferrals] = useState<{ [key: string]: boolean }>({});
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [approvalMode, setApprovalMode] = useState<"manual" | "auto">("manual");
   const [toastMessage, setToastMessage] = useState<string>("");
@@ -24,6 +153,12 @@ export default function BusinessDashboardPage() {
   const handleBroadcastCampaign = () => {
     const channelLabel = deliveryChannel === "whatsapp" ? "WhatsApp" : deliveryChannel === "both" ? "Email & WhatsApp" : "Email";
     setToastMessage(`✓ Targeted Newsletter Broadcasted via ${channelLabel} to ${campaignSegment} Subscribers!`);
+    setTimeout(() => setToastMessage(""), 4000);
+  };
+
+  // Broadcast Cancellation Fill Slot
+  const handleFillEmptySlots = () => {
+    setToastMessage("✓ Broadcasted 4 available cancellation slots to waiting-list patients via SMS & Email!");
     setTimeout(() => setToastMessage(""), 4000);
   };
 
@@ -112,18 +247,16 @@ export default function BusinessDashboardPage() {
         <div className="w-full max-w-md bg-slate-800/90 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-2xl p-8 relative z-10">
           <div className="flex flex-col items-center text-center mb-6">
             <div className="w-14 h-14 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl flex items-center justify-center mb-4 shadow-inner">
-              <svg className="w-8 h-8 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 012-2h2a2 2 0 012 2v6m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
+              <img src="/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" className="w-10 h-10 object-contain" />
             </div>
             <h1 className="font-serif text-2xl font-bold text-white tracking-tight">
               Lincolnshire Knee Clinic
             </h1>
             <p className="text-xs uppercase tracking-widest text-cyan-400 font-semibold mt-1">
-              Business & Practice Intelligence
+              Business &amp; Practice Intelligence
             </p>
             <p className="text-xs text-slate-400 mt-2">
-              Enter your 6-digit Security PIN to access live practice telemetry & growth metrics.
+              Enter your 6-digit Security PIN to access live practice telemetry &amp; growth metrics.
             </p>
           </div>
 
@@ -185,9 +318,7 @@ export default function BusinessDashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-cyan-500/10 border border-cyan-500/30 rounded-xl flex items-center justify-center shrink-0">
-              <svg className="w-6 h-6 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+              <img src="/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" className="w-7 h-7 object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -199,7 +330,7 @@ export default function BusinessDashboardPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Patient Behaviour, Acquisition Channels & Revenue Growth Dashboard
+                Patient Behaviour, Acquisition Channels &amp; Revenue Growth Dashboard
               </p>
             </div>
           </div>
@@ -265,28 +396,34 @@ export default function BusinessDashboardPage() {
           </div>
         </div>
 
-        {/* Dashboard Navigation Tabs */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-6 text-xs font-semibold border-t border-slate-800/80 overflow-x-auto">
-          {[
-            { id: "overview", label: "Executive Overview" },
-            { id: "acquisition", label: "Acquisition & Lincolnshire Postcodes" },
-            { id: "recovery", label: "Abandoned Booking Recovery" },
-            { id: "journeys", label: "Symptom Journey Flows" },
-            { id: "revenue", label: "Revenue & NPS Ratings" },
-            { id: "newsletter", label: "Newsletter & Marketing" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`py-3 border-b-2 whitespace-nowrap transition-colors ${
-                activeTab === tab.id
-                  ? "border-cyan-400 text-cyan-400 font-bold"
-                  : "border-transparent text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Centered Executive Tab Bar */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 border-t border-slate-800/80">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
+            {[
+              { id: "overview", label: "Executive Overview", icon: "📊" },
+              { id: "yield", label: "Treatment Yield & Margins", icon: "💰" },
+              { id: "referrals", label: "GP & Physio Referrals", icon: "🩺" },
+              { id: "recall", label: "Patient Recalls", icon: "🔄" },
+              { id: "acquisition", label: "Postcode Catchment", icon: "🗺️" },
+              { id: "recovery", label: "Abandoned Bookings", icon: "🛒" },
+              { id: "journeys", label: "Symptom Journeys", icon: "🔀" },
+              { id: "revenue", label: "Revenue & NPS", icon: "⭐" },
+              { id: "newsletter", label: "Newsletter & Ads", icon: "📧" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`py-1.5 px-3 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1.5 cursor-pointer border whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? "bg-cyan-500 text-slate-950 border-cyan-400 shadow-md font-extrabold"
+                    : "bg-slate-950 text-slate-300 hover:text-white border-slate-800 hover:border-slate-700"
+                }`}
+              >
+                <span className="text-xs">{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
@@ -302,67 +439,68 @@ export default function BusinessDashboardPage() {
             {/* Executive KPI Header Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Unique Visitors */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-                <div className="flex items-center justify-between gap-2 text-slate-400 text-xs mb-2">
-                  <span className="font-semibold uppercase tracking-wider truncate">Unique Visitors</span>
-                  <span className="text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full whitespace-nowrap inline-flex items-center justify-center text-center text-[11px] leading-none shrink-0">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg relative overflow-hidden">
+                <div className="flex items-center justify-between gap-1.5 text-slate-400 mb-2">
+                  <span className="font-bold text-[10px] uppercase tracking-wide text-slate-300">Unique Visitors</span>
+                  <span className="text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full whitespace-nowrap text-[10px] leading-none shrink-0">
                     +12.4%
                   </span>
                 </div>
-                <div className="text-3xl font-bold text-white tracking-tight">
+                <div className="text-2xl xl:text-3xl font-extrabold text-white tracking-tight">
                   {statsData?.traffic?.uniqueVisitors?.toLocaleString() || "3,940"}
                 </div>
-                <div className="text-xs text-slate-400 mt-2 flex items-center justify-between">
+                <div className="text-[11px] text-slate-400 mt-2 flex items-center justify-between flex-wrap gap-1">
                   <span>Page Views: {statsData?.traffic?.pageViewsTotal?.toLocaleString()}</span>
                   <span className="text-cyan-400 font-medium">Avg {statsData?.traffic?.avgSessionDuration}</span>
                 </div>
               </div>
 
               {/* Conversion Rate */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-                <div className="flex items-center justify-between gap-2 text-slate-400 text-xs mb-2">
-                  <span className="font-semibold uppercase tracking-wider truncate">Consultation Conversion</span>
-                  <span className="text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full whitespace-nowrap inline-flex items-center justify-center text-center text-[11px] leading-none shrink-0">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg relative overflow-hidden">
+                <div className="flex items-center justify-between gap-1.5 text-slate-400 mb-2">
+                  <span className="font-bold text-[10px] uppercase tracking-wide text-slate-300">Consultation Conversion</span>
+                  <span className="text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full whitespace-nowrap text-[10px] leading-none shrink-0">
                     Top 5%
                   </span>
                 </div>
-                <div className="text-3xl font-bold text-white tracking-tight">
+                <div className="text-2xl xl:text-3xl font-extrabold text-white tracking-tight">
                   {statsData?.traffic?.conversionRate || "4.64%"}
                 </div>
-                <div className="text-xs text-slate-400 mt-2">
+                <div className="text-[11px] text-slate-400 mt-2">
                   183 Confirmed Patient Appointments
                 </div>
               </div>
 
               {/* Practice Revenue Matrix */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-                <div className="flex items-center justify-between gap-2 text-slate-400 text-xs mb-2">
-                  <span className="font-semibold uppercase tracking-wider truncate">Total Practice Balances</span>
-                  <span className="text-cyan-400 font-bold bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 rounded-full whitespace-nowrap inline-flex items-center justify-center text-center text-[11px] leading-none shrink-0">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg relative overflow-hidden">
+                <div className="flex items-center justify-between gap-1.5 text-slate-400 mb-2">
+                  <span className="font-bold text-[10px] uppercase tracking-wide text-slate-300">Total Practice Balances</span>
+                  <span className="text-cyan-400 font-bold bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full whitespace-nowrap text-[10px] leading-none shrink-0">
                     {statsData?.summary?.insuredCount || 0} Insured
                   </span>
                 </div>
-                <div className="text-3xl font-bold text-white tracking-tight">
+                <div className="text-2xl xl:text-3xl font-extrabold text-white tracking-tight">
                   {statsData?.summary?.totalBalanceDue || "£306,900.00"}
                 </div>
-                <div className="text-xs text-slate-400 mt-2 flex items-center justify-between">
-                  <span>Active Accounts: {statsData?.summary?.registeredPatientsCount}</span>
+                <div className="text-[11px] text-slate-400 mt-2 flex items-center justify-between flex-wrap gap-1">
                   <span>Self-Pay: {statsData?.summary?.selfPayCount}</span>
+                  <span>Insured: {statsData?.summary?.insuredCount}</span>
+                  <span className="text-cyan-400 font-bold">NHS: {statsData?.summary?.nhsCount || 0}</span>
                 </div>
               </div>
 
               {/* Net Promoter Score */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-                <div className="flex items-center justify-between gap-2 text-slate-400 text-xs mb-2">
-                  <span className="font-semibold uppercase tracking-wider truncate">Patient NPS Rating</span>
-                  <span className="text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full whitespace-nowrap inline-flex items-center justify-center text-center text-[11px] leading-none shrink-0">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg relative overflow-hidden">
+                <div className="flex items-center justify-between gap-1.5 text-slate-400 mb-2">
+                  <span className="font-bold text-[10px] uppercase tracking-wide text-slate-300">Patient NPS Rating</span>
+                  <span className="text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full whitespace-nowrap text-[10px] leading-none shrink-0">
                     ★★★★★
                   </span>
                 </div>
-                <div className="text-3xl font-bold text-white tracking-tight">
-                  {statsData?.satisfaction?.npsScore} <span className="text-sm font-normal text-slate-400">NPS ({statsData?.satisfaction?.starRating})</span>
+                <div className="text-2xl xl:text-3xl font-extrabold text-white tracking-tight">
+                  {statsData?.satisfaction?.npsScore} <span className="text-xs font-normal text-slate-400">NPS ({statsData?.satisfaction?.starRating})</span>
                 </div>
-                <div className="text-xs text-slate-400 mt-2">
+                <div className="text-[11px] text-slate-400 mt-2">
                   {statsData?.satisfaction?.verifiedReviewsCount} Verified Patient Reviews
                 </div>
               </div>
@@ -370,78 +508,377 @@ export default function BusinessDashboardPage() {
 
             {/* TAB 1: EXECUTIVE OVERVIEW */}
             {activeTab === "overview" && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Conversion Funnel Bar Chart */}
-                <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                    <div>
-                      <h2 className="text-lg font-bold text-white">Patient Conversion Funnel</h2>
-                      <p className="text-xs text-slate-400">Step-by-step visitor progression from landing to consultation</p>
+              <div className="space-y-8">
+                {/* 30-Day Predictive Revenue & Pipeline Card */}
+                <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/60 border border-cyan-500/30 rounded-2xl p-6 shadow-xl relative overflow-hidden space-y-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full">
+                          🔮 Predictive AI Revenue Forecast
+                        </span>
+                        <span className="text-xs text-slate-400">Monthly Target: 84% Achieved</span>
+                      </div>
+                      <h2 className="text-2xl font-serif font-bold text-white tracking-tight">
+                        30-Day Revenue Pipeline: <span className="text-cyan-400 font-mono">{statsData?.revenueForecast?.next30Days || "£128,400"}</span>
+                      </h2>
+                      <p className="text-xs text-slate-300 max-w-2xl">
+                        Based on {statsData?.revenueForecast?.confirmedSurgicalPipeline || 18} confirmed surgical cases, {statsData?.revenueForecast?.confirmedInjectionPipeline || 24} injection bookings, and {statsData?.revenueForecast?.consultationPipeline || 36} active consultations.
+                      </p>
                     </div>
-                    <span className="text-xs text-cyan-400 font-mono font-semibold">Live Traffic Flow</span>
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+                      <div className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl text-center">
+                        <div className="text-xs text-slate-400">90-Day Pipeline</div>
+                        <div className="text-lg font-bold font-mono text-emerald-400">{statsData?.revenueForecast?.next90Days || "£364,200"}</div>
+                      </div>
+                      <button
+                        onClick={handleFillEmptySlots}
+                        className="px-4 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                      >
+                        <span>⚡ Fill 4 Cancellation Slots</span>
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="space-y-4">
-                    {statsData?.traffic?.funnel?.map((step: any, idx: number) => {
-                      const percentages = [100, 63, 17, 44];
-                      return (
-                        <div key={idx} className="space-y-1.5">
-                          <div className="flex items-center justify-between text-xs font-semibold">
-                            <span className="text-slate-200">{step.step}</span>
-                            <span className="text-slate-400 font-mono">
-                              {step.count.toLocaleString()} visitors ({step.conversion})
-                            </span>
+                  {/* SVG Revenue Forecast Trend Graph */}
+                  <RevenueForecastChart />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Conversion Funnel Bar Chart */}
+                  <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                      <div>
+                        <h2 className="text-lg font-bold text-white">Patient Conversion Funnel</h2>
+                        <p className="text-xs text-slate-400">Step-by-step visitor progression from landing to consultation</p>
+                      </div>
+                      <span className="text-xs text-cyan-400 font-mono font-semibold">Live Traffic Flow</span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {statsData?.traffic?.funnel?.map((step: any, idx: number) => {
+                        const percentages = [100, 63, 17, 44];
+                        return (
+                          <div key={idx} className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs font-semibold">
+                              <span className="text-slate-200">{step.step}</span>
+                              <span className="text-slate-400 font-mono">
+                                {step.count.toLocaleString()} visitors ({step.conversion})
+                              </span>
+                            </div>
+                            <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                              <div
+                                className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-1000"
+                                style={{ width: `${percentages[idx]}%` }}
+                              />
+                            </div>
                           </div>
-                          <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-                            <div
-                              className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-1000"
-                              style={{ width: `${percentages[idx]}%` }}
-                            />
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Device Breakdown & Top Procedures */}
+                  <div className="space-y-6">
+                    {/* Device Ratio */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wider">Device Audience Split</h3>
+                      <div className="flex items-center justify-between text-xs text-slate-300">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-cyan-400" />
+                          <span>Mobile ({statsData?.traffic?.deviceBreakdown?.mobile}%)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-blue-500" />
+                          <span>Desktop ({statsData?.traffic?.deviceBreakdown?.desktop}%)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-slate-600" />
+                          <span>Tablet ({statsData?.traffic?.deviceBreakdown?.tablet}%)</span>
+                        </div>
+                      </div>
+                      <div className="w-full h-3 bg-slate-950 rounded-full flex overflow-hidden">
+                        <div className="bg-cyan-400 h-full" style={{ width: `${statsData?.traffic?.deviceBreakdown?.mobile}%` }} />
+                        <div className="bg-blue-500 h-full" style={{ width: `${statsData?.traffic?.deviceBreakdown?.desktop}%` }} />
+                        <div className="bg-slate-600 h-full" style={{ width: `${statsData?.traffic?.deviceBreakdown?.tablet}%` }} />
+                      </div>
+                    </div>
+
+                    {/* Top Treatments Breakdown */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wider">Top Viewed Procedures</h3>
+                      <div className="space-y-3">
+                        {statsData?.traffic?.topProcedures?.map((proc: any, i: number) => (
+                          <div key={i} className="flex items-center justify-between text-xs">
+                            <span className="text-slate-300 truncate max-w-[200px]">{proc.name}</span>
+                            <span className="text-cyan-400 font-mono font-semibold">{proc.percent}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: TREATMENT YIELD & MARGINS */}
+            {activeTab === "yield" && (
+              <div className="space-y-8">
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
+                  <div className="border-b border-slate-800 pb-4 flex justify-between items-center">
+                    <div>
+                      <h2 className="text-lg font-bold text-white">Treatment Profitability &amp; Funding Tier Matrix</h2>
+                      <p className="text-xs text-slate-400">Analysis of revenue per case, Self-Pay, Private Insurance, and NHS e-Referral splits</p>
+                    </div>
+                    <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold px-3 py-1 rounded-full">
+                      Avg Margin 64.2%
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {statsData?.revenueMatrix?.map((rev: any, idx: number) => (
+                      <div key={idx} className="p-5 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-bold text-white text-sm font-serif">{rev.procedure}</h3>
+                          <span className="font-mono font-bold text-cyan-400 text-lg">{rev.totalRevenue}</span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2 text-xs py-2 border-y border-slate-900">
+                          <div>
+                            <span className="text-slate-500 text-[10px] block uppercase">Avg Case Value</span>
+                            <span className="font-mono font-bold text-slate-200">{rev.avgCaseValue}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 text-[10px] block uppercase">Self-Pay</span>
+                            <span className="font-mono font-bold text-emerald-400">{rev.selfPayPercent}%</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 text-[10px] block uppercase">Insured</span>
+                            <span className="font-mono font-bold text-blue-400">{rev.insuredPercent}%</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 text-[10px] block uppercase">NHS e-Ref</span>
+                            <span className="font-mono font-bold text-cyan-400">{rev.nhsPercent || 15}%</span>
                           </div>
                         </div>
-                      );
-                    })}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] text-slate-400">
+                            <span>Funding Tier Split (Self-Pay / Insured / NHS)</span>
+                            <span>{rev.selfPayPercent}% / {rev.insuredPercent}% / {rev.nhsPercent || 15}%</span>
+                          </div>
+                          <div className="w-full h-2.5 bg-slate-900 rounded-full flex overflow-hidden border border-slate-800">
+                            <div className="bg-emerald-400 h-full" style={{ width: `${rev.selfPayPercent}%` }} />
+                            <div className="bg-blue-500 h-full" style={{ width: `${rev.insuredPercent}%` }} />
+                            <div className="bg-cyan-400 h-full" style={{ width: `${rev.nhsPercent || 15}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* Device Breakdown & Top Procedures */}
-                <div className="space-y-6">
-                  {/* Device Ratio */}
-                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Device Audience Split</h3>
-                    <div className="flex items-center justify-between text-xs text-slate-300">
+                {/* Dedicated Diagnostic Imaging Referral Revenue & Telemetry Card */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
+                  <div className="border-b border-slate-800 pb-4 flex justify-between items-center flex-wrap gap-2">
+                    <div>
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-cyan-400" />
-                        <span>Mobile ({statsData?.traffic?.deviceBreakdown?.mobile}%)</span>
+                        <h2 className="text-lg font-bold text-white font-serif">Diagnostic Imaging Revenue &amp; Referral Analytics</h2>
+                        <span className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                          Vista Health Network
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-blue-500" />
-                        <span>Desktop ({statsData?.traffic?.deviceBreakdown?.desktop}%)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-slate-600" />
-                        <span>Tablet ({statsData?.traffic?.deviceBreakdown?.tablet}%)</span>
-                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Yield from clinical referral vetting, electronic PACS requisitions, radiologist report reviews, and booking administration
+                      </p>
                     </div>
-                    <div className="w-full h-3 bg-slate-950 rounded-full flex overflow-hidden">
-                      <div className="bg-cyan-400 h-full" style={{ width: `${statsData?.traffic?.deviceBreakdown?.mobile}%` }} />
-                      <div className="bg-blue-500 h-full" style={{ width: `${statsData?.traffic?.deviceBreakdown?.desktop}%` }} />
-                      <div className="bg-slate-600 h-full" style={{ width: `${statsData?.traffic?.deviceBreakdown?.tablet}%` }} />
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Net Diagnostic Margin</span>
+                      <span className="font-mono text-xl font-extrabold text-emerald-400">
+                        {statsData?.diagnosticTelemetry?.netClinicProfit || "£4,960.00"}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Top Treatments Breakdown */}
-                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Top Viewed Procedures</h3>
-                    <div className="space-y-3">
-                      {statsData?.traffic?.topProcedures?.map((proc: any, i: number) => (
-                        <div key={i} className="flex items-center justify-between text-xs">
-                          <span className="text-slate-300 truncate max-w-[200px]">{proc.name}</span>
-                          <span className="text-cyan-400 font-mono font-semibold">{proc.percent}%</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Total Diagnostic Scans</span>
+                      <span className="font-mono text-xl font-bold text-white">
+                        {statsData?.diagnosticTelemetry?.totalDiagnosticCases || 64} Cases
+                      </span>
+                      <span className="text-[10px] text-cyan-400 block font-semibold">100% PACS Verified</span>
+                    </div>
+                    <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Gross Billings</span>
+                      <span className="font-mono text-xl font-bold text-cyan-300">
+                        {statsData?.diagnosticTelemetry?.grossDiagnosticBillings || "£19,840.00"}
+                      </span>
+                      <span className="text-[10px] text-slate-400 block">Retail Patient Charges</span>
+                    </div>
+                    <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Provider Wholesale Cost</span>
+                      <span className="font-mono text-xl font-bold text-slate-300">
+                        {statsData?.diagnosticTelemetry?.wholesaleProviderCost || "£14,880.00"}
+                      </span>
+                      <span className="text-[10px] text-slate-400 block">Vista Invoiced Rate</span>
+                    </div>
+                    <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Accounts Payable</span>
+                      <span className="font-mono text-xl font-bold text-amber-400">
+                        {statsData?.diagnosticTelemetry?.accountsPayable30Days || "£14,880.00"}
+                      </span>
+                      <span className="text-[10px] text-amber-300/80 block font-semibold">30-Day Provider Terms</span>
+                    </div>
+                  </div>
+
+                  {/* Breakdown by Scan Modality */}
+                  <div className="space-y-3 pt-2">
+                    <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Modality Performance &amp; Administration Yield</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {statsData?.diagnosticTelemetry?.breakdown?.map((item: any, i: number) => (
+                        <div key={i} className="p-4 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2 text-xs">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-white font-serif">{item.modality}</span>
+                            <span className="font-mono font-bold text-cyan-400">{item.cases} Cases</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[11px] text-slate-400 pt-1 border-t border-slate-900">
+                            <span>Gross Billings:</span>
+                            <span className="font-mono font-semibold text-slate-200">{item.grossBillings}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[11px] text-slate-400">
+                            <span>Clinic Admin Yield:</span>
+                            <span className="font-mono font-bold text-emerald-400">{item.clinicMargin}</span>
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: GP & PHYSIO REFERRAL NETWORK */}
+            {activeTab === "referrals" && (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                  <div>
+                    <h2 className="text-lg font-bold text-white">GP &amp; Physiotherapist Referral Network Leaderboard</h2>
+                    <p className="text-xs text-slate-400">Tracking regional medical practices sending surgical &amp; injection referrals</p>
+                  </div>
+                  <span className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-xs font-bold px-3 py-1 rounded-full">
+                    53 Active Referrers
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300">
+                    <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold">
+                      <tr>
+                        <th className="py-3 px-4 rounded-l-lg">Medical Practice</th>
+                        <th className="py-3 px-4">GP / Physio Count</th>
+                        <th className="py-3 px-4">Referrals Logged</th>
+                        <th className="py-3 px-4">Primary Pathway</th>
+                        <th className="py-3 px-4 font-mono text-cyan-400">Yield Generated</th>
+                        <th className="py-3 px-4 text-right rounded-r-lg">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                      {statsData?.gpReferrals?.map((ref: any, idx: number) => {
+                        const isSent = sentReferrals[ref.practiceName];
+                        return (
+                          <tr key={idx} className="hover:bg-slate-800/50 transition-colors">
+                            <td className="py-3.5 px-4 font-bold text-white">{ref.practiceName}</td>
+                            <td className="py-3.5 px-4 text-slate-400 font-mono">{ref.GPCount} Clinicians</td>
+                            <td className="py-3.5 px-4 font-bold text-slate-200">{ref.referralsCount} ({ref.convertedCases} Converted)</td>
+                            <td className="py-3.5 px-4 text-clinical-teal font-semibold">{ref.primaryPathway}</td>
+                            <td className="py-3.5 px-4 font-mono font-bold text-emerald-400">{ref.revenueGenerated}</td>
+                            <td className="py-3.5 px-4 text-right">
+                              {isSent ? (
+                                <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold px-3 py-1 rounded-lg text-xs">
+                                  ✓ Progress Sent
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setSentReferrals((prev) => ({ ...prev, [ref.practiceName]: true }));
+                                    setToastMessage(`✓ Dispatched progress summary update to ${ref.practiceName}`);
+                                    setTimeout(() => setToastMessage(""), 4000);
+                                  }}
+                                  className="px-3 py-1.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 font-bold text-xs rounded-lg cursor-pointer"
+                                >
+                                  📨 Dispatch Update
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: PATIENT RECALLS & RETENTION */}
+            {activeTab === "recall" && (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Patient Recall &amp; Re-Engagement Queue</h2>
+                    <p className="text-xs text-slate-400">Automated 12-month injection repeat reviews and post-op check-up reminders</p>
+                  </div>
+                  <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-bold px-3 py-1 rounded-full">
+                    {statsData?.recallQueue?.length || 0} Pending Recalls
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300">
+                    <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold">
+                      <tr>
+                        <th className="py-3 px-4 rounded-l-lg">Recall ID</th>
+                        <th className="py-3 px-4">Patient Name &amp; Email</th>
+                        <th className="py-3 px-4">Recall Requirement</th>
+                        <th className="py-3 px-4">Original Care Date</th>
+                        <th className="py-3 px-4">Potential Yield</th>
+                        <th className="py-3 px-4 text-right rounded-r-lg">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                      {statsData?.recallQueue?.map((item: any, idx: number) => {
+                        const isSent = sentRecalls[item.id];
+                        return (
+                          <tr key={idx} className="hover:bg-slate-800/50 transition-colors">
+                            <td className="py-3.5 px-4 font-mono text-slate-400">{item.id}</td>
+                            <td className="py-3.5 px-4">
+                              <div className="font-bold text-white">{item.patientName}</div>
+                              <div className="text-[11px] text-slate-400 font-mono">{item.email}</div>
+                            </td>
+                            <td className="py-3.5 px-4 text-cyan-400 font-semibold">{item.recallType}</td>
+                            <td className="py-3.5 px-4 text-slate-400">{item.originalDate}</td>
+                            <td className="py-3.5 px-4 font-mono font-bold text-emerald-400">{item.estimatedYield}</td>
+                            <td className="py-3.5 px-4 text-right">
+                              {isSent ? (
+                                <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold px-3 py-1 rounded-lg text-xs">
+                                  ✓ Recall Sent
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setSentRecalls((prev) => ({ ...prev, [item.id]: true }));
+                                    setToastMessage(`✓ Sent recall notification via Email & WhatsApp to ${item.patientName}`);
+                                    setTimeout(() => setToastMessage(""), 4000);
+                                  }}
+                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow cursor-pointer"
+                                >
+                                  📲 Send Recall Trigger
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
@@ -456,6 +893,8 @@ export default function BusinessDashboardPage() {
                     <p className="text-xs text-slate-400">Marketing & referral channel distribution</p>
                   </div>
                   <div className="space-y-4">
+                    <ReferralDonutChart />
+
                     {statsData?.referralSources?.map((ref: any, idx: number) => (
                       <div key={idx} className="space-y-1.5">
                         <div className="flex items-center justify-between text-xs font-semibold">

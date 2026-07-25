@@ -25,13 +25,38 @@ export default function BookAppointment() {
 
       {/* 2. Introductory booking explanation */}
       <div className="my-8 bg-pale-clinical-blue border border-clinical-teal/20 rounded-xl p-5 md:p-6 text-sm text-text-secondary leading-relaxed">
-        <p className="font-bold text-deep-navy text-base mb-2">Choosing Your Pathway</p>
+        <p className="font-bold text-deep-navy text-base mb-2">Choosing Your Pathway &amp; Funding Option</p>
         <p className="mb-2">
-          To ensure you receive the most appropriate care, we offer two consultation pathways. Please review the options below to select between a face-to-face clinical assessment or a video-based consultation.
+          To ensure you receive the most appropriate care, we accommodate <strong>Self-Pay</strong>, <strong>Private Medical Insurance</strong>, and <strong>NHS e-Referral (Choose &amp; Book)</strong> patients. Please review the consultation pathways below.
         </p>
         <p className="text-xs text-text-muted italic">
           Please note that booking arrangements differ by location, and this website does not confirm face-to-face appointments directly.
         </p>
+      </div>
+
+      {/* 3. NHS e-Referral & Private Funding Tiers */}
+      <div className="my-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-4 bg-white border border-border-clinical rounded-xl shadow-xs space-y-1">
+          <div className="text-xs font-bold uppercase tracking-wider text-clinical-teal">💳 Self-Pay Patients</div>
+          <h4 className="font-bold text-deep-navy text-sm">Direct Self-Referral</h4>
+          <p className="text-xs text-text-secondary leading-relaxed">
+            Self-funding patients can self-refer and schedule a consultation directly without needing a prior GP referral letter.
+          </p>
+        </div>
+        <div className="p-4 bg-white border border-border-clinical rounded-xl shadow-xs space-y-1">
+          <div className="text-xs font-bold uppercase tracking-wider text-clinical-teal">🛡️ Private Insurance</div>
+          <h4 className="font-bold text-deep-navy text-sm">Bupa, AXA, Aviva &amp; Vitality</h4>
+          <p className="text-xs text-text-secondary leading-relaxed">
+            Recognized by all major UK private health insurers. Obtain a pre-authorisation code from your provider prior to your appointment.
+          </p>
+        </div>
+        <div className="p-4 bg-white border border-clinical-teal/40 bg-pale-clinical-blue/40 rounded-xl shadow-xs space-y-1">
+          <div className="text-xs font-bold uppercase tracking-wider text-clinical-teal">🏥 NHS Patients (e-Referral)</div>
+          <h4 className="font-bold text-deep-navy text-sm">NHS Choose &amp; Book System</h4>
+          <p className="text-xs text-text-secondary leading-relaxed">
+            NHS patients can be referred by their NHS General Practitioner to see Mr Ricardo J Pacheco via the NHS e-Referral service at partner hospital locations.
+          </p>
+        </div>
       </div>
 
       {/* WhatsApp booking assistance panel */}

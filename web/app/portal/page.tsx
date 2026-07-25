@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Button } from "@/components/Button";
 import { PageHeader } from "@/components/PageHeader";
@@ -24,6 +24,7 @@ interface RecoveryDoc {
 
 interface PatientInfo {
   name: string;
+  email?: string;
   dob: string;
   patientId: string;
   surgery: string;
@@ -327,7 +328,68 @@ export default function PatientPortal() {
 
   // Loaded Patient info states
   const [currentPatient, setCurrentPatient] = useState<PatientInfo | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "appointments" | "intake" | "recovery" | "billing">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "appointments" | "intake" | "recovery" | "billing" | "messages">("overview");
+
+  // Messaging state
+  const [patientMsgText, setPatientMsgText] = useState("");
+  const [isSendingPatientMsg, setIsSendingPatientMsg] = useState(false);
+  const [patientMessages, setPatientMessages] = useState<any[]>([]);
+
+  const fetchPatientMessages = useCallback(async (emailParam: string) => {
+    try {
+      const res = await fetch(`/api/portal/messages?email=${encodeURIComponent(emailParam)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPatientMessages(data.messages || []);
+      }
+    } catch (_) {}
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn && currentPatient?.email) {
+      fetchPatientMessages(currentPatient.email);
+    }
+  }, [isLoggedIn, currentPatient, fetchPatientMessages]);
+
+  const handleSendPatientMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPatient?.email || !patientMsgText.trim()) return;
+    setIsSendingPatientMsg(true);
+    try {
+      const res = await fetch("/api/portal/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: currentPatient.email,
+          text: patientMsgText.trim(),
+          sender: "patient"
+        })
+      });
+      if (res.ok) {
+        setPatientMsgText("");
+        fetchPatientMessages(currentPatient.email);
+      }
+    } catch (_) {} finally {
+      setIsSendingPatientMsg(false);
+    }
+  };
+
+  const handleVoiceDictation = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.lang = "en-GB";
+      recognition.onresult = (e: any) => {
+        const text = e.results[0][0].transcript;
+        if (text) {
+          setPatientMsgText((prev) => (prev ? `${prev} ${text}` : text));
+        }
+      };
+      recognition.start();
+    } catch (_) {}
+  };
 
   // Exercises state
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -936,6 +998,7 @@ export default function PatientPortal() {
             {[
               { id: "overview" as const, label: "Overview & Timeline", icon: "📋" },
               { id: "appointments" as const, label: "Schedule & Telehealth", icon: "📅" },
+              { id: "messages" as const, label: "Clinical Messages", icon: "💬" },
               { id: "intake" as const, label: "Digital Intake & Consents", icon: "✍️" },
               { id: "recovery" as const, label: "Recovery Companion", icon: "🏃‍♂️" },
               { id: "billing" as const, label: "Billing & Vault", icon: "💳" }
@@ -967,6 +1030,74 @@ export default function PatientPortal() {
               );
             })}
           </div>
+
+          {/* Tab: Clinical Messages */}
+          {activeTab === "messages" && (
+            <div className="bg-white border border-border-clinical p-6 md:p-8 rounded-2xl shadow-sm space-y-6">
+              <div className="border-b border-border-clinical pb-4 flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-serif font-bold text-deep-navy">Direct Messaging with Clinical Team</h2>
+                  <p className="text-text-secondary text-sm">Communicate directly with Mr Pacheco and the specialist knee nursing team.</p>
+                </div>
+                <span className="text-xs bg-clinical-teal/10 text-clinical-teal font-semibold px-3 py-1 rounded-full border border-clinical-teal/20">
+                  Active Patient Channel
+                </span>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 min-h-[300px] max-h-[450px] overflow-y-auto space-y-3">
+                {patientMessages.length === 0 ? (
+                  <div className="text-center py-12 text-text-secondary text-sm">
+                    No message history yet. Type a question or post-op query below to start a message thread with your clinical team.
+                  </div>
+                ) : (
+                  patientMessages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`flex flex-col max-w-[85%] ${
+                        msg.sender === "patient" ? "ml-auto items-end" : "mr-auto items-start"
+                      }`}
+                    >
+                      <div className={`p-4 rounded-2xl text-sm ${
+                        msg.sender === "patient"
+                          ? "bg-clinical-teal text-white rounded-br-none"
+                          : "bg-white border border-border-clinical text-deep-navy shadow-xs rounded-bl-none"
+                      }`}>
+                        <p>{msg.text}</p>
+                      </div>
+                      <span className="text-[10px] text-text-secondary mt-1 px-1">
+                        {msg.sender === "patient" ? "You" : "Mr Pacheco / Clinical Team"} &bull; {msg.timestamp || msg.date}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <form onSubmit={handleSendPatientMessage} className="flex gap-2">
+                <input
+                  type="text"
+                  value={patientMsgText}
+                  onChange={(e) => setPatientMsgText(e.target.value)}
+                  placeholder="Ask a question about your recovery, exercises, or appointments..."
+                  className="flex-1 px-4 py-3 border border-border-clinical rounded-xl text-text-main text-sm focus:outline-none focus:border-clinical-teal bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={handleVoiceDictation}
+                  className="px-3.5 py-3 border border-border-clinical hover:bg-slate-50 rounded-xl text-sm font-bold transition-colors cursor-pointer"
+                  title="Voice Dictate Message"
+                >
+                  🎙️
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSendingPatientMsg || !patientMsgText.trim()}
+                  className="px-6 py-3 bg-clinical-teal hover:bg-clinical-teal-hover text-white font-bold text-sm rounded-xl cursor-pointer transition-colors shadow-md disabled:opacity-50"
+                >
+                  {isSendingPatientMsg ? "Sending..." : "Send Message"}
+                </button>
+              </form>
+            </div>
+          )}
 
           {/* Tab 1: Overview & Care Pathways */}
           {activeTab === "overview" && (

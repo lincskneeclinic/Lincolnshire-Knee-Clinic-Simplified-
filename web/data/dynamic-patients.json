@@ -1,1 +1,248 @@
-{}
+{
+  "patient@lincsknee.com": {
+    "name": "Mr. John Henderson",
+    "email": "patient@lincsknee.com",
+    "dob": "14/05/1971",
+    "patientId": "LKC-88402",
+    "surgery": "Total Knee Replacement (Left)",
+    "surgeryDate": "2026-07-25",
+    "daysPostOp": 12,
+    "surgeon": "Mr. Ricardo J Pacheco FRCS Tr & Orth",
+    "balanceDue": 250,
+    "accessTier": "Self-Pay",
+    "insuranceProvider": "Self-Pay",
+    "exercises": [
+      {
+        "id": "slr",
+        "name": "Straight Leg Raises",
+        "description": "Tighten thigh muscle, lift leg 6 inches, hold for 5s. 3 sets of 10.",
+        "completed": false,
+        "videoTips": [
+          "Keep back flat",
+          "Engage your core",
+          "Control the descent slowly"
+        ],
+        "videoUrl": "https://www.youtube.com/embed/2iB8pcKzJgo?start=120"
+      },
+      {
+        "id": "kb",
+        "name": "Seated Knee Bends",
+        "description": "Sit on chair, slide foot back under seat as far as possible, hold 5s. 3 sets of 10.",
+        "completed": false,
+        "videoTips": [
+          "Keep hips level",
+          "Slide slowly",
+          "Hold at maximum comfortable stretch"
+        ],
+        "videoUrl": "https://www.youtube.com/embed/2iB8pcKzJgo?start=75"
+      }
+    ],
+    "documents": [
+      {
+        "title": "Total Knee Replacement Recovery Guide",
+        "filename": "total-knee-replacement-recovery-guide.pdf",
+        "date": "2026-07-25",
+        "type": "Guide"
+      },
+      {
+        "title": "Clinical Summary Letter (Discharge)",
+        "filename": "lkc-discharge-henderson.pdf",
+        "date": "2026-07-25",
+        "type": "Letter"
+      }
+    ],
+    "notesHistory": [
+      {
+        "id": "NOTE-101",
+        "date": "2026-07-25",
+        "timestamp": "09:30 AM",
+        "text": "Wound check completed. Staples intact, minimal swelling. Flexion range 0–110°. Advised progressive full weight bearing with single crutch.",
+        "phase": "2-Week Post-Op Wound Review",
+        "rom": "0–110°",
+        "clinician": "Mr Ricardo J Pacheco"
+      }
+    ],
+    "oksScore": 34,
+    "oksHistory": [
+      {
+        "date": "2026-06-15",
+        "score": 18,
+        "category": "Severe Knee Arthritis"
+      },
+      {
+        "date": "2026-07-25",
+        "score": 34,
+        "category": "Mild-to-Moderate Knee Symptoms"
+      }
+    ],
+    "certificates": [
+      {
+        "id": "CERT-8812",
+        "issuedDate": "2026-07-25",
+        "clearanceType": "Return to Driving & Light Work",
+        "effectiveDate": "2026-08-01",
+        "restrictions": "Fit for non-emergency driving once full emergency braking control is achieved without pain. Light office duties permitted.",
+        "issuedBy": "Mr Ricardo J Pacheco FRCS (Tr & Orth)"
+      }
+    ],
+    "messages": [
+      {
+        "id": "MSG-1",
+        "sender": "clinician",
+        "text": "Hello Mr. Henderson, welcome to your digital recovery portal. Please log your daily quads & heel slide exercises.",
+        "date": "2026-07-25",
+        "timestamp": "09:35 AM",
+        "read": true
+      },
+      {
+        "id": "MSG-2",
+        "sender": "patient",
+        "text": "Thank you Mr Pacheco. Swelling has reduced significantly after using cryotherapy.",
+        "date": "2026-07-25",
+        "timestamp": "10:15 AM",
+        "read": false
+      }
+    ]
+  },
+  "acl@lincsknee.com": {
+    "name": "Ms. Sarah Jenkins",
+    "email": "acl@lincsknee.com",
+    "dob": "22/09/1998",
+    "patientId": "LKC-90211",
+    "surgery": "ACL Reconstruction (Right)",
+    "surgeryDate": "2026-07-25",
+    "daysPostOp": 8,
+    "surgeon": "Mr. Ricardo J Pacheco FRCS Tr & Orth",
+    "balanceDue": 0,
+    "insuranceProvider": "Bupa",
+    "insurancePreAuth": "BI-992019-X",
+    "accessTier": "Insured",
+    "exercises": [
+      {
+        "id": "qs",
+        "name": "Quad Sets (Static Quads)",
+        "description": "Lie flat, push back of knee down into bed to tighten thigh. Hold 5s. 10 reps, 4x daily.",
+        "completed": false,
+        "videoTips": [
+          "Focus on quad contraction",
+          "Keep heel flat"
+        ],
+        "videoUrl": "https://www.youtube.com/embed/shSiZn5x9R8"
+      }
+    ],
+    "documents": [
+      {
+        "title": "ACL Reconstruction Recovery Guide",
+        "filename": "acl-reconstruction-recovery-guide.pdf",
+        "date": "2026-07-25",
+        "type": "Guide"
+      }
+    ],
+    "notesHistory": [
+      {
+        "id": "NOTE-102",
+        "date": "2026-07-25",
+        "timestamp": "11:00 AM",
+        "text": "Hamstring graft site healing well. Full knee extension achieved. Patellar glides normal.",
+        "phase": "Post-Op Week 1 Review",
+        "rom": "0–95°",
+        "clinician": "Mr Ricardo J Pacheco"
+      }
+    ],
+    "oksScore": 28,
+    "oksHistory": [
+      {
+        "date": "2026-07-01",
+        "score": 22,
+        "category": "Moderate-to-Severe Knee Symptoms"
+      },
+      {
+        "date": "2026-07-25",
+        "score": 28,
+        "category": "Moderate-to-Severe Knee Symptoms"
+      }
+    ],
+    "certificates": [
+      {
+        "id": "CERT-9022",
+        "issuedDate": "2026-07-25",
+        "clearanceType": "Light Work Duties Only",
+        "effectiveDate": "2026-07-28",
+        "restrictions": "Desk/sedentary work permitted. Avoid standing >30 mins continuously or lifting >10kg.",
+        "issuedBy": "Mr Ricardo J Pacheco FRCS (Tr & Orth)"
+      }
+    ],
+    "messages": [
+      {
+        "id": "MSG-101",
+        "sender": "patient",
+        "text": "Hi Mr Pacheco, is it normal to feel tightness behind the knee during extension hangs?",
+        "date": "2026-07-25",
+        "timestamp": "11:30 AM",
+        "read": false
+      }
+    ]
+  },
+  "nhs@lincsknee.com": {
+    "name": "Mr. Arthur Pendelton",
+    "email": "nhs@lincsknee.com",
+    "dob": "08/11/1958",
+    "patientId": "LKC-NHS-771",
+    "surgery": "Total Knee Replacement (Right)",
+    "surgeryDate": "2026-07-20",
+    "daysPostOp": 5,
+    "surgeon": "Mr. Ricardo J Pacheco FRCS Tr & Orth",
+    "balanceDue": 0,
+    "insuranceProvider": "NHS e-Referral (UBRN 994012)",
+    "accessTier": "NHS e-Referral",
+    "exercises": [],
+    "documents": [],
+    "notesHistory": [],
+    "oksScore": 21,
+    "oksHistory": [
+      {
+        "date": "2026-07-20",
+        "score": 21,
+        "category": "Moderate-to-Severe Knee Symptoms"
+      }
+    ],
+    "certificates": []
+  },
+  "injection@lincsknee.com": {
+    "name": "Mrs. Emily Watson",
+    "email": "injection@lincsknee.com",
+    "dob": "19/12/1975",
+    "patientId": "LKC-44930",
+    "surgery": "Arthrosamid® Injection (Right)",
+    "surgeryDate": "2026-07-25",
+    "daysPostOp": 5,
+    "surgeon": "Mr. Ricardo J Pacheco FRCS Tr & Orth",
+    "balanceDue": 2150,
+    "accessTier": "Self-Pay",
+    "insuranceProvider": "Self-Pay",
+    "exercises": [],
+    "documents": [
+      {
+        "title": "Arthrosamid® Post-Injection Care Guide",
+        "filename": "arthrosamid-post-injection-guide.pdf",
+        "date": "2026-07-25",
+        "type": "Guide"
+      }
+    ],
+    "notesHistory": [],
+    "oksScore": 38,
+    "oksHistory": [
+      {
+        "date": "2026-07-10",
+        "score": 24,
+        "category": "Moderate-to-Severe Knee Symptoms"
+      },
+      {
+        "date": "2026-07-25",
+        "score": 38,
+        "category": "Satisfactory Joint Function"
+      }
+    ],
+    "certificates": []
+  }
+}

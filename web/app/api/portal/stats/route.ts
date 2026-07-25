@@ -65,17 +65,21 @@ export async function GET() {
   const patientsList = Object.values(patientsObj) as any[];
   const intakeRecords = readIntakeCsv();
 
-  // Calculate patient financial balances
+  // Calculate patient financial balances & funding tiers (Self-Pay, Insured, NHS e-Referral)
   let totalBalanceDue = 0;
   let insuredCount = 0;
   let selfPayCount = 0;
+  let nhsCount = 0;
 
   patientsList.forEach((p) => {
     if (p.balanceDue) {
       const num = parseFloat(String(p.balanceDue).replace(/[^0-9.]/g, ""));
       if (!isNaN(num)) totalBalanceDue += num;
     }
-    if (p.insuranceProvider && p.insuranceProvider !== "Self-Pay" && p.insuranceProvider !== "N/A") {
+    const tier = (p.accessTier || p.insuranceProvider || "").toLowerCase();
+    if (tier.includes("nhs") || tier.includes("e-referral")) {
+      nhsCount++;
+    } else if (p.insuranceProvider && p.insuranceProvider !== "Self-Pay" && p.insuranceProvider !== "N/A") {
       insuredCount++;
     } else {
       selfPayCount++;
@@ -108,11 +112,11 @@ export async function GET() {
 
   // Acquisition & Referral Sources
   const referralSources = [
-    { source: "Google Organic Search", percentage: 42, count: 1654, trend: "+14%" },
-    { source: "Bupa Consultant Directory", percentage: 24, count: 945, trend: "+8%" },
-    { source: "AXA Health / Aviva Finder", percentage: 16, count: 630, trend: "+5%" },
-    { source: "NHS 111 Non-Emergency", percentage: 11, count: 433, trend: "+12%" },
-    { source: "Word of Mouth / Direct", percentage: 7, count: 278, trend: "+3%" },
+    { source: "Google Organic Search", percentage: 38, count: 1497, trend: "+14%" },
+    { source: "NHS e-Referral (Choose & Book)", percentage: 22, count: 866, trend: "+18%" },
+    { source: "Bupa Consultant Directory", percentage: 20, count: 788, trend: "+8%" },
+    { source: "AXA Health / Aviva Finder", percentage: 12, count: 472, trend: "+5%" },
+    { source: "Word of Mouth / Direct", percentage: 8, count: 317, trend: "+3%" },
   ];
 
   // Lincolnshire Catchment Area Postcodes
@@ -193,34 +197,38 @@ export async function GET() {
     },
   ];
 
-  // Treatment Financial & Insurance Matrix
+  // Treatment Financial & Funding Tier Matrix (Self-Pay, Insured, NHS)
   const revenueMatrix = [
     {
       procedure: "Total & Partial Knee Replacement",
       totalRevenue: "£142,500",
-      selfPayPercent: 35,
-      insuredPercent: 65,
+      selfPayPercent: 30,
+      insuredPercent: 50,
+      nhsPercent: 20,
       avgCaseValue: "£11,400",
     },
     {
       procedure: "Arthrosamid & Injections",
       totalRevenue: "£68,400",
-      selfPayPercent: 78,
-      insuredPercent: 22,
+      selfPayPercent: 75,
+      insuredPercent: 20,
+      nhsPercent: 5,
       avgCaseValue: "£2,850",
     },
     {
       procedure: "ACL Reconstruction & Instability",
       totalRevenue: "£54,200",
-      selfPayPercent: 25,
-      insuredPercent: 75,
+      selfPayPercent: 20,
+      insuredPercent: 60,
+      nhsPercent: 20,
       avgCaseValue: "£7,750",
     },
     {
       procedure: "Knee Arthroscopy & Meniscal Surgery",
       totalRevenue: "£41,800",
-      selfPayPercent: 40,
-      insuredPercent: 60,
+      selfPayPercent: 30,
+      insuredPercent: 45,
+      nhsPercent: 25,
       avgCaseValue: "£3,800",
     },
   ];
@@ -232,6 +240,22 @@ export async function GET() {
     { provider: "Aviva Health", share: 18, activeClaims: 20 },
     { provider: "Vitality / WPA / Others", share: 16, activeClaims: 18 },
   ];
+
+  // Diagnostic Imaging Telemetry & 30-Day Provider Invoice Pipeline
+  const diagnosticTelemetry = {
+    totalDiagnosticCases: 64,
+    grossDiagnosticBillings: "£19,840",
+    wholesaleProviderCost: "£14,880",
+    loyaltyCommission10Percent: "£1,984",
+    netClinicProfit: "£4,960",
+    accountsPayable30Days: "£14,880",
+    paymentTerms: "30 Days Net Provider Terms",
+    breakdown: [
+      { modality: "3T MRI Scans", cases: 38, grossBillings: "£13,110", clinicMargin: "£3,277 (25% Wholesale Margin)", loyaltyFee10: "£1,311" },
+      { modality: "Musculoskeletal Ultrasound", cases: 16, grossBillings: "£3,520", clinicMargin: "£880 (25% Wholesale Margin)", loyaltyFee10: "£352" },
+      { modality: "Weight-Bearing X-Rays", cases: 10, grossBillings: "£3,210", clinicMargin: "£803 (25% Wholesale Margin)", loyaltyFee10: "£321" },
+    ]
+  };
 
   // Patient Satisfaction (NPS)
   const satisfaction = {
@@ -289,6 +313,34 @@ export async function GET() {
     ],
   };
 
+  // GP & Physio Referral Leaderboard
+  const gpReferrals = [
+    { practiceName: "Lindum Medical Practice (Lincoln)", GPCount: 14, referralsCount: 38, convertedCases: 32, revenueGenerated: "£148,000", primaryPathway: "Total Knee Replacement" },
+    { practiceName: "Grimsby Health Centre (Grimsby)", GPCount: 9, referralsCount: 26, convertedCases: 22, revenueGenerated: "£86,500", primaryPathway: "Arthrosamid Injection" },
+    { practiceName: "St. John's Medical Centre (Grantham)", GPCount: 8, referralsCount: 19, convertedCases: 16, revenueGenerated: "£72,000", primaryPathway: "ACL Reconstruction" },
+    { practiceName: "Parkside Medical Centre (Boston)", GPCount: 7, referralsCount: 15, convertedCases: 13, revenueGenerated: "£58,400", primaryPathway: "Partial Knee Replacement" },
+    { practiceName: "Lincolnshire Physio Clinic (Lincoln)", GPCount: 5, referralsCount: 12, convertedCases: 11, revenueGenerated: "£42,000", primaryPathway: "Knee Arthroscopy" },
+  ];
+
+  // Patient Recall & Retention Queue
+  const recallQueue = [
+    { id: "RC-101", patientName: "Mrs. Emily Watson", email: "injection@lincsknee.com", recallType: "12-Month Arthrosamid® Repeat Review", originalDate: "2025-08-10", status: "Due Now", estimatedYield: "£2,850" },
+    { id: "RC-102", patientName: "Mr. David Miller", email: "david.m@example.com", recallType: "6-Month Post-Op Total Knee Check-Up", originalDate: "2026-02-14", status: "Due Next Week", estimatedYield: "£250" },
+    { id: "RC-103", patientName: "Ms. Sarah Jenkins", email: "acl@lincsknee.com", recallType: "Contralateral Knee Assessment", originalDate: "2025-09-01", status: "Due in 2 Weeks", estimatedYield: "£1,150" },
+    { id: "RC-104", patientName: "Mr. Robert Vance", email: "consultation@lincsknee.com", recallType: "Surgical Pathway Recommendation Review", originalDate: "2026-01-20", status: "Overdue", estimatedYield: "£11,400" },
+  ];
+
+  // Predictive 30/90-Day Revenue Forecasting Model
+  const revenueForecast = {
+    next30Days: "£128,400",
+    next90Days: "£364,200",
+    confirmedSurgicalPipeline: 18,
+    confirmedInjectionPipeline: 24,
+    consultationPipeline: 36,
+    emptySlotsCount: 4,
+    monthlyTargetProgress: 84,
+  };
+
   return NextResponse.json({
     success: true,
     data: {
@@ -298,6 +350,7 @@ export async function GET() {
         totalBalanceDue: `£${totalBalanceDue.toLocaleString('en-GB', { minimumFractionDigits: 2 })}`,
         insuredCount,
         selfPayCount,
+        nhsCount,
         avgOxfordScore,
         oxfordScoresCount,
       },
@@ -312,6 +365,10 @@ export async function GET() {
       revenueMatrix,
       insuranceProviders,
       satisfaction,
+      gpReferrals,
+      recallQueue,
+      revenueForecast,
+      diagnosticTelemetry,
       subscribers: readNewsletterSubscribers(),
     },
   });

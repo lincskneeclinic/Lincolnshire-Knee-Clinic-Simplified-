@@ -58,6 +58,7 @@ export const Footer: React.FC = () => {
     { name: "Treatments Hub", href: "/treatments" },
     { name: "Recovery Hub", href: "/recovery" },
     { name: "Injections Hub", href: "/injections" },
+    { name: "Diagnostics & Imaging", href: "/diagnostics" },
     { name: "Clinics", href: "/clinics" },
     { name: "Book Appointment", href: "/book-appointment" },
     { name: "Patient Reviews", href: "/patient-reviews" },

@@ -16,6 +16,7 @@ export const Header: React.FC = () => {
     { name: "Conditions", href: "/conditions" },
     { name: "Treatments", href: "/treatments" },
     { name: "Injections", href: "/injections" },
+    { name: "Diagnostics", href: "/diagnostics" },
     { name: "Education & Blog", href: "/education" },
     { name: "Clinics", href: "/clinics" },
     { name: "Contact", href: "/contact" },
@@ -84,13 +85,12 @@ export const Header: React.FC = () => {
         </Link>
 
         {/* Main Navigation Links - Horizontally Aligned in the Middle (Desktop Only) */}
-        {/* Breakpoint is set to xl:flex (1280px) to prevent overlaps on smaller laptop screens */}
-        <nav className="hidden xl:flex items-center justify-center flex-1 gap-3 xl:gap-4 2xl:gap-6 px-2" aria-label="Main navigation">
+        <nav className="hidden xl:flex items-center justify-center flex-1 gap-1.5 xl:gap-2.5 2xl:gap-5 px-1" aria-label="Main navigation">
           {mainNavigation.map((link, idx) => (
             <Link
               key={idx}
               href={link.href}
-              className={`font-sans text-xs xl:text-sm 2xl:text-base font-semibold py-1.5 transition-colors relative whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-clinical-teal ${
+              className={`font-sans text-[11px] xl:text-xs 2xl:text-sm font-semibold py-1.5 transition-colors relative whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-clinical-teal ${
                 isActive(link.href)
                   ? "text-deep-navy font-bold border-b-2 border-clinical-teal"
                   : "text-text-secondary hover:text-deep-navy"
@@ -102,10 +102,10 @@ export const Header: React.FC = () => {
         </nav>
 
         {/* Action Button & Hamburger Toggle - Far Right */}
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Button
             href="/book-appointment"
-            className="hidden xl:inline-flex text-sm py-2 px-5 min-h-[44px] shadow-[0_2px_4px_rgba(0,175,200,0.08)]"
+            className="hidden xl:inline-flex text-xs 2xl:text-sm py-2 px-3.5 2xl:px-5 min-h-[40px] shadow-[0_2px_4px_rgba(0,175,200,0.08)] whitespace-nowrap"
             variant="teal"
           >
             Book Appointment
