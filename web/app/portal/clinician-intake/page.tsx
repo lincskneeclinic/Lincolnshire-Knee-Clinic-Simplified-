@@ -1120,8 +1120,8 @@ export default function ClinicianIntakePage() {
         {/* Directory Tab */}
         {activeTab === "patients" && (
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="font-serif font-bold text-base text-slate-950 dark:text-white">
+            <div className="flex justify-between items-center flex-wrap gap-2">
+              <h2 className="font-serif font-extrabold text-lg text-slate-900 dark:text-white">
                 Consultant Directory &amp; Records ({filteredPatients.length})
               </h2>
               <input
@@ -1129,13 +1129,11 @@ export default function ClinicianIntakePage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Filter directory..."
-                className={`px-3 py-1.5 text-xs border rounded-xl focus:outline-none ${
-                  isTheatreMode ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-200 text-slate-950"
-                }`}
+                className="px-3.5 py-2 text-xs font-bold border-2 rounded-xl focus:outline-none bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-500 shadow-xs"
               />
             </div>
             {filteredPatients.length === 0 ? (
-              <div className="text-center py-12 border border-dashed rounded-2xl text-slate-500 dark:text-slate-400 text-xs font-medium">
+              <div className="text-center py-12 border-2 border-dashed rounded-2xl text-slate-700 dark:text-slate-300 text-xs font-bold">
                 No patient records match the search filter.
               </div>
             ) : (
@@ -1143,15 +1141,13 @@ export default function ClinicianIntakePage() {
                 {filteredPatients.map(([emailKey, p]) => (
                   <div
                     key={emailKey}
-                    className={`p-5 rounded-2xl border shadow-sm space-y-3 flex flex-col justify-between transition-shadow ${
-                      isTheatreMode ? "bg-slate-900 border-slate-700 text-white" : "bg-white border-slate-200 text-slate-950"
-                    }`}
+                    className="p-5 rounded-2xl border-2 border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-md space-y-3 flex flex-col justify-between transition-all"
                   >
                     <div className="space-y-2">
                       <div className="flex justify-between items-start gap-2">
                         <div>
-                          <h3 className="font-bold text-base font-serif text-slate-950 dark:text-white">{p.name}</h3>
-                          <span className="font-mono text-[11px] font-bold text-slate-700 dark:text-slate-200 block mt-0.5">
+                          <h3 className="font-extrabold text-lg font-serif text-slate-950 dark:text-white">{p.name}</h3>
+                          <span className="font-mono text-xs font-extrabold text-slate-900 dark:text-slate-100 block mt-0.5">
                             {p.patientId} &bull; {emailKey}
                           </span>
                         </div>
@@ -1159,7 +1155,7 @@ export default function ClinicianIntakePage() {
                           const tier = (p.accessTier || p.insuranceProvider || "Self-Pay").toString();
                           if (tier.toLowerCase().includes("nhs") || tier.toLowerCase().includes("e-referral")) {
                             return (
-                              <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-full border bg-cyan-500 text-slate-950 border-cyan-400 shadow-sm whitespace-nowrap inline-flex items-center gap-1">
+                              <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-full border bg-cyan-600 text-white border-cyan-500 shadow-sm whitespace-nowrap inline-flex items-center gap-1">
                                 🏥 NHS e-Referral
                               </span>
                             );
@@ -1179,28 +1175,28 @@ export default function ClinicianIntakePage() {
                         })()}
                       </div>
 
-                      <p className="text-xs text-clinical-teal font-bold">{p.surgery}</p>
-                      <p className="text-xs font-extrabold text-slate-800 dark:text-slate-100">
+                      <p className="text-sm font-extrabold text-cyan-700 dark:text-cyan-300 font-serif">{p.surgery}</p>
+                      <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
                         {p.surgeryDate} ({p.daysPostOp || 0} days post-op)
                       </p>
 
                       {/* Insurer / NHS Details Chip */}
                       {(p.insurancePreAuth || p.preAuthCode || p.policyNumber || p.ubrn) && (
-                        <div className="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-[11px] font-mono space-y-1 mt-2">
+                        <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-[11px] font-mono space-y-1 mt-2 shadow-inner">
                           {(p.policyNumber || p.insuranceProvider) && (
-                            <div className="flex justify-between items-center text-slate-200">
+                            <div className="flex justify-between items-center text-white">
                               <span className="text-slate-300 font-sans text-[10px] uppercase font-bold tracking-wider">INSURER:</span>
                               <span className="font-extrabold text-cyan-300">{p.insuranceProvider} {p.policyNumber ? `(#${p.policyNumber})` : ""}</span>
                             </div>
                           )}
                           {(p.insurancePreAuth || p.preAuthCode) && (
-                            <div className="flex justify-between items-center text-slate-200">
+                            <div className="flex justify-between items-center text-white">
                               <span className="text-slate-300 font-sans text-[10px] uppercase font-bold tracking-wider">PRE-AUTH CODE:</span>
                               <span className="font-extrabold text-emerald-300">{p.insurancePreAuth || p.preAuthCode}</span>
                             </div>
                           )}
                           {p.ubrn && (
-                            <div className="flex justify-between items-center text-slate-200">
+                            <div className="flex justify-between items-center text-white">
                               <span className="text-slate-300 font-sans text-[10px] uppercase font-bold tracking-wider">NHS BOOKING REF:</span>
                               <span className="font-extrabold text-cyan-300">{p.ubrn}</span>
                             </div>
@@ -1218,15 +1214,15 @@ export default function ClinicianIntakePage() {
                       {/* Issued Certificates List */}
                       {p.certificates && p.certificates.length > 0 && (
                         <div className="mt-3 space-y-1.5">
-                          <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block">
+                          <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider block">
                             ISSUED CLEARANCES:
                           </span>
                           {p.certificates.map((cert) => (
                             <div
                               key={cert.id}
-                              className="flex justify-between items-center text-xs bg-slate-100 dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium"
+                              className="flex justify-between items-center text-xs bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-white font-medium shadow-xs"
                             >
-                              <span className="font-bold truncate pr-2 text-slate-900 dark:text-white">{cert.clearanceType}</span>
+                              <span className="font-bold truncate pr-2 text-white">{cert.clearanceType}</span>
                               <button
                                 onClick={() => {
                                   setCertModalPatient({ email: emailKey, name: p.name, surgery: p.surgery });
@@ -1235,7 +1231,7 @@ export default function ClinicianIntakePage() {
                                   setCertEffectiveDate(cert.effectiveDate);
                                   setIsPrintCertVisible(true);
                                 }}
-                                className="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-lg text-[11px] whitespace-nowrap cursor-pointer shadow-xs"
+                                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg text-[11px] whitespace-nowrap cursor-pointer shadow-xs border border-slate-700"
                               >
                                 🖨️ View / Print PDF
                               </button>
@@ -1245,10 +1241,10 @@ export default function ClinicianIntakePage() {
                       )}
                       {/* Issued Invoices & Telemetry Status Ledger */}
                       {p.invoices && p.invoices.length > 0 && (
-                        <div className="mt-3 space-y-1.5 border-t border-slate-200 dark:border-slate-800 pt-2.5">
-                          <div className="flex justify-between items-center text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                        <div className="mt-3 space-y-1.5 border-t-2 border-slate-200 dark:border-slate-800 pt-2.5">
+                          <div className="flex justify-between items-center text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
                             <span>INVOICES &amp; EXCESS LEDGER:</span>
-                            <span className="text-[10px] text-cyan-400 font-normal">Auto-Tracked Telemetry</span>
+                            <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-bold">Auto-Tracked Telemetry</span>
                           </div>
                           {p.invoices.map((inv: any) => (
                             <div
