@@ -1121,7 +1121,7 @@ export default function ClinicianIntakePage() {
         {activeTab === "patients" && (
           <div className="space-y-4">
             <div className="flex justify-between items-center flex-wrap gap-2">
-              <h2 className="font-serif font-extrabold text-lg text-slate-900 dark:text-white">
+              <h2 className={`font-serif font-black text-xl drop-shadow-xs ${isTheatreMode ? "text-white" : "text-slate-900"}`}>
                 Consultant Directory &amp; Records ({filteredPatients.length})
               </h2>
               <input
@@ -1129,11 +1129,13 @@ export default function ClinicianIntakePage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Filter directory..."
-                className="px-3.5 py-2 text-xs font-bold border-2 rounded-xl focus:outline-none bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-500 shadow-xs"
+                className={`px-3.5 py-2 text-xs font-bold border-2 rounded-xl focus:outline-none shadow-xs ${
+                  isTheatreMode ? "bg-slate-900 border-slate-700 text-white placeholder-slate-400" : "bg-white border-slate-300 text-slate-900 placeholder-slate-500"
+                }`}
               />
             </div>
             {filteredPatients.length === 0 ? (
-              <div className="text-center py-12 border-2 border-dashed rounded-2xl text-slate-700 dark:text-slate-300 text-xs font-bold">
+              <div className={`text-center py-12 border-2 border-dashed rounded-2xl text-xs font-bold ${isTheatreMode ? "text-slate-300 border-slate-800" : "text-slate-700 border-slate-300"}`}>
                 No patient records match the search filter.
               </div>
             ) : (
@@ -1141,13 +1143,15 @@ export default function ClinicianIntakePage() {
                 {filteredPatients.map(([emailKey, p]) => (
                   <div
                     key={emailKey}
-                    className="p-5 rounded-2xl border-2 border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-md space-y-3 flex flex-col justify-between transition-all"
+                    className={`p-5 rounded-2xl border-2 shadow-md space-y-3 flex flex-col justify-between transition-all ${
+                      isTheatreMode ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-300 text-slate-900"
+                    }`}
                   >
                     <div className="space-y-2">
                       <div className="flex justify-between items-start gap-2">
                         <div>
-                          <h3 className="font-extrabold text-lg font-serif text-slate-950 dark:text-white">{p.name}</h3>
-                          <span className="font-mono text-xs font-extrabold text-slate-900 dark:text-slate-100 block mt-0.5">
+                          <h3 className={`font-extrabold text-lg font-serif ${isTheatreMode ? "text-white" : "text-slate-950"}`}>{p.name}</h3>
+                          <span className={`font-mono text-xs font-extrabold block mt-0.5 ${isTheatreMode ? "text-slate-300" : "text-slate-700"}`}>
                             {p.patientId} &bull; {emailKey}
                           </span>
                         </div>
@@ -1175,8 +1179,8 @@ export default function ClinicianIntakePage() {
                         })()}
                       </div>
 
-                      <p className="text-sm font-extrabold text-cyan-700 dark:text-cyan-300 font-serif">{p.surgery}</p>
-                      <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                      <p className={`text-sm font-extrabold font-serif ${isTheatreMode ? "text-cyan-300" : "text-cyan-800"}`}>{p.surgery}</p>
+                      <p className={`text-xs font-bold ${isTheatreMode ? "text-slate-200" : "text-slate-800"}`}>
                         {p.surgeryDate} ({p.daysPostOp || 0} days post-op)
                       </p>
 
@@ -1214,7 +1218,7 @@ export default function ClinicianIntakePage() {
                       {/* Issued Certificates List */}
                       {p.certificates && p.certificates.length > 0 && (
                         <div className="mt-3 space-y-1.5">
-                          <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider block">
+                          <span className={`text-xs font-extrabold uppercase tracking-wider block ${isTheatreMode ? "text-slate-200" : "text-slate-900"}`}>
                             ISSUED CLEARANCES:
                           </span>
                           {p.certificates.map((cert) => (
@@ -1242,9 +1246,9 @@ export default function ClinicianIntakePage() {
                       {/* Issued Invoices & Telemetry Status Ledger */}
                       {p.invoices && p.invoices.length > 0 && (
                         <div className="mt-3 space-y-1.5 border-t-2 border-slate-200 dark:border-slate-800 pt-2.5">
-                          <div className="flex justify-between items-center text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                          <div className={`flex justify-between items-center text-xs font-extrabold uppercase tracking-wider ${isTheatreMode ? "text-slate-200" : "text-slate-900"}`}>
                             <span>INVOICES &amp; EXCESS LEDGER:</span>
-                            <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-bold">Auto-Tracked Telemetry</span>
+                            <span className={`text-[10px] font-bold ${isTheatreMode ? "text-cyan-400" : "text-cyan-700"}`}>Auto-Tracked Telemetry</span>
                           </div>
                           {p.invoices.map((inv: any) => (
                             <div
