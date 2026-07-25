@@ -6,86 +6,81 @@ interface NewsletterSignupProps {
   /** Variant changes background/colour treatment for light vs dark contexts */
   variant?: "light" | "dark";
   className?: string;
+  title?: string;
+  subtitle?: string;
 }
-
-/**
- * FUTURE SUPABASE MARKETING TABLE ARCHITECTURE (Phase 2)
- * =======================================================
- * When Supabase is connected, submissions from this component should be
- * inserted into the `marketing_consents` table only if `consentChecked === true`.
- *
- * Schema (see /lib/futureMarketingSchema.ts for full detail):
- *   - id                   uuid
- *   - name                 text
- *   - email                text
- *   - consent_status       boolean  ← must be TRUE before inserting
- *   - consent_timestamp    timestamptz
- *   - consent_source       text     ← e.g. "footer", "contact-page", "homepage"
- *   - consent_text_version text     ← e.g. "v1.0-2024-07"
- *   - unsubscribe_status   boolean  DEFAULT false
- *
- * STRICTLY PROHIBITED in this table:
- *   - Symptoms, diagnoses, treatment interests
- *   - Clinical history or special category health data (UK GDPR Art. 9)
- *
- * Do NOT connect Supabase until explicitly instructed.
- */
 
 export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
   variant = "light",
   className = "",
+  title = "Sign up for knee health updates",
+  subtitle = "Receive occasional patient education updates from Lincolnshire Knee Clinic about knee health, clinic services and new educational resources.",
 }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
   const [consentChecked, setConsentChecked] = useState(false); // MUST default to false
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const isDark = variant === "dark";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!consentChecked || !email) return;
+    setErrorMessage("");
 
-    // Detect primary interest from current page URL
-    let primaryInterest = "General Joint Health";
-    if (typeof window !== "undefined") {
-      const path = window.location.pathname.toLowerCase();
-      if (path.includes("injection") || path.includes("arthrosamid") || path.includes("prp")) {
-        primaryInterest = "Injections & Preservation";
-      } else if (path.includes("replacement") || path.includes("arthroplasty") || path.includes("surgery")) {
-        primaryInterest = "Knee Replacement & Surgery";
-      } else if (path.includes("acl") || path.includes("sports") || path.includes("meniscus")) {
-        primaryInterest = "Sports Injuries & ACL";
-      }
+    if (!name.trim()) {
+      setErrorMessage("Please enter your name.");
+      return;
     }
 
+    if (!email.trim()) {
+      setErrorMessage("Please enter your email address.");
+      return;
+    }
+
+    if (!consentChecked) {
+      setErrorMessage("Please confirm your consent by checking the box.");
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      await fetch("/api/newsletter", {
+      const res = await fetch("/api/contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email,
-          name,
-          primaryInterest,
-          topics: ["Knee Health Updates", "Patient Education"],
-          pagesVisited: [typeof window !== "undefined" ? window.location.pathname : "/"],
+          name: name.trim(),
+          email: email.trim(),
+          mobile: mobile.trim() || undefined,
+          consentChecked,
         }),
       });
-    } catch (err) {
-      console.error("Footer newsletter signup error:", err);
-    }
 
-    setSubmitted(true);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSubmitted(true);
+      } else {
+        setErrorMessage(data.message || "Something went wrong. Please try again.");
+      }
+    } catch (err) {
+      console.error("Contact signup submission error:", err);
+      setErrorMessage("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (submitted) {
     return (
-      <div className={`text-center py-6 ${className}`}>
-        <div className={`text-base font-bold mb-1 ${isDark ? "text-clinical-teal" : "text-clinical-teal"}`}>
-          Thank you for signing up!
+      <div className={`p-6 rounded-xl text-center ${isDark ? "bg-white/5 border border-white/10" : "bg-pale-clinical-blue border border-clinical-teal/20"} ${className}`}>
+        <div className={`text-lg font-bold mb-2 ${isDark ? "text-clinical-teal" : "text-deep-navy"}`}>
+          ✓ Thank you for signing up!
         </div>
-        <p className={`text-xs ${isDark ? "text-[#D7E0E5]/70" : "text-text-muted"}`}>
-          You can unsubscribe at any time using the link in any email we send.
+        <p className={`text-xs leading-relaxed ${isDark ? "text-[#D7E0E5]/80" : "text-text-secondary"}`}>
+          You are now subscribed to receive knee health blogs, newsletters, and clinic updates from Lincolnshire Knee Clinic. You can unsubscribe at any time.
         </p>
       </div>
     );
@@ -94,55 +89,63 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
   return (
     <div className={className}>
       <p className={`text-xs font-bold uppercase tracking-widest mb-1 ${isDark ? "text-clinical-teal" : "text-clinical-teal"}`}>
-        Patient Education
+        Stay Informed
       </p>
-      <h3 className={`font-serif text-lg font-bold mb-2 ${isDark ? "text-white" : "text-deep-navy"}`}>
-        Sign up for knee health updates
+      <h3 className={`font-serif text-lg md:text-xl font-bold mb-2 ${isDark ? "text-white" : "text-deep-navy"}`}>
+        {title}
       </h3>
-      <p className={`text-xs leading-relaxed mb-4 ${isDark ? "text-[#D7E0E5]/75" : "text-text-secondary"}`}>
-        Receive occasional patient education updates from Lincolnshire Knee Clinic about knee health,
-        clinic services and new educational resources.
+      <p className={`text-xs leading-relaxed mb-5 ${isDark ? "text-[#D7E0E5]/75" : "text-text-secondary"}`}>
+        {subtitle}
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+      {errorMessage && (
+        <div className="mb-4 text-xs p-3 rounded-lg bg-status-error-bg text-status-error border border-status-error/20 font-medium">
+          {errorMessage}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        {/* Name (Required) */}
         <div className="flex flex-col gap-1">
           <label
-            htmlFor="newsletter-name"
+            htmlFor="contact-name"
             className={`text-xs font-semibold ${isDark ? "text-[#BFD0DA]" : "text-text-secondary"}`}
           >
-            Your name
+            Full Name <span className="text-status-error">*</span>
           </label>
           <input
-            id="newsletter-name"
+            id="contact-name"
             type="text"
             placeholder="e.g. Jane Smith"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
             autoComplete="name"
-            className={`w-full rounded-lg px-3 py-2.5 text-base border focus:outline-none focus:border-clinical-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal ${
+            className={`w-full rounded-lg px-3.5 py-2.5 text-sm border focus:outline-none focus:border-clinical-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal ${
               isDark
                 ? "bg-white/10 border-white/20 text-white placeholder:text-[#D7E0E5]/50 focus:bg-white/15"
                 : "bg-white border-border-clinical text-text-primary placeholder:text-text-muted"
             }`}
           />
         </div>
+
+        {/* Email (Required) */}
         <div className="flex flex-col gap-1">
           <label
-            htmlFor="newsletter-email"
+            htmlFor="contact-email"
             className={`text-xs font-semibold ${isDark ? "text-[#BFD0DA]" : "text-text-secondary"}`}
           >
-            Email address
+            Email Address <span className="text-status-error">*</span>
           </label>
           <input
-            id="newsletter-email"
+            id="contact-email"
             type="email"
             placeholder="e.g. jane@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            className={`w-full rounded-lg px-3 py-2.5 text-base border focus:outline-none focus:border-clinical-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal ${
+            className={`w-full rounded-lg px-3.5 py-2.5 text-sm border focus:outline-none focus:border-clinical-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal ${
               isDark
                 ? "bg-white/10 border-white/20 text-white placeholder:text-[#D7E0E5]/50 focus:bg-white/15"
                 : "bg-white border-border-clinical text-text-primary placeholder:text-text-muted"
@@ -150,47 +153,67 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
           />
         </div>
 
-        {/* Consent checkbox — MUST remain unticked by default */}
-        <div className="flex gap-3 items-start">
+        {/* Mobile Number (Optional) */}
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="contact-mobile"
+            className={`text-xs font-semibold ${isDark ? "text-[#BFD0DA]" : "text-text-secondary"}`}
+          >
+            Mobile Number <span className={`font-normal ${isDark ? "text-[#8BA5B5]" : "text-text-muted"}`}>(optional)</span>
+          </label>
+          <input
+            id="contact-mobile"
+            type="tel"
+            placeholder="e.g. 07700 900123"
+            value={mobile}
+            onChange={(e) => setMobile(e.target.value)}
+            autoComplete="tel"
+            className={`w-full rounded-lg px-3.5 py-2.5 text-sm border focus:outline-none focus:border-clinical-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal ${
+              isDark
+                ? "bg-white/10 border-white/20 text-white placeholder:text-[#D7E0E5]/50 focus:bg-white/15"
+                : "bg-white border-border-clinical text-text-primary placeholder:text-text-muted"
+            }`}
+          />
+        </div>
+
+        {/* Consent Checkbox — MUST remain unchecked by default */}
+        <div className="flex gap-3 items-start pt-1">
           <input
             type="checkbox"
-            id="newsletter-consent"
+            id="contact-consent"
             checked={consentChecked}
             onChange={(e) => setConsentChecked(e.target.checked)}
-            className="mt-1 shrink-0 w-4 h-4 accent-clinical-teal"
+            required
+            className="mt-1 shrink-0 w-4 h-4 accent-clinical-teal cursor-pointer"
           />
           <label
-            htmlFor="newsletter-consent"
-            className={`cursor-pointer text-sm leading-relaxed ${isDark ? "text-[#BFD0DA]" : "text-text-secondary"}`}
+            htmlFor="contact-consent"
+            className={`cursor-pointer text-xs leading-relaxed ${isDark ? "text-[#BFD0DA]" : "text-text-secondary"}`}
           >
-            I agree to receive occasional email updates from Lincolnshire Knee Clinic about knee health,
-            clinic services and patient education. I understand I can unsubscribe at any time.
+            I&apos;d like to receive knee health blogs, newsletters, and updates from Lincolnshire Knee Clinic
           </label>
         </div>
 
         <button
           type="submit"
-          disabled={!consentChecked || !name || !email}
-          aria-disabled={!consentChecked || !name || !email}
-          className={`w-full rounded-lg py-3 text-base font-bold transition-all min-h-[48px] ${
-            consentChecked && name && email
+          disabled={loading || !consentChecked || !name.trim() || !email.trim()}
+          className={`w-full rounded-lg py-3 text-sm font-bold transition-all min-h-[44px] ${
+            !loading && consentChecked && name.trim() && email.trim()
               ? "bg-clinical-teal text-white hover:bg-[#009DB5] cursor-pointer shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clinical-teal"
               : "bg-clinical-teal/30 text-white/50 cursor-not-allowed"
           }`}
         >
-          Subscribe
+          {loading ? "Submitting..." : "Subscribe to Updates"}
         </button>
 
         <p className={`text-xs leading-relaxed ${isDark ? "text-[#8BA5B5]" : "text-text-muted"}`}>
-          We will only use your email for updates if you choose to opt in. You can unsubscribe at any
-          time. See our{" "}
+          We respect your privacy. You can unsubscribe at any time. Read our{" "}
           <a
             href="/privacy-policy"
             className="text-clinical-teal hover:underline font-semibold"
           >
             Privacy Policy
-          </a>{" "}
-          for details. Newsletter sign-up is not required to book an appointment.
+          </a>.
         </p>
       </form>
     </div>

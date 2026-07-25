@@ -211,21 +211,6 @@ export const Footer: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 md:px-8 flex flex-col lg:flex-row items-center justify-between gap-4 text-center lg:text-left">
           <div>
             <p>&copy; {new Date().getFullYear()} Lincolnshire Knee Clinic. All rights reserved.</p>
-            <div className="mt-1.5 flex items-center justify-center lg:justify-start gap-3">
-              <Link
-                href="/portal/clinician-intake"
-                className="text-xs text-[#8BA5B5] hover:text-clinical-teal transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-clinical-teal"
-              >
-                Clinician Portal
-              </Link>
-              <span className="text-xs text-[#8BA5B5]" aria-hidden="true">•</span>
-              <Link
-                href="/portal/business"
-                className="text-xs text-[#8BA5B5] hover:text-clinical-teal transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-clinical-teal"
-              >
-                Business Portal
-              </Link>
-            </div>
           </div>
           <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 font-medium" aria-label="Legal navigation">
             {linksLegal.map((link, idx) => (

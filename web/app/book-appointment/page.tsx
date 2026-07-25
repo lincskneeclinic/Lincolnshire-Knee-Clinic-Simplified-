@@ -20,7 +20,7 @@ export default function BookAppointment() {
       <PageHeader
         category="Appointment Booking"
         title="Book an Appointment"
-        subtitle="Lincolnshire Knee Clinic offers face-to-face specialist consultations and secure online video consultations."
+        subtitle="Lincolnshire Knee Clinic offers face-to-face specialist consultations across regional hospital locations."
       />
 
       {/* 2. Introductory booking explanation */}
@@ -88,12 +88,12 @@ export default function BookAppointment() {
         </a>
       </div>
 
-      {/* 3. Two large pathway cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-10">
-        {/* Pathway A: Face-to-Face */}
+      {/* Face-to-Face Consultation Pathway */}
+      {/* Video consultation pathway removed 2026-07-25 — pending CQC/data protection review, may be reinstated */}
+      <div className="my-10">
         <div className="bg-white border border-border-clinical rounded-xl p-6 md:p-8 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
           <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-clinical-teal mb-2 block">Pathway A</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-clinical-teal mb-2 block">Consultation Pathway</span>
             <h3 className="font-serif text-xl font-bold text-deep-navy mb-4">Face-to-Face Consultation</h3>
             <p className="text-sm text-text-secondary leading-relaxed mb-4">
               Best for clinical joint examinations, initial assessments, and in-clinic knee injection procedures. Conducted at one of our regional clinic locations.
@@ -104,27 +104,8 @@ export default function BookAppointment() {
               <li>Required before arranging diagnostic referrals (MRI, X-ray).</li>
             </ul>
           </div>
-          <Button href="#face-to-face-selector" variant="primary" className="w-full">
+          <Button href="#face-to-face-selector" variant="primary" className="w-full sm:w-auto">
             Choose Location &amp; Arrange
-          </Button>
-        </div>
-
-        {/* Pathway B: Video */}
-        <div className="bg-white border border-border-clinical rounded-xl p-6 md:p-8 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-clinical-teal mb-2 block">Pathway B</span>
-            <h3 className="font-serif text-xl font-bold text-deep-navy mb-4">Video Consultation</h3>
-            <p className="text-sm text-text-secondary leading-relaxed mb-4">
-              Secure online consultations for initial clinical discussions, reviewing diagnostic imaging reports, or post-treatment check-ups.
-            </p>
-            <ul className="space-y-2 text-xs text-text-secondary mb-6 list-disc pl-5">
-              <li>Conducted securely online via Google Meet.</li>
-              <li>Booked and scheduled online using Google Calendar.</li>
-              <li>Payments processed securely through Stripe where required.</li>
-            </ul>
-          </div>
-          <Button href="#video-selector" variant="teal" className="w-full">
-            View Video Booking Details
           </Button>
         </div>
       </div>
@@ -178,47 +159,11 @@ export default function BookAppointment() {
         </div>
       </div>
 
-      {/* 5. Google Calendar information for video booking */}
-      <div id="video-selector" className="my-12 bg-warm-off-white border border-border-clinical rounded-xl p-6 md:p-8 scroll-mt-24">
-        <h2 className="font-serif text-2xl font-bold text-deep-navy mb-4">Secure Video Consultation</h2>
-        
-        <div className="space-y-4 text-sm text-text-secondary leading-relaxed mb-6">
-          <p>
-            “Video consultations, where available, are booked through Google Calendar. A Google Meet link will be provided after the appointment is confirmed.”
-          </p>
-          
-          <div className="bg-white border border-border-clinical/30 p-5 rounded-lg">
-            <h4 className="font-bold text-deep-navy mb-2">Video Consultation Details</h4>
-            <div className="grid grid-cols-2 gap-4 text-xs">
-              <p><strong>Duration:</strong> [Duration]</p>
-              <p><strong>Fee:</strong> [Fee]</p>
-            </div>
-            <p className="text-xs text-text-muted mt-2">
-              Suitable for review of imaging results or follow-up consults where clinical joint palpation is not required.
-            </p>
-          </div>
-
-          <p>
-            “Payment, where required, will be processed securely by Stripe. Lincolnshire Knee Clinic does not store card details on this website.”
-          </p>
-        </div>
-
-        {isPlaceholder(videoBookingUrl) ? (
-          <Button disabled variant="teal" className="w-full md:w-auto">
-            Video booking link pending
-          </Button>
-        ) : (
-          <Button href={videoBookingUrl!} variant="teal" className="w-full md:w-auto">
-            Book Video Consultation
-          </Button>
-        )}
-      </div>
-
-      {/* 6. Payment and privacy note */}
+      {/* 5. Privacy note */}
       <div className="my-8 border-t border-border-clinical/30 pt-6 text-xs text-text-muted leading-relaxed">
         <h4 className="font-bold text-text-secondary mb-1">Booking Privacy &amp; Data Security</h4>
         <p>
-          To protect patient confidentiality, face-to-face clinic telephone bookings do not collect or store patient medical data through this website. Video consultation schedules process scheduling details securely through Google Calendar and Stripe processes payment information. Lincolnshire Knee Clinic does not store credit card credentials. For full terms, please read our{" "}
+          To protect patient confidentiality, face-to-face clinic telephone bookings do not collect or store patient medical data through this website. For full terms, please read our{" "}
           <a href="/privacy-policy" className="text-clinical-teal hover:underline font-semibold">
             Privacy Policy
           </a>.

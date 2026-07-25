@@ -5,6 +5,7 @@ import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { Button } from "@/components/Button";
 import Link from "next/link";
 import { Card } from "@/components/Card";
+import { NewsletterSignup } from "@/components/NewsletterSignup";
 
 export const metadata: Metadata = {
   title: "Clinical Knowledge Hub | Lincolnshire Knee Clinic",
@@ -437,47 +438,35 @@ export default function ClinicalKnowledgeHub() {
               Arrange a professional assessment
             </h2>
             <p className="text-xs md:text-sm text-text-secondary leading-relaxed font-medium mt-2">
-              If you would like to clarify your knee symptoms, confirm a diagnosis, or discuss conservative and surgical treatment pathways, we offer two consultation options:
+              If you would like to clarify your knee symptoms, confirm a diagnosis, or discuss conservative and surgical treatment pathways, arrange a face-to-face consultation with our specialist knee consultant.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Face to Face */}
-            <div className="bg-white border border-border-clinical rounded-2xl p-6 md:p-8 space-y-4 shadow-sm flex flex-col justify-between">
-              <div>
-                <h3 className="font-serif text-lg font-bold text-deep-navy">
-                  Face-to-Face Consultation
-                </h3>
-                <p className="text-xs md:text-sm text-text-secondary leading-relaxed font-medium">
-                  Available at several modern private hospital facilities. Choose your preferred clinic location and contact the reception desk directly to schedule an appointment.
-                </p>
-              </div>
-              <Link
-                href="/clinics"
-                className="inline-block bg-deep-navy text-white text-center font-bold text-xs md:text-sm px-4 py-3 rounded-lg hover:bg-deep-navy/90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-deep-navy focus-visible:outline-offset-2"
-              >
-                Find a Clinic
-              </Link>
+          <div className="bg-white border border-border-clinical rounded-2xl p-6 md:p-8 space-y-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="max-w-2xl space-y-2">
+              <h3 className="font-serif text-lg font-bold text-deep-navy">
+                Face-to-Face Consultation
+              </h3>
+              <p className="text-xs md:text-sm text-text-secondary leading-relaxed font-medium">
+                Available at modern private hospital facilities across Lincolnshire and surrounding areas. Choose your preferred clinic location and contact reception directly to schedule an appointment.
+              </p>
             </div>
-
-            {/* Video Consultation */}
-            <div className="bg-white border border-border-clinical rounded-2xl p-6 md:p-8 space-y-4 shadow-sm flex flex-col justify-between">
-              <div>
-                <h3 className="font-serif text-lg font-bold text-deep-navy">
-                  Video Consultation
-                </h3>
-                <p className="text-xs md:text-sm text-text-secondary leading-relaxed font-medium">
-                  Ideal for initial assessments or second opinions. Schedule an appointment online via Google Calendar and attend your consultation securely over Google Meet.
-                </p>
-              </div>
-              <Link
-                href="/book-appointment"
-                className="inline-block bg-clinical-teal text-white text-center font-bold text-xs md:text-sm px-4 py-3 rounded-lg hover:bg-clinical-teal/90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal focus-visible:outline-offset-2"
-              >
-                Book Appointment
-              </Link>
-            </div>
+            <Link
+              href="/book-appointment"
+              className="inline-block bg-clinical-teal text-white text-center font-bold text-xs md:text-sm px-6 py-3 rounded-lg hover:bg-clinical-teal/90 transition-colors shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal focus-visible:outline-offset-2"
+            >
+              Book Appointment
+            </Link>
           </div>
+        </section>
+
+        {/* 10. Stay Informed Newsletter Section */}
+        <section className="bg-pale-clinical-blue/30 border border-clinical-teal/20 p-6 md:p-10 rounded-2xl">
+          <NewsletterSignup
+            variant="light"
+            title="Stay Informed on Knee Health"
+            subtitle="Subscribe to receive patient education updates, clinical insights, and guidance on knee health from Lincolnshire Knee Clinic."
+          />
         </section>
 
       </div>

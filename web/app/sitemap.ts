@@ -18,7 +18,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/hospital-affiliations",
     "/professional-registrations",
     "/urgent-advice",
-    "/portal",
     "/clinical-knowledge-hub",
     "/recovery",
     "/research",

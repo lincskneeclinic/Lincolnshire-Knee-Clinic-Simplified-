@@ -2,12 +2,9 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-const PATIENTS_DB_PATH = path.join(process.cwd(), "data", "dynamic-patients.json");
-const INTAKE_CSV_PATH = path.join(process.cwd(), "data", "intake-registry.csv");
 const NEWSLETTER_PATH = path.join(process.cwd(), "data", "newsletter-subscribers.json");
 
-// Helper to read newsletter subscribers
-function readNewsletterSubscribers() {
+function readSubscribers() {
   try {
     if (!fs.existsSync(NEWSLETTER_PATH)) return [];
     const content = fs.readFileSync(NEWSLETTER_PATH, "utf8");
@@ -18,358 +15,42 @@ function readNewsletterSubscribers() {
   }
 }
 
-// Helper to read patients DB
-function readPatientsDb() {
-  try {
-    if (!fs.existsSync(PATIENTS_DB_PATH)) return {};
-    const data = fs.readFileSync(PATIENTS_DB_PATH, "utf8");
-    return JSON.parse(data || "{}");
-  } catch (error) {
-    console.error("Failed to read patients database:", error);
-    return {};
-  }
-}
-
-// Helper to read intake CSV rows
-function readIntakeCsv() {
-  try {
-    if (!fs.existsSync(INTAKE_CSV_PATH)) return [];
-    const content = fs.readFileSync(INTAKE_CSV_PATH, "utf8");
-    const lines = content.trim().split("\n");
-    if (lines.length <= 1) return []; // Only header or empty
-    
-    // Parse CSV rows
-    return lines.slice(1).map((line) => {
-      const parts = line.split(",");
-      return {
-        timestamp: parts[0] || "",
-        patientId: parts[1] || "",
-        patientName: parts[2] || "",
-        surgery: parts[3] || "",
-        oxfordScore: parseInt(parts[4] || "0", 10) || 0,
-        medications: parts[5] || "",
-        allergies: parts[6] || "",
-        medicalHistory: parts[7] || "",
-        consentSigned: parts[8] || "NO",
-        signatureType: parts[9] || "",
-      };
-    });
-  } catch (error) {
-    console.error("Failed to read intake CSV:", error);
-    return [];
-  }
-}
-
 export async function GET() {
-  const patientsObj = readPatientsDb();
-  const patientsList = Object.values(patientsObj) as any[];
-  const intakeRecords = readIntakeCsv();
+  const subscribers = readSubscribers();
 
-  // Calculate patient financial balances & funding tiers (Self-Pay, Insured, NHS e-Referral)
-  let totalBalanceDue = 0;
-  let insuredCount = 0;
-  let selfPayCount = 0;
-  let nhsCount = 0;
-
-  patientsList.forEach((p) => {
-    if (p.balanceDue) {
-      const num = parseFloat(String(p.balanceDue).replace(/[^0-9.]/g, ""));
-      if (!isNaN(num)) totalBalanceDue += num;
-    }
-    const tier = (p.accessTier || p.insuranceProvider || "").toLowerCase();
-    if (tier.includes("nhs") || tier.includes("e-referral")) {
-      nhsCount++;
-    } else if (p.insuranceProvider && p.insuranceProvider !== "Self-Pay" && p.insuranceProvider !== "N/A") {
-      insuredCount++;
-    } else {
-      selfPayCount++;
-    }
-  });
-
-  // Calculate Oxford Scores
-  let oxfordScoresSum = 0;
-  let oxfordScoresCount = 0;
-  const scoreDistribution = {
-    severe: 0, // 0 - 19
-    moderate: 0, // 20 - 29
-    mild: 0, // 30 - 39
-    satisfactory: 0, // 40 - 48
-  };
-
-  intakeRecords.forEach((rec) => {
-    if (rec.oxfordScore > 0) {
-      oxfordScoresSum += rec.oxfordScore;
-      oxfordScoresCount++;
-
-      if (rec.oxfordScore <= 19) scoreDistribution.severe++;
-      else if (rec.oxfordScore <= 29) scoreDistribution.moderate++;
-      else if (rec.oxfordScore <= 39) scoreDistribution.mild++;
-      else scoreDistribution.satisfactory++;
-    }
-  });
-
-  const avgOxfordScore = oxfordScoresCount > 0 ? Math.round(oxfordScoresSum / oxfordScoresCount) : 26;
-
-  // Acquisition & Referral Sources
-  const referralSources = [
-    { source: "Google Organic Search", percentage: 38, count: 1497, trend: "+14%" },
-    { source: "NHS e-Referral (Choose & Book)", percentage: 22, count: 866, trend: "+18%" },
-    { source: "Bupa Consultant Directory", percentage: 20, count: 788, trend: "+8%" },
-    { source: "AXA Health / Aviva Finder", percentage: 12, count: 472, trend: "+5%" },
-    { source: "Word of Mouth / Direct", percentage: 8, count: 317, trend: "+3%" },
-  ];
-
-  // Lincolnshire Catchment Area Postcodes
-  const postcodeCatchment = [
-    { postcode: "LN1 - LN6", area: "Lincoln City & Suburbs", patients: 1773, percent: 45, status: "Primary" },
-    { postcode: "NG31", area: "Grantham & South Lincs", patients: 709, percent: 18, status: "High Growth" },
-    { postcode: "LN11", area: "Louth & Wolds Region", patients: 551, percent: 14, status: "Steady" },
-    { postcode: "PE21", area: "Boston & Fens", patients: 433, percent: 11, status: "Opportunity" },
-    { postcode: "PE9", area: "Stamford & South Boundary", patients: 315, percent: 8, status: "Steady" },
-    { postcode: "DN15", area: "Scunthorpe & North Lincs", patients: 159, percent: 4, status: "Emerging" },
-  ];
-
-  // Abandoned Bookings Queue
-  const abandonedBookings = [
-    {
-      id: "AB-901",
-      name: "Sarah Jenkins",
-      contact: "s.jenkins***@gmail.com",
-      procedure: "Arthrosamid Injections",
-      dropoffStep: "Date & Location Selection",
-      timestamp: "2 hours ago",
-      followUpSent: false,
-    },
-    {
-      id: "AB-902",
-      name: "Robert Taylor",
-      contact: "r.taylor***@outlook.com",
-      procedure: "Total Knee Replacement",
-      dropoffStep: "Insurance Pre-Auth Number",
-      timestamp: "5 hours ago",
-      followUpSent: false,
-    },
-    {
-      id: "AB-903",
-      name: "Margaret Evans",
-      contact: "m.evans***@btinternet.com",
-      procedure: "ACL Reconstruction",
-      dropoffStep: "Medical History Screening",
-      timestamp: "Yesterday",
-      followUpSent: true,
-    },
-    {
-      id: "AB-904",
-      name: "David Miller",
-      contact: "d.miller***@yahoo.co.uk",
-      procedure: "Knee Arthroscopy",
-      dropoffStep: "Contact Information",
-      timestamp: "1 day ago",
-      followUpSent: false,
-    },
-  ];
-
-  // Patient Symptom-to-Booking Journey Flows
-  const patientJourneys = [
-    {
-      path: "Inner Knee Pain → Meniscal Tear → Knee Arthroscopy → Booked Consultation",
-      views: 1240,
-      conversion: "7.8%",
-      highValue: true,
-    },
-    {
-      path: "Front Knee Pain → Cartilage Wear → Arthrosamid Injection → Booked Consultation",
-      views: 980,
-      conversion: "6.4%",
-      highValue: true,
-    },
-    {
-      path: "Knee Giving Way → ACL Injury → ACL Reconstruction → Booked Consultation",
-      views: 750,
-      conversion: "5.2%",
-      highValue: false,
-    },
-    {
-      path: "Stiff Knee → Osteoarthritis → Total Knee Replacement → Booked Consultation",
-      views: 1450,
-      conversion: "4.9%",
-      highValue: true,
-    },
-  ];
-
-  // Treatment Financial & Funding Tier Matrix (Self-Pay, Insured, NHS)
-  const revenueMatrix = [
-    {
-      procedure: "Total & Partial Knee Replacement",
-      totalRevenue: "£142,500",
-      selfPayPercent: 30,
-      insuredPercent: 50,
-      nhsPercent: 20,
-      avgCaseValue: "£11,400",
-    },
-    {
-      procedure: "Arthrosamid & Injections",
-      totalRevenue: "£68,400",
-      selfPayPercent: 75,
-      insuredPercent: 20,
-      nhsPercent: 5,
-      avgCaseValue: "£2,850",
-    },
-    {
-      procedure: "ACL Reconstruction & Instability",
-      totalRevenue: "£54,200",
-      selfPayPercent: 20,
-      insuredPercent: 60,
-      nhsPercent: 20,
-      avgCaseValue: "£7,750",
-    },
-    {
-      procedure: "Knee Arthroscopy & Meniscal Surgery",
-      totalRevenue: "£41,800",
-      selfPayPercent: 30,
-      insuredPercent: 45,
-      nhsPercent: 25,
-      avgCaseValue: "£3,800",
-    },
-  ];
-
-  // Insurance Provider Distribution
-  const insuranceProviders = [
-    { provider: "Bupa Healthcare", share: 38, activeClaims: 42 },
-    { provider: "AXA Health", share: 28, activeClaims: 31 },
-    { provider: "Aviva Health", share: 18, activeClaims: 20 },
-    { provider: "Vitality / WPA / Others", share: 16, activeClaims: 18 },
-  ];
-
-  // Diagnostic Imaging Telemetry & 30-Day Provider Invoice Pipeline
-  const diagnosticTelemetry = {
-    totalDiagnosticCases: 64,
-    grossDiagnosticBillings: "£19,840",
-    wholesaleProviderCost: "£14,880",
-    loyaltyCommission10Percent: "£1,984",
-    netClinicProfit: "£4,960",
-    accountsPayable30Days: "£14,880",
-    paymentTerms: "30 Days Net Provider Terms",
-    breakdown: [
-      { modality: "3T MRI Scans", cases: 38, grossBillings: "£13,110", clinicMargin: "£3,277 (25% Wholesale Margin)", loyaltyFee10: "£1,311" },
-      { modality: "Musculoskeletal Ultrasound", cases: 16, grossBillings: "£3,520", clinicMargin: "£880 (25% Wholesale Margin)", loyaltyFee10: "£352" },
-      { modality: "Weight-Bearing X-Rays", cases: 10, grossBillings: "£3,210", clinicMargin: "£803 (25% Wholesale Margin)", loyaltyFee10: "£321" },
-    ]
-  };
-
-  // Patient Satisfaction (NPS)
-  const satisfaction = {
-    npsScore: 94,
-    starRating: "4.95 / 5.0",
-    verifiedReviewsCount: 142,
-    reviews: [
-      {
-        patient: "Mrs. H. Richardson",
-        procedure: "Total Knee Replacement",
-        rating: 5,
-        comment: "Outstanding clinical care from initial assessment through surgery and recovery. Walking pain-free for the first time in 4 years.",
-        date: "3 days ago",
-      },
-      {
-        patient: "Mr. G. Wood",
-        procedure: "Arthrosamid Injection",
-        rating: 5,
-        comment: "Prompt ultrasound-guided injection. Stiffness reduced significantly within 10 days. Excellent communication.",
-        date: "1 week ago",
-      },
-      {
-        patient: "Dr. P. Hughes",
-        procedure: "Knee Arthroscopy",
-        rating: 5,
-        comment: "Extremely professional theatre intake and post-op guidance. Very clear instructions given for rehabilitation.",
-        date: "2 weeks ago",
-      },
-    ],
-  };
-
-  // Website telemetry summary
-  const trafficStats = {
-    pageViewsTotal: 14280,
-    uniqueVisitors: 3940,
-    conversionRate: "4.64%",
-    avgSessionDuration: "3m 42s",
-    bounceRate: "34.2%",
-    deviceBreakdown: {
-      mobile: 68,
-      desktop: 26,
-      tablet: 6,
-    },
-    topProcedures: [
-      { name: "Total & Partial Knee Replacement", views: 5420, percent: 38 },
-      { name: "Knee Injections (Arthrosamid / PRP / Steroid)", views: 4140, percent: 29 },
-      { name: "ACL Reconstruction & Instability", views: 2570, percent: 18 },
-      { name: "Knee Arthroscopy & Meniscal Surgery", views: 2150, percent: 15 },
-    ],
-    funnel: [
-      { step: "1. Unique Visitors", count: 3940, conversion: "100%" },
-      { step: "2. Explored Symptoms/Treatments", count: 2480, conversion: "63.0%" },
-      { step: "3. Initiated Booking Form", count: 420, conversion: "16.9%" },
-      { step: "4. Confirmed Appointment", count: 183, conversion: "43.6%" },
-    ],
-  };
-
-  // GP & Physio Referral Leaderboard
-  const gpReferrals = [
-    { practiceName: "Lindum Medical Practice (Lincoln)", GPCount: 14, referralsCount: 38, convertedCases: 32, revenueGenerated: "£148,000", primaryPathway: "Total Knee Replacement" },
-    { practiceName: "Grimsby Health Centre (Grimsby)", GPCount: 9, referralsCount: 26, convertedCases: 22, revenueGenerated: "£86,500", primaryPathway: "Arthrosamid Injection" },
-    { practiceName: "St. John's Medical Centre (Grantham)", GPCount: 8, referralsCount: 19, convertedCases: 16, revenueGenerated: "£72,000", primaryPathway: "ACL Reconstruction" },
-    { practiceName: "Parkside Medical Centre (Boston)", GPCount: 7, referralsCount: 15, convertedCases: 13, revenueGenerated: "£58,400", primaryPathway: "Partial Knee Replacement" },
-    { practiceName: "Lincolnshire Physio Clinic (Lincoln)", GPCount: 5, referralsCount: 12, convertedCases: 11, revenueGenerated: "£42,000", primaryPathway: "Knee Arthroscopy" },
-  ];
-
-  // Patient Recall & Retention Queue
-  const recallQueue = [
-    { id: "RC-101", patientName: "Mrs. Emily Watson", email: "injection@lincsknee.com", recallType: "12-Month Arthrosamid® Repeat Review", originalDate: "2025-08-10", status: "Due Now", estimatedYield: "£2,850" },
-    { id: "RC-102", patientName: "Mr. David Miller", email: "david.m@example.com", recallType: "6-Month Post-Op Total Knee Check-Up", originalDate: "2026-02-14", status: "Due Next Week", estimatedYield: "£250" },
-    { id: "RC-103", patientName: "Ms. Sarah Jenkins", email: "acl@lincsknee.com", recallType: "Contralateral Knee Assessment", originalDate: "2025-09-01", status: "Due in 2 Weeks", estimatedYield: "£1,150" },
-    { id: "RC-104", patientName: "Mr. Robert Vance", email: "consultation@lincsknee.com", recallType: "Surgical Pathway Recommendation Review", originalDate: "2026-01-20", status: "Overdue", estimatedYield: "£11,400" },
-  ];
-
-  // Predictive 30/90-Day Revenue Forecasting Model
-  const revenueForecast = {
-    next30Days: "£128,400",
-    next90Days: "£364,200",
-    confirmedSurgicalPipeline: 18,
-    confirmedInjectionPipeline: 24,
-    consultationPipeline: 36,
-    emptySlotsCount: 4,
-    monthlyTargetProgress: 84,
-  };
-
+  // Defensible, trackable metrics structure (non-clinical)
   return NextResponse.json({
     success: true,
     data: {
-      summary: {
-        registeredPatientsCount: patientsList.length,
-        intakeSubmissionsCount: intakeRecords.length,
-        totalBalanceDue: `£${totalBalanceDue.toLocaleString('en-GB', { minimumFractionDigits: 2 })}`,
-        insuredCount,
-        selfPayCount,
-        nhsCount,
-        avgOxfordScore,
-        oxfordScoresCount,
+      analyticsConnected: false,
+      newsletter: {
+        totalSignups: subscribers.length,
+        subscribersList: subscribers,
       },
-      scoreDistribution,
-      patients: patientsList,
-      intakes: intakeRecords.slice(-10).reverse(), // Last 10 intakes
-      traffic: trafficStats,
-      referralSources,
-      postcodeCatchment,
-      abandonedBookings,
-      patientJourneys,
-      revenueMatrix,
-      insuranceProviders,
-      satisfaction,
-      gpReferrals,
-      recallQueue,
-      revenueForecast,
-      diagnosticTelemetry,
-      subscribers: readNewsletterSubscribers(),
+      // Trackable web events & metrics — placeholder status until analytics integration is connected
+      metrics: {
+        pageViewsTotal: null,
+        topVisitedPages: [
+          { page: "/clinical-knowledge-hub", label: "Clinical Knowledge Hub", views: null },
+          { page: "/education", label: "Education & Blog", views: null },
+          { page: "/symptoms", label: "Symptoms Hub", views: null },
+          { page: "/conditions", label: "Conditions Hub", views: null },
+          { page: "/treatments", label: "Treatments Hub", views: null },
+          { page: "/injections", label: "Injections Hub", views: null },
+        ],
+        avgTimeOnPage: null,
+        bounceRate: null,
+        clickEvents: {
+          callNowClicks: null,
+          bookAppointmentClicks: null,
+          phoneLinkClicks: null,
+        },
+        trafficSources: [
+          { source: "Organic Search", percentage: null },
+          { source: "Direct Traffic", percentage: null },
+          { source: "Referrals", percentage: null },
+        ],
+      },
     },
   });
 }
