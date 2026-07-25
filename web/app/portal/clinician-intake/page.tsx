@@ -1253,7 +1253,7 @@ export default function ClinicianIntakePage() {
                           {p.invoices.map((inv: any) => (
                             <div
                               key={inv.id}
-                              className="flex justify-between items-start text-xs bg-slate-900 p-3 rounded-xl border border-slate-800 text-white gap-3 shadow-inner"
+                              className="flex justify-between items-center text-xs bg-slate-900 p-3 rounded-xl border border-slate-800 text-white gap-3 shadow-inner"
                             >
                               <div className="space-y-1 flex-1 min-w-0">
                                 <div>
@@ -1284,7 +1284,7 @@ export default function ClinicianIntakePage() {
                               </div>
 
                               {inv.status !== "PAID" && (
-                                <div className="flex flex-col gap-1.5 shrink-0 min-w-[100px]">
+                                <div className="flex flex-col gap-1.5 shrink-0 min-w-[100px] justify-center self-center">
                                   <button
                                     onClick={() => {
                                       const text = encodeURIComponent(`Lincolnshire Knee Clinic Reminder: Dear ${p.name}, your ${inv.type} invoice of £${inv.amount} remains outstanding. Pay online securely: https://lincolnshirekneeclinic.co.uk/portal or BACS Ref: ${inv.id}. Thank you.`);
