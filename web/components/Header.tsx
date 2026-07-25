@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "./Button";
@@ -9,6 +9,20 @@ export const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const pathname = usePathname();
+
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [indicatorStyle, setIndicatorStyle] = useState<{
+    left: number;
+    width: number;
+    opacity: number;
+  }>({
+    left: 0,
+    width: 0,
+    opacity: 0,
+  });
+
+  const navRef = useRef<HTMLElement>(null);
+  const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
   const mainNavigation = [
     { name: "Home", href: "/" },
@@ -27,12 +41,52 @@ export const Header: React.FC = () => {
     { name: "Contact", href: "/contact" },
   ];
 
-  const isActive = (href: string) => {
-    if (href === "/") {
-      return pathname === "/";
-    }
-    return pathname.startsWith(href);
-  };
+  const isActive = useCallback(
+    (href: string) => {
+      if (href === "/") {
+        return pathname === "/";
+      }
+      return pathname.startsWith(href);
+    },
+    [pathname]
+  );
+
+  const activeIndex = mainNavigation.findIndex((link) => isActive(link.href));
+
+  const updateIndicator = useCallback(
+    (targetIndex: number | null) => {
+      const targetIdx =
+        targetIndex !== null
+          ? targetIndex
+          : activeIndex >= 0
+          ? activeIndex
+          : null;
+
+      if (targetIdx !== null && linkRefs.current[targetIdx] && navRef.current) {
+        const linkEl = linkRefs.current[targetIdx];
+        const navEl = navRef.current;
+        if (linkEl && navEl) {
+          const linkRect = linkEl.getBoundingClientRect();
+          const navRect = navEl.getBoundingClientRect();
+          setIndicatorStyle({
+            left: linkRect.left - navRect.left,
+            width: linkRect.width,
+            opacity: 1,
+          });
+          return;
+        }
+      }
+      setIndicatorStyle((prev) => ({ ...prev, opacity: 0 }));
+    },
+    [activeIndex]
+  );
+
+  useEffect(() => {
+    updateIndicator(hoveredIndex);
+    const handleResize = () => updateIndicator(hoveredIndex);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [pathname, hoveredIndex, activeIndex, updateIndicator]);
 
   return (
     <header className="relative w-full z-40 bg-white border-b border-border-clinical shadow-[0_2px_15px_rgba(0,43,69,0.03)]">
@@ -64,7 +118,16 @@ export const Header: React.FC = () => {
           <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden shrink-0">
             {logoError ? (
               // Clean fall-back abstract teal K SVG if image has error
-              <svg className="w-8 h-8 sm:w-9 sm:h-9 text-clinical-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                className="w-8 h-8 sm:w-9 sm:h-9 text-clinical-teal"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <path d="M6 3v18" />
                 <path d="M18 4l-10 8 10 8" />
               </svg>
@@ -83,21 +146,44 @@ export const Header: React.FC = () => {
           </span>
         </Link>
 
-        {/* Main Navigation Links - Horizontally Aligned in the Middle (Desktop Only) */}
-        <nav className="hidden xl:flex items-center justify-center flex-1 gap-1.5 xl:gap-2.5 2xl:gap-5 px-1" aria-label="Main navigation">
-          {mainNavigation.map((link, idx) => (
-            <Link
-              key={idx}
-              href={link.href}
-              className={`font-sans text-[11px] xl:text-xs 2xl:text-sm font-semibold py-1.5 transition-colors relative whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-clinical-teal ${
-                isActive(link.href)
-                  ? "text-deep-navy font-bold border-b-2 border-clinical-teal"
-                  : "text-text-secondary hover:text-deep-navy"
-              }`}
-            >
-              {link.name}
-            </Link>
-          ))}
+        {/* Main Navigation Links with Mouse-Following Sliding Underscore Indicator */}
+        <nav
+          ref={navRef}
+          onMouseLeave={() => setHoveredIndex(null)}
+          className="hidden xl:flex items-center justify-center flex-1 gap-1.5 xl:gap-2.5 2xl:gap-5 px-1 relative py-1.5"
+          aria-label="Main navigation"
+        >
+          {mainNavigation.map((link, idx) => {
+            const active = isActive(link.href);
+            const isHighlighted = hoveredIndex === idx || (hoveredIndex === null && active);
+            return (
+              <Link
+                key={idx}
+                ref={(el) => {
+                  linkRefs.current[idx] = el;
+                }}
+                href={link.href}
+                onMouseEnter={() => setHoveredIndex(idx)}
+                className={`font-sans text-[11px] xl:text-xs 2xl:text-sm font-semibold py-1.5 transition-colors whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-clinical-teal ${
+                  isHighlighted
+                    ? "text-deep-navy font-bold"
+                    : "text-text-secondary hover:text-deep-navy"
+                }`}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
+
+          {/* Smooth Mouse-Following Sliding Underscore */}
+          <span
+            className="absolute bottom-0 h-[2.5px] bg-clinical-teal rounded-full transition-all duration-300 ease-out pointer-events-none"
+            style={{
+              transform: `translateX(${indicatorStyle.left}px)`,
+              width: `${indicatorStyle.width}px`,
+              opacity: indicatorStyle.opacity,
+            }}
+          />
         </nav>
 
         {/* Action Button & Hamburger Toggle - Far Right */}
@@ -141,7 +227,10 @@ export const Header: React.FC = () => {
 
       {/* Mobile Drawer (Collapsed Layout) */}
       {mobileMenuOpen && (
-        <div id="mobile-menu" className="xl:hidden absolute top-full left-0 right-0 w-full bg-white border-b border-border-clinical shadow-2xl py-5 px-5 flex flex-col gap-4 z-50 max-h-[85vh] overflow-y-auto">
+        <div
+          id="mobile-menu"
+          className="xl:hidden absolute top-full left-0 right-0 w-full bg-white border-b border-border-clinical shadow-2xl py-5 px-5 flex flex-col gap-4 z-50 max-h-[85vh] overflow-y-auto"
+        >
           <nav className="flex flex-col gap-2.5" aria-label="Mobile navigation">
             {mainNavigation.map((link, idx) => (
               <Link
