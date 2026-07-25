@@ -4,106 +4,26 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function BusinessDashboardPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pinInput, setPinInput] = useState("");
-  const [pinError, setPinError] = useState("");
   const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter">("overview");
   const [statsData, setStatsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Authenticate PIN
-  const handlePinSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (pinInput.trim() === "230670") {
-      setIsAuthenticated(true);
-      setPinError("");
-    } else {
-      setPinError("Invalid security PIN. Please enter the administrator code.");
-    }
-  };
-
-  // Fetch telemetry stats
+  // Fetch telemetry stats directly (middleware handles authentication via HTTP Basic Auth)
   useEffect(() => {
-    if (isAuthenticated) {
-      setLoading(true);
-      fetch("/api/portal/stats")
-        .then((res) => res.json())
-        .then((res) => {
-          if (res.success) {
-            setStatsData(res.data);
-          }
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error("Failed to load telemetry:", err);
-          setLoading(false);
-        });
-    }
-  }, [isAuthenticated]);
-
-  // PIN Authentication Overlay
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
-
-        <div className="w-full max-w-md bg-slate-800/90 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-2xl p-8 relative z-10">
-          <div className="flex flex-col items-center text-center mb-6">
-            <div className="w-14 h-14 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl flex items-center justify-center mb-4 shadow-inner">
-              <img src="/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" className="w-10 h-10 object-contain" />
-            </div>
-            <h1 className="font-serif text-2xl font-bold text-white tracking-tight">
-              Lincolnshire Knee Clinic
-            </h1>
-            <p className="text-xs uppercase tracking-widest text-cyan-400 font-semibold mt-1">
-              Website Analytics &amp; Practice Intelligence
-            </p>
-            <p className="text-xs text-slate-400 mt-2">
-              Enter your 6-digit Security PIN to view performance &amp; enquiry telemetry.
-            </p>
-          </div>
-
-          <form onSubmit={handlePinSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="pin-input" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 text-center">
-                Administrator PIN
-              </label>
-              <input
-                id="pin-input"
-                type="password"
-                maxLength={6}
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                placeholder="••••••"
-                className="w-full text-center text-2xl tracking-[0.4em] font-mono py-3 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all placeholder:tracking-normal placeholder:text-slate-600"
-                autoFocus
-              />
-            </div>
-
-            {pinError && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs py-2 px-3 rounded-lg text-center font-medium">
-                {pinError}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 px-4 rounded-xl transition-colors shadow-lg shadow-cyan-500/20 text-sm cursor-pointer"
-            >
-              Unlock Business Dashboard
-            </button>
-          </form>
-
-          <div className="mt-6 pt-4 border-t border-slate-700/60 flex items-center justify-center gap-4 text-xs text-slate-400">
-            <Link href="/" className="hover:text-cyan-400 transition-colors inline-flex items-center gap-1 font-semibold">
-              ← Main Website
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    setLoading(true);
+    fetch("/api/portal/stats")
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.success) {
+          setStatsData(res.data);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to load telemetry:", err);
+        setLoading(false);
+      });
+  }, []);
 
   const totalSignups = statsData?.newsletter?.totalSignups || 0;
   const clickEvents = statsData?.clickEvents || { callNowClicks: 0, bookAppointmentClicks: 0, whatsappClicks: 0 };
@@ -143,12 +63,9 @@ export default function BusinessDashboardPage() {
             >
               ← Return to Website
             </Link>
-            <button
-              onClick={() => setIsAuthenticated(false)}
-              className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-semibold py-1.5 px-3 rounded-xl transition-colors cursor-pointer"
-            >
-              Lock
-            </button>
+            <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold py-1.5 px-3 rounded-xl inline-flex items-center gap-1">
+              🔒 Basic Auth Protected
+            </span>
           </div>
         </div>
 

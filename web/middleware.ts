@@ -1,10 +1,59 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+function decodeBase64(str: string): string {
+  try {
+    if (typeof atob === "function") {
+      return atob(str);
+    }
+    if (typeof Buffer !== "undefined") {
+      return Buffer.from(str, "base64").toString("utf-8");
+    }
+    return "";
+  } catch {
+    return "";
+  }
+}
+
+function isAuthorized(request: NextRequest): boolean {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader || !authHeader.startsWith("Basic ")) return false;
+
+  try {
+    const base64Credentials = authHeader.split(" ")[1];
+    const decoded = decodeBase64(base64Credentials);
+    const [user, pass] = decoded.split(":");
+
+    const expectedUser = process.env.DASHBOARD_USER;
+    const expectedPass = process.env.DASHBOARD_PASSWORD;
+
+    if (!expectedUser || !expectedPass) return false;
+
+    return user === expectedUser && pass === expectedPass;
+  } catch (err) {
+    return false;
+  }
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Gate all patient portal & portal API routes with 404 Not Found
+  const isDashboardRoute =
+    pathname === "/portal/business" ||
+    pathname.startsWith("/portal/business/") ||
+    pathname === "/api/portal/stats";
+
+  if (isDashboardRoute) {
+    if (!isAuthorized(request)) {
+      return new NextResponse("Authentication required", {
+        status: 401,
+        headers: { "WWW-Authenticate": 'Basic realm="Dashboard"' },
+      });
+    }
+    return NextResponse.next();
+  }
+
+  // Everything else under /portal and /api/portal stays fully blocked with 404.
   if (
     pathname === "/portal" ||
     pathname.startsWith("/portal/") ||
