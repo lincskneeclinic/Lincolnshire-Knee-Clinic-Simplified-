@@ -1253,12 +1253,14 @@ export default function ClinicianIntakePage() {
                           {p.invoices.map((inv: any) => (
                             <div
                               key={inv.id}
-                              className="flex flex-col sm:flex-row sm:items-center justify-between text-xs bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-white gap-2"
+                              className="flex justify-between items-start text-xs bg-slate-900 p-3 rounded-xl border border-slate-800 text-white gap-3 shadow-inner"
                             >
-                              <div className="space-y-0.5">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-mono font-bold text-cyan-300">£{parseFloat(inv.amount).toFixed(2)}</span>
-                                  <span className="text-[11px] font-semibold text-slate-300">({inv.type})</span>
+                              <div className="space-y-1 flex-1 min-w-0">
+                                <div>
+                                  <span className="font-mono font-extrabold text-cyan-300 text-sm">£{parseFloat(inv.amount).toFixed(2)}</span>
+                                  <span className="text-xs font-bold text-slate-200 block sm:inline sm:ml-2">({inv.type})</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                                   {inv.status === "PAID" && (
                                     <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                                       ✓ PAID ({inv.dateSent})
@@ -1275,19 +1277,20 @@ export default function ClinicianIntakePage() {
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[10px] text-slate-400">
-                                  Sent: {inv.dateSent} &bull; Channel: {inv.channel || "WhatsApp"} &bull; Ref: {inv.id}
+                                <div className="text-[10px] text-slate-400 font-mono pt-0.5 leading-tight">
+                                  Sent: {inv.dateSent} &bull; Channel: {inv.channel || "WhatsApp"}<br />
+                                  Ref: {inv.id}
                                 </div>
                               </div>
 
                               {inv.status !== "PAID" && (
-                                <div className="flex items-center gap-1.5 shrink-0">
+                                <div className="flex flex-col gap-1.5 shrink-0 min-w-[100px]">
                                   <button
                                     onClick={() => {
                                       const text = encodeURIComponent(`Lincolnshire Knee Clinic Reminder: Dear ${p.name}, your ${inv.type} invoice of £${inv.amount} remains outstanding. Pay online securely: https://lincolnshirekneeclinic.co.uk/portal or BACS Ref: ${inv.id}. Thank you.`);
                                       window.open(`https://wa.me/447700900123?text=${text}`, "_blank");
                                     }}
-                                    className="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg cursor-pointer"
+                                    className="w-full py-1.5 px-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-lg cursor-pointer shadow-xs text-center"
                                   >
                                     💬 WhatsApp
                                   </button>
@@ -1305,7 +1308,7 @@ export default function ClinicianIntakePage() {
                                       const res = await fetch("/api/portal/patients");
                                       if (res.ok) setPatients(await res.json());
                                     }}
-                                    className="px-2 py-1 bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold rounded-lg cursor-pointer"
+                                    className="w-full py-1.5 px-2.5 bg-cyan-600 hover:bg-cyan-500 text-white text-[11px] font-bold rounded-lg cursor-pointer shadow-xs text-center"
                                   >
                                     ✓ Mark Paid
                                   </button>
