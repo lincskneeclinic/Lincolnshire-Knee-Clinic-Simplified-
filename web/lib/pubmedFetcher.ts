@@ -18,6 +18,7 @@ export async function fetchPubMedArticles(query: string, maxResults = 5): Promis
 
     const searchRes = await fetch(searchUrl, {
       headers: { "User-Agent": "LincolnshireKneeClinicResearchAgent/1.0" },
+      signal: AbortSignal.timeout(6000),
     });
 
     if (!searchRes.ok) return [];
@@ -32,6 +33,7 @@ export async function fetchPubMedArticles(query: string, maxResults = 5): Promis
 
     const summaryRes = await fetch(summaryUrl, {
       headers: { "User-Agent": "LincolnshireKneeClinicResearchAgent/1.0" },
+      signal: AbortSignal.timeout(6000),
     });
 
     if (!summaryRes.ok) return [];

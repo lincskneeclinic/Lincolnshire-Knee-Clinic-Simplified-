@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { triggerPipelineRun } from "@/lib/contentPipeline";
 
+export const maxDuration = 60; // Allow 60s for PubMed literature fetching and Gemini AI content drafting
+
 export async function POST(request: Request) {
   try {
     let topic: string | undefined = undefined;

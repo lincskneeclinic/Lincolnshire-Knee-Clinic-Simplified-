@@ -11,6 +11,8 @@ function getSupabaseConfig() {
   return { url: url.replace(/\/$/, ""), key };
 }
 
+export const maxDuration = 60; // Allow 60s for PubMed Entrez API and Gemini AI synthesis
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();

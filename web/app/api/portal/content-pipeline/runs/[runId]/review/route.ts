@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { submitPipelineReview } from "@/lib/contentPipeline";
 
+export const maxDuration = 60; // Allow 60s for Gemini AI social caption generation
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ runId: string }> }

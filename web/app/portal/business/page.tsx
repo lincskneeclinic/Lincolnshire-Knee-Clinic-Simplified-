@@ -171,10 +171,23 @@ export default function BusinessDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: newRunTopic.trim() || undefined }),
       });
-      const data = await res.json();
+
+      let data;
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        console.error("Non-JSON response from server:", res.status, text);
+        if (res.status === 504 || res.status === 502 || res.status === 503) {
+          throw new Error("Server timeout while synthesizing AI medical literature. We have increased route duration—please try again.");
+        }
+        throw new Error(`Server error (${res.status}): ${text.slice(0, 100)}`);
+      }
+
       timers.forEach((t) => clearTimeout(t));
 
-      if (data.success && data.run) {
+      if (res.ok && data.success && data.run) {
         setTriggerProgress(100);
         setTriggerStep("Run completed successfully! Loading review workspace...");
         await new Promise((r) => setTimeout(r, 600));
@@ -185,12 +198,12 @@ export default function BusinessDashboardPage() {
         setActionFeedback("🚀 New content automation run initiated successfully!");
         setTimeout(() => setActionFeedback(null), 4000);
       } else {
-        alert(data.error || "Failed to trigger content pipeline run.");
+        throw new Error(data.error || data.message || "Failed to trigger content pipeline run.");
       }
     } catch (err: any) {
       timers.forEach((t) => clearTimeout(t));
       console.error("Error triggering run:", err);
-      alert("An error occurred while triggering the automation run.");
+      alert(err?.message || "An error occurred while triggering the automation run.");
     } finally {
       timers.forEach((t) => clearTimeout(t));
       setIsTriggering(false);
