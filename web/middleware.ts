@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { maintenanceHtmlString } from "@/components/MaintenancePage";
 
 function decodeBase64(str: string): string {
   try {
@@ -38,6 +39,22 @@ function isAuthorized(request: NextRequest): boolean {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // MAINTENANCE MODE CHECK (at the very top of middleware function)
+  if (process.env.MAINTENANCE_MODE === "true") {
+    const isExcludedFromMaintenance =
+      pathname === "/portal/business" ||
+      pathname.startsWith("/portal/business/") ||
+      pathname === "/api/portal/stats" ||
+      pathname.startsWith("/api/");
+
+    if (!isExcludedFromMaintenance) {
+      return new NextResponse(maintenanceHtmlString, {
+        status: 200,
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    }
+  }
+
   const isDashboardRoute =
     pathname === "/portal/business" ||
     pathname.startsWith("/portal/business/") ||
@@ -69,9 +86,9 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/portal",
-    "/portal/:path*",
-    "/api/portal",
-    "/api/portal/:path*",
+    /*
+     * Match all request paths except static files & brand assets
+     */
+    "/((?!_next/static|_next/image|favicon.ico|brand/).*)",
   ],
 };
