@@ -27,7 +27,7 @@ export default function BusinessDashboardPage() {
   const [selectedRun, setSelectedRun] = useState<ContentPipelineRun | null>(null);
   const [selectedRunReviews, setSelectedRunReviews] = useState<ContentPipelineReview[]>([]);
   const [pipelineLoading, setPipelineLoading] = useState(false);
-  const [isResearchBriefExpanded, setIsResearchBriefExpanded] = useState(false);
+  const [isResearchBriefExpanded, setIsResearchBriefExpanded] = useState(true);
   const [isVersionHistoryExpanded, setIsVersionHistoryExpanded] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
@@ -652,26 +652,86 @@ export default function BusinessDashboardPage() {
                           </button>
 
                           {isResearchBriefExpanded && (
-                            <div className="p-4 space-y-3 text-xs border-t border-slate-800/80">
+                            <div className="p-4 space-y-4 text-xs border-t border-slate-800/80 max-h-[500px] overflow-y-auto pr-2">
                               <p className="text-slate-300 leading-relaxed">{selectedRun.research_brief.summary}</p>
-                              <div>
-                                <span className="font-bold text-cyan-400 block mb-1">Key Clinical Findings:</span>
-                                <ul className="list-disc pl-5 text-slate-400 space-y-1">
-                                  {selectedRun.research_brief.key_points.map((pt, i) => (
-                                    <li key={i}>{pt}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                              <div>
-                                <span className="font-bold text-cyan-400 block mb-1">Literature Sources:</span>
-                                <div className="space-y-1">
-                                  {selectedRun.research_brief.sources.map((src, i) => (
-                                    <div key={i} className="text-slate-400 bg-slate-900 p-2 rounded border border-slate-800 font-mono text-[11px]">
-                                      📄 {src}
-                                    </div>
-                                  ))}
+
+                              {/* Key Points */}
+                              {selectedRun.research_brief.key_points && selectedRun.research_brief.key_points.length > 0 && (
+                                <div>
+                                  <span className="font-bold text-cyan-400 block mb-1">Key Clinical Findings:</span>
+                                  <ul className="list-disc pl-5 text-slate-300 space-y-1">
+                                    {selectedRun.research_brief.key_points.map((pt, i) => (
+                                      <li key={i}>{pt}</li>
+                                    ))}
+                                  </ul>
                                 </div>
-                              </div>
+                              )}
+
+                              {/* Conflicting Findings / Nuances */}
+                              {selectedRun.research_brief.conflicting_findings && selectedRun.research_brief.conflicting_findings.length > 0 && (
+                                <div className="bg-amber-950/40 border-l-2 border-amber-400 p-3 rounded-r-lg space-y-1">
+                                  <span className="font-bold text-amber-400 block mb-0.5">⚠️ Conflicting Findings &amp; Clinical Nuances:</span>
+                                  <ul className="list-disc pl-4 text-amber-200 text-[11px] space-y-1">
+                                    {selectedRun.research_brief.conflicting_findings.map((cf, i) => (
+                                      <li key={i}>{cf}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {/* Clinical Indications */}
+                              {selectedRun.research_brief.clinical_indications && selectedRun.research_brief.clinical_indications.length > 0 && (
+                                <div>
+                                  <span className="font-bold text-emerald-400 block mb-1">Clinical Indication Criteria:</span>
+                                  <ul className="list-disc pl-5 text-slate-300 space-y-1">
+                                    {selectedRun.research_brief.clinical_indications.map((ci, i) => (
+                                      <li key={i}>{ci}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {/* PubMed Articles */}
+                              {selectedRun.research_brief.pubmed_articles && selectedRun.research_brief.pubmed_articles.length > 0 && (
+                                <div>
+                                  <span className="font-bold text-cyan-400 block mb-1.5">Verified PubMed Literature (NCBI):</span>
+                                  <div className="space-y-2">
+                                    {selectedRun.research_brief.pubmed_articles.map((art, i) => (
+                                      <div key={i} className="bg-slate-900 p-3 rounded-lg border border-slate-800 space-y-1">
+                                        <a
+                                          href={art.url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="font-bold text-cyan-300 hover:underline flex items-center gap-1 leading-snug"
+                                        >
+                                          <span>📄</span>
+                                          <span>{art.title}</span>
+                                          <span className="text-[10px] text-slate-400">↗</span>
+                                        </a>
+                                        <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                          <span><strong>Authors:</strong> {art.authors}</span>
+                                          <span><strong>Journal:</strong> {art.journal} ({art.pubdate})</span>
+                                          <span className="font-mono text-cyan-400/80">PMID: {art.pmid}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Sources */}
+                              {selectedRun.research_brief.sources && selectedRun.research_brief.sources.length > 0 && (
+                                <div>
+                                  <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px] block mb-1">Source Citations Log:</span>
+                                  <div className="space-y-1">
+                                    {selectedRun.research_brief.sources.map((src, i) => (
+                                      <div key={i} className="text-slate-400 bg-slate-900/80 p-2 rounded border border-slate-800/80 font-mono text-[11px]">
+                                        📄 {src}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -782,7 +842,7 @@ export default function BusinessDashboardPage() {
                             )}
 
                             {/* Rendered Formatted Article Body */}
-                            <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-4">
+                            <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-4 max-h-[650px] overflow-y-auto pr-2">
                               {/* PROMINENT FEATURED ARTICLE IMAGE */}
                               {getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images) && (
                                 <div className="relative rounded-xl overflow-hidden border border-cyan-500/30 shadow-lg max-h-80 mb-4">
