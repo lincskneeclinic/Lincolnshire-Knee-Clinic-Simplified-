@@ -37,6 +37,8 @@ export default function BusinessDashboardPage() {
   const [isTriggerModalOpen, setIsTriggerModalOpen] = useState(false);
   const [newRunTopic, setNewRunTopic] = useState("");
   const [isTriggering, setIsTriggering] = useState(false);
+  const [triggerProgress, setTriggerProgress] = useState(0);
+  const [triggerStep, setTriggerStep] = useState("");
 
   // Review Actions State
   const [isEditMode, setIsEditMode] = useState(false);
@@ -144,6 +146,25 @@ export default function BusinessDashboardPage() {
   const handleTriggerRun = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsTriggering(true);
+    setTriggerProgress(5);
+    setTriggerStep("Selecting topic & initializing clinical pipeline...");
+
+    const steps = [
+      { progress: 15, time: 1500, text: "Scanning patient enquiries for trending knee conditions..." },
+      { progress: 30, time: 3500, text: "Stage 1: Searching PubMed & orthopaedic literature journals..." },
+      { progress: 50, time: 7000, text: "Stage 1: Synthesizing evidence-based clinical research brief..." },
+      { progress: 65, time: 11000, text: "Stage 2: AI Medical Writer drafting 800+ word article & references..." },
+      { progress: 80, time: 16000, text: "Stage 2: Performing clinical review formatting & imagery suggestions..." },
+      { progress: 92, time: 22000, text: "Finalizing content package & preparing review dashboard..." },
+    ];
+
+    const timers = steps.map((s) =>
+      setTimeout(() => {
+        setTriggerProgress(s.progress);
+        setTriggerStep(s.text);
+      }, s.time)
+    );
+
     try {
       const res = await fetch("/api/portal/content-pipeline/trigger", {
         method: "POST",
@@ -151,18 +172,30 @@ export default function BusinessDashboardPage() {
         body: JSON.stringify({ topic: newRunTopic.trim() || undefined }),
       });
       const data = await res.json();
+      timers.forEach((t) => clearTimeout(t));
+
       if (data.success && data.run) {
+        setTriggerProgress(100);
+        setTriggerStep("Run completed successfully! Loading review workspace...");
+        await new Promise((r) => setTimeout(r, 600));
         setIsTriggerModalOpen(false);
         setNewRunTopic("");
         await fetchPipelineRuns();
         await fetchRunDetail(data.run.run_id);
         setActionFeedback("🚀 New content automation run initiated successfully!");
         setTimeout(() => setActionFeedback(null), 4000);
+      } else {
+        alert(data.error || "Failed to trigger content pipeline run.");
       }
-    } catch (err) {
+    } catch (err: any) {
+      timers.forEach((t) => clearTimeout(t));
       console.error("Error triggering run:", err);
+      alert("An error occurred while triggering the automation run.");
     } finally {
+      timers.forEach((t) => clearTimeout(t));
       setIsTriggering(false);
+      setTriggerProgress(0);
+      setTriggerStep("");
     }
   };
 
@@ -1297,8 +1330,9 @@ export default function BusinessDashboardPage() {
                   <span>Start New Content Automation Run</span>
                 </h3>
                 <button
-                  onClick={() => setIsTriggerModalOpen(false)}
-                  className="text-slate-400 hover:text-white text-sm font-bold cursor-pointer"
+                  onClick={() => !isTriggering && setIsTriggerModalOpen(false)}
+                  disabled={isTriggering}
+                  className="text-slate-400 hover:text-white text-sm font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   ✕
                 </button>
@@ -1313,28 +1347,57 @@ export default function BusinessDashboardPage() {
                     type="text"
                     value={newRunTopic}
                     onChange={(e) => setNewRunTopic(e.target.value)}
+                    disabled={isTriggering}
                     placeholder="e.g. Can I kneel after partial knee replacement?"
-                    className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3 text-xs focus:border-cyan-400 focus:outline-none"
+                    className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3 text-xs focus:border-cyan-400 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <p className="text-[11px] text-slate-400 mt-1.5">
                     If left blank, the pipeline will automatically select the highest-trending patient question from contact enquiries.
                   </p>
                 </div>
 
+                {isTriggering && (
+                  <div className="bg-slate-950 p-4 rounded-xl border border-cyan-500/30 space-y-3 my-2 shadow-lg">
+                    <div className="flex justify-between items-center text-xs font-semibold">
+                      <span className="text-cyan-400 flex items-center gap-2 truncate pr-2">
+                        <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0" />
+                        <span className="truncate">{triggerStep || "Initializing pipeline..."}</span>
+                      </span>
+                      <span className="text-slate-300 font-mono font-bold shrink-0">{triggerProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                      <div
+                        className="bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 h-full rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${triggerProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-400 italic text-center">
+                      Please wait while our AI clinical agents analyze medical literature and synthesize your draft...
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => setIsTriggerModalOpen(false)}
-                    className="bg-slate-800 text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
+                    onClick={() => !isTriggering && setIsTriggerModalOpen(false)}
+                    disabled={isTriggering}
+                    className="bg-slate-800 text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isTriggering}
-                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold text-xs px-5 py-2 rounded-xl cursor-pointer"
+                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold text-xs px-5 py-2 rounded-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    {isTriggering ? "Initiating..." : "Launch Automation Run"}
+                    {isTriggering && (
+                      <svg className="animate-spin h-3.5 w-3.5 text-slate-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    )}
+                    {isTriggering ? "Initiating Pipeline..." : "Launch Automation Run"}
                   </button>
                 </div>
               </form>
