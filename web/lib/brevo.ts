@@ -16,6 +16,15 @@ export interface BrevoContactInput {
   primaryInterest?: string;
 }
 
+function toE164UK(mobile?: string): string | undefined {
+  if (!mobile) return undefined;
+  const digits = mobile.replace(/[^\d+]/g, "");
+  if (digits.startsWith("+")) return digits; // already international
+  if (digits.startsWith("0")) return `+44${digits.slice(1)}`; // UK local -> international
+  if (digits.startsWith("44")) return `+${digits}`;
+  return undefined; // doesn't look like a usable number — omit rather than fail
+}
+
 export function isBrevoConfigured(): boolean {
   return Boolean(process.env.BREVO_API_KEY && process.env.BREVO_LIST_ID);
 }
@@ -36,7 +45,7 @@ export async function syncContactToBrevo(contact: BrevoContactInput): Promise<bo
         email: contact.email,
         attributes: {
           FIRSTNAME: contact.name || "",
-          SMS: contact.mobileNumber || undefined,
+          SMS: toE164UK(contact.mobileNumber),
           PRIMARY_INTEREST: contact.primaryInterest || "General Joint Health",
         },
         listIds: [Number(listId)],
