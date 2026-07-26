@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { isSupabaseConfigured, saveContactToSupabase } from "@/lib/supabase";
+import { isBrevoConfigured, syncContactToBrevo } from "@/lib/brevo";
 
 const NEWSLETTER_DB_PATH = path.join(process.cwd(), "data", "newsletter-subscribers.json");
 
@@ -104,7 +105,18 @@ export async function POST(request: Request) {
       });
     }
 
-    // 2. Always persist/sync to local disk JSON file as fallback/cache
+    // 2. Try syncing to Brevo if configured
+    let syncedToBrevo = false;
+    if (isBrevoConfigured()) {
+      syncedToBrevo = await syncContactToBrevo({
+        email: subscriberRecord.email,
+        name: subscriberRecord.name,
+        mobileNumber: subscriberRecord.mobileNumber,
+        primaryInterest: subscriberRecord.primaryInterest,
+      });
+    }
+
+    // 3. Always persist/sync to local disk JSON file as fallback/cache
     const localSubscribers = readSubscribers();
     const existingIndex = localSubscribers.findIndex(
       (sub: any) => sub.email && sub.email.toLowerCase() === cleanEmail
@@ -121,6 +133,7 @@ export async function POST(request: Request) {
       success: true,
       message: "Thank you for subscribing! You will receive knee health blogs, newsletters, and updates from Lincolnshire Knee Clinic.",
       storage: savedToSupabase ? "supabase" : "local_file",
+      brevoSynced: syncedToBrevo,
     });
   } catch (error) {
     console.error("Error processing contact signup:", error);

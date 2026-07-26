@@ -41,7 +41,8 @@ export function middleware(request: NextRequest) {
   const isDashboardRoute =
     pathname === "/portal/business" ||
     pathname.startsWith("/portal/business/") ||
-    pathname === "/api/portal/stats";
+    pathname === "/api/portal/stats" ||
+    pathname.startsWith("/api/portal/content-pipeline");
 
   if (isDashboardRoute) {
     if (!isAuthorized(request)) {

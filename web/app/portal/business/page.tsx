@@ -1,14 +1,44 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { ContentPipelineRun, ContentPipelineReview } from "@/lib/contentPipeline";
 
 export default function BusinessDashboardPage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "pipeline">("overview");
   const [statsData, setStatsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch telemetry stats directly (middleware handles authentication via HTTP Basic Auth)
+  // Content Pipeline State
+  const [pipelineRuns, setPipelineRuns] = useState<ContentPipelineRun[]>([]);
+  const [selectedRun, setSelectedRun] = useState<ContentPipelineRun | null>(null);
+  const [selectedRunReviews, setSelectedRunReviews] = useState<ContentPipelineReview[]>([]);
+  const [pipelineLoading, setPipelineLoading] = useState(false);
+  const [isResearchBriefExpanded, setIsResearchBriefExpanded] = useState(false);
+  const [isVersionHistoryExpanded, setIsVersionHistoryExpanded] = useState(false);
+
+  // Trigger New Run Form State
+  const [isTriggerModalOpen, setIsTriggerModalOpen] = useState(false);
+  const [newRunTopic, setNewRunTopic] = useState("");
+  const [isTriggering, setIsTriggering] = useState(false);
+
+  // Review Actions State
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editExcerpt, setEditExcerpt] = useState("");
+  const [editBody, setEditBody] = useState("");
+  const [editIgCaption, setEditIgCaption] = useState("");
+  const [editFbCaption, setEditFbCaption] = useState("");
+  const [editLiCaption, setEditLiCaption] = useState("");
+
+  const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
+  const [revisionStage, setRevisionStage] = useState<"blog" | "social">("blog");
+  const [revisionNotes, setRevisionNotes] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [actionFeedback, setActionFeedback] = useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Fetch telemetry stats
   useEffect(() => {
     setLoading(true);
     fetch("/api/portal/stats")
@@ -25,12 +55,178 @@ export default function BusinessDashboardPage() {
       });
   }, []);
 
+  // Fetch pipeline runs list
+  const fetchPipelineRuns = useCallback(async () => {
+    setPipelineLoading(true);
+    try {
+      const res = await fetch("/api/portal/content-pipeline/runs");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.runs)) {
+        setPipelineRuns(data.runs);
+      }
+    } catch (err) {
+      console.error("Failed to fetch pipeline runs:", err);
+    } finally {
+      setPipelineLoading(false);
+    }
+  }, []);
+
+  // Fetch single run detail
+  const fetchRunDetail = useCallback(async (runId: string) => {
+    setPipelineLoading(true);
+    try {
+      const res = await fetch(`/api/portal/content-pipeline/runs/${encodeURIComponent(runId)}`);
+      const data = await res.json();
+      if (data.success && data.run) {
+        setSelectedRun(data.run);
+        setSelectedRunReviews(data.reviews || []);
+        // Pre-fill edit states
+        const blogDraft = data.run.blog_drafts?.[0];
+        if (blogDraft) {
+          setEditTitle(blogDraft.title || "");
+          setEditExcerpt(blogDraft.excerpt || "");
+          setEditBody(blogDraft.body || "");
+        }
+        const socialDraft = data.run.social_drafts?.[0];
+        if (socialDraft) {
+          setEditIgCaption(socialDraft.instagram?.caption || "");
+          setEditFbCaption(socialDraft.facebook?.caption || "");
+          setEditLiCaption(socialDraft.linkedin?.caption || "");
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch run detail:", err);
+    } finally {
+      setPipelineLoading(false);
+    }
+  }, []);
+
+  // Sync tab or runId from URL search params on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      const runIdParam = params.get("runId");
+      if (tabParam === "pipeline" || runIdParam) {
+        setActiveTab("pipeline");
+        fetchPipelineRuns();
+        if (runIdParam) {
+          fetchRunDetail(runIdParam);
+        }
+      }
+    }
+  }, [fetchPipelineRuns, fetchRunDetail]);
+
+  useEffect(() => {
+    if (activeTab === "pipeline" && pipelineRuns.length === 0) {
+      fetchPipelineRuns();
+    }
+  }, [activeTab, fetchPipelineRuns, pipelineRuns.length]);
+
+  // Handle trigger new run submission
+  const handleTriggerRun = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsTriggering(true);
+    try {
+      const res = await fetch("/api/portal/content-pipeline/trigger", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: newRunTopic.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (data.success && data.run) {
+        setIsTriggerModalOpen(false);
+        setNewRunTopic("");
+        await fetchPipelineRuns();
+        await fetchRunDetail(data.run.run_id);
+        setActionFeedback("🚀 New content automation run initiated successfully!");
+        setTimeout(() => setActionFeedback(null), 4000);
+      }
+    } catch (err) {
+      console.error("Error triggering run:", err);
+    } finally {
+      setIsTriggering(false);
+    }
+  };
+
+  // Submit review decision (approved | edited | revision_requested)
+  const handleReviewSubmission = async (
+    stage: "blog" | "social",
+    decision: "approved" | "edited" | "revision_requested",
+    customPayload?: any
+  ) => {
+    if (!selectedRun) return;
+    setIsSubmittingReview(true);
+    try {
+      let bodyData: any = {
+        stage,
+        decision,
+      };
+
+      if (decision === "edited") {
+        if (stage === "blog") {
+          bodyData.editedContent = {
+            title: editTitle,
+            excerpt: editExcerpt,
+            body: editBody,
+          };
+        } else {
+          bodyData.editedContent = {
+            instagram: { caption: editIgCaption, status: "approved" },
+            facebook: { caption: editFbCaption, status: "approved" },
+            linkedin: { caption: editLiCaption, status: "approved" },
+          };
+        }
+      } else if (decision === "revision_requested") {
+        bodyData.revisionNotes = revisionNotes;
+      } else if (customPayload) {
+        bodyData.editedContent = customPayload;
+      }
+
+      const res = await fetch(`/api/portal/content-pipeline/runs/${selectedRun.run_id}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyData),
+      });
+
+      const data = await res.json();
+      if (data.success && data.run) {
+        setIsEditMode(false);
+        setIsRevisionModalOpen(false);
+        setRevisionNotes("");
+        await fetchPipelineRuns();
+        await fetchRunDetail(data.run.run_id);
+        setActionFeedback(`✓ Review decision '${decision.toUpperCase()}' recorded successfully.`);
+        setTimeout(() => setActionFeedback(null), 4000);
+      }
+    } catch (err) {
+      console.error("Error submitting review:", err);
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  // Copy to clipboard helper
+  const handleCopyToClipboard = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2500);
+  };
+
   const totalSignups = statsData?.newsletter?.totalSignups || 0;
   const clickEvents = statsData?.clickEvents || { callNowClicks: 0, bookAppointmentClicks: 0, whatsappClicks: 0 };
   const totalClicks = (clickEvents.callNowClicks || 0) + (clickEvents.bookAppointmentClicks || 0) + (clickEvents.whatsappClicks || 0);
   const trendingTopics = statsData?.trendingTopics || [];
   const pollResults = statsData?.pollResults || { votes: {}, suggestions: [] };
   const pollVotesTotal = Object.values(pollResults.votes || {}).reduce((a: any, b: any) => Number(a) + Number(b), 0);
+
+  // Group pipeline runs
+  const reviewNeededRuns = pipelineRuns.filter(
+    (r) => r.status === "awaiting_blog_approval" || r.status === "awaiting_social_approval"
+  );
+  const otherRuns = pipelineRuns.filter(
+    (r) => r.status !== "awaiting_blog_approval" && r.status !== "awaiting_social_approval"
+  );
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col">
@@ -51,7 +247,7 @@ export default function BusinessDashboardPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Visitor Engagement, Event Telemetry &amp; Contact Capture Dashboard
+                Visitor Engagement, Event Telemetry &amp; Content Automation Pipeline
               </p>
             </div>
           </div>
@@ -77,10 +273,19 @@ export default function BusinessDashboardPage() {
               { id: "topics", label: "Trending Questions & Polls", icon: "💡" },
               { id: "events", label: "Click Event Telemetry", icon: "👆" },
               { id: "newsletter", label: "Subscriber Growth & Segments", icon: "📧" },
+              {
+                id: "pipeline",
+                label: "Content Pipeline",
+                icon: "📝",
+                badge: reviewNeededRuns.length > 0 ? reviewNeededRuns.length : null,
+              },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => {
+                  setActiveTab(tab.id as any);
+                  if (tab.id === "pipeline") setSelectedRun(null);
+                }}
                 className={`py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer border ${
                   activeTab === tab.id
                     ? "bg-cyan-500 text-slate-950 border-cyan-400 shadow-md font-extrabold"
@@ -89,11 +294,23 @@ export default function BusinessDashboardPage() {
               >
                 <span>{tab.icon}</span>
                 <span>{tab.label}</span>
+                {tab.badge && (
+                  <span className="bg-amber-400 text-slate-950 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full animate-pulse">
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             ))}
           </div>
         </div>
       </header>
+
+      {/* Action Toast Feedback */}
+      {actionFeedback && (
+        <div className="fixed top-20 right-6 z-50 bg-emerald-950 border border-emerald-500 text-emerald-200 px-4 py-3 rounded-xl shadow-2xl text-xs font-bold animate-bounce">
+          {actionFeedback}
+        </div>
+      )}
 
       {/* Dashboard Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -104,9 +321,8 @@ export default function BusinessDashboardPage() {
           </div>
         ) : (
           <>
-            {/* KPI Summary Cards */}
+            {/* KPI Summary Cards (Visible across all tabs) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Event Clicks */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative">
                 <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400 block mb-1">
                   Tracked Click Events
@@ -119,7 +335,6 @@ export default function BusinessDashboardPage() {
                 </p>
               </div>
 
-              {/* Total Contact Signups */}
               <div className="bg-slate-900 border border-cyan-500/30 rounded-2xl p-5 shadow-lg relative">
                 <span className="font-bold text-[10px] uppercase tracking-wider text-cyan-400 block mb-1">
                   Verified Contact Signups
@@ -132,29 +347,27 @@ export default function BusinessDashboardPage() {
                 </p>
               </div>
 
-              {/* Patient Questions Tracked */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative">
                 <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400 block mb-1">
-                  Trending Enquiry Topics
+                  Content Runs Needing Action
                 </span>
-                <div className="text-2xl xl:text-3xl font-extrabold text-white font-mono">
-                  {trendingTopics.length}
+                <div className="text-2xl xl:text-3xl font-extrabold text-amber-400 font-mono">
+                  {reviewNeededRuns.length}
                 </div>
                 <p className="text-[11px] text-slate-400 mt-2 font-medium">
-                  Auto-updated from patient enquiries
+                  Blog &amp; Social drafts awaiting approval
                 </p>
               </div>
 
-              {/* Content Poll Responses */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative">
                 <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400 block mb-1">
-                  Patient Poll Responses
+                  Published Content Assets
                 </span>
-                <div className="text-2xl xl:text-3xl font-extrabold text-white font-mono">
-                  {Number(pollVotesTotal)}
+                <div className="text-2xl xl:text-3xl font-extrabold text-emerald-400 font-mono">
+                  {pipelineRuns.filter((r) => r.status === "published").length}
                 </div>
                 <p className="text-[11px] text-slate-400 mt-2 font-medium">
-                  {pollResults?.suggestions?.length || 0} custom suggestions submitted
+                  Live articles &amp; social packages
                 </p>
               </div>
             </div>
@@ -162,7 +375,6 @@ export default function BusinessDashboardPage() {
             {/* TAB: OVERVIEW */}
             {activeTab === "overview" && (
               <div className="space-y-8">
-                {/* Analytics Connection & Event Status Card */}
                 <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/60 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
@@ -183,7 +395,6 @@ export default function BusinessDashboardPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Top Trending Questions Box */}
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
                     <div className="flex justify-between items-center border-b border-slate-800 pb-3">
                       <h3 className="text-sm font-bold text-white uppercase tracking-wider">Top Trending Patient Questions</h3>
@@ -208,7 +419,6 @@ export default function BusinessDashboardPage() {
                     </div>
                   </div>
 
-                  {/* Patient Content Poll Votes */}
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
                     <div className="flex justify-between items-center border-b border-slate-800 pb-3">
                       <h3 className="text-sm font-bold text-white uppercase tracking-wider">Patient Content Poll Votes</h3>
@@ -233,32 +443,10 @@ export default function BusinessDashboardPage() {
                     </div>
                   </div>
                 </div>
-
-                {/* Aggregate Regional Catchment Panel */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
-                  <div className="border-b border-slate-800 pb-3">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Aggregate Regional Traffic Catchment</h3>
-                    <p className="text-xs text-slate-400">Regional distribution derived from aggregate non-identifying telemetry</p>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
-                    {[
-                      { region: "Lincoln & Central Lincolnshire", share: "44%", status: "Primary Catchment" },
-                      { region: "Grantham & South Lincs", share: "22%", status: "High Growth" },
-                      { region: "Louth & Coastal Wolds", share: "18%", status: "Steady" },
-                      { region: "Scunthorpe & North Lincs", share: "16%", status: "Emerging" },
-                    ].map((item, i) => (
-                      <div key={i} className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-1">
-                        <span className="text-[10px] text-slate-400 uppercase font-bold block">{item.region}</span>
-                        <span className="font-mono text-xl font-bold text-cyan-400">{item.share}</span>
-                        <span className="text-[10px] text-emerald-400 block font-semibold">{item.status}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
 
-            {/* TAB: TRENDING QUESTIONS & POLLS */}
+            {/* TAB: TOPICS */}
             {activeTab === "topics" && (
               <div className="space-y-8">
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
@@ -275,184 +463,839 @@ export default function BusinessDashboardPage() {
                             <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider block mb-0.5">{t.category || "General"}</span>
                             <h3 className="font-serif text-base font-bold text-white">{t.label}</h3>
                           </div>
-                          <span className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-xs font-mono font-bold px-3 py-1 rounded-full">
-                            {t.enquiryCount} Tracked Enquiries
-                          </span>
+                          <button
+                            onClick={() => {
+                              setActiveTab("pipeline");
+                              setNewRunTopic(t.label);
+                              setIsTriggerModalOpen(true);
+                            }}
+                            className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-semibold px-3 py-1 rounded-xl transition-colors"
+                          >
+                            🚀 Trigger Content Run for Topic
+                          </button>
                         </div>
-
-                        {t.latestQueries && t.latestQueries.length > 0 && (
-                          <div className="space-y-1.5 pt-2 border-t border-slate-900">
-                            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Sample Patient Queries:</span>
-                            {t.latestQueries.slice(0, 3).map((q: string, qIdx: number) => (
-                              <div key={qIdx} className="text-xs text-slate-300 bg-slate-900 p-2.5 rounded-lg border border-slate-800 italic">
-                                "{q}"
-                              </div>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     ))}
-                  </div>
-                </div>
-
-                {/* Patient Custom Topic Suggestions */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
-                  <div className="border-b border-slate-800 pb-4">
-                    <h2 className="text-lg font-bold text-white">Free-Text Patient Content Suggestions</h2>
-                    <p className="text-xs text-slate-400">Submitted directly by visitors via the interactive poll widget on `/newsletter`</p>
-                  </div>
-
-                  <div className="space-y-3">
-                    {pollResults?.suggestions?.length === 0 ? (
-                      <p className="text-xs text-slate-500 italic">No custom suggestions submitted yet.</p>
-                    ) : (
-                      pollResults?.suggestions?.map((s: any, idx: number) => (
-                        <div key={idx} className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between text-xs gap-4">
-                          <p className="text-slate-200 font-medium italic">"{s.text}"</p>
-                          <span className="text-[10px] text-slate-500 font-mono shrink-0">{s.date}</span>
-                        </div>
-                      ))
-                    )}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* TAB: EVENT TELEMETRY */}
+            {/* TAB: EVENTS */}
             {activeTab === "events" && (
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
                 <div className="border-b border-slate-800 pb-4">
                   <h2 className="text-lg font-bold text-white">Call &amp; Appointment Click Event Telemetry</h2>
                   <p className="text-xs text-slate-400">Real-time counts for high-intent action button clicks (non-clinical, anonymous)</p>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="p-6 bg-slate-950 border border-slate-800 rounded-xl space-y-3 text-center">
                     <span className="text-3xl">📞</span>
                     <h3 className="font-bold text-white text-base">"Call Clinic Reception" Clicks</h3>
-                    <p className="text-xs text-slate-400">Telephone link taps on clinic location cards</p>
-                    <div className="font-mono text-3xl font-extrabold text-cyan-400 pt-2">
-                      {clickEvents.callNowClicks}
-                    </div>
+                    <div className="font-mono text-3xl font-extrabold text-cyan-400 pt-2">{clickEvents.callNowClicks}</div>
                   </div>
-
                   <div className="p-6 bg-slate-950 border border-slate-800 rounded-xl space-y-3 text-center">
                     <span className="text-3xl">📅</span>
                     <h3 className="font-bold text-white text-base">"Book Appointment" Clicks</h3>
-                    <p className="text-xs text-slate-400">Header &amp; page CTA button taps</p>
-                    <div className="font-mono text-3xl font-extrabold text-cyan-400 pt-2">
-                      {clickEvents.bookAppointmentClicks}
-                    </div>
+                    <div className="font-mono text-3xl font-extrabold text-cyan-400 pt-2">{clickEvents.bookAppointmentClicks}</div>
                   </div>
-
                   <div className="p-6 bg-slate-950 border border-slate-800 rounded-xl space-y-3 text-center">
                     <span className="text-3xl">💬</span>
                     <h3 className="font-bold text-white text-base">WhatsApp Help Clicks</h3>
-                    <p className="text-xs text-slate-400">Administrative enquiries button taps</p>
-                    <div className="font-mono text-3xl font-extrabold text-emerald-400 pt-2">
-                      {clickEvents.whatsappClicks}
-                    </div>
+                    <div className="font-mono text-3xl font-extrabold text-emerald-400 pt-2">{clickEvents.whatsappClicks}</div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* TAB: SUBSCRIBER GROWTH & SEGMENTS */}
+            {/* TAB: NEWSLETTER */}
             {activeTab === "newsletter" && (
               <div className="space-y-8">
-                {/* Interest & Source Segmentation Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Category Breakdown */}
-                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Audience Interest Categories</h3>
-                    <div className="space-y-3 text-xs">
-                      {Object.entries(statsData?.newsletter?.interestSegmentation || {}).map(([cat, count]: [string, any], idx: number) => (
-                        <div key={idx} className="flex justify-between items-center p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                          <span className="text-slate-200 font-medium">{cat}</span>
-                          <span className="font-mono font-bold text-cyan-400">{count} Subscribers</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Source Breakdown */}
-                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Signup Form Entry Point</h3>
-                    <div className="space-y-3 text-xs">
-                      <div className="flex justify-between items-center p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                        <span className="text-slate-200 font-medium">Footer / Inline Signup Widget</span>
-                        <span className="font-mono font-bold text-emerald-400">
-                          {statsData?.newsletter?.sourceBreakdown?.["newsletter-signup-component"] || 0} Signups
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                        <span className="text-slate-200 font-medium">Dedicated `/newsletter` Page Form</span>
-                        <span className="font-mono font-bold text-cyan-400">
-                          {statsData?.newsletter?.sourceBreakdown?.["newsletter-page-detailed-form"] || 0} Signups
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Subscriber Directory Table */}
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                    <div>
-                      <h2 className="text-lg font-bold text-white">Verified Subscriber Directory</h2>
-                      <p className="text-xs text-slate-400">Registered marketing consents with explicit timestamps</p>
+                  <h2 className="text-lg font-bold text-white">Verified Subscriber Directory</h2>
+                  <p className="text-xs text-slate-400">Total signups: {totalSignups}</p>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: CONTENT PIPELINE */}
+            {activeTab === "pipeline" && (
+              <div className="space-y-8">
+                {/* Header Control Bar */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-xl font-bold text-white">Content Automation Pipeline</h2>
+                      <span className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full">
+                        Clinical Review Portal
+                      </span>
                     </div>
-                    <span className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-xs font-bold px-3 py-1 rounded-full">
-                      {totalSignups} Total Signups
-                    </span>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Review, edit, and approve AI-generated blog posts and multi-platform social captions.
+                    </p>
                   </div>
 
-                  {totalSignups === 0 ? (
-                    <div className="p-10 bg-slate-950 border border-slate-800 rounded-xl text-center space-y-2">
-                      <div className="text-3xl">📧</div>
-                      <h3 className="font-bold text-white text-sm">No Contact Signups Logged Yet</h3>
-                      <p className="text-xs text-slate-400 max-w-md mx-auto">
-                        Form submissions from the website signup component will appear here once submitted.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs text-slate-300">
-                        <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold">
-                          <tr>
-                            <th className="py-3 px-4 rounded-l-lg">Name</th>
-                            <th className="py-3 px-4">Email</th>
-                            <th className="py-3 px-4">Mobile</th>
-                            <th className="py-3 px-4">Primary Interest</th>
-                            <th className="py-3 px-4">Consent Timestamp</th>
-                            <th className="py-3 px-4 text-right rounded-r-lg">Consent Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800">
-                          {statsData?.newsletter?.subscribersList?.map((sub: any, idx: number) => (
-                            <tr key={idx} className="hover:bg-slate-800/50 transition-colors">
-                              <td className="py-3.5 px-4 font-bold text-white">{sub.name || "N/A"}</td>
-                              <td className="py-3.5 px-4 font-mono text-cyan-400">{sub.email}</td>
-                              <td className="py-3.5 px-4 text-slate-400">{sub.mobileNumber || "Not provided"}</td>
-                              <td className="py-3.5 px-4 text-slate-300">{sub.primaryInterest || "General Joint Health"}</td>
-                              <td className="py-3.5 px-4 font-mono text-slate-400 text-[11px]">{sub.consentGivenAt ? sub.consentGivenAt.split("T")[0] : "N/A"}</td>
-                              <td className="py-3.5 px-4 text-right">
-                                <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-                                  ✓ Consent Confirmed
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {selectedRun && (
+                      <button
+                        onClick={() => setSelectedRun(null)}
+                        className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+                      >
+                        ← Back to List
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setIsTriggerModalOpen(true)}
+                      className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>✨</span>
+                      <span>Start New Run</span>
+                    </button>
+                  </div>
                 </div>
+
+                {/* PIPELINE DETAIL VIEW */}
+                {selectedRun ? (
+                  <div className="space-y-8">
+                    {/* Run Summary Banner */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+                      <div className="flex items-center justify-between flex-wrap gap-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-mono text-slate-400 font-bold">{selectedRun.run_id}</span>
+                          <StatusBadge status={selectedRun.status} />
+                        </div>
+                        <span className="text-xs text-slate-400 font-mono">
+                          Created: {new Date(selectedRun.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-serif font-bold text-white leading-snug">{selectedRun.topic}</h3>
+
+                      {/* Collapsible Research Brief Accordion */}
+                      {selectedRun.research_brief && (
+                        <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950">
+                          <button
+                            onClick={() => setIsResearchBriefExpanded(!isResearchBriefExpanded)}
+                            className="w-full text-left px-4 py-3 bg-slate-900/60 hover:bg-slate-900 flex justify-between items-center text-xs font-bold text-slate-300 transition-colors cursor-pointer"
+                          >
+                            <span className="flex items-center gap-2">
+                              <span>🔬</span>
+                              <span>Research Brief &amp; Literature Sources</span>
+                            </span>
+                            <span>{isResearchBriefExpanded ? "▲ Collapse" : "▼ Expand Material"}</span>
+                          </button>
+
+                          {isResearchBriefExpanded && (
+                            <div className="p-4 space-y-3 text-xs border-t border-slate-800/80">
+                              <p className="text-slate-300 leading-relaxed">{selectedRun.research_brief.summary}</p>
+                              <div>
+                                <span className="font-bold text-cyan-400 block mb-1">Key Clinical Findings:</span>
+                                <ul className="list-disc pl-5 text-slate-400 space-y-1">
+                                  {selectedRun.research_brief.key_points.map((pt, i) => (
+                                    <li key={i}>{pt}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div>
+                                <span className="font-bold text-cyan-400 block mb-1">Literature Sources:</span>
+                                <div className="space-y-1">
+                                  {selectedRun.research_brief.sources.map((src, i) => (
+                                    <div key={i} className="text-slate-400 bg-slate-900 p-2 rounded border border-slate-800 font-mono text-[11px]">
+                                      📄 {src}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* STAGE 1: BLOG DRAFT REVIEW (Awaiting Blog Approval) */}
+                    {(selectedRun.status === "awaiting_blog_approval" || selectedRun.status === "writing_blog") && (
+                      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                          <div>
+                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                              <span>📝</span>
+                              <span>Blog Article Draft (Version {selectedRun.blog_drafts[0]?.version || 1})</span>
+                            </h3>
+                            <p className="text-xs text-slate-400">Review clinical accuracy and patient-facing tone.</p>
+                          </div>
+                          {!isEditMode && (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleReviewSubmission("blog", "approved")}
+                                disabled={isSubmittingReview}
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                              >
+                                ✓ Approve Draft
+                              </button>
+                              <button
+                                onClick={() => setIsEditMode(true)}
+                                className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                              >
+                                ✏️ Edit Draft
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setRevisionStage("blog");
+                                  setIsRevisionModalOpen(true);
+                                }}
+                                className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                              >
+                                🔄 Request Revision
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* EDIT MODE FORM */}
+                        {isEditMode ? (
+                          <div className="space-y-4 bg-slate-950 p-5 rounded-xl border border-cyan-500/30">
+                            <div>
+                              <label className="block text-xs font-bold text-cyan-400 mb-1">Article Title</label>
+                              <input
+                                type="text"
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-2.5 text-xs focus:border-cyan-400 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-cyan-400 mb-1">Excerpt / Meta Summary</label>
+                              <textarea
+                                value={editExcerpt}
+                                onChange={(e) => setEditExcerpt(e.target.value)}
+                                rows={2}
+                                className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-2.5 text-xs focus:border-cyan-400 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-cyan-400 mb-1">Formatted Body Content (Markdown supported)</label>
+                              <textarea
+                                value={editBody}
+                                onChange={(e) => setEditBody(e.target.value)}
+                                rows={14}
+                                className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-2.5 text-xs font-mono focus:border-cyan-400 focus:outline-none leading-relaxed"
+                              />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-2">
+                              <button
+                                onClick={() => setIsEditMode(false)}
+                                className="bg-slate-800 text-slate-300 text-xs px-4 py-2 rounded-xl cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => handleReviewSubmission("blog", "edited")}
+                                disabled={isSubmittingReview}
+                                className="bg-cyan-500 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl cursor-pointer"
+                              >
+                                {isSubmittingReview ? "Saving..." : "Save & Approve Edited Draft"}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* READ/PREVIEW MODE */
+                          <div className="space-y-6">
+                            {/* Prominent Clinical Review Flag Banner */}
+                            {selectedRun.blog_drafts[0]?.flags && selectedRun.blog_drafts[0].flags.length > 0 && (
+                              <div className="bg-gradient-to-r from-amber-950 via-amber-900 to-red-950 border-2 border-amber-500 text-amber-200 p-4 rounded-xl shadow-lg space-y-2">
+                                <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-amber-400">
+                                  <span>⚠️</span>
+                                  <span>Action Required: Clinical Items Highlighted</span>
+                                </div>
+                                <ul className="list-disc pl-5 text-xs space-y-1 text-amber-100">
+                                  {selectedRun.blog_drafts[0].flags.map((flag, idx) => (
+                                    <li key={idx} className="font-semibold">{flag}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Rendered Formatted Article Body */}
+                            <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-4">
+                              <h1 className="font-serif text-2xl font-bold text-white tracking-tight">
+                                {selectedRun.blog_drafts[0]?.title}
+                              </h1>
+                              {selectedRun.blog_drafts[0]?.excerpt && (
+                                <p className="text-xs text-slate-400 italic border-l-2 border-cyan-500 pl-3 py-1">
+                                  {selectedRun.blog_drafts[0].excerpt}
+                                </p>
+                              )}
+                              <div className="text-xs text-slate-300 space-y-4 leading-relaxed font-sans border-t border-slate-900 pt-4">
+                                <FormattedContent body={selectedRun.blog_drafts[0]?.body || ""} />
+                              </div>
+                            </div>
+
+                            {/* References & Image Prompts */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                                <span className="font-bold text-cyan-400 uppercase tracking-wider text-[10px] block">Suggested Visual Prompts</span>
+                                <ul className="list-disc pl-4 text-slate-400 space-y-1">
+                                  {selectedRun.blog_drafts[0]?.suggested_images?.map((img, i) => (
+                                    <li key={i}>{img}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                                <span className="font-bold text-cyan-400 uppercase tracking-wider text-[10px] block">References &amp; Citations</span>
+                                <ul className="list-disc pl-4 text-slate-400 space-y-1 font-mono text-[11px]">
+                                  {selectedRun.blog_drafts[0]?.references?.map((ref, i) => (
+                                    <li key={i}>{ref}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* STAGE 2: SOCIAL DRAFTS REVIEW (Awaiting Social Approval or Published) */}
+                    {(selectedRun.status === "awaiting_social_approval" ||
+                      selectedRun.status === "published" ||
+                      selectedRun.social_drafts.length > 0) && (
+                      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                          <div>
+                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                              <span>📱</span>
+                              <span>Multi-Platform Social Media Drafts</span>
+                            </h3>
+                            <p className="text-xs text-slate-400">
+                              Approve each platform's caption independently or publish all.
+                            </p>
+                          </div>
+                          {selectedRun.status === "awaiting_social_approval" && (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleReviewSubmission("social", "approved")}
+                                disabled={isSubmittingReview}
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                              >
+                                ✓ Approve All Platforms
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setRevisionStage("social");
+                                  setIsRevisionModalOpen(true);
+                                }}
+                                className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                              >
+                                🔄 Request Revision
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 3 Platform Cards */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                          {/* Instagram Card */}
+                          <PlatformCard
+                            platform="Instagram"
+                            icon="📸"
+                            color="from-purple-950 to-pink-950"
+                            borderColor="border-pink-500/30"
+                            caption={selectedRun.social_drafts[0]?.instagram?.caption || ""}
+                            status={selectedRun.social_drafts[0]?.instagram?.status || "pending"}
+                            isPublished={selectedRun.status === "published"}
+                            onApprove={() =>
+                              handleReviewSubmission("social", "edited", {
+                                instagram: { caption: selectedRun.social_drafts[0]?.instagram?.caption, status: "approved" },
+                              })
+                            }
+                            onCopy={() =>
+                              handleCopyToClipboard(
+                                selectedRun.social_drafts[0]?.instagram?.caption || "",
+                                "ig"
+                              )
+                            }
+                            isCopied={copiedKey === "ig"}
+                          />
+
+                          {/* Facebook Card */}
+                          <PlatformCard
+                            platform="Facebook"
+                            icon="📘"
+                            color="from-blue-950 to-indigo-950"
+                            borderColor="border-blue-500/30"
+                            caption={selectedRun.social_drafts[0]?.facebook?.caption || ""}
+                            status={selectedRun.social_drafts[0]?.facebook?.status || "pending"}
+                            isPublished={selectedRun.status === "published"}
+                            onApprove={() =>
+                              handleReviewSubmission("social", "edited", {
+                                facebook: { caption: selectedRun.social_drafts[0]?.facebook?.caption, status: "approved" },
+                              })
+                            }
+                            onCopy={() =>
+                              handleCopyToClipboard(
+                                selectedRun.social_drafts[0]?.facebook?.caption || "",
+                                "fb"
+                              )
+                            }
+                            isCopied={copiedKey === "fb"}
+                          />
+
+                          {/* LinkedIn Card */}
+                          <PlatformCard
+                            platform="LinkedIn"
+                            icon="💼"
+                            color="from-slate-950 to-cyan-950"
+                            borderColor="border-cyan-500/30"
+                            caption={selectedRun.social_drafts[0]?.linkedin?.caption || ""}
+                            status={selectedRun.social_drafts[0]?.linkedin?.status || "pending"}
+                            isPublished={selectedRun.status === "published"}
+                            onApprove={() =>
+                              handleReviewSubmission("social", "edited", {
+                                linkedin: { caption: selectedRun.social_drafts[0]?.linkedin?.caption, status: "approved" },
+                              })
+                            }
+                            onCopy={() =>
+                              handleCopyToClipboard(
+                                selectedRun.social_drafts[0]?.linkedin?.caption || "",
+                                "li"
+                              )
+                            }
+                            isCopied={copiedKey === "li"}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* PUBLISHED RUN DETAILS & ASSET DOWNLOADS */}
+                    {selectedRun.status === "published" && (
+                      <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-cyan-950 border border-emerald-500/40 rounded-2xl p-6 shadow-xl space-y-4">
+                        <div className="flex justify-between items-center flex-wrap gap-2">
+                          <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+                            <span>🚀</span>
+                            <span>Published &amp; Ready for Distribution</span>
+                          </span>
+                          {selectedRun.published_urls?.blog_url && (
+                            <Link
+                              href={selectedRun.published_urls.blog_url}
+                              target="_blank"
+                              className="bg-emerald-500 text-slate-950 text-xs font-extrabold px-4 py-2 rounded-xl hover:bg-emerald-400 transition-colors inline-flex items-center gap-1.5"
+                            >
+                              <span>🔗</span>
+                              <span>View Live Blog Post</span>
+                            </Link>
+                          )}
+                        </div>
+
+                        {/* Downloadable Assets */}
+                        {selectedRun.social_media_assets && selectedRun.social_media_assets.length > 0 && (
+                          <div className="pt-3 border-t border-slate-800 space-y-2">
+                            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+                              Media Asset Packages Ready for Manual Posting:
+                            </span>
+                            <div className="flex flex-wrap gap-3 text-xs">
+                              {selectedRun.social_media_assets.map((asset, i) => (
+                                <a
+                                  key={i}
+                                  href={asset.asset_url}
+                                  download
+                                  className="bg-slate-950 hover:bg-slate-900 border border-slate-700 text-cyan-400 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors font-mono"
+                                >
+                                  <span>📥</span>
+                                  <span>{asset.platform} Asset Package</span>
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* COLLAPSIBLE VERSION HISTORY ACCORDION */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
+                      <button
+                        onClick={() => setIsVersionHistoryExpanded(!isVersionHistoryExpanded)}
+                        className="w-full text-left px-6 py-4 bg-slate-900 hover:bg-slate-800/80 flex justify-between items-center text-xs font-bold text-slate-300 transition-colors cursor-pointer"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>📜</span>
+                          <span>Version &amp; Audit Review History ({selectedRunReviews.length} records)</span>
+                        </span>
+                        <span>{isVersionHistoryExpanded ? "▲ Collapse Audit Log" : "▼ View Audit History"}</span>
+                      </button>
+
+                      {isVersionHistoryExpanded && (
+                        <div className="p-6 space-y-4 border-t border-slate-800 text-xs">
+                          {selectedRunReviews.length === 0 ? (
+                            <p className="text-slate-500 italic">No previous revision logs recorded for this run.</p>
+                          ) : (
+                            <div className="space-y-3">
+                              {selectedRunReviews.map((rev) => (
+                                <div key={rev.id} className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-bold uppercase text-[10px] tracking-wider px-2 py-0.5 rounded bg-slate-800 text-cyan-400">
+                                        Stage: {rev.stage}
+                                      </span>
+                                      <span className={`font-bold text-[10px] uppercase px-2 py-0.5 rounded ${
+                                        rev.decision === "approved" ? "bg-emerald-500/20 text-emerald-400" :
+                                        rev.decision === "edited" ? "bg-cyan-500/20 text-cyan-400" : "bg-amber-500/20 text-amber-400"
+                                      }`}>
+                                        {rev.decision.replace("_", " ")}
+                                      </span>
+                                    </div>
+                                    <span className="text-[10px] text-slate-500 font-mono">
+                                      {new Date(rev.created_at).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  {rev.revision_notes && (
+                                    <p className="text-slate-300 bg-slate-900 p-2.5 rounded border border-slate-800 italic">
+                                      "{rev.revision_notes}"
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* PIPELINE LIST VIEW */
+                  <div className="space-y-8">
+                    {/* SECTION 1: Needs Your Review */}
+                    <div className="bg-slate-900 border border-amber-500/30 rounded-2xl p-6 shadow-xl space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+                          <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                            Needs Your Attention ({reviewNeededRuns.length})
+                          </h3>
+                        </div>
+                        <span className="text-[11px] text-amber-400 font-mono">Action Required</span>
+                      </div>
+
+                      {reviewNeededRuns.length === 0 ? (
+                        <div className="py-8 text-center text-slate-400 text-xs">
+                          🎉 No pending drafts require clinical review at this time.
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-4">
+                          {reviewNeededRuns.map((run) => (
+                            <div
+                              key={run.id}
+                              onClick={() => fetchRunDetail(run.run_id)}
+                              className="p-5 bg-slate-950 border border-slate-800 hover:border-cyan-500/50 rounded-xl transition-all shadow-md space-y-3 cursor-pointer group"
+                            >
+                              <div className="flex items-center justify-between flex-wrap gap-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-mono text-cyan-400 font-bold">{run.run_id}</span>
+                                  <StatusBadge status={run.status} />
+                                </div>
+                                <span className="text-[11px] text-slate-400 font-mono">
+                                  {new Date(run.created_at).toLocaleDateString()}
+                                </span>
+                              </div>
+
+                              <h4 className="font-serif text-base font-bold text-white group-hover:text-cyan-400 transition-colors">
+                                {run.topic}
+                              </h4>
+
+                              {run.blog_drafts?.[0]?.flags && run.blog_drafts[0].flags.length > 0 && (
+                                <div className="text-[11px] font-bold text-amber-400 bg-amber-950/40 border border-amber-500/30 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5">
+                                  <span>⚠️</span>
+                                  <span>{run.blog_drafts[0].flags.length} Clinical Review Flag(s)</span>
+                                </div>
+                              )}
+
+                              <div className="flex justify-end text-xs text-cyan-400 font-bold items-center gap-1">
+                                <span>Open Review Workspace</span>
+                                <span>→</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* SECTION 2: Secondary Section - All Other Runs */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
+                      <div className="border-b border-slate-800 pb-3">
+                        <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+                          In Progress, Published &amp; Archived Runs ({otherRuns.length})
+                        </h3>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {otherRuns.map((run) => (
+                          <div
+                            key={run.id}
+                            onClick={() => fetchRunDetail(run.run_id)}
+                            className="p-4 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl transition-all space-y-2 cursor-pointer"
+                          >
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-mono text-slate-400">{run.run_id}</span>
+                              <StatusBadge status={run.status} />
+                            </div>
+                            <h4 className="font-medium text-xs text-slate-200 line-clamp-2">{run.topic}</h4>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </>
         )}
+
+        {/* START NEW RUN MODAL */}
+        {isTriggerModalOpen && (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <span>✨</span>
+                  <span>Start New Content Automation Run</span>
+                </h3>
+                <button
+                  onClick={() => setIsTriggerModalOpen(false)}
+                  className="text-slate-400 hover:text-white text-sm font-bold cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleTriggerRun} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Custom Topic / Patient Question (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={newRunTopic}
+                    onChange={(e) => setNewRunTopic(e.target.value)}
+                    placeholder="e.g. Can I kneel after partial knee replacement?"
+                    className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3 text-xs focus:border-cyan-400 focus:outline-none"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1.5">
+                    If left blank, the pipeline will automatically select the highest-trending patient question from contact enquiries.
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsTriggerModalOpen(false)}
+                    className="bg-slate-800 text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isTriggering}
+                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold text-xs px-5 py-2 rounded-xl cursor-pointer"
+                  >
+                    {isTriggering ? "Initiating..." : "Launch Automation Run"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* REQUEST REVISION MODAL */}
+        {isRevisionModalOpen && (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <span>🔄</span>
+                  <span>Request Revision ({revisionStage.toUpperCase()} Stage)</span>
+                </h3>
+                <button
+                  onClick={() => setIsRevisionModalOpen(false)}
+                  className="text-slate-400 hover:text-white text-sm font-bold cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-amber-400 mb-1">
+                    Clinical Revision Notes (Required)
+                  </label>
+                  <textarea
+                    value={revisionNotes}
+                    onChange={(e) => setRevisionNotes(e.target.value)}
+                    rows={4}
+                    placeholder="Specify exact wording adjustments or clinical clarifications required..."
+                    className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3 text-xs focus:border-amber-400 focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsRevisionModalOpen(false)}
+                    className="bg-slate-800 text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmittingReview || !revisionNotes.trim()}
+                    onClick={() => handleReviewSubmission(revisionStage, "revision_requested")}
+                    className="bg-amber-600 hover:bg-amber-500 text-white font-extrabold text-xs px-5 py-2 rounded-xl cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmittingReview ? "Submitting..." : "Send Revision Request"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
+    </div>
+  );
+}
+
+// Subcomponent: Status Badge
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    awaiting_blog_approval: "bg-amber-500/20 border-amber-500/40 text-amber-300",
+    awaiting_social_approval: "bg-purple-500/20 border-purple-500/40 text-purple-300",
+    published: "bg-emerald-500/20 border-emerald-500/40 text-emerald-300",
+    researching: "bg-cyan-500/20 border-cyan-500/40 text-cyan-300",
+    writing_blog: "bg-blue-500/20 border-blue-500/40 text-blue-300",
+    writing_social: "bg-pink-500/20 border-pink-500/40 text-pink-300",
+    abandoned: "bg-slate-800 border-slate-700 text-slate-400",
+  };
+
+  const labels: Record<string, string> = {
+    awaiting_blog_approval: "Awaiting Blog Review",
+    awaiting_social_approval: "Awaiting Social Review",
+    published: "Published Live",
+    researching: "Researching",
+    writing_blog: "Writing Blog",
+    writing_social: "Writing Social Captions",
+    abandoned: "Archived",
+  };
+
+  return (
+    <span
+      className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+        styles[status] || "bg-slate-800 text-slate-300"
+      }`}
+    >
+      {labels[status] || status}
+    </span>
+  );
+}
+
+// Subcomponent: Formatted Content Preview
+function FormattedContent({ body }: { body: string }) {
+  if (!body) return null;
+
+  const parts = body.split("\n\n");
+
+  return (
+    <>
+      {parts.map((block, idx) => {
+        if (block.startsWith("### ")) {
+          return (
+            <h3 key={idx} className="font-serif text-base font-bold text-white pt-2 border-b border-slate-800 pb-1">
+              {block.replace("### ", "")}
+            </h3>
+          );
+        }
+
+        if (block.includes("[NEEDS CLINICAL REVIEW]")) {
+          return (
+            <div
+              key={idx}
+              className="bg-amber-950/60 border-l-4 border-amber-400 text-amber-200 p-3 rounded-r-lg font-semibold my-2 flex items-start gap-2"
+            >
+              <span className="text-amber-400 shrink-0">⚠️</span>
+              <span>{block}</span>
+            </div>
+          );
+        }
+
+        return (
+          <p key={idx} className="leading-relaxed">
+            {block}
+          </p>
+        );
+      })}
+    </>
+  );
+}
+
+// Subcomponent: Social Platform Card
+function PlatformCard({
+  platform,
+  icon,
+  color,
+  borderColor,
+  caption,
+  status,
+  isPublished,
+  onApprove,
+  onCopy,
+  isCopied,
+}: {
+  platform: string;
+  icon: string;
+  color: string;
+  borderColor: string;
+  caption: string;
+  status: string;
+  isPublished: boolean;
+  onApprove: () => void;
+  onCopy: () => void;
+  isCopied: boolean;
+}) {
+  return (
+    <div className={`bg-gradient-to-b ${color} border ${borderColor} rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4`}>
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <span className="text-xs font-bold text-white flex items-center gap-1.5">
+            <span>{icon}</span>
+            <span>{platform}</span>
+          </span>
+          <span
+            className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+              status === "approved" || isPublished
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+            }`}
+          >
+            {status === "approved" || isPublished ? "✓ Approved" : "Pending Review"}
+          </span>
+        </div>
+
+        <div className="bg-slate-950/80 p-3.5 rounded-lg border border-slate-800 text-xs text-slate-200 font-sans leading-relaxed whitespace-pre-wrap">
+          {caption || "No caption generated yet."}
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center pt-2 border-t border-slate-800/80">
+        <button
+          onClick={onCopy}
+          className="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+        >
+          <span>{isCopied ? "✓ Copied!" : "📋 Copy Caption"}</span>
+        </button>
+
+        {status !== "approved" && !isPublished && (
+          <button
+            onClick={onApprove}
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+          >
+            Approve {platform}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
