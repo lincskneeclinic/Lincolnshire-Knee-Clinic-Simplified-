@@ -30,6 +30,7 @@ export async function saveContactToSupabase(record: ContactRecord): Promise<bool
 
   try {
     const endpoint = `${url.replace(/\/$/, "")}/rest/v1/contacts`;
+    console.log("Supabase endpoint being called:", endpoint);
     const res = await fetch(endpoint, {
       method: "POST",
       headers: {
