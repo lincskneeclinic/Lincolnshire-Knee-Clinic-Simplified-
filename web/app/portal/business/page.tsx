@@ -4,6 +4,19 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ContentPipelineRun, ContentPipelineReview } from "@/lib/contentPipeline";
 
+function getRenderableImageUrl(suggestedImages?: string[]): string | null {
+  if (!suggestedImages || !Array.isArray(suggestedImages) || suggestedImages.length === 0) return null;
+  const match = suggestedImages.find(
+    (item) =>
+      typeof item === "string" &&
+      (item.startsWith("http://") ||
+        item.startsWith("https://") ||
+        item.startsWith("/") ||
+        item.startsWith("data:"))
+  );
+  return match || null;
+}
+
 export default function BusinessDashboardPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "pipeline">("overview");
   const [statsData, setStatsData] = useState<any>(null);
@@ -16,6 +29,8 @@ export default function BusinessDashboardPage() {
   const [pipelineLoading, setPipelineLoading] = useState(false);
   const [isResearchBriefExpanded, setIsResearchBriefExpanded] = useState(false);
   const [isVersionHistoryExpanded, setIsVersionHistoryExpanded] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState("");
 
   // Trigger New Run Form State
   const [isTriggerModalOpen, setIsTriggerModalOpen] = useState(false);
@@ -210,6 +225,51 @@ export default function BusinessDashboardPage() {
       console.error("Error submitting review:", err);
     } finally {
       setIsSubmittingReview(false);
+    }
+  };
+
+  // Image attachment helpers
+  const handleAttachImage = async (newImageUrl: string) => {
+    if (!selectedRun) return;
+    const currentDraft = selectedRun.blog_drafts[0];
+    const currentImages = currentDraft?.suggested_images || [];
+    const cleanUrl = newImageUrl.trim();
+    const updatedImages = [cleanUrl, ...currentImages.filter((img) => img !== cleanUrl)];
+
+    await handleReviewSubmission("blog", "edited", {
+      title: currentDraft?.title,
+      excerpt: currentDraft?.excerpt,
+      body: currentDraft?.body,
+      suggestedImages: updatedImages,
+      references: currentDraft?.references,
+    });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/portal/content-pipeline/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        await handleAttachImage(data.url);
+        setActionFeedback("✓ Image uploaded to Supabase Storage and attached successfully!");
+        setTimeout(() => setActionFeedback(null), 4000);
+      } else {
+        console.error("Upload error:", data.error);
+      }
+    } catch (err) {
+      console.error("Error uploading file:", err);
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -723,6 +783,21 @@ export default function BusinessDashboardPage() {
 
                             {/* Rendered Formatted Article Body */}
                             <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-4">
+                              {/* PROMINENT FEATURED ARTICLE IMAGE */}
+                              {getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images) && (
+                                <div className="relative rounded-xl overflow-hidden border border-cyan-500/30 shadow-lg max-h-80 mb-4">
+                                  <img
+                                    src={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)!}
+                                    alt="Attached Blog Visual"
+                                    className="w-full max-h-80 object-cover"
+                                  />
+                                  <div className="absolute bottom-3 left-3 bg-slate-950/80 backdrop-blur text-[11px] text-cyan-300 font-bold px-3 py-1 rounded-full border border-slate-700 flex items-center gap-1.5">
+                                    <span>🖼️</span>
+                                    <span>Attached Featured Image</span>
+                                  </div>
+                                </div>
+                              )}
+
                               <h1 className="font-serif text-2xl font-bold text-white tracking-tight">
                                 {selectedRun.blog_drafts[0]?.title}
                               </h1>
@@ -733,6 +808,77 @@ export default function BusinessDashboardPage() {
                               )}
                               <div className="text-xs text-slate-300 space-y-4 leading-relaxed font-sans border-t border-slate-900 pt-4">
                                 <FormattedContent body={selectedRun.blog_drafts[0]?.body || ""} />
+                              </div>
+                            </div>
+
+                            {/* ATTACH IMAGE & ASSET CONTROL PANEL */}
+                            <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-4">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-cyan-400 uppercase tracking-wider text-xs flex items-center gap-1.5">
+                                  <span>🖼️</span>
+                                  <span>Attached Media Asset &amp; Image Controls</span>
+                                </span>
+                                {getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images) ? (
+                                  <span className="text-[11px] text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-500/40 px-2.5 py-0.5 rounded-full">
+                                    ✓ Active Image Attached
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] text-amber-400 font-bold bg-amber-950/60 border border-amber-500/40 px-2.5 py-0.5 rounded-full">
+                                    No Image Attached
+                                  </span>
+                                )}
+                              </div>
+
+                              {!getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images) && (
+                                <div className="bg-slate-900/80 p-3.5 rounded-xl border border-dashed border-amber-500/40 text-amber-200 text-xs flex items-center justify-between gap-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-base">🖼️</span>
+                                    <div>
+                                      <span className="font-bold block text-white">No image attached yet</span>
+                                      <span className="text-slate-400 text-[11px]">
+                                        Upload an image or paste a URL below to attach it to this blog post and all social media cards.
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Controls: File Upload & URL Paste */}
+                              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t border-slate-900">
+                                <label className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-colors inline-flex items-center justify-center gap-2 shrink-0 shadow">
+                                  <span>📁</span>
+                                  <span>{isUploadingImage ? "Uploading to Storage..." : "Upload Image File"}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    disabled={isUploadingImage}
+                                    onChange={handleFileUpload}
+                                    className="hidden"
+                                  />
+                                </label>
+
+                                <div className="flex items-center gap-2 flex-1">
+                                  <input
+                                    type="text"
+                                    value={imageUrlInput}
+                                    onChange={(e) => setImageUrlInput(e.target.value)}
+                                    placeholder="Or paste direct image URL (https://...)"
+                                    className="flex-1 bg-slate-900 border border-slate-700 text-white rounded-xl p-2.5 text-xs focus:border-cyan-400 focus:outline-none"
+                                  />
+                                  <button
+                                    type="button"
+                                    disabled={!imageUrlInput.trim()}
+                                    onClick={async () => {
+                                      if (imageUrlInput.trim()) {
+                                        await handleAttachImage(imageUrlInput.trim());
+                                        setImageUrlInput("");
+                                      }
+                                    }}
+                                    className="bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer disabled:opacity-50 border border-slate-700"
+                                  >
+                                    Attach URL
+                                  </button>
+                                </div>
                               </div>
                             </div>
 
@@ -809,6 +955,7 @@ export default function BusinessDashboardPage() {
                             caption={selectedRun.social_drafts[0]?.instagram?.caption || ""}
                             status={selectedRun.social_drafts[0]?.instagram?.status || "pending"}
                             isPublished={selectedRun.status === "published"}
+                            attachedImageUrl={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)}
                             onApprove={() => handleReviewSubmission("social", "approved", undefined, "instagram")}
                             onSaveEdit={(newCaption) =>
                               handleReviewSubmission("social", "edited", { caption: newCaption }, "instagram")
@@ -837,6 +984,7 @@ export default function BusinessDashboardPage() {
                             caption={selectedRun.social_drafts[0]?.facebook?.caption || ""}
                             status={selectedRun.social_drafts[0]?.facebook?.status || "pending"}
                             isPublished={selectedRun.status === "published"}
+                            attachedImageUrl={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)}
                             onApprove={() => handleReviewSubmission("social", "approved", undefined, "facebook")}
                             onSaveEdit={(newCaption) =>
                               handleReviewSubmission("social", "edited", { caption: newCaption }, "facebook")
@@ -865,6 +1013,7 @@ export default function BusinessDashboardPage() {
                             caption={selectedRun.social_drafts[0]?.linkedin?.caption || ""}
                             status={selectedRun.social_drafts[0]?.linkedin?.status || "pending"}
                             isPublished={selectedRun.status === "published"}
+                            attachedImageUrl={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)}
                             onApprove={() => handleReviewSubmission("social", "approved", undefined, "linkedin")}
                             onSaveEdit={(newCaption) =>
                               handleReviewSubmission("social", "edited", { caption: newCaption }, "linkedin")
@@ -1272,6 +1421,7 @@ function PlatformCard({
   caption,
   status,
   isPublished,
+  attachedImageUrl,
   onApprove,
   onSaveEdit,
   onRequestRevision,
@@ -1286,6 +1436,7 @@ function PlatformCard({
   caption: string;
   status: string;
   isPublished: boolean;
+  attachedImageUrl?: string | null;
   onApprove: () => void;
   onSaveEdit: (newCaption: string) => void;
   onRequestRevision: () => void;
@@ -1317,6 +1468,25 @@ function PlatformCard({
             {status === "approved" || isPublished ? "✓ Approved" : "Pending Review"}
           </span>
         </div>
+
+        {/* Attached Image or Placeholder Banner */}
+        {attachedImageUrl ? (
+          <div className="relative rounded-lg overflow-hidden border border-slate-800 shadow-md group">
+            <img
+              src={attachedImageUrl}
+              alt={`${platformLabel} Visual Asset`}
+              className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+            <div className="absolute bottom-2 right-2 bg-slate-950/80 backdrop-blur text-[10px] text-cyan-300 font-mono px-2 py-0.5 rounded border border-slate-700">
+              📷 Attached Media Asset
+            </div>
+          </div>
+        ) : (
+          <div className="bg-slate-950/70 border border-dashed border-amber-500/30 rounded-lg p-3 text-center text-amber-300/90 text-[11px] flex items-center justify-center gap-2">
+            <span>🖼️</span>
+            <span>No image attached — add one in the blog review step</span>
+          </div>
+        )}
 
         {isEditing ? (
           <div className="space-y-2">
