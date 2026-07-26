@@ -54,6 +54,8 @@ export async function saveContactToSupabase(record: ContactRecord): Promise<bool
     return res.ok;
   } catch (error) {
     console.error("Error writing to Supabase contacts table:", error);
+    console.error("Error cause:", (error as any)?.cause);
+    console.error("Supabase URL being used:", process.env.NEXT_PUBLIC_SUPABASE_URL);
     return false;
   }
 }
