@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ContentPipelineRun, ContentPipelineReview } from "@/lib/contentPipeline";
+import ReactMarkdown from "react-markdown";
 
 function getRenderableImageUrl(suggestedImages?: string[]): string | null {
   if (!suggestedImages || !Array.isArray(suggestedImages) || suggestedImages.length === 0) return null;
@@ -1441,41 +1442,57 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 // Subcomponent: Formatted Content Preview
-function FormattedContent({ body }: { body: string }) {
-  if (!body) return null;
-
-  const parts = body.split("\n\n");
+function FormattedContent({ body, body_markdown }: { body?: string; body_markdown?: string }) {
+  const content = body_markdown || body || "";
+  if (!content) return null;
 
   return (
-    <>
-      {parts.map((block, idx) => {
-        if (block.startsWith("### ")) {
-          return (
-            <h3 key={idx} className="font-serif text-base font-bold text-white pt-2 border-b border-slate-800 pb-1">
-              {block.replace("### ", "")}
-            </h3>
-          );
-        }
+    <div className="markdown-content space-y-3">
+      <ReactMarkdown
+        components={{
+          h1: ({ children }) => <h1 className="font-serif text-xl font-bold text-white pt-3 border-b border-slate-800 pb-1 mb-2">{children}</h1>,
+          h2: ({ children }) => <h2 className="font-serif text-lg font-bold text-white pt-3 border-b border-slate-800 pb-1 mb-2">{children}</h2>,
+          h3: ({ children }) => <h3 className="font-serif text-base font-bold text-white pt-2 border-b border-slate-800 pb-1 mb-2">{children}</h3>,
+          h4: ({ children }) => <h4 className="font-serif text-sm font-bold text-white pt-2 pb-1 mb-1">{children}</h4>,
+          p: ({ children }) => {
+            const text = React.Children.toArray(children)
+              .map((child: any) => {
+                if (typeof child === "string" || typeof child === "number") return String(child);
+                if (child?.props?.children) {
+                  return Array.isArray(child.props.children)
+                    ? child.props.children.join("")
+                    : String(child.props.children);
+                }
+                return "";
+              })
+              .join("");
 
-        if (block.includes("[NEEDS CLINICAL REVIEW]")) {
-          return (
-            <div
-              key={idx}
-              className="bg-amber-950/60 border-l-4 border-amber-400 text-amber-200 p-3 rounded-r-lg font-semibold my-2 flex items-start gap-2"
-            >
-              <span className="text-amber-400 shrink-0">⚠️</span>
-              <span>{block}</span>
-            </div>
-          );
-        }
-
-        return (
-          <p key={idx} className="leading-relaxed">
-            {block}
-          </p>
-        );
-      })}
-    </>
+            if (text.includes("[NEEDS CLINICAL REVIEW]")) {
+              return (
+                <div className="bg-amber-950/60 border-l-4 border-amber-400 text-amber-200 p-3 rounded-r-lg font-semibold my-2 flex items-start gap-2">
+                  <span className="text-amber-400 shrink-0">⚠️</span>
+                  <div className="leading-relaxed">{children}</div>
+                </div>
+              );
+            }
+            return <p className="leading-relaxed mb-3">{children}</p>;
+          },
+          ul: ({ children }) => <ul className="list-disc pl-5 space-y-1.5 mb-3">{children}</ul>,
+          ol: ({ children }) => <ol className="list-decimal pl-5 space-y-1.5 mb-3">{children}</ol>,
+          li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+          hr: () => <hr className="border-slate-800 my-4" />,
+          strong: ({ children }) => <strong className="font-bold text-white">{children}</strong>,
+          em: ({ children }) => <em className="italic text-slate-200">{children}</em>,
+          blockquote: ({ children }) => (
+            <blockquote className="border-l-4 border-cyan-500 bg-slate-900/50 pl-4 py-2 italic text-slate-300 my-3 rounded-r">
+              {children}
+            </blockquote>
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
   );
 }
 
