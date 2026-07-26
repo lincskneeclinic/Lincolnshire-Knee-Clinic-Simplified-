@@ -50,7 +50,6 @@ export async function POST(request: Request) {
 
     const isConsentGiven = Boolean(consentChecked || marketingConsent || gdprConsent);
 
-    // Validate required fields
     if (!email || typeof email !== "string" || !email.trim()) {
       return NextResponse.json(
         { success: false, message: "Email is required." },
@@ -58,7 +57,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Basic email format validation regex
     const cleanEmail = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(cleanEmail)) {
@@ -68,7 +66,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify explicit consent check (MUST be explicitly true)
     if (!isConsentGiven) {
       return NextResponse.json(
         { success: false, message: "Consent checkbox must be checked." },
@@ -89,7 +86,7 @@ export async function POST(request: Request) {
       pagesVisited: Array.isArray(pagesVisited) && pagesVisited.length > 0 ? pagesVisited : ["/"],
     };
 
-    // 1. Try writing to Supabase if configured
+    // 1. Write to Supabase (source of truth for consent evidence).
     let savedToSupabase = false;
     if (isSupabaseConfigured()) {
       savedToSupabase = await saveContactToSupabase({
@@ -105,7 +102,11 @@ export async function POST(request: Request) {
       });
     }
 
-    // 2. Try syncing to Brevo if configured
+    // 2. Sync to Brevo — this is the actual sending list. Runs regardless
+    // of Supabase's result: Supabase is your consent record, Brevo is your
+    // send target, and a subscriber should end up in Brevo even in the
+    // rare case Supabase has a transient failure. Doesn't block the
+    // response either way — a Brevo hiccup shouldn't fail the signup.
     let syncedToBrevo = false;
     if (isBrevoConfigured()) {
       syncedToBrevo = await syncContactToBrevo({
@@ -116,23 +117,29 @@ export async function POST(request: Request) {
       });
     }
 
-    // 3. Always persist/sync to local disk JSON file as fallback/cache
-    const localSubscribers = readSubscribers();
-    const existingIndex = localSubscribers.findIndex(
-      (sub: any) => sub.email && sub.email.toLowerCase() === cleanEmail
-    );
-
-    if (existingIndex >= 0) {
-      localSubscribers[existingIndex] = { ...localSubscribers[existingIndex], ...subscriberRecord };
-    } else {
-      localSubscribers.push(subscriberRecord);
+    // 3. Local file write is now FALLBACK ONLY — only happens if Supabase
+    // wasn't configured or the write failed, rather than always
+    // duplicating subscriber PII onto local disk on every signup.
+    if (!savedToSupabase) {
+      const localSubscribers = readSubscribers();
+      const existingIndex = localSubscribers.findIndex(
+        (sub: any) => sub.email && sub.email.toLowerCase() === cleanEmail
+      );
+      if (existingIndex >= 0) {
+        localSubscribers[existingIndex] = { ...localSubscribers[existingIndex], ...subscriberRecord };
+      } else {
+        localSubscribers.push(subscriberRecord);
+      }
+      writeSubscribers(localSubscribers);
+      console.warn(
+        `Contact ${cleanEmail} saved to local fallback file — Supabase was unavailable. Investigate before this happens for real subscribers.`
+      );
     }
-    writeSubscribers(localSubscribers);
 
     return NextResponse.json({
       success: true,
       message: "Thank you for subscribing! You will receive knee health blogs, newsletters, and updates from Lincolnshire Knee Clinic.",
-      storage: savedToSupabase ? "supabase" : "local_file",
+      storage: savedToSupabase ? "supabase" : "local_file_fallback",
       brevoSynced: syncedToBrevo,
     });
   } catch (error) {
