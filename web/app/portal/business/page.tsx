@@ -33,6 +33,7 @@ export default function BusinessDashboardPage() {
 
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
   const [revisionStage, setRevisionStage] = useState<"blog" | "social">("blog");
+  const [revisionPlatform, setRevisionPlatform] = useState<"instagram" | "facebook" | "linkedin" | undefined>(undefined);
   const [revisionNotes, setRevisionNotes] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
@@ -153,7 +154,8 @@ export default function BusinessDashboardPage() {
   const handleReviewSubmission = async (
     stage: "blog" | "social",
     decision: "approved" | "edited" | "revision_requested",
-    customPayload?: any
+    customPayload?: any,
+    platform?: "instagram" | "facebook" | "linkedin"
   ) => {
     if (!selectedRun) return;
     setIsSubmittingReview(true);
@@ -161,6 +163,7 @@ export default function BusinessDashboardPage() {
       let bodyData: any = {
         stage,
         decision,
+        platform,
       };
 
       if (decision === "edited") {
@@ -170,6 +173,8 @@ export default function BusinessDashboardPage() {
             excerpt: editExcerpt,
             body: editBody,
           };
+        } else if (customPayload) {
+          bodyData.editedContent = customPayload;
         } else {
           bodyData.editedContent = {
             instagram: { caption: editIgCaption, status: "approved" },
@@ -194,9 +199,11 @@ export default function BusinessDashboardPage() {
         setIsEditMode(false);
         setIsRevisionModalOpen(false);
         setRevisionNotes("");
+        setRevisionPlatform(undefined);
         await fetchPipelineRuns();
         await fetchRunDetail(data.run.run_id);
-        setActionFeedback(`✓ Review decision '${decision.toUpperCase()}' recorded successfully.`);
+        const targetDesc = platform ? `${platform.toUpperCase()} (${decision.toUpperCase()})` : decision.toUpperCase();
+        setActionFeedback(`✓ Review decision for ${targetDesc} recorded successfully.`);
         setTimeout(() => setActionFeedback(null), 4000);
       }
     } catch (err) {
@@ -790,22 +797,27 @@ export default function BusinessDashboardPage() {
                           )}
                         </div>
 
-                        {/* 3 Platform Cards */}
+                        {/* 3 Independent Platform Cards */}
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                           {/* Instagram Card */}
                           <PlatformCard
-                            platform="Instagram"
+                            platformKey="instagram"
+                            platformLabel="Instagram"
                             icon="📸"
                             color="from-purple-950 to-pink-950"
                             borderColor="border-pink-500/30"
                             caption={selectedRun.social_drafts[0]?.instagram?.caption || ""}
                             status={selectedRun.social_drafts[0]?.instagram?.status || "pending"}
                             isPublished={selectedRun.status === "published"}
-                            onApprove={() =>
-                              handleReviewSubmission("social", "edited", {
-                                instagram: { caption: selectedRun.social_drafts[0]?.instagram?.caption, status: "approved" },
-                              })
+                            onApprove={() => handleReviewSubmission("social", "approved", undefined, "instagram")}
+                            onSaveEdit={(newCaption) =>
+                              handleReviewSubmission("social", "edited", { caption: newCaption }, "instagram")
                             }
+                            onRequestRevision={() => {
+                              setRevisionStage("social");
+                              setRevisionPlatform("instagram");
+                              setIsRevisionModalOpen(true);
+                            }}
                             onCopy={() =>
                               handleCopyToClipboard(
                                 selectedRun.social_drafts[0]?.instagram?.caption || "",
@@ -817,18 +829,23 @@ export default function BusinessDashboardPage() {
 
                           {/* Facebook Card */}
                           <PlatformCard
-                            platform="Facebook"
+                            platformKey="facebook"
+                            platformLabel="Facebook"
                             icon="📘"
                             color="from-blue-950 to-indigo-950"
                             borderColor="border-blue-500/30"
                             caption={selectedRun.social_drafts[0]?.facebook?.caption || ""}
                             status={selectedRun.social_drafts[0]?.facebook?.status || "pending"}
                             isPublished={selectedRun.status === "published"}
-                            onApprove={() =>
-                              handleReviewSubmission("social", "edited", {
-                                facebook: { caption: selectedRun.social_drafts[0]?.facebook?.caption, status: "approved" },
-                              })
+                            onApprove={() => handleReviewSubmission("social", "approved", undefined, "facebook")}
+                            onSaveEdit={(newCaption) =>
+                              handleReviewSubmission("social", "edited", { caption: newCaption }, "facebook")
                             }
+                            onRequestRevision={() => {
+                              setRevisionStage("social");
+                              setRevisionPlatform("facebook");
+                              setIsRevisionModalOpen(true);
+                            }}
                             onCopy={() =>
                               handleCopyToClipboard(
                                 selectedRun.social_drafts[0]?.facebook?.caption || "",
@@ -840,18 +857,23 @@ export default function BusinessDashboardPage() {
 
                           {/* LinkedIn Card */}
                           <PlatformCard
-                            platform="LinkedIn"
+                            platformKey="linkedin"
+                            platformLabel="LinkedIn"
                             icon="💼"
                             color="from-slate-950 to-cyan-950"
                             borderColor="border-cyan-500/30"
                             caption={selectedRun.social_drafts[0]?.linkedin?.caption || ""}
                             status={selectedRun.social_drafts[0]?.linkedin?.status || "pending"}
                             isPublished={selectedRun.status === "published"}
-                            onApprove={() =>
-                              handleReviewSubmission("social", "edited", {
-                                linkedin: { caption: selectedRun.social_drafts[0]?.linkedin?.caption, status: "approved" },
-                              })
+                            onApprove={() => handleReviewSubmission("social", "approved", undefined, "linkedin")}
+                            onSaveEdit={(newCaption) =>
+                              handleReviewSubmission("social", "edited", { caption: newCaption }, "linkedin")
                             }
+                            onRequestRevision={() => {
+                              setRevisionStage("social");
+                              setRevisionPlatform("linkedin");
+                              setIsRevisionModalOpen(true);
+                            }}
                             onCopy={() =>
                               handleCopyToClipboard(
                                 selectedRun.social_drafts[0]?.linkedin?.caption || "",
@@ -1109,10 +1131,16 @@ export default function BusinessDashboardPage() {
               <div className="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
                   <span>🔄</span>
-                  <span>Request Revision ({revisionStage.toUpperCase()} Stage)</span>
+                  <span>
+                    Request Revision ({revisionStage.toUpperCase()}
+                    {revisionPlatform ? ` — ${revisionPlatform.toUpperCase()}` : ""})
+                  </span>
                 </h3>
                 <button
-                  onClick={() => setIsRevisionModalOpen(false)}
+                  onClick={() => {
+                    setIsRevisionModalOpen(false);
+                    setRevisionPlatform(undefined);
+                  }}
                   className="text-slate-400 hover:text-white text-sm font-bold cursor-pointer"
                 >
                   ✕
@@ -1136,7 +1164,10 @@ export default function BusinessDashboardPage() {
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => setIsRevisionModalOpen(false)}
+                    onClick={() => {
+                      setIsRevisionModalOpen(false);
+                      setRevisionPlatform(undefined);
+                    }}
                     className="bg-slate-800 text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
                   >
                     Cancel
@@ -1144,7 +1175,7 @@ export default function BusinessDashboardPage() {
                   <button
                     type="button"
                     disabled={isSubmittingReview || !revisionNotes.trim()}
-                    onClick={() => handleReviewSubmission(revisionStage, "revision_requested")}
+                    onClick={() => handleReviewSubmission(revisionStage, "revision_requested", undefined, revisionPlatform)}
                     className="bg-amber-600 hover:bg-amber-500 text-white font-extrabold text-xs px-5 py-2 rounded-xl cursor-pointer disabled:opacity-50"
                   >
                     {isSubmittingReview ? "Submitting..." : "Send Revision Request"}
@@ -1233,7 +1264,8 @@ function FormattedContent({ body }: { body: string }) {
 
 // Subcomponent: Social Platform Card
 function PlatformCard({
-  platform,
+  platformKey,
+  platformLabel,
   icon,
   color,
   borderColor,
@@ -1241,10 +1273,13 @@ function PlatformCard({
   status,
   isPublished,
   onApprove,
+  onSaveEdit,
+  onRequestRevision,
   onCopy,
   isCopied,
 }: {
-  platform: string;
+  platformKey: "instagram" | "facebook" | "linkedin";
+  platformLabel: string;
   icon: string;
   color: string;
   borderColor: string;
@@ -1252,16 +1287,25 @@ function PlatformCard({
   status: string;
   isPublished: boolean;
   onApprove: () => void;
+  onSaveEdit: (newCaption: string) => void;
+  onRequestRevision: () => void;
   onCopy: () => void;
   isCopied: boolean;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedText, setEditedText] = useState(caption);
+
+  useEffect(() => {
+    setEditedText(caption);
+  }, [caption]);
+
   return (
     <div className={`bg-gradient-to-b ${color} border ${borderColor} rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4`}>
       <div className="space-y-3">
         <div className="flex justify-between items-center">
           <span className="text-xs font-bold text-white flex items-center gap-1.5">
             <span>{icon}</span>
-            <span>{platform}</span>
+            <span>{platformLabel}</span>
           </span>
           <span
             className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
@@ -1274,26 +1318,68 @@ function PlatformCard({
           </span>
         </div>
 
-        <div className="bg-slate-950/80 p-3.5 rounded-lg border border-slate-800 text-xs text-slate-200 font-sans leading-relaxed whitespace-pre-wrap">
-          {caption || "No caption generated yet."}
-        </div>
+        {isEditing ? (
+          <div className="space-y-2">
+            <textarea
+              value={editedText}
+              onChange={(e) => setEditedText(e.target.value)}
+              rows={6}
+              className="w-full bg-slate-950 border border-cyan-500/50 text-white rounded-lg p-3 text-xs focus:outline-none leading-relaxed font-sans"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="bg-slate-900 text-slate-300 text-[11px] px-3 py-1 rounded-lg cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  onSaveEdit(editedText);
+                  setIsEditing(false);
+                }}
+                className="bg-cyan-500 text-slate-950 font-bold text-[11px] px-3 py-1 rounded-lg cursor-pointer"
+              >
+                Save &amp; Approve
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-slate-950/80 p-3.5 rounded-lg border border-slate-800 text-xs text-slate-200 font-sans leading-relaxed whitespace-pre-wrap">
+            {caption || "No caption generated yet."}
+          </div>
+        )}
       </div>
 
-      <div className="flex justify-between items-center pt-2 border-t border-slate-800/80">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
         <button
           onClick={onCopy}
-          className="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+          className="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
         >
-          <span>{isCopied ? "✓ Copied!" : "📋 Copy Caption"}</span>
+          <span>{isCopied ? "✓ Copied!" : "📋 Copy"}</span>
         </button>
 
-        {status !== "approved" && !isPublished && (
-          <button
-            onClick={onApprove}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-          >
-            Approve {platform}
-          </button>
+        {status !== "approved" && !isPublished && !isEditing && (
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 text-[11px] font-semibold px-2 py-1.5 rounded-lg transition-colors cursor-pointer"
+            >
+              ✏️ Edit
+            </button>
+            <button
+              onClick={onRequestRevision}
+              className="bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 border border-amber-500/30 text-[11px] font-semibold px-2 py-1.5 rounded-lg transition-colors cursor-pointer"
+            >
+              🔄 Revision
+            </button>
+            <button
+              onClick={onApprove}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            >
+              ✓ Approve
+            </button>
+          </div>
         )}
       </div>
     </div>

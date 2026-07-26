@@ -10,11 +10,18 @@ export async function POST(
     const runId = resolvedParams.runId;
 
     const body = await request.json();
-    const { stage, decision, editedContent, revisionNotes } = body;
+    const { stage, platform, decision, editedContent, revisionNotes } = body;
 
     if (!stage || !["blog", "social"].includes(stage)) {
       return NextResponse.json(
         { success: false, error: "Invalid or missing 'stage'. Must be 'blog' or 'social'." },
+        { status: 400 }
+      );
+    }
+
+    if (platform && !["instagram", "facebook", "linkedin"].includes(platform)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid 'platform'. Must be 'instagram', 'facebook', or 'linkedin'." },
         { status: 400 }
       );
     }
@@ -35,6 +42,7 @@ export async function POST(
 
     const result = await submitPipelineReview(runId, {
       stage,
+      platform,
       decision,
       editedContent,
       revisionNotes

@@ -66,6 +66,7 @@ export interface ContentPipelineReview {
   review_id?: string;
   run_id: string;
   stage: "blog" | "social";
+  platform?: "instagram" | "facebook" | "linkedin";
   version?: number;
   decision: "approved" | "edited" | "revision_requested";
   edited_content?: any;
@@ -111,6 +112,8 @@ function mapRunToRow(run: ContentPipelineRun): any {
     research_brief: run.research_brief || null,
     blog_drafts: run.blog_drafts || [],
     social_drafts: run.social_drafts || [],
+    published_urls: run.published_urls || null,
+    social_media_assets: run.social_media_assets || null,
     created_at: run.created_at,
     updated_at: run.updated_at,
   };
@@ -122,6 +125,7 @@ function mapRowToReview(row: any): ContentPipelineReview {
     review_id: row.review_id || row.id || `rev-${Date.now()}`,
     run_id: row.run_id,
     stage: row.stage,
+    platform: row.platform || undefined,
     version: row.version || 1,
     decision: row.decision,
     edited_content: row.edited_content || null,
@@ -135,6 +139,7 @@ function mapReviewToRow(review: ContentPipelineReview): any {
     review_id: review.review_id || review.id || `rev-${Date.now()}`,
     run_id: review.run_id,
     stage: review.stage,
+    platform: review.platform || null,
     version: review.version || 1,
     decision: review.decision,
     edited_content: review.edited_content || null,
@@ -398,12 +403,14 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
 
 /**
  * Submit a review decision (approved | edited | revision_requested) for blog or social stage.
- * Updates Supabase REST API when configured and local disk cache.
+ * Supports independent per-platform decisions for social stage ("instagram" | "facebook" | "linkedin").
+ * Transitions run status to "published" ONLY when all 3 social platforms are approved.
  */
 export async function submitPipelineReview(
   runId: string,
   payload: {
     stage: "blog" | "social";
+    platform?: "instagram" | "facebook" | "linkedin";
     decision: "approved" | "edited" | "revision_requested";
     editedContent?: any;
     revisionNotes?: string;
@@ -429,6 +436,7 @@ export async function submitPipelineReview(
     review_id: `rev-${Date.now()}`,
     run_id: run.run_id,
     stage: payload.stage,
+    platform: payload.platform || undefined,
     version: currentVersion,
     decision: payload.decision,
     edited_content: payload.editedContent || null,
@@ -480,59 +488,74 @@ export async function submitPipelineReview(
       run.status = "writing_blog";
     }
   } else if (payload.stage === "social") {
-    if (payload.decision === "approved" || payload.decision === "edited") {
-      if (payload.editedContent && run.social_drafts.length > 0) {
-        const currentDraft = run.social_drafts[0];
-        if (payload.editedContent.instagram) {
-          currentDraft.instagram = {
-            caption: payload.editedContent.instagram.caption || currentDraft.instagram.caption,
-            status: payload.editedContent.instagram.status || "approved"
-          };
+    if (run.social_drafts && run.social_drafts.length > 0) {
+      const currentDraft = run.social_drafts[0];
+      const platform = payload.platform;
+
+      if (platform && ["instagram", "facebook", "linkedin"].includes(platform)) {
+        // Independent per-platform decision
+        if (payload.decision === "approved") {
+          currentDraft[platform].status = "approved";
+        } else if (payload.decision === "edited") {
+          if (payload.editedContent) {
+            const newCaption = typeof payload.editedContent === "string"
+              ? payload.editedContent
+              : (payload.editedContent.caption || payload.editedContent[platform]?.caption || currentDraft[platform].caption);
+            currentDraft[platform].caption = newCaption;
+          }
+          currentDraft[platform].status = "approved";
+        } else if (payload.decision === "revision_requested") {
+          currentDraft[platform].status = "pending";
         }
-        if (payload.editedContent.facebook) {
-          currentDraft.facebook = {
-            caption: payload.editedContent.facebook.caption || currentDraft.facebook.caption,
-            status: payload.editedContent.facebook.status || "approved"
-          };
+      } else {
+        // Bulk / all platforms fallback
+        if (payload.decision === "approved" || payload.decision === "edited") {
+          if (payload.editedContent) {
+            if (payload.editedContent.instagram?.caption) currentDraft.instagram.caption = payload.editedContent.instagram.caption;
+            if (payload.editedContent.facebook?.caption) currentDraft.facebook.caption = payload.editedContent.facebook.caption;
+            if (payload.editedContent.linkedin?.caption) currentDraft.linkedin.caption = payload.editedContent.linkedin.caption;
+          }
+          currentDraft.instagram.status = "approved";
+          currentDraft.facebook.status = "approved";
+          currentDraft.linkedin.status = "approved";
+        } else if (payload.decision === "revision_requested") {
+          currentDraft.instagram.status = "pending";
+          currentDraft.facebook.status = "pending";
+          currentDraft.linkedin.status = "pending";
         }
-        if (payload.editedContent.linkedin) {
-          currentDraft.linkedin = {
-            caption: payload.editedContent.linkedin.caption || currentDraft.linkedin.caption,
-            status: payload.editedContent.linkedin.status || "approved"
-          };
-        }
-      } else if (run.social_drafts.length > 0) {
-        run.social_drafts[0].instagram.status = "approved";
-        run.social_drafts[0].facebook.status = "approved";
-        run.social_drafts[0].linkedin.status = "approved";
       }
+    }
 
-      const latestSocial = run.social_drafts[0];
-      const allApproved =
-        latestSocial &&
-        latestSocial.instagram.status === "approved" &&
-        latestSocial.facebook.status === "approved" &&
-        latestSocial.linkedin.status === "approved";
+    // Check if ALL THREE platforms are approved
+    const latestSocial = run.social_drafts[0];
+    const allApproved =
+      latestSocial &&
+      latestSocial.instagram.status === "approved" &&
+      latestSocial.facebook.status === "approved" &&
+      latestSocial.linkedin.status === "approved";
 
-      if (allApproved) {
-        run.status = "published";
-        const slug = (run.blog_drafts[0]?.title || run.topic)
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "");
+    if (allApproved) {
+      run.status = "published";
+      const slug = (run.blog_drafts[0]?.title || run.topic)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
 
-        run.published_urls = {
-          blog_url: `/blog/${slug}`,
-          published_at: now
-        };
-        run.social_media_assets = [
-          { platform: "Instagram", asset_url: `/assets/social/${slug}-ig.png` },
-          { platform: "Facebook", asset_url: `/assets/social/${slug}-fb.png` },
-          { platform: "LinkedIn", asset_url: `/assets/social/${slug}-li.pdf` }
-        ];
+      run.published_urls = {
+        blog_url: `/blog/${slug}`,
+        published_at: now
+      };
+      run.social_media_assets = [
+        { platform: "Instagram", asset_url: `/assets/social/${slug}-ig.png` },
+        { platform: "Facebook", asset_url: `/assets/social/${slug}-fb.png` },
+        { platform: "LinkedIn", asset_url: `/assets/social/${slug}-li.pdf` }
+      ];
+    } else {
+      if (payload.decision === "revision_requested" && !payload.platform) {
+        run.status = "writing_social";
+      } else {
+        run.status = "awaiting_social_approval";
       }
-    } else if (payload.decision === "revision_requested") {
-      run.status = "writing_social";
     }
   }
 
