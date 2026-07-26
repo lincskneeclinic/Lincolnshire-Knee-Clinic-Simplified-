@@ -75,6 +75,7 @@ BODY:
     return {
       title,
       excerpt,
+      body_markdown: body,
       body,
       flags,
       suggestedImages: [

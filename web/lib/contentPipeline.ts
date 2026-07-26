@@ -34,7 +34,8 @@ export interface BlogDraftVersion {
   version: number;
   title: string;
   excerpt: string;
-  body: string;
+  body_markdown?: string;
+  body?: string;
   suggested_images: string[];
   references: string[];
   flags: string[];
@@ -379,7 +380,8 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
         version: 1,
         title: blogDraftData.title,
         excerpt: blogDraftData.excerpt,
-        body: blogDraftData.body,
+        body_markdown: blogDraftData.body_markdown || blogDraftData.body,
+        body: blogDraftData.body_markdown || blogDraftData.body,
         suggested_images: blogDraftData.suggestedImages,
         references: realReferences,
         flags: blogDraftData.flags,
@@ -479,7 +481,8 @@ export async function submitPipelineReview(
           version: latestVersionNumber,
           title: payload.editedContent.title || run.blog_drafts[0]?.title || run.topic,
           excerpt: payload.editedContent.excerpt || run.blog_drafts[0]?.excerpt || "",
-          body: payload.editedContent.body || run.blog_drafts[0]?.body || "",
+          body_markdown: payload.editedContent.body_markdown || payload.editedContent.body || run.blog_drafts[0]?.body_markdown || run.blog_drafts[0]?.body || "",
+          body: payload.editedContent.body_markdown || payload.editedContent.body || run.blog_drafts[0]?.body_markdown || run.blog_drafts[0]?.body || "",
           suggested_images: payload.editedContent.suggestedImages || run.blog_drafts[0]?.suggested_images || [],
           references: payload.editedContent.references || run.blog_drafts[0]?.references || [],
           flags: payload.editedContent.flags || [],

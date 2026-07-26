@@ -101,7 +101,7 @@ export default function BusinessDashboardPage() {
         if (blogDraft) {
           setEditTitle(blogDraft.title || "");
           setEditExcerpt(blogDraft.excerpt || "");
-          setEditBody(blogDraft.body || "");
+          setEditBody(blogDraft.body_markdown || blogDraft.body || "");
         }
         const socialDraft = data.run.social_drafts?.[0];
         if (socialDraft) {
@@ -186,6 +186,7 @@ export default function BusinessDashboardPage() {
           bodyData.editedContent = {
             title: editTitle,
             excerpt: editExcerpt,
+            body_markdown: editBody,
             body: editBody,
           };
         } else if (customPayload) {
@@ -239,7 +240,8 @@ export default function BusinessDashboardPage() {
     await handleReviewSubmission("blog", "edited", {
       title: currentDraft?.title,
       excerpt: currentDraft?.excerpt,
-      body: currentDraft?.body,
+      body_markdown: currentDraft?.body_markdown || currentDraft?.body,
+      body: currentDraft?.body_markdown || currentDraft?.body,
       suggestedImages: updatedImages,
       references: currentDraft?.references,
     });
@@ -873,7 +875,7 @@ export default function BusinessDashboardPage() {
                                 </p>
                               )}
                               <div className="text-xs text-slate-300 space-y-4 leading-relaxed font-sans border-t border-slate-900 pt-4">
-                                <FormattedContent body={selectedRun.blog_drafts[0]?.body || ""} />
+                                <FormattedContent body={selectedRun.blog_drafts[0]?.body_markdown || selectedRun.blog_drafts[0]?.body || ""} />
                               </div>
                             </div>
 
