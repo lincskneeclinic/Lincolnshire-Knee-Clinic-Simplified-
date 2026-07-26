@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { maintenanceHtmlString } from "@/components/MaintenancePage";
 
 function decodeBase64(str: string): string {
   try {
@@ -42,16 +41,38 @@ export function middleware(request: NextRequest) {
 
   const maintenanceMode = process.env.MAINTENANCE_MODE?.toLowerCase() === "true";
 
-  // MAINTENANCE MODE CHECK (at the very top of middleware function)
   if (maintenanceMode) {
-    const isExcludedFromMaintenance =
+    const isExempt =
       pathname === "/portal/business" ||
       pathname.startsWith("/portal/business/") ||
       pathname === "/api/portal/stats" ||
       pathname.startsWith("/api/");
 
-    if (!isExcludedFromMaintenance) {
-      return new NextResponse(maintenanceHtmlString, {
+    if (!isExempt) {
+      const html = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <title>Lincolnshire Knee Clinic — Site Update</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <style>
+            body { font-family: system-ui, sans-serif; background: #0f1f1a; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; text-align: center; padding: 2rem; }
+            .box { max-width: 480px; }
+            h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+            p { font-size: 1rem; line-height: 1.6; opacity: 0.9; }
+            a { color: #7fd1ae; }
+          </style>
+        </head>
+        <body>
+          <div class="box">
+            <h1>Lincolnshire Knee Clinic</h1>
+            <p>Our website is currently being updated. For appointments or enquiries, please call <a href="tel:07770473437">07770 473437</a> or email <a href="mailto:admin@lincsknee.com">admin@lincsknee.com</a>.</p>
+          </div>
+        </body>
+        </html>
+      `;
+      return new NextResponse(html, {
         status: 200,
         headers: { "content-type": "text/html; charset=utf-8" },
       });
