@@ -652,7 +652,10 @@ export default function BusinessDashboardPage() {
                           </button>
 
                           {isResearchBriefExpanded && (
-                            <div className="p-5 space-y-4 text-xs border-t border-slate-800/80 max-h-[480px] overflow-y-auto custom-scrollbar">
+                            <div 
+                              className="p-5 space-y-4 text-xs border-t border-slate-800/80 custom-scrollbar"
+                              style={{ maxHeight: '480px', overflowY: 'auto' }}
+                            >
                               <p className="text-slate-300 leading-relaxed">{selectedRun.research_brief.summary}</p>
 
                               {/* Key Points */}
@@ -803,8 +806,8 @@ export default function BusinessDashboardPage() {
                               <textarea
                                 value={editBody}
                                 onChange={(e) => setEditBody(e.target.value)}
-                                rows={16}
-                                className="w-full h-80 bg-slate-900 border border-slate-700 text-white rounded-lg p-3 text-xs font-mono focus:border-cyan-400 focus:outline-none leading-relaxed overflow-y-auto custom-scrollbar"
+                                className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-3 text-xs font-mono focus:border-cyan-400 focus:outline-none leading-relaxed custom-scrollbar"
+                                style={{ height: '320px', overflowY: 'auto' }}
                               />
                             </div>
                             <div className="flex justify-end gap-3 pt-2">
@@ -842,7 +845,10 @@ export default function BusinessDashboardPage() {
                             )}
 
                             {/* Rendered Formatted Article Body */}
-                            <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-4 max-h-[550px] overflow-y-auto custom-scrollbar">
+                            <div 
+                              className="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-4 custom-scrollbar"
+                              style={{ maxHeight: '550px', overflowY: 'auto' }}
+                            >
                               {/* PROMINENT FEATURED ARTICLE IMAGE */}
                               {getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images) && (
                                 <div className="relative rounded-xl overflow-hidden border border-cyan-500/30 shadow-lg max-h-80 mb-4">

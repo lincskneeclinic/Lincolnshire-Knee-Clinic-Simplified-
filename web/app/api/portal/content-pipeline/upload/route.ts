@@ -21,6 +21,21 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!file.type || !file.type.startsWith("image/")) {
+      return NextResponse.json(
+        { success: false, error: "Invalid file type. Only image files (e.g. image/png, image/jpeg, image/webp) are allowed." },
+        { status: 400 }
+      );
+    }
+
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { success: false, error: "File size exceeds the 5MB limit. Please upload a smaller image." },
+        { status: 400 }
+      );
+    }
+
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
@@ -71,11 +86,20 @@ export async function POST(request: Request) {
           fileName,
         });
       } else {
-        console.error("Supabase Storage upload error:", uploadRes.status, await uploadRes.text());
+        const errorText = await uploadRes.text();
+        console.error("Supabase Storage upload error:", uploadRes.status, errorText);
+        return NextResponse.json(
+          { success: false, error: `Supabase Storage upload failed (${uploadRes.status}): ${errorText || "Unknown error"}` },
+          { status: 500 }
+        );
       }
     }
 
-    // Local filesystem fallback
+    // Local filesystem fallback — only activates when Supabase genuinely isn't configured
+    console.warn(
+      `Image ${fileName} saved to local fallback directory — Supabase is not configured. Investigate before this happens in production.`
+    );
+
     const uploadDir = path.join(process.cwd(), "public", "uploads", "content-pipeline");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });

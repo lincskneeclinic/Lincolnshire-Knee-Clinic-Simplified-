@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { sendContentPipelineNotificationEmail } from "./graphMail";
 import { performResearchProcess } from "./researchAgent";
+import { writeBlogDraft } from "./blogWriterAgent";
 
 export type RunStatus =
   | "researching"
@@ -349,6 +350,22 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
   const now = new Date().toISOString();
   const newRunId = `run-${Date.now()}`;
 
+  // Execute Stage 2: AI Blog Writer
+  let blogDraftData;
+  try {
+    blogDraftData = await writeBlogDraft(selectedTopic, researchBrief as any);
+  } catch (err: any) {
+    console.error("Stage 2 Blog Writer failed:", err);
+    const errorMessage = err?.message || String(err);
+    blogDraftData = {
+      title: `[GENERATION ERROR] ${selectedTopic}`,
+      excerpt: `The AI Blog Writer encountered an error: ${errorMessage}`,
+      body: `### ⚠️ Stage 2 AI Generation Failed\n\nThe content pipeline attempted to generate a full-length article using Gemini AI, but encountered a system error:\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\n**Please check:**\n1. Did you completely restart your local development server (\`npm run dev\`) after updates?\n2. Is the \`GEMINI_API_KEY\` valid in your \`.env\` file?\n3. Check terminal logs for detailed stack trace.\n\n[NEEDS CLINICAL REVIEW] This is an error placeholder, do not publish.`,
+      suggestedImages: ["Error icon placeholder"],
+      flags: [`[NEEDS CLINICAL REVIEW] AI generation failed with error: ${errorMessage}`],
+    };
+  }
+
   const newRun: ContentPipelineRun = {
     id: newRunId,
     run_id: newRunId,
@@ -360,12 +377,12 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
     blog_drafts: [
       {
         version: 1,
-        title: selectedTopic,
-        excerpt: `An evidence-based clinical guide on ${selectedTopic.toLowerCase()} for patients across Lincolnshire.`,
-        body: `### Clinical Overview of ${selectedTopic}\n\nUnderstanding treatment options and rehabilitation pathways for knee joint care is key to restoring patient mobility.\n\n[NEEDS CLINICAL REVIEW] Verify indication criteria and surgical vs conservative referral parameters before publishing.\n\n### Evidence-Based Rehabilitation Guidance\nAt Lincolnshire Knee Clinic, we provide evidence-based care tailored to individual patient needs. Contact reception to schedule a specialist consultation.`,
-        suggested_images: ["Clinical consultation room photograph", "Knee joint anatomical diagnostic diagram"],
+        title: blogDraftData.title,
+        excerpt: blogDraftData.excerpt,
+        body: blogDraftData.body,
+        suggested_images: blogDraftData.suggestedImages,
         references: realReferences,
-        flags: ["[NEEDS CLINICAL REVIEW] Verify indication criteria and surgical vs conservative referral parameters before publishing."],
+        flags: blogDraftData.flags,
         created_at: now
       }
     ],
