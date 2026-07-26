@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { sendContentPipelineNotificationEmail } from "./graphMail";
+import { performResearchProcess } from "./researchAgent";
 
 export type RunStatus =
   | "researching"
@@ -16,6 +17,16 @@ export interface ResearchBrief {
   key_points: string[];
   sources: string[];
   target_audience: string;
+  conflicting_findings?: string[];
+  clinical_indications?: string[];
+  pubmed_articles?: Array<{
+    pmid: string;
+    title: string;
+    authors: string;
+    journal: string;
+    pubdate: string;
+    url: string;
+  }>;
 }
 
 export interface BlogDraftVersion {
@@ -302,8 +313,8 @@ export async function getPipelineRunDetail(runId: string): Promise<{
 }
 
 /**
- * Trigger a new run. If topic is not provided, pick top trending query or fallback.
- * Inserts to Supabase REST API when configured and updates local cache.
+ * Trigger a new run. Automatically executes Stage 1 Research (PubMed NCBI Entrez API search)
+ * to populate genuine clinical literature citations and indications into research_brief.
  */
 export async function triggerPipelineRun(customTopic?: string): Promise<ContentPipelineRun> {
   let selectedTopic = customTopic?.trim();
@@ -328,6 +339,13 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
     selectedTopic = "Robotic Total Knee Replacement: Pre-Op Preparation & Recovery Milestones";
   }
 
+  // Execute Stage 1 PubMed Literature & Evidence Scan
+  const researchBrief = await performResearchProcess(selectedTopic);
+
+  const realReferences = researchBrief.sources && researchBrief.sources.length > 0
+    ? researchBrief.sources
+    : ["NICE Clinical Guidelines on Knee Care", "Journal of Bone and Joint Surgery"];
+
   const now = new Date().toISOString();
   const newRunId = `run-${Date.now()}`;
 
@@ -338,25 +356,16 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
     triggered_by: "manual",
     topic_source: topicSource,
     status: "awaiting_blog_approval",
-    research_brief: {
-      summary: `Automated evidence scan and patient enquiry synthesis for "${selectedTopic}".`,
-      key_points: [
-        "Patient-focused educational content addressing core clinical indications.",
-        "Clinical reference integration from PubMed and orthopaedics evidence base.",
-        "Clear guidance on conservative management vs surgical referral."
-      ],
-      sources: ["PubMed Orthopaedics Journal Index", "Lincolnshire Knee Clinic Patient FAQ Registry"],
-      target_audience: "Patients in Lincolnshire experiencing knee pain or joint stiffness"
-    },
+    research_brief: researchBrief as any,
     blog_drafts: [
       {
         version: 1,
         title: selectedTopic,
-        excerpt: `An evidence-based guide on ${selectedTopic.toLowerCase()} for patients across Lincolnshire.`,
-        body: `### Overview of ${selectedTopic}\n\nUnderstanding your options for knee care is key to restoring active mobility. Knee joint health relies on timely diagnosis, conservative physical therapy, and expert medical assessment.\n\n[NEEDS CLINICAL REVIEW] Verify clinical indication parameters and referral criteria before publishing.\n\n### Clinical Guidance\nAt Lincolnshire Knee Clinic, we provide personalized care tailored to individual patient needs. Contact our clinic reception to book your consultation.`,
+        excerpt: `An evidence-based clinical guide on ${selectedTopic.toLowerCase()} for patients across Lincolnshire.`,
+        body: `### Clinical Overview of ${selectedTopic}\n\nUnderstanding treatment options and rehabilitation pathways for knee joint care is key to restoring patient mobility.\n\n[NEEDS CLINICAL REVIEW] Verify indication criteria and surgical vs conservative referral parameters before publishing.\n\n### Evidence-Based Rehabilitation Guidance\nAt Lincolnshire Knee Clinic, we provide evidence-based care tailored to individual patient needs. Contact reception to schedule a specialist consultation.`,
         suggested_images: ["Clinical consultation room photograph", "Knee joint anatomical diagnostic diagram"],
-        references: ["Journal of Bone and Joint Surgery, 2024", "NICE Clinical Guidelines on Knee Pain"],
-        flags: ["[NEEDS CLINICAL REVIEW] Verify clinical indication parameters and referral criteria before publishing."],
+        references: realReferences,
+        flags: ["[NEEDS CLINICAL REVIEW] Verify indication criteria and surgical vs conservative referral parameters before publishing."],
         created_at: now
       }
     ],
