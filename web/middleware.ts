@@ -40,8 +40,10 @@ export function middleware(request: NextRequest) {
   console.log("MAINTENANCE CHECK:", process.env.MAINTENANCE_MODE);
   const { pathname } = request.nextUrl;
 
+  const maintenanceMode = process.env.MAINTENANCE_MODE?.toLowerCase() === "true";
+
   // MAINTENANCE MODE CHECK (at the very top of middleware function)
-  if (process.env.MAINTENANCE_MODE === "true") {
+  if (maintenanceMode) {
     const isExcludedFromMaintenance =
       pathname === "/portal/business" ||
       pathname.startsWith("/portal/business/") ||
