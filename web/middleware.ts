@@ -37,6 +37,7 @@ function isAuthorized(request: NextRequest): boolean {
 }
 
 export function middleware(request: NextRequest) {
+  console.log("MAINTENANCE CHECK:", process.env.MAINTENANCE_MODE);
   const { pathname } = request.nextUrl;
 
   // MAINTENANCE MODE CHECK (at the very top of middleware function)
