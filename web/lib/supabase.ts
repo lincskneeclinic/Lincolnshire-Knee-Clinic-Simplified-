@@ -51,6 +51,11 @@ export async function saveContactToSupabase(record: ContactRecord): Promise<bool
       }),
     });
 
+    if (!res.ok) {
+      const errorBody = await res.text();
+      console.error("Supabase API error:", res.status, errorBody);
+    }
+
     return res.ok;
   } catch (error) {
     console.error("Error writing to Supabase contacts table:", error);
