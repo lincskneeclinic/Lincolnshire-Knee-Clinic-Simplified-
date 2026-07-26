@@ -44,6 +44,11 @@ export async function syncContactToBrevo(contact: BrevoContactInput): Promise<bo
       }),
     });
 
+    if (!res.ok) {
+      const errorBody = await res.text();
+      console.error("Brevo API error:", res.status, errorBody);
+    }
+
     return res.ok;
   } catch (error) {
     console.error("Error syncing contact to Brevo:", error);
