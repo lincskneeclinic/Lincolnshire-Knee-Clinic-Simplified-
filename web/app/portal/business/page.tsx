@@ -652,7 +652,7 @@ export default function BusinessDashboardPage() {
                           </button>
 
                           {isResearchBriefExpanded && (
-                            <div className="p-4 space-y-4 text-xs border-t border-slate-800/80 max-h-[500px] overflow-y-auto pr-2">
+                            <div className="p-5 space-y-4 text-xs border-t border-slate-800/80">
                               <p className="text-slate-300 leading-relaxed">{selectedRun.research_brief.summary}</p>
 
                               {/* Key Points */}
@@ -842,7 +842,7 @@ export default function BusinessDashboardPage() {
                             )}
 
                             {/* Rendered Formatted Article Body */}
-                            <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-4 max-h-[650px] overflow-y-auto pr-2">
+                            <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-4">
                               {/* PROMINENT FEATURED ARTICLE IMAGE */}
                               {getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images) && (
                                 <div className="relative rounded-xl overflow-hidden border border-cyan-500/30 shadow-lg max-h-80 mb-4">
