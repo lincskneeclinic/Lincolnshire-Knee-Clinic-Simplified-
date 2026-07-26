@@ -46,6 +46,8 @@ export interface ContentPipelineRun {
   id: string;
   run_id: string;
   topic: string;
+  triggered_by?: string;
+  topic_source?: string;
   status: RunStatus;
   research_brief?: ResearchBrief | null;
   blog_drafts: BlogDraftVersion[];
@@ -60,9 +62,11 @@ export interface ContentPipelineRun {
 }
 
 export interface ContentPipelineReview {
-  id: string;
+  id?: string;
+  review_id?: string;
   run_id: string;
   stage: "blog" | "social";
+  version?: number;
   decision: "approved" | "edited" | "revision_requested";
   edited_content?: any;
   revision_notes?: string;
@@ -71,6 +75,73 @@ export interface ContentPipelineReview {
 
 const RUNS_FILE_PATH = path.join(process.cwd(), "data", "content-pipeline-runs.json");
 const REVIEWS_FILE_PATH = path.join(process.cwd(), "data", "content-pipeline-reviews.json");
+
+function getSupabaseConfig() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key || !url.startsWith("http")) return null;
+  return { url: url.replace(/\/$/, ""), key };
+}
+
+function mapRowToRun(row: any): ContentPipelineRun {
+  return {
+    id: row.run_id || row.id || `run-${Date.now()}`,
+    run_id: row.run_id || row.id || `run-${Date.now()}`,
+    topic: row.topic || "",
+    triggered_by: row.triggered_by || "manual",
+    topic_source: row.topic_source || "trending_enquiry",
+    status: row.status || "researching",
+    research_brief: row.research_brief || null,
+    blog_drafts: Array.isArray(row.blog_drafts) ? row.blog_drafts : [],
+    social_drafts: Array.isArray(row.social_drafts) ? row.social_drafts : [],
+    published_urls: row.published_urls || null,
+    social_media_assets: row.social_media_assets || null,
+    created_at: row.created_at || new Date().toISOString(),
+    updated_at: row.updated_at || new Date().toISOString(),
+  };
+}
+
+function mapRunToRow(run: ContentPipelineRun): any {
+  return {
+    run_id: run.run_id || run.id,
+    topic: run.topic,
+    triggered_by: run.triggered_by || "manual",
+    topic_source: run.topic_source || "trending_enquiry",
+    status: run.status,
+    research_brief: run.research_brief || null,
+    blog_drafts: run.blog_drafts || [],
+    social_drafts: run.social_drafts || [],
+    created_at: run.created_at,
+    updated_at: run.updated_at,
+  };
+}
+
+function mapRowToReview(row: any): ContentPipelineReview {
+  return {
+    id: row.review_id || row.id || `rev-${Date.now()}`,
+    review_id: row.review_id || row.id || `rev-${Date.now()}`,
+    run_id: row.run_id,
+    stage: row.stage,
+    version: row.version || 1,
+    decision: row.decision,
+    edited_content: row.edited_content || null,
+    revision_notes: row.revision_notes || undefined,
+    created_at: row.created_at || new Date().toISOString(),
+  };
+}
+
+function mapReviewToRow(review: ContentPipelineReview): any {
+  return {
+    review_id: review.review_id || review.id || `rev-${Date.now()}`,
+    run_id: review.run_id,
+    stage: review.stage,
+    version: review.version || 1,
+    decision: review.decision,
+    edited_content: review.edited_content || null,
+    revision_notes: review.revision_notes || null,
+    created_at: review.created_at,
+  };
+}
 
 function ensureDirectoryExistence(filePath: string) {
   const dirname = path.dirname(filePath);
@@ -126,29 +197,98 @@ export function writeReviewsToDisk(reviews: ContentPipelineReview[]): boolean {
 /**
  * List all content pipeline runs, sorted most recent first.
  * Supports filtering by status parameter.
+ * Queries Supabase REST API when configured, with local disk fallback.
  */
 export async function getPipelineRuns(statusFilter?: string): Promise<ContentPipelineRun[]> {
-  let runs = readRunsFromDisk();
+  const config = getSupabaseConfig();
+  if (config) {
+    try {
+      let endpoint = `${config.url}/rest/v1/content_pipeline_runs?select=*&order=created_at.desc`;
+      if (statusFilter) {
+        endpoint = `${config.url}/rest/v1/content_pipeline_runs?select=*&status=eq.${encodeURIComponent(statusFilter)}&order=created_at.desc`;
+      }
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          apikey: config.key,
+          Authorization: `Bearer ${config.key}`,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          return data.map(mapRowToRun);
+        }
+      } else {
+        console.error("Supabase API error fetching pipeline runs:", res.status, await res.text());
+      }
+    } catch (err) {
+      console.error("Error fetching pipeline runs from Supabase:", err);
+    }
+  }
 
+  // Local disk fallback
+  let runs = readRunsFromDisk();
   if (statusFilter) {
     runs = runs.filter((r) => r.status === statusFilter);
   }
-
-  // Sort most recent first
   runs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   return runs;
 }
 
 /**
  * Get single run with complete detail and associated review history
+ * Queries Supabase REST API when configured, with local disk fallback.
  */
 export async function getPipelineRunDetail(runId: string): Promise<{
   run: ContentPipelineRun | null;
   reviews: ContentPipelineReview[];
 }> {
+  const config = getSupabaseConfig();
+  if (config) {
+    try {
+      const runEndpoint = `${config.url}/rest/v1/content_pipeline_runs?select=*&run_id=eq.${encodeURIComponent(runId)}`;
+      const reviewsEndpoint = `${config.url}/rest/v1/content_pipeline_reviews?select=*&run_id=eq.${encodeURIComponent(runId)}&order=created_at.desc`;
+
+      const [runRes, reviewsRes] = await Promise.all([
+        fetch(runEndpoint, {
+          method: "GET",
+          headers: { apikey: config.key, Authorization: `Bearer ${config.key}` },
+        }),
+        fetch(reviewsEndpoint, {
+          method: "GET",
+          headers: { apikey: config.key, Authorization: `Bearer ${config.key}` },
+        }),
+      ]);
+
+      let run: ContentPipelineRun | null = null;
+      let reviews: ContentPipelineReview[] = [];
+
+      if (runRes.ok) {
+        const runData = await runRes.json();
+        if (Array.isArray(runData) && runData.length > 0) {
+          run = mapRowToRun(runData[0]);
+        }
+      }
+
+      if (reviewsRes.ok) {
+        const reviewsData = await reviewsRes.json();
+        if (Array.isArray(reviewsData)) {
+          reviews = reviewsData.map(mapRowToReview);
+        }
+      }
+
+      if (run) {
+        return { run, reviews };
+      }
+    } catch (err) {
+      console.error("Error fetching run detail from Supabase:", err);
+    }
+  }
+
+  // Local disk fallback
   const runs = readRunsFromDisk();
   const run = runs.find((r) => r.run_id === runId || r.id === runId) || null;
-
   const reviews = readReviewsFromDisk()
     .filter((rev) => rev.run_id === runId)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -158,9 +298,11 @@ export async function getPipelineRunDetail(runId: string): Promise<{
 
 /**
  * Trigger a new run. If topic is not provided, pick top trending query or fallback.
+ * Inserts to Supabase REST API when configured and updates local cache.
  */
 export async function triggerPipelineRun(customTopic?: string): Promise<ContentPipelineRun> {
   let selectedTopic = customTopic?.trim();
+  const topicSource = customTopic?.trim() ? "custom_user_input" : "trending_enquiry";
 
   if (!selectedTopic) {
     try {
@@ -168,7 +310,6 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
       if (fs.existsSync(topicsPath)) {
         const topics = JSON.parse(fs.readFileSync(topicsPath, "utf8") || "[]");
         if (topics.length > 0) {
-          // Sort by enquiryCount desc
           topics.sort((a: any, b: any) => (b.enquiryCount || 0) - (a.enquiryCount || 0));
           selectedTopic = topics[0].label || topics[0].category;
         }
@@ -189,7 +330,9 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
     id: newRunId,
     run_id: newRunId,
     topic: selectedTopic,
-    status: "awaiting_blog_approval", // Initial draft ready for review demonstration
+    triggered_by: "manual",
+    topic_source: topicSource,
+    status: "awaiting_blog_approval",
     research_brief: {
       summary: `Automated evidence scan and patient enquiry synthesis for "${selectedTopic}".`,
       key_points: [
@@ -219,6 +362,30 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
     updated_at: now
   };
 
+  const config = getSupabaseConfig();
+  if (config) {
+    try {
+      const endpoint = `${config.url}/rest/v1/content_pipeline_runs`;
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          apikey: config.key,
+          Authorization: `Bearer ${config.key}`,
+          "Content-Type": "application/json",
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify(mapRunToRow(newRun)),
+      });
+
+      if (!res.ok) {
+        console.error("Supabase POST run error:", res.status, await res.text());
+      }
+    } catch (err) {
+      console.error("Error inserting run to Supabase:", err);
+    }
+  }
+
+  // Update local disk cache
   const runs = readRunsFromDisk();
   runs.unshift(newRun);
   writeRunsToDisk(runs);
@@ -230,7 +397,8 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
 }
 
 /**
- * Submit a review decision (approved | edited | revision_requested) for blog or social stage
+ * Submit a review decision (approved | edited | revision_requested) for blog or social stage.
+ * Updates Supabase REST API when configured and local disk cache.
  */
 export async function submitPipelineReview(
   runId: string,
@@ -241,30 +409,32 @@ export async function submitPipelineReview(
     revisionNotes?: string;
   }
 ): Promise<{ success: boolean; run: ContentPipelineRun | null; review: ContentPipelineReview }> {
+  // Fetch current run detail
+  const { run: existingRun } = await getPipelineRunDetail(runId);
   const runs = readRunsFromDisk();
   const runIndex = runs.findIndex((r) => r.run_id === runId || r.id === runId);
 
-  if (runIndex === -1) {
+  const run = existingRun || (runIndex >= 0 ? runs[runIndex] : null);
+
+  if (!run) {
     throw new Error(`Run ${runId} not found`);
   }
 
-  const run = runs[runIndex];
   const now = new Date().toISOString();
+  const currentVersion = payload.stage === "blog" ? (run.blog_drafts?.[0]?.version || 1) : (run.social_drafts?.[0]?.version || 1);
 
   // Create review log
   const newReview: ContentPipelineReview = {
     id: `rev-${Date.now()}`,
+    review_id: `rev-${Date.now()}`,
     run_id: run.run_id,
     stage: payload.stage,
+    version: currentVersion,
     decision: payload.decision,
     edited_content: payload.editedContent || null,
     revision_notes: payload.revisionNotes || undefined,
     created_at: now
   };
-
-  const reviews = readReviewsFromDisk();
-  reviews.unshift(newReview);
-  writeReviewsToDisk(reviews);
 
   // Process State Transitions
   if (payload.stage === "blog") {
@@ -283,7 +453,6 @@ export async function submitPipelineReview(
         });
       }
 
-      // Generate initial social drafts if not present
       if (!run.social_drafts || run.social_drafts.length === 0) {
         run.social_drafts = [
           {
@@ -305,7 +474,6 @@ export async function submitPipelineReview(
         ];
       }
 
-      // Transition to awaiting_social_approval
       run.status = "awaiting_social_approval";
       await sendContentPipelineNotificationEmail(run, "social");
     } else if (payload.decision === "revision_requested") {
@@ -334,13 +502,11 @@ export async function submitPipelineReview(
           };
         }
       } else if (run.social_drafts.length > 0) {
-        // Mark all platform captions approved
         run.social_drafts[0].instagram.status = "approved";
         run.social_drafts[0].facebook.status = "approved";
         run.social_drafts[0].linkedin.status = "approved";
       }
 
-      // Check if all platforms are approved
       const latestSocial = run.social_drafts[0];
       const allApproved =
         latestSocial &&
@@ -371,8 +537,59 @@ export async function submitPipelineReview(
   }
 
   run.updated_at = now;
-  runs[runIndex] = run;
+
+  // Supabase Sync
+  const config = getSupabaseConfig();
+  if (config) {
+    try {
+      // 1. Insert review record
+      const reviewEndpoint = `${config.url}/rest/v1/content_pipeline_reviews`;
+      await fetch(reviewEndpoint, {
+        method: "POST",
+        headers: {
+          apikey: config.key,
+          Authorization: `Bearer ${config.key}`,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify(mapReviewToRow(newReview)),
+      });
+
+      // 2. Patch run record
+      const runEndpoint = `${config.url}/rest/v1/content_pipeline_runs?run_id=eq.${encodeURIComponent(run.run_id)}`;
+      await fetch(runEndpoint, {
+        method: "PATCH",
+        headers: {
+          apikey: config.key,
+          Authorization: `Bearer ${config.key}`,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({
+          status: run.status,
+          blog_drafts: run.blog_drafts,
+          social_drafts: run.social_drafts,
+          published_urls: run.published_urls || null,
+          social_media_assets: run.social_media_assets || null,
+          updated_at: run.updated_at,
+        }),
+      });
+    } catch (err) {
+      console.error("Error updating Supabase review/run:", err);
+    }
+  }
+
+  // Update local disk cache
+  if (runIndex >= 0) {
+    runs[runIndex] = run;
+  } else {
+    runs.unshift(run);
+  }
   writeRunsToDisk(runs);
+
+  const reviews = readReviewsFromDisk();
+  reviews.unshift(newReview);
+  writeReviewsToDisk(reviews);
 
   return { success: true, run, review: newReview };
 }
