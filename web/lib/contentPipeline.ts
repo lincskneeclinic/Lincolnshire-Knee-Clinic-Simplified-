@@ -477,13 +477,39 @@ export async function submitPipelineReview(
     if (payload.decision === "approved" || payload.decision === "edited") {
       if (payload.decision === "edited" && payload.editedContent) {
         const latestVersionNumber = (run.blog_drafts?.[0]?.version || 1) + 1;
+        const editedBody = payload.editedContent.body_markdown || payload.editedContent.body || "";
+
+        // Parse placeholders from the edited body to keep suggested_images in sync!
+        const placeholderRegex = /\[IMAGE PLACEHOLDER:\s*(.*?)\]/gi;
+        let match;
+        const suggestedImages: any[] = [
+          "Patient undergoing functional knee rehabilitation and symmetry testing with a physical therapist",
+          "Anatomical diagram illustrating knee joint structures and surgical repair integrity"
+        ];
+        let count = 1;
+        const previousImages = run.blog_drafts[0]?.suggested_images || [];
+        while ((match = placeholderRegex.exec(editedBody)) !== null) {
+          const label = match[1].trim();
+          const previousResolved = previousImages.find(
+            (img: any) =>
+              typeof img === "object" &&
+              img !== null &&
+              img.label?.trim().toLowerCase() === label.toLowerCase()
+          ) as any;
+          suggestedImages.push({
+            placeholderId: previousResolved?.placeholderId || `placeholder-${count++}`,
+            label,
+            url: previousResolved?.url || ""
+          });
+        }
+
         run.blog_drafts.unshift({
           version: latestVersionNumber,
           title: payload.editedContent.title || run.blog_drafts[0]?.title || run.topic,
           excerpt: payload.editedContent.excerpt || run.blog_drafts[0]?.excerpt || "",
-          body_markdown: payload.editedContent.body_markdown || payload.editedContent.body || run.blog_drafts[0]?.body_markdown || run.blog_drafts[0]?.body || "",
-          body: payload.editedContent.body_markdown || payload.editedContent.body || run.blog_drafts[0]?.body_markdown || run.blog_drafts[0]?.body || "",
-          suggested_images: payload.editedContent.suggestedImages || run.blog_drafts[0]?.suggested_images || [],
+          body_markdown: editedBody,
+          body: editedBody,
+          suggested_images: suggestedImages,
           references: payload.editedContent.references || run.blog_drafts[0]?.references || [],
           flags: payload.editedContent.flags || [],
           created_at: now

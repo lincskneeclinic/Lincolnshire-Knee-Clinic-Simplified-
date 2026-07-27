@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ContentPipelineRun, ContentPipelineReview } from "@/lib/contentPipeline";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type RunDetailTab = "draft" | "research" | "images" | "social";
 
@@ -902,23 +903,7 @@ export default function BusinessDashboardPage() {
 
                           {(selectedRun.status === "awaiting_blog_approval" || selectedRun.status === "writing_blog") && (
                             <div className="flex flex-wrap items-center gap-2">
-                              {isEditMode ? (
-                                <>
-                                  <button
-                                    onClick={() => setIsEditMode(false)}
-                                    className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
-                                  >
-                                    Cancel
-                                  </button>
-                                  <button
-                                    onClick={() => handleReviewSubmission("blog", "edited")}
-                                    disabled={isSubmittingReview}
-                                    className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-60"
-                                  >
-                                    {isSubmittingReview ? "Saving..." : "Save & Approve Edited Draft"}
-                                  </button>
-                                </>
-                              ) : (
+                              {isEditMode ? null : (
                                 <>
                                   <button
                                     onClick={() => handleReviewSubmission("blog", "approved")}
@@ -929,6 +914,12 @@ export default function BusinessDashboardPage() {
                                   </button>
                                   <button
                                     onClick={() => {
+                                      const latestDraft = selectedRun.blog_drafts?.[0];
+                                      if (latestDraft) {
+                                        setEditTitle(latestDraft.title || "");
+                                        setEditExcerpt(latestDraft.excerpt || "");
+                                        setEditBody(latestDraft.body_markdown || latestDraft.body || "");
+                                      }
                                       setRunDetailTab("draft");
                                       setIsEditMode(true);
                                     }}
@@ -1046,73 +1037,104 @@ export default function BusinessDashboardPage() {
                         {activeRunDetailTab === "draft" && (
                           <div className="space-y-6">
                             {isEditMode ? (
-                              <div className="space-y-4 bg-dark-overlay-navy p-5 rounded-xl border border-clinical-teal/30">
-                                <div>
-                                  <label className="block text-xs text-clinical-teal mb-1">Article Title</label>
-                                  <input
-                                    type="text"
-                                    value={editTitle}
-                                    onChange={(e) => setEditTitle(e.target.value)}
-                                    className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-xs text-clinical-teal mb-1">Excerpt / Meta Summary</label>
-                                  <textarea
-                                    value={editExcerpt}
-                                    onChange={(e) => setEditExcerpt(e.target.value)}
-                                    rows={2}
-                                    className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-xs text-clinical-teal mb-1">Formatted Body Content (Markdown supported)</label>
-                                  
-                                  {/* Markdown Toolbar */}
-                                  <div className="flex items-center gap-1 bg-primary-navy border-t border-x border-white/20 rounded-t-lg p-1.5">
-                                    <button
-                                      type="button"
-                                      onClick={() => insertMarkdown("bold")}
-                                      className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1 rounded transition-colors cursor-pointer border border-white/10"
-                                      title="Bold text"
-                                    >
-                                      <strong>B</strong>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => insertMarkdown("italic")}
-                                      className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1 rounded transition-colors cursor-pointer border border-white/10"
-                                      title="Italic text"
-                                    >
-                                      <em>I</em>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => insertMarkdown("heading")}
-                                      className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1 rounded transition-colors cursor-pointer border border-white/10"
-                                      title="H2 Heading"
-                                    >
-                                      H2
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => insertMarkdown("bullet")}
-                                      className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1 rounded transition-colors cursor-pointer border border-white/10"
-                                      title="Bullet List"
-                                    >
-                                      • List
-                                    </button>
+                              <div className="space-y-4 bg-dark-overlay-navy p-5 rounded-xl border border-clinical-teal/30 animate-fadeIn">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                  {/* Left Column: Markdown editor fields */}
+                                  <div className="space-y-4">
+                                    <div>
+                                      <label className="block text-xs text-clinical-teal mb-1 font-semibold">Article Title</label>
+                                      <input
+                                        type="text"
+                                        value={editTitle}
+                                        onChange={(e) => setEditTitle(e.target.value)}
+                                        className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs text-clinical-teal mb-1 font-semibold">Excerpt / Meta Summary</label>
+                                      <textarea
+                                        value={editExcerpt}
+                                        onChange={(e) => setEditExcerpt(e.target.value)}
+                                        rows={2}
+                                        className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs text-clinical-teal mb-1 font-semibold">Formatted Body Content (Markdown supported)</label>
+                                      
+                                      {/* Markdown Toolbar */}
+                                      <div className="flex items-center gap-1 bg-primary-navy border-t border-x border-white/20 rounded-t-lg p-1.5">
+                                        <button
+                                          type="button"
+                                          onClick={() => insertMarkdown("bold")}
+                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1 rounded transition-colors cursor-pointer border border-white/10"
+                                          title="Bold text"
+                                        >
+                                          <strong>B</strong>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => insertMarkdown("italic")}
+                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1 rounded transition-colors cursor-pointer border border-white/10"
+                                          title="Italic text"
+                                        >
+                                          <em>I</em>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => insertMarkdown("heading")}
+                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1 rounded transition-colors cursor-pointer border border-white/10"
+                                          title="H2 Heading"
+                                        >
+                                          H2
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => insertMarkdown("bullet")}
+                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1 rounded transition-colors cursor-pointer border border-white/10"
+                                          title="Bullet List"
+                                        >
+                                          • List
+                                        </button>
+                                      </div>
+
+                                      <textarea
+                                        ref={textareaRef}
+                                        value={editBody}
+                                        onChange={(e) => setEditBody(e.target.value)}
+                                        className="w-full bg-primary-navy border border-white/20 text-white rounded-b-lg p-3 text-xs font-mono focus:border-clinical-teal focus:outline-none leading-relaxed custom-scrollbar"
+                                        style={{ height: "320px", overflowY: "auto" }}
+                                      />
+                                    </div>
                                   </div>
 
-                                  <textarea
-                                    ref={textareaRef}
-                                    value={editBody}
-                                    onChange={(e) => setEditBody(e.target.value)}
-                                    className="w-full bg-primary-navy border border-white/20 text-white rounded-b-lg p-3 text-xs font-mono focus:border-clinical-teal focus:outline-none leading-relaxed custom-scrollbar"
-                                    style={{ height: "320px", overflowY: "auto" }}
-                                  />
+                                  {/* Right Column: Live Rendered Preview */}
+                                  <div className="space-y-2 border-t lg:border-t-0 lg:border-l border-white/10 pt-4 lg:pt-0 lg:pl-6 flex flex-col">
+                                    <label className="block text-xs text-clinical-teal mb-1 font-semibold">Live Preview</label>
+                                    <div
+                                      className="bg-primary-navy/40 p-5 rounded-xl border border-white/10 space-y-4 custom-scrollbar overflow-y-auto text-[9px] text-white/80 leading-relaxed font-sans flex-1"
+                                      style={{ maxHeight: "480px" }}
+                                    >
+                                      <h1 className="font-serif text-xl font-bold text-white tracking-tight">
+                                        {editTitle || selectedRun.blog_drafts[0]?.title}
+                                      </h1>
+                                      {editExcerpt && (
+                                        <p className="text-[9px] text-white/70 italic border-l-2 border-clinical-teal pl-3 py-1">
+                                          {editExcerpt}
+                                        </p>
+                                      )}
+                                      <div className="border-t border-white/10 pt-4">
+                                        <FormattedContent 
+                                          body={editBody} 
+                                          suggestedImages={selectedRun.blog_drafts[0]?.suggested_images}
+                                          onAttachPlaceholder={(placeholderId, label, url) => handleAttachPlaceholderImage(placeholderId, label, url)}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="flex justify-end gap-3 pt-2">
+
+                                <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
                                   <button
                                     onClick={() => setIsEditMode(false)}
                                     className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
@@ -1816,6 +1838,47 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+// Subcomponent: Fixed Footer, CTA & Disclaimer Template
+function ArticleFooterTemplate() {
+  return (
+    <div className="mt-8 border-t border-white/10 pt-6 space-y-6">
+      {/* 1. CTA Button */}
+      <div className="text-center">
+        <Link
+          href="/book-appointment"
+          className="inline-block bg-clinical-teal hover:bg-clinical-teal-hover text-deep-navy text-xs font-semibold px-6 py-2.5 rounded-xl transition-all shadow-md cursor-pointer"
+        >
+          Book a Consultation
+        </Link>
+      </div>
+
+      {/* 2. Disclaimer */}
+      <div className="border-t border-white/5 pt-4">
+        <p className="text-[10px] text-white/50 leading-relaxed text-center max-w-2xl mx-auto">
+          This article is for general informational purposes only and does not constitute medical advice. It is not a substitute for professional diagnosis or treatment. Always consult Mr. Pacheco or another qualified healthcare professional regarding your individual condition.
+        </p>
+      </div>
+
+      {/* 3. Footer */}
+      <div className="border-t border-white/5 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] text-white/60">
+        <div className="flex items-center gap-2">
+          <img
+            src="/brand/lkc-logo-k-transparent.png"
+            alt="Lincolnshire Knee Clinic Logo"
+            className="w-6 h-6 object-contain"
+          />
+          <span className="font-serif font-bold text-white">Lincolnshire Knee Clinic</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 justify-center sm:justify-end">
+          <span>Lead Consultant: Mr Ricardo J Pacheco (GMC 4145976)</span>
+          <span>📞 07770 473437</span>
+          <span>✉ admin@lincsknee.com</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Subcomponent: Formatted Content Preview
 function FormattedContent({ 
   body, 
@@ -1834,7 +1897,28 @@ function FormattedContent({
   return (
     <div className="markdown-content space-y-3">
       <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
         components={{
+          table: ({ children }) => (
+            <div className="overflow-x-auto my-4 rounded-lg border border-white/10">
+              <table className="min-w-full divide-y divide-white/10 text-[9.5px] text-white/80 leading-normal">
+                {children}
+              </table>
+            </div>
+          ),
+          thead: ({ children }) => <thead className="bg-primary-navy">{children}</thead>,
+          tbody: ({ children }) => <tbody className="divide-y divide-white/5 bg-dark-overlay-navy/40">{children}</tbody>,
+          tr: ({ children }) => <tr>{children}</tr>,
+          th: ({ children }) => (
+            <th className="px-3 py-2 text-left font-serif font-bold text-white tracking-wider border-r border-white/10 last:border-r-0">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="px-3 py-2 whitespace-normal border-r border-white/5 last:border-r-0 text-white/80">
+              {children}
+            </td>
+          ),
           h1: ({ children }) => <h1 className="font-serif text-base font-bold text-white pt-3 border-b border-white/10 pb-1 mb-2">{children}</h1>,
           h2: ({ children }) => <h2 className="font-serif text-sm font-bold text-white pt-3 border-b border-white/10 pb-1 mb-2">{children}</h2>,
           h3: ({ children }) => <h3 className="font-serif text-xs font-bold text-white pt-2 border-b border-white/10 pb-1 mb-2">{children}</h3>,
@@ -1955,6 +2039,7 @@ function FormattedContent({
       >
         {content}
       </ReactMarkdown>
+      <ArticleFooterTemplate />
     </div>
   );
 }
