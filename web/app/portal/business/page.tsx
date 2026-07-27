@@ -739,7 +739,7 @@ export default function BusinessDashboardPage() {
 
           {/* Desktop/Tablet: horizontal-scrollable, never wraps */}
           <div className="hidden md:block overflow-x-auto scrollbar-hide">
-            <div className="flex items-center justify-center gap-0.5 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-max min-w-full">
+            <div className="flex items-center justify-center gap-0.5 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
               {navTabs.map((tab) => (
                 <button
                   key={tab.id}
