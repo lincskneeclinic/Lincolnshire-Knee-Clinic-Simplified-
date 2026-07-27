@@ -345,24 +345,24 @@ export default function BusinessDashboardPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col">
+    <div className="min-h-screen bg-deep-navy text-white/80 font-sans flex flex-col">
       {/* Top Header Navigation */}
-      <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 shadow-lg">
+      <header className="bg-primary-navy border-b border-white/10 sticky top-0 z-40 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-cyan-500/10 border border-cyan-500/30 rounded-xl flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 bg-dark-overlay-navy border border-clinical-teal/30 rounded-xl flex items-center justify-center shrink-0">
               <img src="/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" className="w-7 h-7 object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight">
+                <h1 className="font-serif text-base sm:text-lg font-bold text-white tracking-tight">
                   Lincolnshire Knee Clinic
                 </h1>
-                <span className="bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                <span className="bg-dark-overlay-navy border border-clinical-teal/30 text-clinical-teal text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
                   Practice Intelligence
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-white/60">
                 Visitor Engagement, Event Telemetry &amp; Content Automation Pipeline
               </p>
             </div>
@@ -371,18 +371,18 @@ export default function BusinessDashboardPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-xs font-semibold py-1.5 px-3.5 rounded-xl transition-colors inline-flex items-center gap-1.5"
+              className="bg-dark-overlay-navy hover:bg-white/5 border border-clinical-teal/30 text-clinical-teal text-xs py-1.5 px-3.5 rounded-xl transition-colors inline-flex items-center gap-1.5"
             >
               ← Return to Website
             </Link>
-            <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold py-1.5 px-3 rounded-xl inline-flex items-center gap-1">
+            <span className="bg-dark-overlay-navy border border-white/10 text-white/70 text-xs py-1.5 px-3 rounded-xl inline-flex items-center gap-1">
               🔒 Basic Auth Protected
             </span>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 border-t border-slate-800/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 border-t border-white/10">
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
             {[
               { id: "overview", label: "Executive Overview", icon: "📊" },
@@ -402,16 +402,16 @@ export default function BusinessDashboardPage() {
                   setActiveTab(tab.id as any);
                   if (tab.id === "pipeline") setSelectedRun(null);
                 }}
-                className={`py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer border ${
+                className={`py-1.5 px-3.5 rounded-xl text-xs transition-all flex items-center gap-2 cursor-pointer border ${
                   activeTab === tab.id
-                    ? "bg-cyan-500 text-slate-950 border-cyan-400 shadow-md font-extrabold"
-                    : "bg-slate-950 text-slate-300 hover:text-white border-slate-800 hover:border-slate-700"
+                    ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-md"
+                    : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20"
                 }`}
               >
                 <span>{tab.icon}</span>
                 <span>{tab.label}</span>
                 {tab.badge && (
-                  <span className="bg-amber-400 text-slate-950 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full animate-pulse">
+                  <span className="bg-clinical-teal text-deep-navy text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                     {tab.badge}
                   </span>
                 )}
@@ -423,7 +423,7 @@ export default function BusinessDashboardPage() {
 
       {/* Action Toast Feedback */}
       {actionFeedback && (
-        <div className="fixed top-20 right-6 z-50 bg-emerald-950 border border-emerald-500 text-emerald-200 px-4 py-3 rounded-xl shadow-2xl text-xs font-bold animate-bounce">
+        <div className="fixed top-20 right-6 z-50 bg-primary-navy border border-clinical-teal text-clinical-teal px-4 py-3 rounded-xl shadow-2xl text-xs font-normal animate-bounce">
           {actionFeedback}
         </div>
       )}
@@ -432,57 +432,57 @@ export default function BusinessDashboardPage() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {loading ? (
           <div className="py-20 text-center space-y-4">
-            <div className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-slate-400 text-sm">Loading telemetry metrics...</p>
+            <div className="w-12 h-12 border-4 border-clinical-teal border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-white/60 text-sm">Loading telemetry metrics...</p>
           </div>
         ) : (
           <>
             {/* KPI Summary Cards (Visible across all tabs) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative">
-                <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400 block mb-1">
+              <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg relative">
+                <span className="text-[10px] uppercase tracking-wider text-white/60 block mb-1">
                   Tracked Click Events
                 </span>
-                <div className="text-2xl xl:text-3xl font-extrabold text-white font-mono">
+                <div className="text-xl xl:text-2xl font-bold text-white font-mono">
                   {totalClicks}
                 </div>
-                <p className="text-[11px] text-cyan-400 mt-2 font-medium">
+                <p className="text-[11px] text-white/60 mt-2">
                   {clickEvents.callNowClicks} Calls | {clickEvents.bookAppointmentClicks} Bookings | {clickEvents.whatsappClicks} WhatsApp
                 </p>
               </div>
 
-              <div className="bg-slate-900 border border-cyan-500/30 rounded-2xl p-5 shadow-lg relative">
-                <span className="font-bold text-[10px] uppercase tracking-wider text-cyan-400 block mb-1">
+              <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg relative">
+                <span className="text-[10px] uppercase tracking-wider text-white/60 block mb-1">
                   Verified Contact Signups
                 </span>
-                <div className="text-2xl xl:text-3xl font-extrabold text-white font-mono">
+                <div className="text-xl xl:text-2xl font-bold text-white font-mono">
                   {totalSignups}
                 </div>
-                <p className="text-[11px] text-emerald-400 mt-2 font-medium">
+                <p className="text-[11px] text-white/60 mt-2">
                   100% Consent Confirmed &amp; Timestamped
                 </p>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative">
-                <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400 block mb-1">
+              <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg relative">
+                <span className="text-[10px] uppercase tracking-wider text-white/60 block mb-1">
                   Content Runs Needing Action
                 </span>
-                <div className="text-2xl xl:text-3xl font-extrabold text-amber-400 font-mono">
+                <div className="text-xl xl:text-2xl font-bold text-white font-mono">
                   {reviewNeededRuns.length}
                 </div>
-                <p className="text-[11px] text-slate-400 mt-2 font-medium">
+                <p className="text-[11px] text-white/60 mt-2">
                   Blog &amp; Social drafts awaiting approval
                 </p>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative">
-                <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400 block mb-1">
+              <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg relative">
+                <span className="text-[10px] uppercase tracking-wider text-white/60 block mb-1">
                   Published Content Assets
                 </span>
-                <div className="text-2xl xl:text-3xl font-extrabold text-emerald-400 font-mono">
+                <div className="text-xl xl:text-2xl font-bold text-white font-mono">
                   {pipelineRuns.filter((r) => r.status === "published").length}
                 </div>
-                <p className="text-[11px] text-slate-400 mt-2 font-medium">
+                <p className="text-[11px] text-white/60 mt-2">
                   Live articles &amp; social packages
                 </p>
               </div>
@@ -491,42 +491,42 @@ export default function BusinessDashboardPage() {
             {/* TAB: OVERVIEW */}
             {activeTab === "overview" && (
               <div className="space-y-8">
-                <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/60 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+                <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                      <span className="bg-dark-overlay-navy border border-clinical-teal/30 text-clinical-teal text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
                         ✓ Click Events Active
                       </span>
-                      <span className="bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                      <span className="bg-dark-overlay-navy border border-clinical-teal/30 text-clinical-teal text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
                         {statsData?.analyticsConnected ? "✓ Microsoft Clarity Connected" : "Clarity Script Ready"}
                       </span>
                     </div>
                   </div>
-                  <h2 className="text-xl font-serif font-bold text-white">
+                  <h2 className="text-lg font-serif font-bold text-white">
                     Live Practice Telemetry &amp; Content Insights
                   </h2>
-                  <p className="text-xs text-slate-300 max-w-3xl leading-relaxed">
+                  <p className="text-xs text-white/70 max-w-3xl leading-relaxed">
                     This dashboard surfaces real enquiry topics from incoming contact messages, votes from patient content polls, signup growth from validated opt-in consents, and real click event counters for call and booking links. All data remains strictly aggregate and non-identifying.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
-                    <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                      <h3 className="text-sm font-bold text-white uppercase tracking-wider">Top Trending Patient Questions</h3>
-                      <span className="text-[11px] text-cyan-400 font-mono">From Contact Enquiries</span>
+                  <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-4">
+                    <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                      <h3 className="text-xs font-bold text-white uppercase tracking-wider">Top Trending Patient Questions</h3>
+                      <span className="text-[11px] text-white/60 font-mono">From Contact Enquiries</span>
                     </div>
                     <div className="space-y-3">
                       {trendingTopics.slice(0, 4).map((t: any, i: number) => (
-                        <div key={i} className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5 text-xs">
+                        <div key={i} className="p-3.5 bg-dark-overlay-navy border border-white/5 rounded-xl space-y-1.5 text-xs">
                           <div className="flex items-center justify-between">
-                            <span className="font-bold text-white font-serif">{t.label}</span>
-                            <span className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            <span className="text-white/90 font-serif">{t.label}</span>
+                            <span className="bg-primary-navy text-clinical-teal border border-clinical-teal/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
                               {t.enquiryCount} Enquiries
                             </span>
                           </div>
                           {t.latestQueries && t.latestQueries[0] && (
-                            <p className="text-[11px] text-slate-400 italic">
+                            <p className="text-[11px] text-white/60 italic">
                               "{t.latestQueries[0]}"
                             </p>
                           )}
@@ -535,10 +535,10 @@ export default function BusinessDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
-                    <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                      <h3 className="text-sm font-bold text-white uppercase tracking-wider">Patient Content Poll Votes</h3>
-                      <span className="text-[11px] text-emerald-400 font-mono">{Number(pollVotesTotal)} Total Votes</span>
+                  <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-4">
+                    <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                      <h3 className="text-xs font-bold text-white uppercase tracking-wider">Patient Content Poll Votes</h3>
+                      <span className="text-[11px] text-white/60 font-mono">{Number(pollVotesTotal)} Total Votes</span>
                     </div>
                     <div className="space-y-3">
                       {Object.entries(pollResults.votes || {}).map(([opt, count]: [string, any], idx: number) => {
@@ -546,12 +546,12 @@ export default function BusinessDashboardPage() {
                         const pct = totalNum > 0 ? Math.round((Number(count) / totalNum) * 100) : 0;
                         return (
                           <div key={idx} className="space-y-1.5 text-xs">
-                            <div className="flex justify-between text-slate-200">
-                              <span className="font-medium truncate max-w-[280px]">{opt}</span>
-                              <span className="font-mono font-bold text-cyan-400">{count} votes ({pct}%)</span>
+                            <div className="flex justify-between text-white/80">
+                              <span className="truncate max-w-[280px]">{opt}</span>
+                              <span className="font-mono text-clinical-teal">{count} votes ({pct}%)</span>
                             </div>
-                            <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-                              <div className="bg-cyan-400 h-full rounded-full" style={{ width: `${pct}%` }} />
+                            <div className="w-full h-2 bg-dark-overlay-navy rounded-full overflow-hidden border border-white/5">
+                              <div className="bg-clinical-teal h-full rounded-full" style={{ width: `${pct}%` }} />
                             </div>
                           </div>
                         );
@@ -565,19 +565,19 @@ export default function BusinessDashboardPage() {
             {/* TAB: TOPICS */}
             {activeTab === "topics" && (
               <div className="space-y-8">
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
-                  <div className="border-b border-slate-800 pb-4">
-                    <h2 className="text-lg font-bold text-white">Trending Patient Questions &amp; Content Input</h2>
-                    <p className="text-xs text-slate-400">Direct input for blog articles and patient education resources from real message enquiries</p>
+                <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-6">
+                  <div className="border-b border-white/10 pb-4">
+                    <h2 className="text-base font-bold text-white">Trending Patient Questions &amp; Content Input</h2>
+                    <p className="text-xs text-white/60">Direct input for blog articles and patient education resources from real message enquiries</p>
                   </div>
 
                   <div className="space-y-4">
                     {trendingTopics.map((t: any, idx: number) => (
-                      <div key={idx} className="p-5 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
+                      <div key={idx} className="p-5 bg-dark-overlay-navy border border-white/5 rounded-xl space-y-3">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                           <div>
-                            <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider block mb-0.5">{t.category || "General"}</span>
-                            <h3 className="font-serif text-base font-bold text-white">{t.label}</h3>
+                            <span className="text-xs text-clinical-teal uppercase tracking-wider block mb-0.5">{t.category || "General"}</span>
+                            <h3 className="font-serif text-sm font-bold text-white">{t.label}</h3>
                           </div>
                           <button
                             onClick={() => {
@@ -585,7 +585,7 @@ export default function BusinessDashboardPage() {
                               setNewRunTopic(t.label);
                               setIsTriggerModalOpen(true);
                             }}
-                            className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-semibold px-3 py-1 rounded-xl transition-colors"
+                            className="bg-dark-overlay-navy hover:bg-white/5 text-clinical-teal border border-clinical-teal/40 text-xs px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
                           >
                             🚀 Trigger Content Run for Topic
                           </button>
@@ -599,26 +599,26 @@ export default function BusinessDashboardPage() {
 
             {/* TAB: EVENTS */}
             {activeTab === "events" && (
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
-                <div className="border-b border-slate-800 pb-4">
-                  <h2 className="text-lg font-bold text-white">Call &amp; Appointment Click Event Telemetry</h2>
-                  <p className="text-xs text-slate-400">Real-time counts for high-intent action button clicks (non-clinical, anonymous)</p>
+              <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-6">
+                <div className="border-b border-white/10 pb-4">
+                  <h2 className="text-base font-bold text-white">Call &amp; Appointment Click Event Telemetry</h2>
+                  <p className="text-xs text-white/60">Real-time counts for high-intent action button clicks (non-clinical, anonymous)</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="p-6 bg-slate-950 border border-slate-800 rounded-xl space-y-3 text-center">
+                  <div className="p-6 bg-dark-overlay-navy border border-white/5 rounded-xl space-y-3 text-center">
                     <span className="text-3xl">📞</span>
-                    <h3 className="font-bold text-white text-base">"Call Clinic Reception" Clicks</h3>
-                    <div className="font-mono text-3xl font-extrabold text-cyan-400 pt-2">{clickEvents.callNowClicks}</div>
+                    <h3 className="font-bold text-white text-sm">"Call Clinic Reception" Clicks</h3>
+                    <div className="font-mono text-2xl font-bold text-clinical-teal pt-2">{clickEvents.callNowClicks}</div>
                   </div>
-                  <div className="p-6 bg-slate-950 border border-slate-800 rounded-xl space-y-3 text-center">
+                  <div className="p-6 bg-dark-overlay-navy border border-white/5 rounded-xl space-y-3 text-center">
                     <span className="text-3xl">📅</span>
-                    <h3 className="font-bold text-white text-base">"Book Appointment" Clicks</h3>
-                    <div className="font-mono text-3xl font-extrabold text-cyan-400 pt-2">{clickEvents.bookAppointmentClicks}</div>
+                    <h3 className="font-bold text-white text-sm">"Book Appointment" Clicks</h3>
+                    <div className="font-mono text-2xl font-bold text-clinical-teal pt-2">{clickEvents.bookAppointmentClicks}</div>
                   </div>
-                  <div className="p-6 bg-slate-950 border border-slate-800 rounded-xl space-y-3 text-center">
+                  <div className="p-6 bg-dark-overlay-navy border border-white/5 rounded-xl space-y-3 text-center">
                     <span className="text-3xl">💬</span>
-                    <h3 className="font-bold text-white text-base">WhatsApp Help Clicks</h3>
-                    <div className="font-mono text-3xl font-extrabold text-emerald-400 pt-2">{clickEvents.whatsappClicks}</div>
+                    <h3 className="font-bold text-white text-sm">WhatsApp Help Clicks</h3>
+                    <div className="font-mono text-2xl font-bold text-clinical-teal pt-2">{clickEvents.whatsappClicks}</div>
                   </div>
                 </div>
               </div>
@@ -627,9 +627,9 @@ export default function BusinessDashboardPage() {
             {/* TAB: NEWSLETTER */}
             {activeTab === "newsletter" && (
               <div className="space-y-8">
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
-                  <h2 className="text-lg font-bold text-white">Verified Subscriber Directory</h2>
-                  <p className="text-xs text-slate-400">Total signups: {totalSignups}</p>
+                <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-6">
+                  <h2 className="text-base font-bold text-white">Verified Subscriber Directory</h2>
+                  <p className="text-xs text-white/60">Total signups: {totalSignups}</p>
                 </div>
               </div>
             )}
@@ -638,15 +638,15 @@ export default function BusinessDashboardPage() {
             {activeTab === "pipeline" && (
               <div className="space-y-8">
                 {/* Header Control Bar */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-xl font-bold text-white">Content Automation Pipeline</h2>
-                      <span className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full">
+                      <h2 className="text-lg font-bold text-white">Content Automation Pipeline</h2>
+                      <span className="bg-dark-overlay-navy text-clinical-teal border border-clinical-teal/30 text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full">
                         Clinical Review Portal
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-white/60 mt-1">
                       Review, edit, and approve AI-generated blog posts and multi-platform social captions.
                     </p>
                   </div>
@@ -655,14 +655,14 @@ export default function BusinessDashboardPage() {
                     {selectedRun && (
                       <button
                         onClick={() => setSelectedRun(null)}
-                        className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+                        className="bg-dark-overlay-navy hover:bg-white/5 text-white/80 border border-white/20 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
                       >
                         ← Back to List
                       </button>
                     )}
                     <button
                       onClick={() => setIsTriggerModalOpen(true)}
-                      className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                      className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <span>✨</span>
                       <span>Start New Run</span>
@@ -674,24 +674,24 @@ export default function BusinessDashboardPage() {
                 {selectedRun ? (
                   <div className="space-y-8">
                     {/* Run Summary Banner */}
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+                    <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
                       <div className="flex items-center justify-between flex-wrap gap-3">
                         <div className="flex items-center gap-3">
-                          <span className="text-xs font-mono text-slate-400 font-bold">{selectedRun.run_id}</span>
+                          <span className="text-xs font-mono text-white/60">{selectedRun.run_id}</span>
                           <StatusBadge status={selectedRun.status} />
                         </div>
-                        <span className="text-xs text-slate-400 font-mono">
+                        <span className="text-xs text-white/60 font-mono">
                           Created: {new Date(selectedRun.created_at).toLocaleString()}
                         </span>
                       </div>
-                      <h3 className="text-xl font-serif font-bold text-white leading-snug">{selectedRun.topic}</h3>
+                      <h3 className="text-lg font-serif font-bold text-white leading-snug">{selectedRun.topic}</h3>
 
                       {/* Collapsible Research Brief Accordion */}
                       {selectedRun.research_brief && (
-                        <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950">
+                        <div className="border border-white/10 rounded-xl overflow-hidden bg-dark-overlay-navy">
                           <button
                             onClick={() => setIsResearchBriefExpanded(!isResearchBriefExpanded)}
-                            className="w-full text-left px-4 py-3 bg-slate-900/60 hover:bg-slate-900 flex justify-between items-center text-xs font-bold text-slate-300 transition-colors cursor-pointer"
+                            className="w-full text-left px-4 py-3 bg-primary-navy/80 hover:bg-primary-navy flex justify-between items-center text-xs text-white/80 transition-colors cursor-pointer"
                           >
                             <span className="flex items-center gap-2">
                               <span>🔬</span>
@@ -702,16 +702,16 @@ export default function BusinessDashboardPage() {
 
                           {isResearchBriefExpanded && (
                             <div 
-                              className="p-5 space-y-4 text-xs border-t border-slate-800/80 custom-scrollbar"
+                              className="p-5 space-y-4 text-xs border-t border-white/10 custom-scrollbar"
                               style={{ maxHeight: '480px', overflowY: 'auto' }}
                             >
-                              <p className="text-slate-300 leading-relaxed">{selectedRun.research_brief.summary}</p>
+                              <p className="text-white/80 leading-relaxed">{selectedRun.research_brief.summary}</p>
 
                               {/* Key Points */}
                               {selectedRun.research_brief.key_points && selectedRun.research_brief.key_points.length > 0 && (
                                 <div>
-                                  <span className="font-bold text-cyan-400 block mb-1">Key Clinical Findings:</span>
-                                  <ul className="list-disc pl-5 text-slate-300 space-y-1">
+                                  <span className="text-clinical-teal block mb-1">Key Clinical Findings:</span>
+                                  <ul className="list-disc pl-5 text-white/80 space-y-1">
                                     {selectedRun.research_brief.key_points.map((pt, i) => (
                                       <li key={i}>{pt}</li>
                                     ))}
@@ -721,9 +721,9 @@ export default function BusinessDashboardPage() {
 
                               {/* Conflicting Findings / Nuances */}
                               {selectedRun.research_brief.conflicting_findings && selectedRun.research_brief.conflicting_findings.length > 0 && (
-                                <div className="bg-amber-950/40 border-l-2 border-amber-400 p-3 rounded-r-lg space-y-1">
-                                  <span className="font-bold text-amber-400 block mb-0.5">⚠️ Conflicting Findings &amp; Clinical Nuances:</span>
-                                  <ul className="list-disc pl-4 text-amber-200 text-[11px] space-y-1">
+                                <div className="bg-dark-overlay-navy border-l-2 border-amber-500/70 p-3 rounded-r-lg space-y-1">
+                                  <span className="text-amber-300/90 block mb-0.5">⚠️ Conflicting Findings &amp; Clinical Nuances:</span>
+                                  <ul className="list-disc pl-4 text-amber-200/80 text-[11px] space-y-1">
                                     {selectedRun.research_brief.conflicting_findings.map((cf, i) => (
                                       <li key={i}>{cf}</li>
                                     ))}
@@ -734,8 +734,8 @@ export default function BusinessDashboardPage() {
                               {/* Clinical Indications */}
                               {selectedRun.research_brief.clinical_indications && selectedRun.research_brief.clinical_indications.length > 0 && (
                                 <div>
-                                  <span className="font-bold text-emerald-400 block mb-1">Clinical Indication Criteria:</span>
-                                  <ul className="list-disc pl-5 text-slate-300 space-y-1">
+                                  <span className="text-clinical-teal block mb-1">Clinical Indication Criteria:</span>
+                                  <ul className="list-disc pl-5 text-white/80 space-y-1">
                                     {selectedRun.research_brief.clinical_indications.map((ci, i) => (
                                       <li key={i}>{ci}</li>
                                     ))}
@@ -746,24 +746,24 @@ export default function BusinessDashboardPage() {
                               {/* PubMed Articles */}
                               {selectedRun.research_brief.pubmed_articles && selectedRun.research_brief.pubmed_articles.length > 0 && (
                                 <div>
-                                  <span className="font-bold text-cyan-400 block mb-1.5">Verified PubMed Literature (NCBI):</span>
+                                  <span className="text-clinical-teal block mb-1.5">Verified PubMed Literature (NCBI):</span>
                                   <div className="space-y-2">
                                     {selectedRun.research_brief.pubmed_articles.map((art, i) => (
-                                      <div key={i} className="bg-slate-900 p-3 rounded-lg border border-slate-800 space-y-1">
+                                      <div key={i} className="bg-primary-navy p-3 rounded-lg border border-white/10 space-y-1">
                                         <a
                                           href={art.url}
                                           target="_blank"
                                           rel="noreferrer"
-                                          className="font-bold text-cyan-300 hover:underline flex items-center gap-1 leading-snug"
+                                          className="text-clinical-teal hover:underline flex items-center gap-1 leading-snug"
                                         >
                                           <span>📄</span>
                                           <span>{art.title}</span>
-                                          <span className="text-[10px] text-slate-400">↗</span>
+                                          <span className="text-[10px] text-white/60">↗</span>
                                         </a>
-                                        <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-1">
-                                          <span><strong>Authors:</strong> {art.authors}</span>
-                                          <span><strong>Journal:</strong> {art.journal} ({art.pubdate})</span>
-                                          <span className="font-mono text-cyan-400/80">PMID: {art.pmid}</span>
+                                        <div className="text-[11px] text-white/70 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                          <span>Authors: {art.authors}</span>
+                                          <span>Journal: {art.journal} ({art.pubdate})</span>
+                                          <span className="font-mono text-clinical-teal/80">PMID: {art.pmid}</span>
                                         </div>
                                       </div>
                                     ))}
@@ -774,10 +774,10 @@ export default function BusinessDashboardPage() {
                               {/* Sources */}
                               {selectedRun.research_brief.sources && selectedRun.research_brief.sources.length > 0 && (
                                 <div>
-                                  <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px] block mb-1">Source Citations Log:</span>
+                                  <span className="text-white/60 uppercase tracking-wider text-[10px] block mb-1">Source Citations Log:</span>
                                   <div className="space-y-1">
                                     {selectedRun.research_brief.sources.map((src, i) => (
-                                      <div key={i} className="text-slate-400 bg-slate-900/80 p-2 rounded border border-slate-800/80 font-mono text-[11px]">
+                                      <div key={i} className="text-white/60 bg-primary-navy/40 p-2 rounded border border-white/10 font-mono text-[11px]">
                                         📄 {src}
                                       </div>
                                     ))}
@@ -792,27 +792,27 @@ export default function BusinessDashboardPage() {
 
                     {/* STAGE 1: BLOG DRAFT REVIEW (Awaiting Blog Approval) */}
                     {(selectedRun.status === "awaiting_blog_approval" || selectedRun.status === "writing_blog") && (
-                      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                      <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-xl space-y-6">
+                        <div className="flex items-center justify-between border-b border-white/10 pb-4">
                           <div>
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <h3 className="text-base font-bold text-white flex items-center gap-2">
                               <span>📝</span>
                               <span>Blog Article Draft (Version {selectedRun.blog_drafts[0]?.version || 1})</span>
                             </h3>
-                            <p className="text-xs text-slate-400">Review clinical accuracy and patient-facing tone.</p>
+                            <p className="text-xs text-white/60">Review clinical accuracy and patient-facing tone.</p>
                           </div>
                           {!isEditMode && (
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => handleReviewSubmission("blog", "approved")}
                                 disabled={isSubmittingReview}
-                                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                                className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
                               >
                                 ✓ Approve Draft
                               </button>
                               <button
                                 onClick={() => setIsEditMode(true)}
-                                className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                                className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
                               >
                                 ✏️ Edit Draft
                               </button>
@@ -821,7 +821,7 @@ export default function BusinessDashboardPage() {
                                   setRevisionStage("blog");
                                   setIsRevisionModalOpen(true);
                                 }}
-                                className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                                className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
                               >
                                 🔄 Request Revision
                               </button>
@@ -831,45 +831,45 @@ export default function BusinessDashboardPage() {
 
                         {/* EDIT MODE FORM */}
                         {isEditMode ? (
-                          <div className="space-y-4 bg-slate-950 p-5 rounded-xl border border-cyan-500/30">
+                          <div className="space-y-4 bg-dark-overlay-navy p-5 rounded-xl border border-clinical-teal/30">
                             <div>
-                              <label className="block text-xs font-bold text-cyan-400 mb-1">Article Title</label>
+                              <label className="block text-xs text-clinical-teal mb-1">Article Title</label>
                               <input
                                 type="text"
                                 value={editTitle}
                                 onChange={(e) => setEditTitle(e.target.value)}
-                                className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-2.5 text-xs focus:border-cyan-400 focus:outline-none"
+                                className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-bold text-cyan-400 mb-1">Excerpt / Meta Summary</label>
+                              <label className="block text-xs text-clinical-teal mb-1">Excerpt / Meta Summary</label>
                               <textarea
                                 value={editExcerpt}
                                 onChange={(e) => setEditExcerpt(e.target.value)}
                                 rows={2}
-                                className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-2.5 text-xs focus:border-cyan-400 focus:outline-none"
+                                className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-bold text-cyan-400 mb-1">Formatted Body Content (Markdown supported)</label>
+                              <label className="block text-xs text-clinical-teal mb-1">Formatted Body Content (Markdown supported)</label>
                               <textarea
                                 value={editBody}
                                 onChange={(e) => setEditBody(e.target.value)}
-                                className="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-3 text-xs font-mono focus:border-cyan-400 focus:outline-none leading-relaxed custom-scrollbar"
+                                className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-3 text-xs font-mono focus:border-clinical-teal focus:outline-none leading-relaxed custom-scrollbar"
                                 style={{ height: '320px', overflowY: 'auto' }}
                               />
                             </div>
                             <div className="flex justify-end gap-3 pt-2">
                               <button
                                 onClick={() => setIsEditMode(false)}
-                                className="bg-slate-800 text-slate-300 text-xs px-4 py-2 rounded-xl cursor-pointer"
+                                className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
                               >
                                 Cancel
                               </button>
                               <button
                                 onClick={() => handleReviewSubmission("blog", "edited")}
                                 disabled={isSubmittingReview}
-                                className="bg-cyan-500 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl cursor-pointer"
+                                className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl cursor-pointer"
                               >
                                 {isSubmittingReview ? "Saving..." : "Save & Approve Edited Draft"}
                               </button>
@@ -880,14 +880,14 @@ export default function BusinessDashboardPage() {
                           <div className="space-y-6">
                             {/* Prominent Clinical Review Flag Banner */}
                             {selectedRun.blog_drafts[0]?.flags && selectedRun.blog_drafts[0].flags.length > 0 && (
-                              <div className="bg-gradient-to-r from-amber-950 via-amber-900 to-red-950 border-2 border-amber-500 text-amber-200 p-4 rounded-xl shadow-lg space-y-2">
-                                <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-amber-400">
+                              <div className="bg-dark-overlay-navy border border-amber-500/50 text-amber-200/90 p-4 rounded-xl shadow-md space-y-2">
+                                <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-400/90 font-normal">
                                   <span>⚠️</span>
                                   <span>Action Required: Clinical Items Highlighted</span>
                                 </div>
-                                <ul className="list-disc pl-5 text-xs space-y-1 text-amber-100">
+                                <ul className="list-disc pl-5 text-xs space-y-1 text-white/80 font-normal">
                                   {selectedRun.blog_drafts[0].flags.map((flag, idx) => (
-                                    <li key={idx} className="font-semibold">{flag}</li>
+                                    <li key={idx}>{flag}</li>
                                   ))}
                                 </ul>
                               </div>
@@ -895,62 +895,62 @@ export default function BusinessDashboardPage() {
 
                             {/* Rendered Formatted Article Body */}
                             <div 
-                              className="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-4 custom-scrollbar"
+                              className="bg-dark-overlay-navy p-6 rounded-xl border border-white/10 space-y-4 custom-scrollbar"
                               style={{ maxHeight: '550px', overflowY: 'auto' }}
                             >
                               {/* PROMINENT FEATURED ARTICLE IMAGE */}
                               {getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images) && (
-                                <div className="relative rounded-xl overflow-hidden border border-cyan-500/30 shadow-lg max-h-80 mb-4">
+                                <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-lg max-h-80 mb-4">
                                   <img
                                     src={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)!}
                                     alt="Attached Blog Visual"
                                     className="w-full max-h-80 object-cover"
                                   />
-                                  <div className="absolute bottom-3 left-3 bg-slate-950/80 backdrop-blur text-[11px] text-cyan-300 font-bold px-3 py-1 rounded-full border border-slate-700 flex items-center gap-1.5">
+                                  <div className="absolute bottom-3 left-3 bg-dark-overlay-navy/90 backdrop-blur text-[11px] text-clinical-teal px-3 py-1 rounded-full border border-white/10 flex items-center gap-1.5">
                                     <span>🖼️</span>
                                     <span>Attached Featured Image</span>
                                   </div>
                                 </div>
                               )}
 
-                              <h1 className="font-serif text-2xl font-bold text-white tracking-tight">
+                              <h1 className="font-serif text-xl font-bold text-white tracking-tight">
                                 {selectedRun.blog_drafts[0]?.title}
                               </h1>
                               {selectedRun.blog_drafts[0]?.excerpt && (
-                                <p className="text-xs text-slate-400 italic border-l-2 border-cyan-500 pl-3 py-1">
+                                <p className="text-xs text-white/70 italic border-l-2 border-clinical-teal pl-3 py-1">
                                   {selectedRun.blog_drafts[0].excerpt}
                                 </p>
                               )}
-                              <div className="text-xs text-slate-300 space-y-4 leading-relaxed font-sans border-t border-slate-900 pt-4">
+                              <div className="text-xs text-white/80 space-y-4 leading-relaxed font-sans border-t border-white/10 pt-4">
                                 <FormattedContent body={selectedRun.blog_drafts[0]?.body_markdown || selectedRun.blog_drafts[0]?.body || ""} />
                               </div>
                             </div>
 
                             {/* ATTACH IMAGE & ASSET CONTROL PANEL */}
-                            <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-4">
+                            <div className="bg-dark-overlay-navy p-5 rounded-xl border border-white/10 space-y-4">
                               <div className="flex items-center justify-between">
-                                <span className="font-bold text-cyan-400 uppercase tracking-wider text-xs flex items-center gap-1.5">
+                                <span className="text-clinical-teal uppercase tracking-wider text-xs flex items-center gap-1.5">
                                   <span>🖼️</span>
                                   <span>Attached Media Asset &amp; Image Controls</span>
                                 </span>
                                 {getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images) ? (
-                                  <span className="text-[11px] text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-500/40 px-2.5 py-0.5 rounded-full">
+                                  <span className="text-[11px] text-clinical-teal bg-primary-navy border border-clinical-teal/30 px-2.5 py-0.5 rounded-full">
                                     ✓ Active Image Attached
                                   </span>
                                 ) : (
-                                  <span className="text-[11px] text-amber-400 font-bold bg-amber-950/60 border border-amber-500/40 px-2.5 py-0.5 rounded-full">
+                                  <span className="text-[11px] text-white/70 bg-primary-navy border border-white/20 px-2.5 py-0.5 rounded-full">
                                     No Image Attached
                                   </span>
                                 )}
                               </div>
 
                               {!getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images) && (
-                                <div className="bg-slate-900/80 p-3.5 rounded-xl border border-dashed border-amber-500/40 text-amber-200 text-xs flex items-center justify-between gap-3">
+                                <div className="bg-primary-navy/60 p-3.5 rounded-xl border border-dashed border-white/20 text-white/70 text-xs flex items-center justify-between gap-3">
                                   <div className="flex items-center gap-2">
                                     <span className="text-base">🖼️</span>
                                     <div>
-                                      <span className="font-bold block text-white">No image attached yet</span>
-                                      <span className="text-slate-400 text-[11px]">
+                                      <span className="block text-white/90">No image attached yet</span>
+                                      <span className="text-white/60 text-[11px]">
                                         Upload an image or paste a URL below to attach it to this blog post and all social media cards.
                                       </span>
                                     </div>
@@ -959,8 +959,8 @@ export default function BusinessDashboardPage() {
                               )}
 
                               {/* Controls: File Upload & URL Paste */}
-                              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t border-slate-900">
-                                <label className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-colors inline-flex items-center justify-center gap-2 shrink-0 shadow">
+                              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t border-white/10">
+                                <label className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-colors inline-flex items-center justify-center gap-2 shrink-0 shadow">
                                   <span>📁</span>
                                   <span>{isUploadingImage ? "Uploading to Storage..." : "Upload Image File"}</span>
                                   <input
@@ -978,7 +978,7 @@ export default function BusinessDashboardPage() {
                                     value={imageUrlInput}
                                     onChange={(e) => setImageUrlInput(e.target.value)}
                                     placeholder="Or paste direct image URL (https://...)"
-                                    className="flex-1 bg-slate-900 border border-slate-700 text-white rounded-xl p-2.5 text-xs focus:border-cyan-400 focus:outline-none"
+                                    className="flex-1 bg-primary-navy border border-white/20 text-white rounded-xl p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
                                   />
                                   <button
                                     type="button"
@@ -989,7 +989,7 @@ export default function BusinessDashboardPage() {
                                         setImageUrlInput("");
                                       }
                                     }}
-                                    className="bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer disabled:opacity-50 border border-slate-700"
+                                    className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
                                   >
                                     Attach URL
                                   </button>
@@ -999,17 +999,17 @@ export default function BusinessDashboardPage() {
 
                             {/* References & Image Prompts */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                                <span className="font-bold text-cyan-400 uppercase tracking-wider text-[10px] block">Suggested Visual Prompts</span>
-                                <ul className="list-disc pl-4 text-slate-400 space-y-1">
+                              <div className="bg-dark-overlay-navy p-4 rounded-xl border border-white/10 space-y-2">
+                                <span className="text-clinical-teal uppercase tracking-wider text-[10px] block">Suggested Visual Prompts</span>
+                                <ul className="list-disc pl-4 text-white/70 space-y-1">
                                   {selectedRun.blog_drafts[0]?.suggested_images?.map((img, i) => (
                                     <li key={i}>{img}</li>
                                   ))}
                                 </ul>
                               </div>
-                              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                                <span className="font-bold text-cyan-400 uppercase tracking-wider text-[10px] block">References &amp; Citations</span>
-                                <ul className="list-disc pl-4 text-slate-400 space-y-1 font-mono text-[11px]">
+                              <div className="bg-dark-overlay-navy p-4 rounded-xl border border-white/10 space-y-2">
+                                <span className="text-clinical-teal uppercase tracking-wider text-[10px] block">References &amp; Citations</span>
+                                <ul className="list-disc pl-4 text-white/70 space-y-1 font-mono text-[11px]">
                                   {selectedRun.blog_drafts[0]?.references?.map((ref, i) => (
                                     <li key={i}>{ref}</li>
                                   ))}
@@ -1025,14 +1025,14 @@ export default function BusinessDashboardPage() {
                     {(selectedRun.status === "awaiting_social_approval" ||
                       selectedRun.status === "published" ||
                       selectedRun.social_drafts.length > 0) && (
-                      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                      <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-xl space-y-6">
+                        <div className="flex items-center justify-between border-b border-white/10 pb-4">
                           <div>
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <h3 className="text-base font-bold text-white flex items-center gap-2">
                               <span>📱</span>
                               <span>Multi-Platform Social Media Drafts</span>
                             </h3>
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-white/60">
                               Approve each platform's caption independently or publish all.
                             </p>
                           </div>
@@ -1041,7 +1041,7 @@ export default function BusinessDashboardPage() {
                               <button
                                 onClick={() => handleReviewSubmission("social", "approved")}
                                 disabled={isSubmittingReview}
-                                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                                className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
                               >
                                 ✓ Approve All Platforms
                               </button>
@@ -1050,7 +1050,7 @@ export default function BusinessDashboardPage() {
                                   setRevisionStage("social");
                                   setIsRevisionModalOpen(true);
                                 }}
-                                className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                                className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
                               >
                                 🔄 Request Revision
                               </button>
@@ -1065,8 +1065,8 @@ export default function BusinessDashboardPage() {
                             platformKey="instagram"
                             platformLabel="Instagram"
                             icon="📸"
-                            color="from-purple-950 to-pink-950"
-                            borderColor="border-pink-500/30"
+                            color=""
+                            borderColor=""
                             caption={selectedRun.social_drafts[0]?.instagram?.caption || ""}
                             status={selectedRun.social_drafts[0]?.instagram?.status || "pending"}
                             isPublished={selectedRun.status === "published"}
@@ -1094,8 +1094,8 @@ export default function BusinessDashboardPage() {
                             platformKey="facebook"
                             platformLabel="Facebook"
                             icon="📘"
-                            color="from-blue-950 to-indigo-950"
-                            borderColor="border-blue-500/30"
+                            color=""
+                            borderColor=""
                             caption={selectedRun.social_drafts[0]?.facebook?.caption || ""}
                             status={selectedRun.social_drafts[0]?.facebook?.status || "pending"}
                             isPublished={selectedRun.status === "published"}
@@ -1123,8 +1123,8 @@ export default function BusinessDashboardPage() {
                             platformKey="linkedin"
                             platformLabel="LinkedIn"
                             icon="💼"
-                            color="from-slate-950 to-cyan-950"
-                            borderColor="border-cyan-500/30"
+                            color=""
+                            borderColor=""
                             caption={selectedRun.social_drafts[0]?.linkedin?.caption || ""}
                             status={selectedRun.social_drafts[0]?.linkedin?.status || "pending"}
                             isPublished={selectedRun.status === "published"}
@@ -1152,9 +1152,9 @@ export default function BusinessDashboardPage() {
 
                     {/* PUBLISHED RUN DETAILS & ASSET DOWNLOADS */}
                     {selectedRun.status === "published" && (
-                      <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-cyan-950 border border-emerald-500/40 rounded-2xl p-6 shadow-xl space-y-4">
+                      <div className="bg-primary-navy border border-clinical-teal/30 rounded-2xl p-6 shadow-xl space-y-4">
                         <div className="flex justify-between items-center flex-wrap gap-2">
-                          <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+                          <span className="bg-dark-overlay-navy text-clinical-teal border border-clinical-teal/40 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
                             <span>🚀</span>
                             <span>Published &amp; Ready for Distribution</span>
                           </span>
@@ -1162,7 +1162,7 @@ export default function BusinessDashboardPage() {
                             <Link
                               href={selectedRun.published_urls.blog_url}
                               target="_blank"
-                              className="bg-emerald-500 text-slate-950 text-xs font-extrabold px-4 py-2 rounded-xl hover:bg-emerald-400 transition-colors inline-flex items-center gap-1.5"
+                              className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl transition-colors inline-flex items-center gap-1.5"
                             >
                               <span>🔗</span>
                               <span>View Live Blog Post</span>
@@ -1172,8 +1172,8 @@ export default function BusinessDashboardPage() {
 
                         {/* Downloadable Assets */}
                         {selectedRun.social_media_assets && selectedRun.social_media_assets.length > 0 && (
-                          <div className="pt-3 border-t border-slate-800 space-y-2">
-                            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+                          <div className="pt-3 border-t border-white/10 space-y-2">
+                            <span className="text-xs text-white/70 uppercase tracking-wider block">
                               Media Asset Packages Ready for Manual Posting:
                             </span>
                             <div className="flex flex-wrap gap-3 text-xs">
@@ -1182,7 +1182,7 @@ export default function BusinessDashboardPage() {
                                   key={i}
                                   href={asset.asset_url}
                                   download
-                                  className="bg-slate-950 hover:bg-slate-900 border border-slate-700 text-cyan-400 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors font-mono"
+                                  className="bg-dark-overlay-navy hover:bg-white/5 border border-clinical-teal/30 text-clinical-teal px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors font-mono"
                                 >
                                   <span>📥</span>
                                   <span>{asset.platform} Asset Package</span>
@@ -1195,10 +1195,10 @@ export default function BusinessDashboardPage() {
                     )}
 
                     {/* COLLAPSIBLE VERSION HISTORY ACCORDION */}
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
+                    <div className="bg-primary-navy border border-white/10 rounded-2xl overflow-hidden shadow-lg">
                       <button
                         onClick={() => setIsVersionHistoryExpanded(!isVersionHistoryExpanded)}
-                        className="w-full text-left px-6 py-4 bg-slate-900 hover:bg-slate-800/80 flex justify-between items-center text-xs font-bold text-slate-300 transition-colors cursor-pointer"
+                        className="w-full text-left px-6 py-4 bg-primary-navy hover:bg-primary-navy/80 flex justify-between items-center text-xs text-white/80 transition-colors cursor-pointer"
                       >
                         <span className="flex items-center gap-2">
                           <span>📜</span>
@@ -1208,31 +1208,28 @@ export default function BusinessDashboardPage() {
                       </button>
 
                       {isVersionHistoryExpanded && (
-                        <div className="p-6 space-y-4 border-t border-slate-800 text-xs">
+                        <div className="p-6 space-y-4 border-t border-white/10 text-xs">
                           {selectedRunReviews.length === 0 ? (
-                            <p className="text-slate-500 italic">No previous revision logs recorded for this run.</p>
+                            <p className="text-white/50 italic">No previous revision logs recorded for this run.</p>
                           ) : (
                             <div className="space-y-3">
                               {selectedRunReviews.map((rev) => (
-                                <div key={rev.id} className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5">
+                                <div key={rev.id} className="p-3.5 bg-dark-overlay-navy border border-white/10 rounded-xl space-y-1.5">
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                      <span className="font-bold uppercase text-[10px] tracking-wider px-2 py-0.5 rounded bg-slate-800 text-cyan-400">
+                                      <span className="font-bold uppercase text-[10px] tracking-wider px-2 py-0.5 rounded bg-primary-navy text-clinical-teal">
                                         Stage: {rev.stage}
                                       </span>
-                                      <span className={`font-bold text-[10px] uppercase px-2 py-0.5 rounded ${
-                                        rev.decision === "approved" ? "bg-emerald-500/20 text-emerald-400" :
-                                        rev.decision === "edited" ? "bg-cyan-500/20 text-cyan-400" : "bg-amber-500/20 text-amber-400"
-                                      }`}>
+                                      <span className="font-bold text-[10px] uppercase px-2 py-0.5 rounded bg-primary-navy border border-clinical-teal/30 text-clinical-teal">
                                         {rev.decision.replace("_", " ")}
                                       </span>
                                     </div>
-                                    <span className="text-[10px] text-slate-500 font-mono">
+                                    <span className="text-[10px] text-white/50 font-mono">
                                       {new Date(rev.created_at).toLocaleString()}
                                     </span>
                                   </div>
                                   {rev.revision_notes && (
-                                    <p className="text-slate-300 bg-slate-900 p-2.5 rounded border border-slate-800 italic">
+                                    <p className="text-white/80 bg-primary-navy p-2.5 rounded border border-white/10 italic">
                                       "{rev.revision_notes}"
                                     </p>
                                   )}
@@ -1248,19 +1245,19 @@ export default function BusinessDashboardPage() {
                   /* PIPELINE LIST VIEW */
                   <div className="space-y-8">
                     {/* SECTION 1: Needs Your Review */}
-                    <div className="bg-slate-900 border border-amber-500/30 rounded-2xl p-6 shadow-xl space-y-4">
-                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-3">
                         <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
-                          <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                          <span className="w-2.5 h-2.5 rounded-full bg-clinical-teal animate-ping" />
+                          <h3 className="text-xs font-bold text-white uppercase tracking-wider">
                             Needs Your Attention ({reviewNeededRuns.length})
                           </h3>
                         </div>
-                        <span className="text-[11px] text-amber-400 font-mono">Action Required</span>
+                        <span className="text-[11px] text-clinical-teal font-mono">Action Required</span>
                       </div>
 
                       {reviewNeededRuns.length === 0 ? (
-                        <div className="py-8 text-center text-slate-400 text-xs">
+                        <div className="py-8 text-center text-white/60 text-xs">
                           🎉 No pending drafts require clinical review at this time.
                         </div>
                       ) : (
@@ -1269,30 +1266,30 @@ export default function BusinessDashboardPage() {
                             <div
                               key={run.id}
                               onClick={() => fetchRunDetail(run.run_id)}
-                              className="p-5 bg-slate-950 border border-slate-800 hover:border-cyan-500/50 rounded-xl transition-all shadow-md space-y-3 cursor-pointer group"
+                              className="p-5 bg-dark-overlay-navy border border-white/10 hover:border-clinical-teal/50 rounded-xl transition-all shadow-md space-y-3 cursor-pointer group"
                             >
                               <div className="flex items-center justify-between flex-wrap gap-2">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs font-mono text-cyan-400 font-bold">{run.run_id}</span>
+                                  <span className="text-xs font-mono text-white/70">{run.run_id}</span>
                                   <StatusBadge status={run.status} />
                                 </div>
-                                <span className="text-[11px] text-slate-400 font-mono">
+                                <span className="text-[11px] text-white/60 font-mono">
                                   {new Date(run.created_at).toLocaleDateString()}
                                 </span>
                               </div>
 
-                              <h4 className="font-serif text-base font-bold text-white group-hover:text-cyan-400 transition-colors">
+                              <h4 className="font-serif text-sm font-bold text-white group-hover:text-clinical-teal transition-colors">
                                 {run.topic}
                               </h4>
 
                               {run.blog_drafts?.[0]?.flags && run.blog_drafts[0].flags.length > 0 && (
-                                <div className="text-[11px] font-bold text-amber-400 bg-amber-950/40 border border-amber-500/30 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5">
+                                <div className="text-[11px] text-amber-300/90 bg-primary-navy border border-amber-500/40 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5">
                                   <span>⚠️</span>
                                   <span>{run.blog_drafts[0].flags.length} Clinical Review Flag(s)</span>
                                 </div>
                               )}
 
-                              <div className="flex justify-end text-xs text-cyan-400 font-bold items-center gap-1">
+                              <div className="flex justify-end text-xs text-clinical-teal items-center gap-1">
                                 <span>Open Review Workspace</span>
                                 <span>→</span>
                               </div>
@@ -1303,9 +1300,9 @@ export default function BusinessDashboardPage() {
                     </div>
 
                     {/* SECTION 2: Secondary Section - All Other Runs */}
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
-                      <div className="border-b border-slate-800 pb-3">
-                        <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+                    <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-4">
+                      <div className="border-b border-white/10 pb-3">
+                        <h3 className="text-xs font-bold text-white/80 uppercase tracking-wider">
                           In Progress, Published &amp; Archived Runs ({otherRuns.length})
                         </h3>
                       </div>
@@ -1315,13 +1312,13 @@ export default function BusinessDashboardPage() {
                           <div
                             key={run.id}
                             onClick={() => fetchRunDetail(run.run_id)}
-                            className="p-4 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl transition-all space-y-2 cursor-pointer"
+                            className="p-4 bg-dark-overlay-navy border border-white/10 hover:border-white/20 rounded-xl transition-all space-y-2 cursor-pointer"
                           >
                             <div className="flex items-center justify-between text-xs">
-                              <span className="font-mono text-slate-400">{run.run_id}</span>
+                              <span className="font-mono text-white/60">{run.run_id}</span>
                               <StatusBadge status={run.status} />
                             </div>
-                            <h4 className="font-medium text-xs text-slate-200 line-clamp-2">{run.topic}</h4>
+                            <h4 className="text-xs text-white/80 line-clamp-2">{run.topic}</h4>
                           </div>
                         ))}
                       </div>
@@ -1335,17 +1332,17 @@ export default function BusinessDashboardPage() {
 
         {/* START NEW RUN MODAL */}
         {isTriggerModalOpen && (
-          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-              <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
+          <div className="fixed inset-0 z-50 bg-deep-navy/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-primary-navy border border-white/10 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+              <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <span>✨</span>
                   <span>Start New Content Automation Run</span>
                 </h3>
                 <button
                   onClick={() => !isTriggering && setIsTriggerModalOpen(false)}
                   disabled={isTriggering}
-                  className="text-slate-400 hover:text-white text-sm font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-white/60 hover:text-white text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   ✕
                 </button>
@@ -1353,7 +1350,7 @@ export default function BusinessDashboardPage() {
 
               <form onSubmit={handleTriggerRun} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                  <label className="block text-xs text-white/80 mb-1">
                     Custom Topic / Patient Question (Optional)
                   </label>
                   <input
@@ -1362,29 +1359,29 @@ export default function BusinessDashboardPage() {
                     onChange={(e) => setNewRunTopic(e.target.value)}
                     disabled={isTriggering}
                     placeholder="e.g. Can I kneel after partial knee replacement?"
-                    className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3 text-xs focus:border-cyan-400 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   />
-                  <p className="text-[11px] text-slate-400 mt-1.5">
+                  <p className="text-[11px] text-white/60 mt-1.5">
                     If left blank, the pipeline will automatically select the highest-trending patient question from contact enquiries.
                   </p>
                 </div>
 
                 {isTriggering && (
-                  <div className="bg-slate-950 p-4 rounded-xl border border-cyan-500/30 space-y-3 my-2 shadow-lg">
-                    <div className="flex justify-between items-center text-xs font-semibold">
-                      <span className="text-cyan-400 flex items-center gap-2 truncate pr-2">
-                        <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0" />
+                  <div className="bg-dark-overlay-navy p-4 rounded-xl border border-clinical-teal/30 space-y-3 my-2 shadow-lg">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-clinical-teal flex items-center gap-2 truncate pr-2">
+                        <span className="inline-block w-2 h-2 rounded-full bg-clinical-teal animate-ping shrink-0" />
                         <span className="truncate">{triggerStep || "Initializing pipeline..."}</span>
                       </span>
-                      <span className="text-slate-300 font-mono font-bold shrink-0">{triggerProgress}%</span>
+                      <span className="text-white/80 font-mono shrink-0">{triggerProgress}%</span>
                     </div>
-                    <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div className="w-full bg-primary-navy h-2 rounded-full overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 h-full rounded-full transition-all duration-500 ease-out"
+                        className="bg-clinical-teal h-full rounded-full transition-all duration-500 ease-out"
                         style={{ width: `${triggerProgress}%` }}
                       />
                     </div>
-                    <p className="text-[11px] text-slate-400 italic text-center">
+                    <p className="text-[11px] text-white/60 italic text-center">
                       Please wait while our AI clinical agents analyze medical literature and synthesize your draft...
                     </p>
                   </div>
@@ -1395,17 +1392,17 @@ export default function BusinessDashboardPage() {
                     type="button"
                     onClick={() => !isTriggering && setIsTriggerModalOpen(false)}
                     disabled={isTriggering}
-                    className="bg-slate-800 text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isTriggering}
-                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold text-xs px-5 py-2 rounded-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-5 py-2 rounded-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {isTriggering && (
-                      <svg className="animate-spin h-3.5 w-3.5 text-slate-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -1420,10 +1417,10 @@ export default function BusinessDashboardPage() {
 
         {/* REQUEST REVISION MODAL */}
         {isRevisionModalOpen && (
-          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-              <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
+          <div className="fixed inset-0 z-50 bg-deep-navy/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-primary-navy border border-white/10 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+              <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <span>🔄</span>
                   <span>
                     Request Revision ({revisionStage.toUpperCase()}
@@ -1435,7 +1432,7 @@ export default function BusinessDashboardPage() {
                     setIsRevisionModalOpen(false);
                     setRevisionPlatform(undefined);
                   }}
-                  className="text-slate-400 hover:text-white text-sm font-bold cursor-pointer"
+                  className="text-white/60 hover:text-white text-sm cursor-pointer"
                 >
                   ✕
                 </button>
@@ -1443,7 +1440,7 @@ export default function BusinessDashboardPage() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-amber-400 mb-1">
+                  <label className="block text-xs text-amber-300/90 mb-1">
                     Clinical Revision Notes (Required)
                   </label>
                   <textarea
@@ -1451,7 +1448,7 @@ export default function BusinessDashboardPage() {
                     onChange={(e) => setRevisionNotes(e.target.value)}
                     rows={4}
                     placeholder="Specify exact wording adjustments or clinical clarifications required..."
-                    className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl p-3 text-xs focus:border-amber-400 focus:outline-none"
+                    className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none"
                   />
                 </div>
 
@@ -1462,7 +1459,7 @@ export default function BusinessDashboardPage() {
                       setIsRevisionModalOpen(false);
                       setRevisionPlatform(undefined);
                     }}
-                    className="bg-slate-800 text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
+                    className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1470,7 +1467,7 @@ export default function BusinessDashboardPage() {
                     type="button"
                     disabled={isSubmittingReview || !revisionNotes.trim()}
                     onClick={() => handleReviewSubmission(revisionStage, "revision_requested", undefined, revisionPlatform)}
-                    className="bg-amber-600 hover:bg-amber-500 text-white font-extrabold text-xs px-5 py-2 rounded-xl cursor-pointer disabled:opacity-50"
+                    className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-5 py-2 rounded-xl cursor-pointer disabled:opacity-50"
                   >
                     {isSubmittingReview ? "Submitting..." : "Send Revision Request"}
                   </button>
@@ -1487,13 +1484,13 @@ export default function BusinessDashboardPage() {
 // Subcomponent: Status Badge
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    awaiting_blog_approval: "bg-amber-500/20 border-amber-500/40 text-amber-300",
-    awaiting_social_approval: "bg-purple-500/20 border-purple-500/40 text-purple-300",
-    published: "bg-emerald-500/20 border-emerald-500/40 text-emerald-300",
-    researching: "bg-cyan-500/20 border-cyan-500/40 text-cyan-300",
-    writing_blog: "bg-blue-500/20 border-blue-500/40 text-blue-300",
-    writing_social: "bg-pink-500/20 border-pink-500/40 text-pink-300",
-    abandoned: "bg-slate-800 border-slate-700 text-slate-400",
+    awaiting_blog_approval: "bg-dark-overlay-navy border-clinical-teal/40 text-clinical-teal",
+    awaiting_social_approval: "bg-dark-overlay-navy border-clinical-teal/40 text-clinical-teal",
+    published: "bg-dark-overlay-navy border-clinical-teal/30 text-white/90",
+    researching: "bg-dark-overlay-navy border-clinical-teal/20 text-clinical-teal/80",
+    writing_blog: "bg-dark-overlay-navy border-clinical-teal/20 text-clinical-teal/80",
+    writing_social: "bg-dark-overlay-navy border-clinical-teal/20 text-clinical-teal/80",
+    abandoned: "bg-dark-overlay-navy border-white/10 text-white/50",
   };
 
   const labels: Record<string, string> = {
@@ -1508,8 +1505,8 @@ function StatusBadge({ status }: { status: string }) {
 
   return (
     <span
-      className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
-        styles[status] || "bg-slate-800 text-slate-300"
+      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+        styles[status] || "bg-dark-overlay-navy border-white/10 text-white/70"
       }`}
     >
       {labels[status] || status}
@@ -1526,10 +1523,10 @@ function FormattedContent({ body, body_markdown }: { body?: string; body_markdow
     <div className="markdown-content space-y-3">
       <ReactMarkdown
         components={{
-          h1: ({ children }) => <h1 className="font-serif text-xl font-bold text-white pt-3 border-b border-slate-800 pb-1 mb-2">{children}</h1>,
-          h2: ({ children }) => <h2 className="font-serif text-lg font-bold text-white pt-3 border-b border-slate-800 pb-1 mb-2">{children}</h2>,
-          h3: ({ children }) => <h3 className="font-serif text-base font-bold text-white pt-2 border-b border-slate-800 pb-1 mb-2">{children}</h3>,
-          h4: ({ children }) => <h4 className="font-serif text-sm font-bold text-white pt-2 pb-1 mb-1">{children}</h4>,
+          h1: ({ children }) => <h1 className="font-serif text-lg font-bold text-white pt-3 border-b border-white/10 pb-1 mb-2">{children}</h1>,
+          h2: ({ children }) => <h2 className="font-serif text-base font-bold text-white pt-3 border-b border-white/10 pb-1 mb-2">{children}</h2>,
+          h3: ({ children }) => <h3 className="font-serif text-sm font-bold text-white pt-2 border-b border-white/10 pb-1 mb-2">{children}</h3>,
+          h4: ({ children }) => <h4 className="font-serif text-xs font-bold text-white pt-2 pb-1 mb-1">{children}</h4>,
           p: ({ children }) => {
             const text = React.Children.toArray(children)
               .map((child: any) => {
@@ -1545,9 +1542,9 @@ function FormattedContent({ body, body_markdown }: { body?: string; body_markdow
 
             if (text.includes("[NEEDS CLINICAL REVIEW]")) {
               return (
-                <div className="bg-amber-950/60 border-l-4 border-amber-400 text-amber-200 p-3 rounded-r-lg font-semibold my-2 flex items-start gap-2">
-                  <span className="text-amber-400 shrink-0">⚠️</span>
-                  <div className="leading-relaxed">{children}</div>
+                <div className="bg-dark-overlay-navy border-l-4 border-amber-500/70 text-amber-200/90 p-3.5 rounded-r-lg my-3 flex items-start gap-2.5 shadow-sm">
+                  <span className="text-amber-400/80 shrink-0">⚠️</span>
+                  <div className="leading-relaxed text-xs">{children}</div>
                 </div>
               );
             }
@@ -1556,11 +1553,11 @@ function FormattedContent({ body, body_markdown }: { body?: string; body_markdow
           ul: ({ children }) => <ul className="list-disc pl-5 space-y-1.5 mb-3">{children}</ul>,
           ol: ({ children }) => <ol className="list-decimal pl-5 space-y-1.5 mb-3">{children}</ol>,
           li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-          hr: () => <hr className="border-slate-800 my-4" />,
+          hr: () => <hr className="border-white/10 my-4" />,
           strong: ({ children }) => <strong className="font-bold text-white">{children}</strong>,
-          em: ({ children }) => <em className="italic text-slate-200">{children}</em>,
+          em: ({ children }) => <em className="italic text-white/80">{children}</em>,
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-cyan-500 bg-slate-900/50 pl-4 py-2 italic text-slate-300 my-3 rounded-r">
+            <blockquote className="border-l-4 border-clinical-teal bg-dark-overlay-navy pl-4 py-2 italic text-white/80 my-3 rounded-r">
               {children}
             </blockquote>
           ),
@@ -1612,18 +1609,18 @@ function PlatformCard({
   }, [caption]);
 
   return (
-    <div className={`bg-gradient-to-b ${color} border ${borderColor} rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4`}>
+    <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4">
       <div className="space-y-3">
         <div className="flex justify-between items-center">
-          <span className="text-xs font-bold text-white flex items-center gap-1.5">
+          <span className="text-xs text-white/90 flex items-center gap-1.5">
             <span>{icon}</span>
             <span>{platformLabel}</span>
           </span>
           <span
-            className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+            className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${
               status === "approved" || isPublished
-                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                ? "bg-primary-navy text-clinical-teal border-clinical-teal/30"
+                : "bg-primary-navy text-white/70 border-white/20"
             }`}
           >
             {status === "approved" || isPublished ? "✓ Approved" : "Pending Review"}
@@ -1632,18 +1629,18 @@ function PlatformCard({
 
         {/* Attached Image or Placeholder Banner */}
         {attachedImageUrl ? (
-          <div className="relative rounded-lg overflow-hidden border border-slate-800 shadow-md group">
+          <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md group">
             <img
               src={attachedImageUrl}
               alt={`${platformLabel} Visual Asset`}
               className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
             />
-            <div className="absolute bottom-2 right-2 bg-slate-950/80 backdrop-blur text-[10px] text-cyan-300 font-mono px-2 py-0.5 rounded border border-slate-700">
+            <div className="absolute bottom-2 right-2 bg-primary-navy/90 backdrop-blur text-[10px] text-clinical-teal font-mono px-2 py-0.5 rounded border border-white/10">
               📷 Attached Media Asset
             </div>
           </div>
         ) : (
-          <div className="bg-slate-950/70 border border-dashed border-amber-500/30 rounded-lg p-3 text-center text-amber-300/90 text-[11px] flex items-center justify-center gap-2">
+          <div className="bg-primary-navy/70 border border-dashed border-white/20 rounded-lg p-3 text-center text-white/70 text-[11px] flex items-center justify-center gap-2">
             <span>🖼️</span>
             <span>No image attached — add one in the blog review step</span>
           </div>
@@ -1655,12 +1652,12 @@ function PlatformCard({
               value={editedText}
               onChange={(e) => setEditedText(e.target.value)}
               rows={6}
-              className="w-full bg-slate-950 border border-cyan-500/50 text-white rounded-lg p-3 text-xs focus:outline-none leading-relaxed font-sans"
+              className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-3 text-xs focus:border-clinical-teal focus:outline-none leading-relaxed font-sans"
             />
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setIsEditing(false)}
-                className="bg-slate-900 text-slate-300 text-[11px] px-3 py-1 rounded-lg cursor-pointer"
+                className="border border-white/20 text-white/70 hover:bg-white/5 text-[11px] px-3 py-1 rounded-lg cursor-pointer"
               >
                 Cancel
               </button>
@@ -1669,23 +1666,23 @@ function PlatformCard({
                   onSaveEdit(editedText);
                   setIsEditing(false);
                 }}
-                className="bg-cyan-500 text-slate-950 font-bold text-[11px] px-3 py-1 rounded-lg cursor-pointer"
+                className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-[11px] px-3 py-1 rounded-lg cursor-pointer"
               >
                 Save &amp; Approve
               </button>
             </div>
           </div>
         ) : (
-          <div className="bg-slate-950/80 p-3.5 rounded-lg border border-slate-800 text-xs text-slate-200 font-sans leading-relaxed whitespace-pre-wrap">
+          <div className="bg-primary-navy/80 p-3.5 rounded-lg border border-white/10 text-xs text-white/80 font-sans leading-relaxed whitespace-pre-wrap">
             {caption || "No caption generated yet."}
           </div>
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10">
         <button
           onClick={onCopy}
-          className="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+          className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
         >
           <span>{isCopied ? "✓ Copied!" : "📋 Copy"}</span>
         </button>
@@ -1694,19 +1691,19 @@ function PlatformCard({
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setIsEditing(true)}
-              className="bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 text-[11px] font-semibold px-2 py-1.5 rounded-lg transition-colors cursor-pointer"
+              className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
             >
               ✏️ Edit
             </button>
             <button
               onClick={onRequestRevision}
-              className="bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 border border-amber-500/30 text-[11px] font-semibold px-2 py-1.5 rounded-lg transition-colors cursor-pointer"
+              className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
             >
               🔄 Revision
             </button>
             <button
               onClick={onApprove}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-[11px] px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
             >
               ✓ Approve
             </button>
