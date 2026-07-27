@@ -737,27 +737,29 @@ export default function BusinessDashboardPage() {
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-primary-navy to-transparent" />
           </div>
 
-          {/* Desktop/Tablet: unchanged */}
-          <div className="hidden md:flex flex-wrap items-center justify-start gap-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {navTabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleNavTabClick(tab.id)}
-                className={`py-1.5 px-2 rounded-xl text-[9.5px] transition-all flex items-center gap-1 cursor-pointer border ${
-                  activeTab === tab.id
-                    ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-md"
-                    : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20"
-                }`}
-              >
-                <span className="text-[10px]">{tab.icon}</span>
-                <span>{tab.label}</span>
-                {tab.badge && (
-                  <span className="bg-clinical-teal text-deep-navy text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                    {tab.badge}
-                  </span>
-                )}
-              </button>
-            ))}
+          {/* Desktop/Tablet: horizontal-scrollable, never wraps */}
+          <div className="hidden md:block overflow-x-auto scrollbar-hide">
+            <div className="flex items-center gap-0.5 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-max min-w-full">
+              {navTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleNavTabClick(tab.id)}
+                  className={`py-1 px-1.5 rounded-xl text-[9.5px] transition-all flex items-center gap-1 cursor-pointer border shrink-0 whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-md"
+                      : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20"
+                  }`}
+                >
+                  <span className="text-[9px]">{tab.icon}</span>
+                  <span>{tab.label}</span>
+                  {tab.badge && (
+                    <span className="bg-clinical-teal text-deep-navy text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </header>
@@ -1333,7 +1335,7 @@ export default function BusinessDashboardPage() {
                                   <div className="space-y-2 border-t lg:border-t-0 lg:border-l border-white/10 pt-4 lg:pt-0 lg:pl-6 flex flex-col">
                                     <label className="block text-xs text-clinical-teal mb-1 font-semibold">Live Preview</label>
                                     <div
-                                      className="bg-primary-navy/40 p-5 rounded-xl border border-white/10 space-y-4 custom-scrollbar overflow-y-auto text-[9px] text-white/80 leading-relaxed font-sans flex-1"
+                                      className="bg-primary-navy/40 p-5 rounded-xl border border-white/10 space-y-4 custom-scrollbar overflow-y-auto text-white/80 leading-relaxed font-sans flex-1"
                                       style={{ maxHeight: "480px" }}
                                     >
                                       <h1 className="font-serif text-xl font-bold text-white tracking-tight">
@@ -1407,7 +1409,7 @@ export default function BusinessDashboardPage() {
                                       {editExcerpt || selectedRun.blog_drafts[0]?.excerpt}
                                     </p>
                                   )}
-                                  <div className="text-[9px] text-white/80 space-y-4 leading-relaxed font-sans border-t border-white/10 pt-4">
+                                  <div className="text-white/80 space-y-4 leading-relaxed font-sans border-t border-white/10 pt-4">
                                     <FormattedContent 
                                       body={editBody || selectedRun.blog_drafts[0]?.body_markdown || selectedRun.blog_drafts[0]?.body || ""} 
                                       suggestedImages={editSuggestedImages.length > 0 ? editSuggestedImages : selectedRun.blog_drafts[0]?.suggested_images}
