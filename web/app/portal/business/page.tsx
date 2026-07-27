@@ -134,6 +134,30 @@ export default function BusinessDashboardPage() {
     }
   };
 
+  // Close the editor without saving/approving — edits remain in local state so the
+  // read-only preview shows them until the user navigates away or reloads.
+  const handleFinishEditing = () => {
+    setIsEditMode(false);
+  };
+
+  // Approve Draft: if the user has local edits that haven't been saved yet, warn them.
+  const handleApproveDraft = () => {
+    const serverDraft = selectedRun?.blog_drafts?.[0];
+    const hasLocalEdits =
+      editTitle !== (serverDraft?.title || "") ||
+      editExcerpt !== (serverDraft?.excerpt || "") ||
+      editBody !== (serverDraft?.body_markdown || serverDraft?.body || "");
+    if (hasLocalEdits) {
+      const proceed = confirm(
+        "You have unsaved edits in the editor.\n\nClick OK to save and approve your edited version, or Cancel to go back and review your changes first."
+      );
+      if (!proceed) return;
+      handleReviewSubmission("blog", "edited");
+    } else {
+      handleReviewSubmission("blog", "approved");
+    }
+  };
+
   const handleDiscardChanges = () => {
     if (confirm("Discard all unsaved edits? This will restore the original draft text.")) {
       const blogDraft = selectedRun?.blog_drafts?.[0];
@@ -218,8 +242,7 @@ export default function BusinessDashboardPage() {
 
   const handleAttachPlaceholderImage = async (placeholderId: string, label: string, url: string) => {
     if (!selectedRun) return;
-    const currentDraft = selectedRun.blog_drafts[0];
-    
+
     const exists = editSuggestedImages.some(
       (img) => typeof img === "object" && img !== null && (img as any).placeholderId === placeholderId
     );
@@ -236,13 +259,20 @@ export default function BusinessDashboardPage() {
       updatedImages = [...editSuggestedImages, { placeholderId, label, url }];
     }
 
+    // Always update local preview state immediately
     setEditSuggestedImages(updatedImages);
 
+    // If we are in edit mode, keep editing — the server save happens when the user clicks
+    // "Save & Approve". Do not call handleReviewSubmission here, as that would close the editor.
+    if (isEditMode) return;
+
+    // Outside edit mode (read-only view), persist to server immediately as before
+    const currentDraft = selectedRun.blog_drafts[0];
     await handleReviewSubmission("blog", "edited", {
-      title: editTitle,
-      excerpt: editExcerpt,
-      body_markdown: editBody,
-      body: editBody,
+      title: currentDraft?.title,
+      excerpt: currentDraft?.excerpt,
+      body_markdown: currentDraft?.body_markdown || currentDraft?.body,
+      body: currentDraft?.body_markdown || currentDraft?.body,
       suggestedImages: updatedImages,
       references: currentDraft?.references,
     });
@@ -411,7 +441,8 @@ export default function BusinessDashboardPage() {
     stage: "blog" | "social",
     decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social",
     customPayload?: any,
-    platform?: "instagram" | "facebook" | "linkedin"
+    platform?: "instagram" | "facebook" | "linkedin",
+    keepEditMode?: boolean
   ) => {
     if (!selectedRun) return;
     setIsSubmittingReview(true);
@@ -465,13 +496,21 @@ export default function BusinessDashboardPage() {
 
       const data = await res.json();
       if (data.success && data.run) {
-        setIsEditMode(false);
+        if (!keepEditMode) {
+          setIsEditMode(false);
+        }
         setEditingPlatform(null);
         setIsRevisionModalOpen(false);
         setRevisionNotes("");
         setRevisionPlatform(undefined);
         await fetchPipelineRuns();
-        await fetchRunDetail(data.run.run_id);
+        // Only re-fetch run detail (which resets local edit state) if we are not in edit mode
+        if (!keepEditMode) {
+          await fetchRunDetail(data.run.run_id);
+        } else {
+          // Just refresh the run list without blowing away our local edits
+          setSelectedRun(data.run);
+        }
         const targetDesc = platform ? `${platform.toUpperCase()} (${decision.toUpperCase()})` : decision.toUpperCase();
         setActionFeedback(`✓ Action for ${targetDesc} recorded successfully.`);
         setTimeout(() => setActionFeedback(null), 4000);
@@ -487,17 +526,23 @@ export default function BusinessDashboardPage() {
   // Image attachment helpers
   const handleAttachImage = async (newImageUrl: string) => {
     if (!selectedRun) return;
-    const currentDraft = selectedRun.blog_drafts[0];
     const cleanUrl = newImageUrl.trim();
     const updatedImages = [cleanUrl, ...editSuggestedImages.filter((img) => img !== cleanUrl)];
 
+    // Always update local preview state immediately
     setEditSuggestedImages(updatedImages);
 
+    // If we are in edit mode, keep editing — the server save happens when the user clicks
+    // "Save & Approve". Do not call handleReviewSubmission here, as that would close the editor.
+    if (isEditMode) return;
+
+    // Outside edit mode (read-only view), persist to server immediately as before
+    const currentDraft = selectedRun.blog_drafts[0];
     await handleReviewSubmission("blog", "edited", {
-      title: editTitle,
-      excerpt: editExcerpt,
-      body_markdown: editBody,
-      body: editBody,
+      title: currentDraft?.title,
+      excerpt: currentDraft?.excerpt,
+      body_markdown: currentDraft?.body_markdown || currentDraft?.body,
+      body: currentDraft?.body_markdown || currentDraft?.body,
       suggestedImages: updatedImages,
       references: currentDraft?.references,
     });
@@ -1024,7 +1069,7 @@ export default function BusinessDashboardPage() {
                               {isEditMode ? null : (
                                 <>
                                   <button
-                                    onClick={() => handleReviewSubmission("blog", "approved")}
+                                    onClick={handleApproveDraft}
                                     disabled={isSubmittingReview}
                                     className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer disabled:opacity-60"
                                   >
@@ -1312,20 +1357,29 @@ export default function BusinessDashboardPage() {
                                   </div>
                                 </div>
 
-                                <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                                <div className="flex justify-between gap-3 pt-4 border-t border-white/10">
                                   <button
                                      onClick={handleDiscardChanges}
                                      className="border border-status-error/40 text-status-error hover:bg-status-error/10 text-xs px-4 py-2 rounded-xl cursor-pointer font-medium"
                                    >
                                      Discard Changes
                                    </button>
-                                  <button
-                                    onClick={() => handleReviewSubmission("blog", "edited")}
-                                    disabled={isSubmittingReview}
-                                    className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-60"
-                                  >
-                                    {isSubmittingReview ? "Saving..." : "Save & Approve Edited Draft"}
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={handleFinishEditing}
+                                      className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
+                                      title="Close the editor and return to read-only view. Your changes are preserved locally."
+                                    >
+                                      Finish Editing
+                                    </button>
+                                    <button
+                                      onClick={() => handleReviewSubmission("blog", "edited")}
+                                      disabled={isSubmittingReview}
+                                      className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-60"
+                                    >
+                                      {isSubmittingReview ? "Saving..." : "Save & Approve Edited Draft"}
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             ) : (
@@ -1348,17 +1402,17 @@ export default function BusinessDashboardPage() {
                                   style={{ maxHeight: "620px", overflowY: "auto" }}
                                 >
                                   <h1 className="font-serif text-xl font-bold text-white tracking-tight">
-                                    {selectedRun.blog_drafts[0]?.title}
+                                    {editTitle || selectedRun.blog_drafts[0]?.title}
                                   </h1>
-                                  {selectedRun.blog_drafts[0]?.excerpt && (
+                                  {(editExcerpt || selectedRun.blog_drafts[0]?.excerpt) && (
                                     <p className="text-[9px] text-white/70 italic border-l-2 border-clinical-teal pl-3 py-1">
-                                      {selectedRun.blog_drafts[0].excerpt}
+                                      {editExcerpt || selectedRun.blog_drafts[0]?.excerpt}
                                     </p>
                                   )}
                                   <div className="text-[9px] text-white/80 space-y-4 leading-relaxed font-sans border-t border-white/10 pt-4">
                                     <FormattedContent 
-                                      body={selectedRun.blog_drafts[0]?.body_markdown || selectedRun.blog_drafts[0]?.body || ""} 
-                                      suggestedImages={selectedRun.blog_drafts[0]?.suggested_images}
+                                      body={editBody || selectedRun.blog_drafts[0]?.body_markdown || selectedRun.blog_drafts[0]?.body || ""} 
+                                      suggestedImages={editSuggestedImages.length > 0 ? editSuggestedImages : selectedRun.blog_drafts[0]?.suggested_images}
                                       onAttachPlaceholder={(placeholderId, label, url) => handleAttachPlaceholderImage(placeholderId, label, url)}
                                     />
                                   </div>
