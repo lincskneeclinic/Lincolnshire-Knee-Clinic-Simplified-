@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { submitPipelineReview } from "@/lib/contentPipeline";
+import { MIN_BLOG_BODY_LENGTH } from "@/lib/contentPipelineConstants";
 
 export const maxDuration = 60; // Allow 60s for Gemini AI social caption generation
 
@@ -40,6 +41,19 @@ export async function POST(
         { success: false, error: "Revision notes are required when requesting a revision." },
         { status: 400 }
       );
+    }
+
+    if (stage === "blog" && decision === "edited") {
+      const bodyText: string = (editedContent?.body_markdown || editedContent?.body || "").trim();
+      if (bodyText.length < MIN_BLOG_BODY_LENGTH) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Blog draft body is empty or too short to approve (minimum ${MIN_BLOG_BODY_LENGTH} characters required).`,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const result = await submitPipelineReview(runId, {

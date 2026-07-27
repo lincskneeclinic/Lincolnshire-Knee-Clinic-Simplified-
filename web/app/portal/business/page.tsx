@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ContentPipelineRun, ContentPipelineReview } from "@/lib/contentPipeline";
+import { MIN_BLOG_BODY_LENGTH } from "@/lib/contentPipelineConstants";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
@@ -148,6 +149,12 @@ export default function BusinessDashboardPage() {
       editExcerpt !== (serverDraft?.excerpt || "") ||
       editBody !== (serverDraft?.body_markdown || serverDraft?.body || "");
     if (hasLocalEdits) {
+      if (editBody.trim().length < MIN_BLOG_BODY_LENGTH) {
+        alert(
+          `The article body is too short to approve (minimum ${MIN_BLOG_BODY_LENGTH} characters). Please write or restore the full article content before approving.`
+        );
+        return;
+      }
       const proceed = confirm(
         "You have unsaved edits in the editor.\n\nClick OK to save and approve your edited version, or Cancel to go back and review your changes first."
       );
@@ -1373,7 +1380,7 @@ export default function BusinessDashboardPage() {
                                       Finish Editing
                                     </button>
                                     <button
-                                      onClick={() => handleReviewSubmission("blog", "edited")}
+                                      onClick={handleApproveDraft}
                                       disabled={isSubmittingReview}
                                       className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-60"
                                     >
