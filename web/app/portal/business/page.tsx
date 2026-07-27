@@ -367,69 +367,136 @@ export default function BusinessDashboardPage() {
     { key: "facebook" as const, label: "Facebook" },
     { key: "linkedin" as const, label: "LinkedIn" },
   ];
+  const navTabs = [
+    { id: "overview", label: "Executive Overview", icon: "📊" },
+    { id: "topics", label: "Trending Questions & Polls", icon: "💡" },
+    { id: "events", label: "Click Event Telemetry", icon: "👆" },
+    { id: "newsletter", label: "Subscriber Growth & Segments", icon: "📧" },
+    {
+      id: "pipeline",
+      label: "Content Pipeline",
+      icon: "📝",
+      badge: reviewNeededRuns.length > 0 ? reviewNeededRuns.length : null,
+    },
+  ];
+  const handleNavTabClick = (tabId: string) => {
+    setActiveTab(tabId as any);
+    if (tabId === "pipeline") {
+      setSelectedRun(null);
+      setRunDetailTab("draft");
+      setEditingPlatform(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-deep-navy text-white/80 font-sans flex flex-col">
       {/* Top Header Navigation */}
       <header className="bg-primary-navy border-b border-white/10 sticky top-0 z-40 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-dark-overlay-navy border border-clinical-teal/30 rounded-xl flex items-center justify-center shrink-0">
-              <img src="/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" className="w-7 h-7 object-contain" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-serif text-base sm:text-lg font-bold text-white tracking-tight">
-                  Lincolnshire Knee Clinic
-                </h1>
-                <span className="bg-dark-overlay-navy border border-clinical-teal/30 text-clinical-teal text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                  Practice Intelligence
-                </span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-3.5">
+          {/* Mobile Header (below md) */}
+          <div className="flex md:hidden flex-col gap-2.5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 bg-dark-overlay-navy border border-clinical-teal/30 rounded-xl flex items-center justify-center shrink-0">
+                <img src="/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" className="w-7 h-7 object-contain" />
               </div>
-              <p className="text-xs text-white/60">
-                Visitor Engagement, Event Telemetry &amp; Content Automation Pipeline
-              </p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center flex-wrap gap-1.5">
+                  <h1 className="font-serif text-base font-bold text-white tracking-tight leading-tight">
+                    Lincolnshire Knee Clinic
+                  </h1>
+                  <span className="bg-dark-overlay-navy border border-clinical-teal/30 text-clinical-teal text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0">
+                    Practice Intelligence
+                  </span>
+                </div>
+                <p className="text-xs text-white/60 leading-snug mt-0.5">
+                  Visitor Engagement, Event Telemetry &amp; Content Automation Pipeline
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <Link
+                href="/"
+                className="bg-dark-overlay-navy hover:bg-white/5 border border-clinical-teal/30 text-clinical-teal text-[11px] py-1.5 px-2 rounded-lg transition-colors inline-flex items-center justify-center gap-1"
+              >
+                ← Return to Website
+              </Link>
+              <span className="bg-dark-overlay-navy border border-white/10 text-white/70 text-[11px] py-1.5 px-2 rounded-lg inline-flex items-center justify-center gap-1">
+                🔒 Basic Auth Protected
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="bg-dark-overlay-navy hover:bg-white/5 border border-clinical-teal/30 text-clinical-teal text-xs py-1.5 px-3.5 rounded-xl transition-colors inline-flex items-center gap-1.5"
-            >
-              ← Return to Website
-            </Link>
-            <span className="bg-dark-overlay-navy border border-white/10 text-white/70 text-xs py-1.5 px-3 rounded-xl inline-flex items-center gap-1">
-              🔒 Basic Auth Protected
-            </span>
+          {/* Desktop/Tablet Header (md and up) — unchanged */}
+          <div className="hidden md:flex md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-dark-overlay-navy border border-clinical-teal/30 rounded-xl flex items-center justify-center shrink-0">
+                <img src="/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" className="w-7 h-7 object-contain" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="font-serif text-base sm:text-lg font-bold text-white tracking-tight">
+                    Lincolnshire Knee Clinic
+                  </h1>
+                  <span className="bg-dark-overlay-navy border border-clinical-teal/30 text-clinical-teal text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                    Practice Intelligence
+                  </span>
+                </div>
+                <p className="text-xs text-white/60">
+                  Visitor Engagement, Event Telemetry &amp; Content Automation Pipeline
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Link
+                href="/"
+                className="bg-dark-overlay-navy hover:bg-white/5 border border-clinical-teal/30 text-clinical-teal text-xs py-1.5 px-3.5 rounded-xl transition-colors inline-flex items-center gap-1.5"
+              >
+                ← Return to Website
+              </Link>
+              <span className="bg-dark-overlay-navy border border-white/10 text-white/70 text-xs py-1.5 px-3 rounded-xl inline-flex items-center gap-1">
+                🔒 Basic Auth Protected
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 border-t border-white/10">
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-1">
-            {[
-              { id: "overview", label: "Executive Overview", icon: "📊" },
-              { id: "topics", label: "Trending Questions & Polls", icon: "💡" },
-              { id: "events", label: "Click Event Telemetry", icon: "👆" },
-              { id: "newsletter", label: "Subscriber Growth & Segments", icon: "📧" },
-              {
-                id: "pipeline",
-                label: "Content Pipeline",
-                icon: "📝",
-                badge: reviewNeededRuns.length > 0 ? reviewNeededRuns.length : null,
-              },
-            ].map((tab) => (
+        <div className="py-2.5 border-t border-white/10">
+          {/* Mobile: horizontal scrollable strip */}
+          <div className="relative md:hidden">
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide px-4">
+              {navTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleNavTabClick(tab.id)}
+                  className={`py-2 px-3 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer border shrink-0 whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-md"
+                      : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20"
+                  }`}
+                >
+                  <span className="text-xs">{tab.icon}</span>
+                  <span>{tab.label}</span>
+                  {tab.badge && (
+                    <span className="bg-clinical-teal text-deep-navy text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
+              <span className="shrink-0 w-1" aria-hidden="true" />
+            </div>
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-primary-navy to-transparent" />
+          </div>
+
+          {/* Desktop/Tablet: unchanged */}
+          <div className="hidden md:flex flex-wrap items-center justify-start gap-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {navTabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id as any);
-                  if (tab.id === "pipeline") {
-                    setSelectedRun(null);
-                    setRunDetailTab("draft");
-                    setEditingPlatform(null);
-                  }
-                }}
+                onClick={() => handleNavTabClick(tab.id)}
                 className={`py-1.5 px-2 rounded-xl text-[9.5px] transition-all flex items-center gap-1 cursor-pointer border ${
                   activeTab === tab.id
                     ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-md"

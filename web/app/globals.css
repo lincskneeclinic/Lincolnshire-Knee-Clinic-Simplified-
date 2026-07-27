@@ -171,3 +171,12 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #06b6d4;
 }
+
+/* Hides scrollbar while keeping the element natively scrollable (mobile tab strip) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
