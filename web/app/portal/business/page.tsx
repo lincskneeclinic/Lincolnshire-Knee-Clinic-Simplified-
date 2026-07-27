@@ -7,7 +7,7 @@ import ReactMarkdown from "react-markdown";
 
 type RunDetailTab = "draft" | "research" | "images" | "social";
 
-function getRenderableImageUrl(suggestedImages?: string[]): string | null {
+function getRenderableImageUrl(suggestedImages?: any[]): string | null {
   if (!suggestedImages || !Array.isArray(suggestedImages) || suggestedImages.length === 0) return null;
   const match = suggestedImages.find(
     (item) =>
@@ -21,6 +21,7 @@ function getRenderableImageUrl(suggestedImages?: string[]): string | null {
 }
 
 export default function BusinessDashboardPage() {
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "pipeline">("overview");
   const [statsData, setStatsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -59,6 +60,97 @@ export default function BusinessDashboardPage() {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const insertMarkdown = (type: "bold" | "italic" | "heading" | "bullet") => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end);
+
+    let replacement = "";
+    if (type === "bold") {
+      replacement = `**${selectedText || "text"}**`;
+    } else if (type === "italic") {
+      replacement = `*${selectedText || "text"}*`;
+    } else if (type === "heading") {
+      const beforeText = text.substring(0, start);
+      const lineStart = beforeText.lastIndexOf("\n") + 1;
+      const afterLineStartText = beforeText.substring(lineStart);
+      
+      const newBefore = text.substring(0, lineStart) + "## " + afterLineStartText;
+      const newText = newBefore + text.substring(start);
+      setEditBody(newText);
+      
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(lineStart + 3 + start - lineStart, lineStart + 3 + end - lineStart);
+      }, 0);
+      return;
+    } else if (type === "bullet") {
+      const beforeText = text.substring(0, start);
+      const lineStart = beforeText.lastIndexOf("\n") + 1;
+      const afterLineStartText = beforeText.substring(lineStart);
+      
+      const newBefore = text.substring(0, lineStart) + "- " + afterLineStartText;
+      const newText = newBefore + text.substring(start);
+      setEditBody(newText);
+      
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(lineStart + 2 + start - lineStart, lineStart + 2 + end - lineStart);
+      }, 0);
+      return;
+    }
+
+    if (type === "bold" || type === "italic") {
+      const newText = text.substring(0, start) + replacement + text.substring(end);
+      setEditBody(newText);
+      
+      setTimeout(() => {
+        textarea.focus();
+        const offset = type === "bold" ? 2 : 1;
+        if (selectedText) {
+          textarea.setSelectionRange(start + offset, start + offset + selectedText.length);
+        } else {
+          textarea.setSelectionRange(start + offset, start + offset + 4);
+        }
+      }, 0);
+    }
+  };
+
+  const handleAttachPlaceholderImage = async (placeholderId: string, label: string, url: string) => {
+    if (!selectedRun) return;
+    const currentDraft = selectedRun.blog_drafts[0];
+    const currentImages = currentDraft?.suggested_images || [];
+    
+    const exists = currentImages.some(
+      (img) => typeof img === "object" && img !== null && (img as any).placeholderId === placeholderId
+    );
+
+    let updatedImages;
+    if (exists) {
+      updatedImages = currentImages.map((img) => {
+        if (typeof img === "object" && img !== null && (img as any).placeholderId === placeholderId) {
+          return { ...(img as any), url };
+        }
+        return img;
+      });
+    } else {
+      updatedImages = [...currentImages, { placeholderId, label, url }];
+    }
+
+    await handleReviewSubmission("blog", "edited", {
+      title: currentDraft?.title,
+      excerpt: currentDraft?.excerpt,
+      body_markdown: currentDraft?.body_markdown || currentDraft?.body,
+      body: currentDraft?.body_markdown || currentDraft?.body,
+      suggestedImages: updatedImages,
+      references: currentDraft?.references,
+    });
+  };
 
   // Fetch telemetry stats
   useEffect(() => {
@@ -975,10 +1067,48 @@ export default function BusinessDashboardPage() {
                                 </div>
                                 <div>
                                   <label className="block text-xs text-clinical-teal mb-1">Formatted Body Content (Markdown supported)</label>
+                                  
+                                  {/* Markdown Toolbar */}
+                                  <div className="flex items-center gap-1 bg-primary-navy border-t border-x border-white/20 rounded-t-lg p-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => insertMarkdown("bold")}
+                                      className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1 rounded transition-colors cursor-pointer border border-white/10"
+                                      title="Bold text"
+                                    >
+                                      <strong>B</strong>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => insertMarkdown("italic")}
+                                      className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1 rounded transition-colors cursor-pointer border border-white/10"
+                                      title="Italic text"
+                                    >
+                                      <em>I</em>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => insertMarkdown("heading")}
+                                      className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1 rounded transition-colors cursor-pointer border border-white/10"
+                                      title="H2 Heading"
+                                    >
+                                      H2
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => insertMarkdown("bullet")}
+                                      className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1 rounded transition-colors cursor-pointer border border-white/10"
+                                      title="Bullet List"
+                                    >
+                                      • List
+                                    </button>
+                                  </div>
+
                                   <textarea
+                                    ref={textareaRef}
                                     value={editBody}
                                     onChange={(e) => setEditBody(e.target.value)}
-                                    className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-3 text-xs font-mono focus:border-clinical-teal focus:outline-none leading-relaxed custom-scrollbar"
+                                    className="w-full bg-primary-navy border border-white/20 text-white rounded-b-lg p-3 text-xs font-mono focus:border-clinical-teal focus:outline-none leading-relaxed custom-scrollbar"
                                     style={{ height: "320px", overflowY: "auto" }}
                                   />
                                 </div>
@@ -1026,7 +1156,11 @@ export default function BusinessDashboardPage() {
                                     </p>
                                   )}
                                   <div className="text-[9px] text-white/80 space-y-4 leading-relaxed font-sans border-t border-white/10 pt-4">
-                                    <FormattedContent body={selectedRun.blog_drafts[0]?.body_markdown || selectedRun.blog_drafts[0]?.body || ""} />
+                                    <FormattedContent 
+                                      body={selectedRun.blog_drafts[0]?.body_markdown || selectedRun.blog_drafts[0]?.body || ""} 
+                                      suggestedImages={selectedRun.blog_drafts[0]?.suggested_images}
+                                      onAttachPlaceholder={(placeholderId, label, url) => handleAttachPlaceholderImage(placeholderId, label, url)}
+                                    />
                                   </div>
                                 </div>
                               </>
@@ -1197,8 +1331,8 @@ export default function BusinessDashboardPage() {
                               <div className="bg-dark-overlay-navy p-4 rounded-xl border border-white/10 space-y-2">
                                 <span className="text-clinical-teal uppercase tracking-wider text-[10px] block">Suggested Visual Prompts</span>
                                 <ul className="list-disc pl-4 text-white/70 space-y-1">
-                                  {selectedRun.blog_drafts[0]?.suggested_images?.map((img, i) => (
-                                    <li key={i}>{img}</li>
+                                  {selectedRun.blog_drafts[0]?.suggested_images?.filter(img => typeof img === "string").map((img, i) => (
+                                    <li key={i}>{img as string}</li>
                                   ))}
                                 </ul>
                               </div>
@@ -1683,7 +1817,17 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 // Subcomponent: Formatted Content Preview
-function FormattedContent({ body, body_markdown }: { body?: string; body_markdown?: string }) {
+function FormattedContent({ 
+  body, 
+  body_markdown,
+  suggestedImages,
+  onAttachPlaceholder
+}: { 
+  body?: string; 
+  body_markdown?: string;
+  suggestedImages?: any[];
+  onAttachPlaceholder?: (placeholderId: string, label: string, url: string) => void;
+}) {
   const content = body_markdown || body || "";
   if (!content) return null;
 
@@ -1716,6 +1860,84 @@ function FormattedContent({ body, body_markdown }: { body?: string; body_markdow
                 </div>
               );
             }
+
+            const placeholderRegex = /^\[IMAGE PLACEHOLDER:\s*(.*?)\]$/i;
+            const match = text.trim().match(placeholderRegex);
+            if (match) {
+              const label = match[1].trim();
+              const resolvedImage = (suggestedImages || []).find(
+                (item) => 
+                  typeof item === "object" && 
+                  item !== null && 
+                  item.label?.trim().toLowerCase() === label.toLowerCase()
+              );
+
+              if (resolvedImage && resolvedImage.url) {
+                return (
+                  <div className="my-4 space-y-1.5 text-center">
+                    <img 
+                      src={resolvedImage.url} 
+                      alt={label} 
+                      className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-cover" 
+                    />
+                    <span className="text-[10px] text-white/50 italic block">
+                      📷 Inline Image: {label}
+                    </span>
+                  </div>
+                );
+              }
+
+              const placeholderId = resolvedImage?.placeholderId || `placeholder-${label.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`;
+
+              return (
+                <div className="border border-dashed border-clinical-teal/40 bg-primary-navy/40 p-4 rounded-xl my-4 text-center space-y-3">
+                  <div className="text-[10px] uppercase tracking-wider text-clinical-teal font-semibold">📷 Suggested Image Placement</div>
+                  <p className="text-[11px] text-white/90 italic">"{label}"</p>
+                  {onAttachPlaceholder && (
+                    <div className="flex items-center justify-center gap-2">
+                      <label className="bg-clinical-teal hover:bg-clinical-teal-hover text-deep-navy text-[10px] px-3 py-1.5 rounded-lg cursor-pointer transition-colors font-medium">
+                        Upload Image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              const formData = new FormData();
+                              formData.append("file", file);
+                              const res = await fetch("/api/portal/content-pipeline/upload", {
+                                method: "POST",
+                                body: formData,
+                              });
+                              const data = await res.json();
+                              if (data.success && data.url) {
+                                onAttachPlaceholder(placeholderId, label, data.url);
+                              }
+                            } catch (err) {
+                              console.error("Placeholder upload failed:", err);
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                      <button
+                        onClick={() => {
+                          const url = prompt("Enter the direct image URL:");
+                          if (url) {
+                            onAttachPlaceholder(placeholderId, label, url);
+                          }
+                        }}
+                        className="border border-white/20 text-white/80 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium"
+                      >
+                        Paste URL
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return <p className="leading-relaxed mb-3">{children}</p>;
           },
           ul: ({ children }) => <ul className="list-disc pl-5 space-y-1.5 mb-3">{children}</ul>,

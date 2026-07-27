@@ -36,7 +36,7 @@ export interface BlogDraftVersion {
   excerpt: string;
   body_markdown?: string;
   body?: string;
-  suggested_images: string[];
+  suggested_images: Array<string | { placeholderId?: string; label: string; url?: string }>;
   references: string[];
   flags: string[];
   created_at: string;
@@ -515,6 +515,41 @@ export async function submitPipelineReview(
       await sendContentPipelineNotificationEmail(run, "social");
     } else if (payload.decision === "revision_requested") {
       run.status = "writing_blog";
+      const latestVersionNumber = (run.blog_drafts?.[0]?.version || 1) + 1;
+      const previousDraft = run.blog_drafts?.[0] || null;
+      let blogDraftData;
+      try {
+        blogDraftData = await writeBlogDraft(
+          run.topic,
+          run.research_brief as any,
+          previousDraft,
+          payload.revisionNotes
+        );
+      } catch (err: any) {
+        console.error("Stage 2 Blog Writer revision failed:", err);
+        const errorMessage = err?.message || String(err);
+        blogDraftData = {
+          title: `[GENERATION ERROR] ${run.topic} (V${latestVersionNumber})`,
+          excerpt: `The AI Blog Writer encountered an error during revision: ${errorMessage}`,
+          body: `### ⚠️ Stage 2 AI Generation Failed during Revision\n\nThe content pipeline attempted to generate a revised article using Gemini AI, but encountered a system error:\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\n[NEEDS CLINICAL REVIEW] This is an error placeholder, do not publish.`,
+          suggestedImages: previousDraft?.suggested_images || ["Error icon placeholder"],
+          flags: [`[NEEDS CLINICAL REVIEW] AI revision failed with error: ${errorMessage}`],
+        };
+      }
+
+      run.blog_drafts.unshift({
+        version: latestVersionNumber,
+        title: blogDraftData.title,
+        excerpt: blogDraftData.excerpt,
+        body_markdown: blogDraftData.body_markdown || blogDraftData.body,
+        body: blogDraftData.body_markdown || blogDraftData.body,
+        suggested_images: blogDraftData.suggestedImages || [],
+        references: previousDraft?.references || ["NICE Clinical Guidelines on Knee Care", "Journal of Bone and Joint Surgery"],
+        flags: blogDraftData.flags || [],
+        created_at: now
+      });
+
+      run.status = "awaiting_blog_approval";
     }
   } else if (payload.stage === "social") {
     if (run.social_drafts && run.social_drafts.length > 0) {
