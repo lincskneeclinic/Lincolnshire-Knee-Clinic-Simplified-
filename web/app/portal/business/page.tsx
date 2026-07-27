@@ -6,6 +6,7 @@ import { ContentPipelineRun, ContentPipelineReview } from "@/lib/contentPipeline
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
+import rehypeRaw from "rehype-raw";
 
 type RunDetailTab = "draft" | "research" | "images" | "social";
 
@@ -50,6 +51,10 @@ export default function BusinessDashboardPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editExcerpt, setEditExcerpt] = useState("");
   const [editBody, setEditBody] = useState("");
+  const [editSuggestedImages, setEditSuggestedImages] = useState<any[]>([]);
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const typingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const [editIgCaption, setEditIgCaption] = useState("");
   const [editFbCaption, setEditFbCaption] = useState("");
   const [editLiCaption, setEditLiCaption] = useState("");
@@ -64,7 +69,85 @@ export default function BusinessDashboardPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  const insertMarkdown = (type: "bold" | "italic" | "heading" | "bullet") => {
+  // Initialize/reset history stack when entering Edit mode
+  useEffect(() => {
+    if (isEditMode) {
+      setHistory([editBody]);
+      setHistoryIndex(0);
+    }
+  }, [isEditMode]);
+
+  const pushHistory = useCallback((newText: string) => {
+    setHistory((prev) => {
+      const nextHist = prev.slice(0, historyIndex + 1);
+      if (nextHist[nextHist.length - 1] === newText) return prev;
+      const updated = [...nextHist, newText];
+      setHistoryIndex(updated.length - 1);
+      return updated;
+    });
+  }, [historyIndex]);
+
+  const handleTextareaChange = (newVal: string) => {
+    setEditBody(newVal);
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      pushHistory(newVal);
+    }, 500);
+  };
+
+  const handleUndo = useCallback(() => {
+    if (historyIndex > 0) {
+      const prevIndex = historyIndex - 1;
+      setHistoryIndex(prevIndex);
+      setEditBody(history[prevIndex]);
+    }
+  }, [history, historyIndex]);
+
+  const handleRedo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      const nextIndex = historyIndex + 1;
+      setHistoryIndex(nextIndex);
+      setEditBody(history[nextIndex]);
+    }
+  }, [history, historyIndex]);
+
+  const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const isMac = typeof window !== "undefined" && navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+    const isCmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+
+    if (isCmdOrCtrl) {
+      if (e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      } else if (e.key.toLowerCase() === "y" && !isMac) {
+        e.preventDefault();
+        handleRedo();
+      }
+    }
+  };
+
+  const handleDiscardChanges = () => {
+    if (confirm("Discard all unsaved edits? This will restore the original draft text.")) {
+      const blogDraft = selectedRun?.blog_drafts?.[0];
+      if (blogDraft) {
+        setEditTitle(blogDraft.title || "");
+        setEditExcerpt(blogDraft.excerpt || "");
+        setEditBody(blogDraft.body_markdown || blogDraft.body || "");
+        setEditSuggestedImages(blogDraft.suggested_images || []);
+      }
+      setIsEditMode(false);
+    }
+  };
+
+  const insertMarkdown = (type: "bold" | "italic" | "underline" | "h1" | "h2" | "h3" | "bullet") => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
@@ -78,18 +161,24 @@ export default function BusinessDashboardPage() {
       replacement = `**${selectedText || "text"}**`;
     } else if (type === "italic") {
       replacement = `*${selectedText || "text"}*`;
-    } else if (type === "heading") {
+    } else if (type === "underline") {
+      replacement = `<u>${selectedText || "text"}</u>`;
+    } else if (type === "h1" || type === "h2" || type === "h3") {
+      const hashes = type === "h1" ? "# " : type === "h2" ? "## " : "### ";
+      const hashLength = hashes.length;
+      
       const beforeText = text.substring(0, start);
       const lineStart = beforeText.lastIndexOf("\n") + 1;
       const afterLineStartText = beforeText.substring(lineStart);
       
-      const newBefore = text.substring(0, lineStart) + "## " + afterLineStartText;
+      const newBefore = text.substring(0, lineStart) + hashes + afterLineStartText;
       const newText = newBefore + text.substring(start);
       setEditBody(newText);
+      pushHistory(newText);
       
       setTimeout(() => {
         textarea.focus();
-        textarea.setSelectionRange(lineStart + 3 + start - lineStart, lineStart + 3 + end - lineStart);
+        textarea.setSelectionRange(lineStart + hashLength + start - lineStart, lineStart + hashLength + end - lineStart);
       }, 0);
       return;
     } else if (type === "bullet") {
@@ -100,6 +189,7 @@ export default function BusinessDashboardPage() {
       const newBefore = text.substring(0, lineStart) + "- " + afterLineStartText;
       const newText = newBefore + text.substring(start);
       setEditBody(newText);
+      pushHistory(newText);
       
       setTimeout(() => {
         textarea.focus();
@@ -108,17 +198,19 @@ export default function BusinessDashboardPage() {
       return;
     }
 
-    if (type === "bold" || type === "italic") {
+    if (type === "bold" || type === "italic" || type === "underline") {
       const newText = text.substring(0, start) + replacement + text.substring(end);
       setEditBody(newText);
+      pushHistory(newText);
       
       setTimeout(() => {
         textarea.focus();
-        const offset = type === "bold" ? 2 : 1;
+        const startOffset = type === "bold" ? 2 : type === "italic" ? 1 : 3;
+        const endOffset = type === "bold" ? 2 : type === "italic" ? 1 : 4;
         if (selectedText) {
-          textarea.setSelectionRange(start + offset, start + offset + selectedText.length);
+          textarea.setSelectionRange(start + startOffset, start + startOffset + selectedText.length);
         } else {
-          textarea.setSelectionRange(start + offset, start + offset + 4);
+          textarea.setSelectionRange(start + startOffset, start + startOffset + 4);
         }
       }, 0);
     }
@@ -127,29 +219,30 @@ export default function BusinessDashboardPage() {
   const handleAttachPlaceholderImage = async (placeholderId: string, label: string, url: string) => {
     if (!selectedRun) return;
     const currentDraft = selectedRun.blog_drafts[0];
-    const currentImages = currentDraft?.suggested_images || [];
     
-    const exists = currentImages.some(
+    const exists = editSuggestedImages.some(
       (img) => typeof img === "object" && img !== null && (img as any).placeholderId === placeholderId
     );
 
     let updatedImages;
     if (exists) {
-      updatedImages = currentImages.map((img) => {
+      updatedImages = editSuggestedImages.map((img) => {
         if (typeof img === "object" && img !== null && (img as any).placeholderId === placeholderId) {
           return { ...(img as any), url };
         }
         return img;
       });
     } else {
-      updatedImages = [...currentImages, { placeholderId, label, url }];
+      updatedImages = [...editSuggestedImages, { placeholderId, label, url }];
     }
 
+    setEditSuggestedImages(updatedImages);
+
     await handleReviewSubmission("blog", "edited", {
-      title: currentDraft?.title,
-      excerpt: currentDraft?.excerpt,
-      body_markdown: currentDraft?.body_markdown || currentDraft?.body,
-      body: currentDraft?.body_markdown || currentDraft?.body,
+      title: editTitle,
+      excerpt: editExcerpt,
+      body_markdown: editBody,
+      body: editBody,
       suggestedImages: updatedImages,
       references: currentDraft?.references,
     });
@@ -205,6 +298,7 @@ export default function BusinessDashboardPage() {
           setEditTitle(blogDraft.title || "");
           setEditExcerpt(blogDraft.excerpt || "");
           setEditBody(blogDraft.body_markdown || blogDraft.body || "");
+          setEditSuggestedImages(blogDraft.suggested_images || []);
         }
         const socialDraft = data.run.social_drafts?.[0];
         if (socialDraft) {
@@ -336,6 +430,7 @@ export default function BusinessDashboardPage() {
             excerpt: editExcerpt,
             body_markdown: editBody,
             body: editBody,
+            suggestedImages: editSuggestedImages,
           };
         } else if (customPayload) {
           bodyData.editedContent = customPayload;
@@ -393,15 +488,16 @@ export default function BusinessDashboardPage() {
   const handleAttachImage = async (newImageUrl: string) => {
     if (!selectedRun) return;
     const currentDraft = selectedRun.blog_drafts[0];
-    const currentImages = currentDraft?.suggested_images || [];
     const cleanUrl = newImageUrl.trim();
-    const updatedImages = [cleanUrl, ...currentImages.filter((img) => img !== cleanUrl)];
+    const updatedImages = [cleanUrl, ...editSuggestedImages.filter((img) => img !== cleanUrl)];
+
+    setEditSuggestedImages(updatedImages);
 
     await handleReviewSubmission("blog", "edited", {
-      title: currentDraft?.title,
-      excerpt: currentDraft?.excerpt,
-      body_markdown: currentDraft?.body_markdown || currentDraft?.body,
-      body: currentDraft?.body_markdown || currentDraft?.body,
+      title: editTitle,
+      excerpt: editExcerpt,
+      body_markdown: editBody,
+      body: editBody,
       suggestedImages: updatedImages,
       references: currentDraft?.references,
     });
@@ -1092,11 +1188,11 @@ export default function BusinessDashboardPage() {
                                       <label className="block text-xs text-clinical-teal mb-1 font-semibold">Formatted Body Content (Markdown supported)</label>
                                       
                                       {/* Markdown Toolbar */}
-                                      <div className="flex items-center gap-1 bg-primary-navy border-t border-x border-white/20 rounded-t-lg p-1.5">
+                                      <div className="flex flex-wrap items-center gap-1.5 bg-primary-navy border-t border-x border-white/20 rounded-t-lg p-2">
                                         <button
                                           type="button"
                                           onClick={() => insertMarkdown("bold")}
-                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1 rounded transition-colors cursor-pointer border border-white/10"
+                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-white/10"
                                           title="Bold text"
                                         >
                                           <strong>B</strong>
@@ -1104,33 +1200,86 @@ export default function BusinessDashboardPage() {
                                         <button
                                           type="button"
                                           onClick={() => insertMarkdown("italic")}
-                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1 rounded transition-colors cursor-pointer border border-white/10"
+                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-white/10"
                                           title="Italic text"
                                         >
                                           <em>I</em>
                                         </button>
                                         <button
                                           type="button"
-                                          onClick={() => insertMarkdown("heading")}
-                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1 rounded transition-colors cursor-pointer border border-white/10"
+                                          onClick={() => insertMarkdown("underline")}
+                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-white/10 underline"
+                                          title="Underline text"
+                                        >
+                                          U
+                                        </button>
+                                        
+                                        <span className="w-px h-4 bg-white/10 mx-1" />
+
+                                        <button
+                                          type="button"
+                                          onClick={() => insertMarkdown("h1")}
+                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1.5 rounded transition-colors cursor-pointer border border-white/10"
+                                          title="H1 Heading"
+                                        >
+                                          H1
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => insertMarkdown("h2")}
+                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1.5 rounded transition-colors cursor-pointer border border-white/10"
                                           title="H2 Heading"
                                         >
                                           H2
                                         </button>
                                         <button
                                           type="button"
+                                          onClick={() => insertMarkdown("h3")}
+                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1.5 rounded transition-colors cursor-pointer border border-white/10"
+                                          title="H3 Heading"
+                                        >
+                                          H3
+                                        </button>
+
+                                        <span className="w-px h-4 bg-white/10 mx-1" />
+
+                                        <button
+                                          type="button"
                                           onClick={() => insertMarkdown("bullet")}
-                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1 rounded transition-colors cursor-pointer border border-white/10"
+                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1.5 rounded transition-colors cursor-pointer border border-white/10"
                                           title="Bullet List"
                                         >
                                           • List
+                                        </button>
+
+                                        <span className="w-px h-4 bg-white/10 mx-1" />
+
+                                        <button
+                                          type="button"
+                                          onClick={handleUndo}
+                                          disabled={historyIndex <= 0}
+                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-white/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                                          title="Undo (Ctrl+Z)"
+                                        >
+                                          ↩ Undo
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={handleRedo}
+                                          disabled={historyIndex >= history.length - 1}
+                                          className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-white/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                                          title="Redo (Ctrl+Shift+Z)"
+                                        >
+                                          ↪ Redo
                                         </button>
                                       </div>
 
                                       <textarea
                                         ref={textareaRef}
                                         value={editBody}
-                                        onChange={(e) => setEditBody(e.target.value)}
+                                        onChange={(e) => handleTextareaChange(e.target.value)}
+                                        onKeyDown={handleTextareaKeyDown}
+                                        
                                         className="w-full bg-primary-navy border border-white/20 text-white rounded-b-lg p-3 text-xs font-mono focus:border-clinical-teal focus:outline-none leading-relaxed custom-scrollbar"
                                         style={{ height: "320px", overflowY: "auto" }}
                                       />
@@ -1154,8 +1303,8 @@ export default function BusinessDashboardPage() {
                                       )}
                                       <div className="border-t border-white/10 pt-4">
                                         <FormattedContent 
-                                          body={editBody} 
-                                          suggestedImages={selectedRun.blog_drafts[0]?.suggested_images}
+                                           body={editBody} 
+                                           suggestedImages={editSuggestedImages}
                                           onAttachPlaceholder={(placeholderId, label, url) => handleAttachPlaceholderImage(placeholderId, label, url)}
                                         />
                                       </div>
@@ -1165,11 +1314,11 @@ export default function BusinessDashboardPage() {
 
                                 <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
                                   <button
-                                    onClick={() => setIsEditMode(false)}
-                                    className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
-                                  >
-                                    Cancel
-                                  </button>
+                                     onClick={handleDiscardChanges}
+                                     className="border border-status-error/40 text-status-error hover:bg-status-error/10 text-xs px-4 py-2 rounded-xl cursor-pointer font-medium"
+                                   >
+                                     Discard Changes
+                                   </button>
                                   <button
                                     onClick={() => handleReviewSubmission("blog", "edited")}
                                     disabled={isSubmittingReview}
@@ -1974,6 +2123,7 @@ function FormattedContent({
     <div className="markdown-content space-y-3">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
         components={{
           table: ({ children }) => (
             <div className="overflow-x-auto my-4 rounded-lg border border-white/10">
