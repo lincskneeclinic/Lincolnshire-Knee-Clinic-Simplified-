@@ -383,7 +383,7 @@ export default function BusinessDashboardPage() {
 
         {/* Tab Navigation */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 border-t border-white/10">
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-1">
             {[
               { id: "overview", label: "Executive Overview", icon: "📊" },
               { id: "topics", label: "Trending Questions & Polls", icon: "💡" },
@@ -402,16 +402,16 @@ export default function BusinessDashboardPage() {
                   setActiveTab(tab.id as any);
                   if (tab.id === "pipeline") setSelectedRun(null);
                 }}
-                className={`py-1.5 px-2.5 rounded-xl text-[11px] transition-all flex items-center gap-2 cursor-pointer border ${
+                className={`py-1.5 px-2 rounded-xl text-[9.5px] transition-all flex items-center gap-1 cursor-pointer border ${
                   activeTab === tab.id
                     ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-md"
                     : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20"
                 }`}
               >
-                <span>{tab.icon}</span>
+                <span className="text-[10px]">{tab.icon}</span>
                 <span>{tab.label}</span>
                 {tab.badge && (
-                  <span className="bg-clinical-teal text-deep-navy text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  <span className="bg-clinical-teal text-deep-navy text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                     {tab.badge}
                   </span>
                 )}
@@ -702,7 +702,7 @@ export default function BusinessDashboardPage() {
 
                           {isResearchBriefExpanded && (
                             <div 
-                              className="p-5 space-y-4 text-[10px] border-t border-white/10 custom-scrollbar"
+                              className="p-5 space-y-4 text-[9px] border-t border-white/10 custom-scrollbar"
                               style={{ maxHeight: '480px', overflowY: 'auto' }}
                             >
                               <p className="text-white/80 leading-relaxed">{selectedRun.research_brief.summary}</p>
@@ -710,7 +710,7 @@ export default function BusinessDashboardPage() {
                               {/* Key Points */}
                               {selectedRun.research_brief.key_points && selectedRun.research_brief.key_points.length > 0 && (
                                 <div>
-                                  <span className="text-clinical-teal block mb-1">Key Clinical Findings:</span>
+                                  <span className="text-clinical-teal block mb-1 text-[10px]">Key Clinical Findings:</span>
                                   <ul className="list-disc pl-5 text-white/80 space-y-1">
                                     {selectedRun.research_brief.key_points.map((pt, i) => (
                                       <li key={i}>{pt}</li>
@@ -722,8 +722,8 @@ export default function BusinessDashboardPage() {
                               {/* Conflicting Findings / Nuances */}
                               {selectedRun.research_brief.conflicting_findings && selectedRun.research_brief.conflicting_findings.length > 0 && (
                                 <div className="bg-dark-overlay-navy border-l-2 border-amber-500/70 p-3 rounded-r-lg space-y-1">
-                                  <span className="text-amber-300/90 block mb-0.5">⚠️ Conflicting Findings &amp; Clinical Nuances:</span>
-                                  <ul className="list-disc pl-4 text-amber-200/80 text-[10px] space-y-1">
+                                  <span className="text-amber-300/90 block mb-0.5 text-[10px]">⚠️ Conflicting Findings &amp; Clinical Nuances:</span>
+                                  <ul className="list-disc pl-4 text-amber-200/80 text-[9px] space-y-1">
                                     {selectedRun.research_brief.conflicting_findings.map((cf, i) => (
                                       <li key={i}>{cf}</li>
                                     ))}
@@ -734,7 +734,7 @@ export default function BusinessDashboardPage() {
                               {/* Clinical Indications */}
                               {selectedRun.research_brief.clinical_indications && selectedRun.research_brief.clinical_indications.length > 0 && (
                                 <div>
-                                  <span className="text-clinical-teal block mb-1">Clinical Indication Criteria:</span>
+                                  <span className="text-clinical-teal block mb-1 text-[10px]">Clinical Indication Criteria:</span>
                                   <ul className="list-disc pl-5 text-white/80 space-y-1">
                                     {selectedRun.research_brief.clinical_indications.map((ci, i) => (
                                       <li key={i}>{ci}</li>
@@ -746,7 +746,7 @@ export default function BusinessDashboardPage() {
                               {/* PubMed Articles */}
                               {selectedRun.research_brief.pubmed_articles && selectedRun.research_brief.pubmed_articles.length > 0 && (
                                 <div>
-                                  <span className="text-clinical-teal block mb-1.5">Verified PubMed Literature (NCBI):</span>
+                                  <span className="text-clinical-teal block mb-1.5 text-[10px]">Verified PubMed Literature (NCBI):</span>
                                   <div className="space-y-2">
                                     {selectedRun.research_brief.pubmed_articles.map((art, i) => (
                                       <div key={i} className="bg-primary-navy p-3 rounded-lg border border-white/10 space-y-1">
@@ -754,13 +754,13 @@ export default function BusinessDashboardPage() {
                                           href={art.url}
                                           target="_blank"
                                           rel="noreferrer"
-                                          className="text-clinical-teal hover:underline flex items-center gap-1 leading-snug"
+                                          className="text-clinical-teal hover:underline flex items-center gap-1 leading-snug text-[10px]"
                                         >
                                           <span>📄</span>
                                           <span>{art.title}</span>
-                                          <span className="text-[9px] text-white/60">↗</span>
+                                          <span className="text-[8px] text-white/60">↗</span>
                                         </a>
-                                        <div className="text-[10px] text-white/70 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                        <div className="text-[9px] text-white/70 flex flex-wrap items-center gap-x-3 gap-y-1">
                                           <span>Authors: {art.authors}</span>
                                           <span>Journal: {art.journal} ({art.pubdate})</span>
                                           <span className="font-mono text-clinical-teal/80">PMID: {art.pmid}</span>
@@ -774,10 +774,10 @@ export default function BusinessDashboardPage() {
                               {/* Sources */}
                               {selectedRun.research_brief.sources && selectedRun.research_brief.sources.length > 0 && (
                                 <div>
-                                  <span className="text-white/60 uppercase tracking-wider text-[9px] block mb-1">Source Citations Log:</span>
+                                  <span className="text-white/60 uppercase tracking-wider text-[10px] block mb-1">Source Citations Log:</span>
                                   <div className="space-y-1">
                                     {selectedRun.research_brief.sources.map((src, i) => (
-                                      <div key={i} className="text-white/60 bg-primary-navy/40 p-2 rounded border border-white/10 font-mono text-[10px]">
+                                      <div key={i} className="text-white/60 bg-primary-navy/40 p-2 rounded border border-white/10 font-mono text-[9px]">
                                         📄 {src}
                                       </div>
                                     ))}
@@ -917,11 +917,11 @@ export default function BusinessDashboardPage() {
                                 {selectedRun.blog_drafts[0]?.title}
                               </h1>
                               {selectedRun.blog_drafts[0]?.excerpt && (
-                                <p className="text-xs text-white/70 italic border-l-2 border-clinical-teal pl-3 py-1">
+                                <p className="text-[9px] text-white/70 italic border-l-2 border-clinical-teal pl-3 py-1">
                                   {selectedRun.blog_drafts[0].excerpt}
                                 </p>
                               )}
-                              <div className="text-[10px] text-white/80 space-y-4 leading-relaxed font-sans border-t border-white/10 pt-4">
+                              <div className="text-[9px] text-white/80 space-y-4 leading-relaxed font-sans border-t border-white/10 pt-4">
                                 <FormattedContent body={selectedRun.blog_drafts[0]?.body_markdown || selectedRun.blog_drafts[0]?.body || ""} />
                               </div>
                             </div>
@@ -1544,7 +1544,7 @@ function FormattedContent({ body, body_markdown }: { body?: string; body_markdow
               return (
                 <div className="bg-dark-overlay-navy border-l-4 border-amber-500/70 text-amber-200/90 p-3.5 rounded-r-lg my-3 flex items-start gap-2.5 shadow-sm">
                   <span className="text-amber-400/80 shrink-0">⚠️</span>
-                  <div className="leading-relaxed text-[10px]">{children}</div>
+                  <div className="leading-relaxed text-[9px]">{children}</div>
                 </div>
               );
             }
