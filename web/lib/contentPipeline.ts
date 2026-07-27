@@ -45,6 +45,7 @@ export interface BlogDraftVersion {
 export interface SocialCaptionPlatform {
   caption: string;
   status: "pending" | "approved";
+  imageUrl?: string;
 }
 
 export interface SocialDraftVersion {
@@ -81,7 +82,7 @@ export interface ContentPipelineReview {
   stage: "blog" | "social";
   platform?: "instagram" | "facebook" | "linkedin";
   version?: number;
-  decision: "approved" | "edited" | "revision_requested";
+  decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social";
   edited_content?: any;
   revision_notes?: string;
   created_at: string;
@@ -439,7 +440,7 @@ export async function submitPipelineReview(
   payload: {
     stage: "blog" | "social";
     platform?: "instagram" | "facebook" | "linkedin";
-    decision: "approved" | "edited" | "revision_requested";
+    decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social";
     editedContent?: any;
     revisionNotes?: string;
   }
@@ -473,7 +474,27 @@ export async function submitPipelineReview(
   };
 
   // Process State Transitions
-  if (payload.stage === "blog") {
+  if (payload.decision === "revert_to_blog") {
+    run.status = "awaiting_blog_approval";
+    run.published_urls = null;
+    run.social_media_assets = null;
+    if (run.social_drafts && run.social_drafts.length > 0) {
+      const socialDraft = run.social_drafts[0];
+      socialDraft.instagram.status = "pending";
+      socialDraft.facebook.status = "pending";
+      socialDraft.linkedin.status = "pending";
+    }
+  } else if (payload.decision === "revert_to_social") {
+    run.status = "awaiting_social_approval";
+    run.published_urls = null;
+    run.social_media_assets = null;
+    if (run.social_drafts && run.social_drafts.length > 0) {
+      const socialDraft = run.social_drafts[0];
+      socialDraft.instagram.status = "pending";
+      socialDraft.facebook.status = "pending";
+      socialDraft.linkedin.status = "pending";
+    }
+  } else if (payload.stage === "blog") {
     if (payload.decision === "approved" || payload.decision === "edited") {
       if (payload.decision === "edited" && payload.editedContent) {
         const latestVersionNumber = (run.blog_drafts?.[0]?.version || 1) + 1;
@@ -591,7 +612,14 @@ export async function submitPipelineReview(
             const newCaption = typeof payload.editedContent === "string"
               ? payload.editedContent
               : (payload.editedContent.caption || payload.editedContent[platform]?.caption || currentDraft[platform].caption);
+            const newImageUrl = typeof payload.editedContent === "object" && payload.editedContent !== null
+              ? (payload.editedContent.imageUrl || payload.editedContent[platform]?.imageUrl || currentDraft[platform].imageUrl)
+              : currentDraft[platform].imageUrl;
+
             currentDraft[platform].caption = newCaption;
+            if (newImageUrl !== undefined) {
+              currentDraft[platform].imageUrl = newImageUrl;
+            }
           }
           currentDraft[platform].status = "approved";
         } else if (payload.decision === "revision_requested") {
@@ -604,6 +632,10 @@ export async function submitPipelineReview(
             if (payload.editedContent.instagram?.caption) currentDraft.instagram.caption = payload.editedContent.instagram.caption;
             if (payload.editedContent.facebook?.caption) currentDraft.facebook.caption = payload.editedContent.facebook.caption;
             if (payload.editedContent.linkedin?.caption) currentDraft.linkedin.caption = payload.editedContent.linkedin.caption;
+
+            if (payload.editedContent.instagram?.imageUrl !== undefined) currentDraft.instagram.imageUrl = payload.editedContent.instagram.imageUrl;
+            if (payload.editedContent.facebook?.imageUrl !== undefined) currentDraft.facebook.imageUrl = payload.editedContent.facebook.imageUrl;
+            if (payload.editedContent.linkedin?.imageUrl !== undefined) currentDraft.linkedin.imageUrl = payload.editedContent.linkedin.imageUrl;
           }
           currentDraft.instagram.status = "approved";
           currentDraft.facebook.status = "approved";

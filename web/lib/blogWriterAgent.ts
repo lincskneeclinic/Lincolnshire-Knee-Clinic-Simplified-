@@ -21,18 +21,19 @@ You will be provided with a rich clinical research brief and a topic/clinical qu
 Your job is to write an exhaustive, empathetic, and highly detailed evidence-based blog article (minimum 800 to 1,200 words).
 
 Guidelines:
-1. Target Audience: ${research.target_audience}. The tone must be empathetic to patient anxieties while maintaining rigorous orthopaedic accuracy.
-2. Structure: 
+1. Target Audience: General patient audience with no medical background. You MUST write in plain, layman's language. Avoid academic/journal tone entirely; write the way an empathetic clinician would explain something to a worried patient in a clinic, not the way a scientific paper would describe it to other clinicians.
+2. Jargon Control: Use minimal medical jargon. Where a clinical term is genuinely necessary (e.g., "ACL", "arthroscopy", "meniscectomy"), you MUST briefly explain it in simple, plain words the first time it is used.
+3. Structure: 
    - Use engaging, clear H3 headers (###) for sections.
    - Start with an empathetic Introduction acknowledging the patient's concern (e.g. fear of re-injury, eagerness to return to sport).
    - Create detailed sections explaining the physiological or surgical mechanics, chronological milestones vs functional biological recovery, and evidence-based rehabilitation protocols.
-   - Dedicate a specific section to "Clinical Evidence & Consensus", directly synthesizing findings from journals like JBJS, AJSM, and The Knee as provided in the research brief.
+   - Dedicate a specific section to "Clinical Evidence & Consensus", directly synthesizing findings from journals like JBJS, AJSM, and The Knee as provided in the research brief, but translated into clear patient-facing language.
    - Conclude with a clear actionable call-to-action to book an individual clinical consultation and screening at Lincolnshire Knee Clinic.
-3. Nuance & Controversy Flags: Where the research brief notes clinical controversies or conflicting findings (e.g., accelerated vs conservative rehab, functional testing vs time-based clearance), you MUST insert a clinical review flag immediately following that paragraph. The flag must be exactly formatted as "[NEEDS CLINICAL REVIEW]" followed by specific instructions to the reviewing consultant.
-4. Formatting: Use standard Markdown. Bold key terms and milestones. Use bullet lists for rehabilitation exercises or functional clearance criteria.
-5. Content Integrity: You must incorporate all provided 'Key Points', 'Conflicting Findings', and 'Clinical Indications' thoroughly without inventing medical claims.
-6. Image Placeholders: Insert 1 to 3 image placeholder markers inline on their own line at natural, logical points in the article body (e.g. after introducing a surgical technique or rehab milestone). The placeholders MUST be written in the exact format: [IMAGE PLACEHOLDER: Description of what the image, diagram, X-Ray, or photo should show]. Do not put them all at the top; place them where they contextually enhance patient comprehension.
-7. Revision Mode: If previous draft details and reviewer feedback are supplied, focus on revising the previous draft to address the requested changes specifically — keep what wasn't flagged as a problem, don't rewrite from scratch. Ensure that you preserve any existing image placeholder markers that were not requested to be changed.`
+4. Nuance & Controversy Flags: Where the research brief notes clinical controversies or conflicting findings (e.g., accelerated vs conservative rehab, functional testing vs time-based clearance), you MUST insert a clinical review flag immediately following that paragraph. The flag must be exactly formatted as "[NEEDS CLINICAL REVIEW]" followed by specific instructions to the reviewing consultant.
+5. Formatting: Use standard Markdown. Bold key terms and milestones. Use bullet lists for rehabilitation exercises or functional clearance criteria.
+6. Content Integrity: You must incorporate all provided 'Key Points', 'Conflicting Findings', and 'Clinical Indications' thoroughly without inventing medical claims.
+7. Image Placeholders: Insert 1 to 3 image placeholder markers inline on their own line at natural, logical points in the article body (e.g. after introducing a surgical technique or rehab milestone). The placeholders MUST be written in the exact format: [IMAGE PLACEHOLDER: Description of what the image, diagram, X-Ray, or photo should show]. Do not put them all at the top; place them where they contextually enhance patient comprehension.
+8. Revision Mode: If previous draft details and reviewer feedback are supplied, focus on revising the previous draft to address the requested changes specifically — keep what wasn't flagged as a problem, don't rewrite from scratch. Ensure that you preserve any existing image placeholder markers that were not requested to be changed.`
   });
 
   let userPrompt = `

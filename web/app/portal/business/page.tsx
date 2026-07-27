@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ContentPipelineRun, ContentPipelineReview } from "@/lib/contentPipeline";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
 
 type RunDetailTab = "draft" | "research" | "images" | "social";
 
@@ -60,6 +61,7 @@ export default function BusinessDashboardPage() {
   const [revisionNotes, setRevisionNotes] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const insertMarkdown = (type: "bold" | "italic" | "heading" | "bullet") => {
@@ -310,15 +312,16 @@ export default function BusinessDashboardPage() {
     }
   };
 
-  // Submit review decision (approved | edited | revision_requested)
+  // Submit review decision (approved | edited | revision_requested | revert_to_blog | revert_to_social)
   const handleReviewSubmission = async (
     stage: "blog" | "social",
-    decision: "approved" | "edited" | "revision_requested",
+    decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social",
     customPayload?: any,
     platform?: "instagram" | "facebook" | "linkedin"
   ) => {
     if (!selectedRun) return;
     setIsSubmittingReview(true);
+    setActionError(null);
     try {
       let bodyData: any = {
         stage,
@@ -355,6 +358,16 @@ export default function BusinessDashboardPage() {
         body: JSON.stringify(bodyData),
       });
 
+      if (!res.ok) {
+        const text = await res.text();
+        let errMsg = "Server error occurred. The Gemini AI generation might have timed out or failed.";
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed.error) errMsg = parsed.error;
+        } catch {}
+        throw new Error(errMsg);
+      }
+
       const data = await res.json();
       if (data.success && data.run) {
         setIsEditMode(false);
@@ -365,11 +378,12 @@ export default function BusinessDashboardPage() {
         await fetchPipelineRuns();
         await fetchRunDetail(data.run.run_id);
         const targetDesc = platform ? `${platform.toUpperCase()} (${decision.toUpperCase()})` : decision.toUpperCase();
-        setActionFeedback(`✓ Review decision for ${targetDesc} recorded successfully.`);
+        setActionFeedback(`✓ Action for ${targetDesc} recorded successfully.`);
         setTimeout(() => setActionFeedback(null), 4000);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error submitting review:", err);
+      setActionError(err?.message || "An unexpected network error occurred while submitting the review.");
     } finally {
       setIsSubmittingReview(false);
     }
@@ -613,6 +627,14 @@ export default function BusinessDashboardPage() {
       {actionFeedback && (
         <div className="fixed top-20 right-6 z-50 bg-primary-navy border border-clinical-teal text-clinical-teal px-4 py-3 rounded-xl shadow-2xl text-xs font-normal animate-bounce">
           {actionFeedback}
+        </div>
+      )}
+
+      {actionError && (
+        <div className="fixed top-20 right-6 z-50 bg-primary-navy border border-status-error text-status-error px-4 py-3 rounded-xl shadow-2xl text-xs font-normal flex items-center gap-2 max-w-sm animate-fadeIn">
+          <span>⚠️</span>
+          <div className="flex-1">{actionError}</div>
+          <button onClick={() => setActionError(null)} className="text-white/60 hover:text-white cursor-pointer ml-2">✕</button>
         </div>
       )}
 
@@ -952,15 +974,22 @@ export default function BusinessDashboardPage() {
                                   Approve All Platforms
                                 </button>
                                 <button
-                                  onClick={() => {
-                                    setRevisionStage("social");
-                                    setRevisionPlatform(undefined);
-                                    setIsRevisionModalOpen(true);
-                                  }}
-                                  className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
-                                >
-                                  Request Revision
-                                </button>
+                                   onClick={() => {
+                                     setRevisionStage("social");
+                                     setRevisionPlatform(undefined);
+                                     setIsRevisionModalOpen(true);
+                                   }}
+                                   className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                                 >
+                                   Request Revision
+                                 </button>
+                                 <button
+                                   onClick={() => handleReviewSubmission("blog", "revert_to_blog")}
+                                   disabled={isSubmittingReview}
+                                   className="border border-amber-500/40 hover:border-amber-500 text-amber-300 hover:bg-amber-500/10 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer disabled:opacity-50 font-sans"
+                                 >
+                                   ↩ Revert to Blog Review
+                                 </button>
                               </div>
 
                               {selectedRun.social_drafts.length > 0 && (
@@ -1377,13 +1406,13 @@ export default function BusinessDashboardPage() {
                                 <PlatformCard
                                   platformKey="instagram"
                                   platformLabel="Instagram"
-                                  icon="IG"
+                                  icon={<FaInstagram className="w-4 h-4 text-[#E1306C]" />}
                                   color=""
                                   borderColor=""
                                   caption={selectedRun.social_drafts[0]?.instagram?.caption || ""}
                                   status={selectedRun.social_drafts[0]?.instagram?.status || "pending"}
                                   isPublished={selectedRun.status === "published"}
-                                  attachedImageUrl={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)}
+                                  attachedImageUrl={selectedRun.social_drafts[0]?.instagram?.imageUrl}
                                   isExternalEditing={editingPlatform === "instagram"}
                                   onCancelExternalEdit={() => setEditingPlatform(null)}
                                   onApprove={() => handleReviewSubmission("social", "approved", undefined, "instagram")}
@@ -1402,18 +1431,29 @@ export default function BusinessDashboardPage() {
                                     )
                                   }
                                   isCopied={copiedKey === "ig"}
+                                  onAttachImage={(url) => {
+                                    const latestSocial = selectedRun.social_drafts[0];
+                                    const customPayload = {
+                                      ...latestSocial,
+                                      instagram: {
+                                        ...latestSocial.instagram,
+                                        imageUrl: url
+                                      }
+                                    };
+                                    handleReviewSubmission("social", "edited", customPayload, "instagram");
+                                  }}
                                 />
 
                                 <PlatformCard
                                   platformKey="facebook"
                                   platformLabel="Facebook"
-                                  icon="FB"
+                                  icon={<FaFacebook className="w-4 h-4 text-[#1877F2]" />}
                                   color=""
                                   borderColor=""
                                   caption={selectedRun.social_drafts[0]?.facebook?.caption || ""}
                                   status={selectedRun.social_drafts[0]?.facebook?.status || "pending"}
                                   isPublished={selectedRun.status === "published"}
-                                  attachedImageUrl={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)}
+                                  attachedImageUrl={selectedRun.social_drafts[0]?.facebook?.imageUrl}
                                   isExternalEditing={editingPlatform === "facebook"}
                                   onCancelExternalEdit={() => setEditingPlatform(null)}
                                   onApprove={() => handleReviewSubmission("social", "approved", undefined, "facebook")}
@@ -1432,18 +1472,29 @@ export default function BusinessDashboardPage() {
                                     )
                                   }
                                   isCopied={copiedKey === "fb"}
+                                  onAttachImage={(url) => {
+                                    const latestSocial = selectedRun.social_drafts[0];
+                                    const customPayload = {
+                                      ...latestSocial,
+                                      facebook: {
+                                        ...latestSocial.facebook,
+                                        imageUrl: url
+                                      }
+                                    };
+                                    handleReviewSubmission("social", "edited", customPayload, "facebook");
+                                  }}
                                 />
 
                                 <PlatformCard
                                   platformKey="linkedin"
                                   platformLabel="LinkedIn"
-                                  icon="LI"
+                                  icon={<FaLinkedin className="w-4 h-4 text-[#0A66C2]" />}
                                   color=""
                                   borderColor=""
                                   caption={selectedRun.social_drafts[0]?.linkedin?.caption || ""}
                                   status={selectedRun.social_drafts[0]?.linkedin?.status || "pending"}
                                   isPublished={selectedRun.status === "published"}
-                                  attachedImageUrl={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)}
+                                  attachedImageUrl={selectedRun.social_drafts[0]?.linkedin?.imageUrl}
                                   isExternalEditing={editingPlatform === "linkedin"}
                                   onCancelExternalEdit={() => setEditingPlatform(null)}
                                   onApprove={() => handleReviewSubmission("social", "approved", undefined, "linkedin")}
@@ -1462,6 +1513,17 @@ export default function BusinessDashboardPage() {
                                     )
                                   }
                                   isCopied={copiedKey === "li"}
+                                  onAttachImage={(url) => {
+                                    const latestSocial = selectedRun.social_drafts[0];
+                                    const customPayload = {
+                                      ...latestSocial,
+                                      linkedin: {
+                                        ...latestSocial.linkedin,
+                                        imageUrl: url
+                                      }
+                                    };
+                                    handleReviewSubmission("social", "edited", customPayload, "linkedin");
+                                  }}
                                 />
                               </div>
                             ) : (
@@ -1486,12 +1548,26 @@ export default function BusinessDashboardPage() {
                             <Link
                               href={selectedRun.published_urls.blog_url}
                               target="_blank"
-                              className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl transition-colors inline-flex items-center gap-1.5"
+                              className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl transition-colors inline-flex items-center gap-1.5 animate-fadeIn"
                             >
                               <span>🔗</span>
                               <span>View Live Blog Post</span>
                             </Link>
                           )}
+                          <button
+                            onClick={() => handleReviewSubmission("social", "revert_to_social")}
+                            disabled={isSubmittingReview}
+                            className="border border-amber-500/40 hover:border-amber-500 text-amber-300 hover:bg-amber-500/10 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer disabled:opacity-50 font-sans"
+                          >
+                            ↩ Unpublish / Revert to Social Review
+                          </button>
+                          <button
+                            onClick={() => handleReviewSubmission("blog", "revert_to_blog")}
+                            disabled={isSubmittingReview}
+                            className="border border-white/20 hover:border-white/40 text-white hover:bg-white/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer disabled:opacity-50 font-sans"
+                          >
+                            ↩ Revert to Blog Review
+                          </button>
                         </div>
 
                         {/* Downloadable Assets */}
@@ -2062,10 +2138,11 @@ function PlatformCard({
   onRequestRevision,
   onCopy,
   isCopied,
+  onAttachImage,
 }: {
   platformKey: "instagram" | "facebook" | "linkedin";
   platformLabel: string;
-  icon: string;
+  icon: React.ReactNode;
   color: string;
   borderColor: string;
   caption: string;
@@ -2079,6 +2156,7 @@ function PlatformCard({
   onRequestRevision: () => void;
   onCopy: () => void;
   isCopied: boolean;
+  onAttachImage?: (url: string) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(caption);
@@ -2095,11 +2173,11 @@ function PlatformCard({
   }, [caption, isExternalEditing]);
 
   return (
-    <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4">
+    <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4 animate-fadeIn">
       <div className="space-y-3">
         <div className="flex justify-between items-center">
-          <span className="text-xs text-white/90 flex items-center gap-1.5">
-            <span>{icon}</span>
+          <span className="text-xs text-white/90 flex items-center gap-1.5 font-semibold">
+            <span className="shrink-0">{icon}</span>
             <span>{platformLabel}</span>
           </span>
           <span
@@ -2115,20 +2193,103 @@ function PlatformCard({
 
         {/* Attached Image or Placeholder Banner */}
         {attachedImageUrl ? (
-          <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md group">
-            <img
-              src={attachedImageUrl}
-              alt={`${platformLabel} Visual Asset`}
-              className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-            <div className="absolute bottom-2 right-2 bg-primary-navy/90 backdrop-blur text-[10px] text-clinical-teal font-mono px-2 py-0.5 rounded border border-white/10">
-              📷 Attached Media Asset
+          <div className="space-y-2">
+            <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md group">
+              <img
+                src={attachedImageUrl}
+                alt={`${platformLabel} Visual Asset`}
+                className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300 animate-fadeIn"
+              />
+              <div className="absolute bottom-2 right-2 bg-primary-navy/90 backdrop-blur text-[10px] text-clinical-teal font-mono px-2 py-0.5 rounded border border-white/10">
+                📷 Attached Media Asset
+              </div>
             </div>
+            {!isPublished && (
+              <div className="flex justify-end gap-1.5">
+                <label className="bg-white/10 hover:bg-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors cursor-pointer font-medium border border-white/10">
+                  Change Image
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        const res = await fetch("/api/portal/content-pipeline/upload", {
+                          method: "POST",
+                          body: formData,
+                        });
+                        const data = await res.json();
+                        if (data.success && data.url) {
+                          onAttachImage?.(data.url);
+                        }
+                      } catch (err) {
+                        console.error("Platform image upload failed:", err);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+                <button
+                  onClick={() => {
+                    const url = prompt(`Enter direct image URL for ${platformLabel}:`);
+                    if (url) {
+                      onAttachImage?.(url);
+                    }
+                  }}
+                  className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer"
+                >
+                  Paste URL
+                </button>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="bg-primary-navy/70 border border-dashed border-white/20 rounded-lg p-3 text-center text-white/70 text-[11px] flex items-center justify-center gap-2">
-            <span>🖼️</span>
-            <span>No image attached — add one in the blog review step</span>
+          <div className="bg-primary-navy/70 border border-dashed border-white/20 rounded-lg p-4 text-center space-y-2">
+            <div className="text-[10px] text-white/50">No platform-specific image attached</div>
+            {!isPublished && (
+              <div className="flex items-center justify-center gap-1.5">
+                <label className="bg-clinical-teal hover:bg-clinical-teal-hover text-deep-navy text-[9px] px-2.5 py-1 rounded-lg cursor-pointer transition-colors font-medium">
+                  Upload Image
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        const res = await fetch("/api/portal/content-pipeline/upload", {
+                          method: "POST",
+                          body: formData,
+                        });
+                        const data = await res.json();
+                        if (data.success && data.url) {
+                          onAttachImage?.(data.url);
+                        }
+                      } catch (err) {
+                        console.error("Platform image upload failed:", err);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+                <button
+                  onClick={() => {
+                    const url = prompt(`Enter direct image URL for ${platformLabel}:`);
+                    if (url) {
+                      onAttachImage?.(url);
+                    }
+                  }}
+                  className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1 rounded-lg transition-colors font-medium cursor-pointer"
+                >
+                  Paste URL
+                </button>
+              </div>
+            )}
           </div>
         )}
 
