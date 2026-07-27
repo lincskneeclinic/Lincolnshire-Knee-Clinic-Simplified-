@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ContentPipelineRun, ContentPipelineReview } from "@/lib/contentPipeline";
 import ReactMarkdown from "react-markdown";
 
+type RunDetailTab = "draft" | "research" | "images" | "social";
+
 function getRenderableImageUrl(suggestedImages?: string[]): string | null {
   if (!suggestedImages || !Array.isArray(suggestedImages) || suggestedImages.length === 0) return null;
   const match = suggestedImages.find(
@@ -28,10 +30,10 @@ export default function BusinessDashboardPage() {
   const [selectedRun, setSelectedRun] = useState<ContentPipelineRun | null>(null);
   const [selectedRunReviews, setSelectedRunReviews] = useState<ContentPipelineReview[]>([]);
   const [pipelineLoading, setPipelineLoading] = useState(false);
-  const [isResearchBriefExpanded, setIsResearchBriefExpanded] = useState(true);
   const [isVersionHistoryExpanded, setIsVersionHistoryExpanded] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
+  const [runDetailTab, setRunDetailTab] = useState<RunDetailTab>("draft");
 
   // Trigger New Run Form State
   const [isTriggerModalOpen, setIsTriggerModalOpen] = useState(false);
@@ -48,6 +50,7 @@ export default function BusinessDashboardPage() {
   const [editIgCaption, setEditIgCaption] = useState("");
   const [editFbCaption, setEditFbCaption] = useState("");
   const [editLiCaption, setEditLiCaption] = useState("");
+  const [editingPlatform, setEditingPlatform] = useState<"instagram" | "facebook" | "linkedin" | null>(null);
 
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
   const [revisionStage, setRevisionStage] = useState<"blog" | "social">("blog");
@@ -99,6 +102,8 @@ export default function BusinessDashboardPage() {
       if (data.success && data.run) {
         setSelectedRun(data.run);
         setSelectedRunReviews(data.reviews || []);
+        setRunDetailTab("draft");
+        setEditingPlatform(null);
         // Pre-fill edit states
         const blogDraft = data.run.blog_drafts?.[0];
         if (blogDraft) {
@@ -260,6 +265,7 @@ export default function BusinessDashboardPage() {
       const data = await res.json();
       if (data.success && data.run) {
         setIsEditMode(false);
+        setEditingPlatform(null);
         setIsRevisionModalOpen(false);
         setRevisionNotes("");
         setRevisionPlatform(undefined);
@@ -343,6 +349,24 @@ export default function BusinessDashboardPage() {
   const otherRuns = pipelineRuns.filter(
     (r) => r.status !== "awaiting_blog_approval" && r.status !== "awaiting_social_approval"
   );
+  const selectedRunHasSocial =
+    !!selectedRun &&
+    (selectedRun.status === "awaiting_social_approval" ||
+      selectedRun.status === "published" ||
+      selectedRun.social_drafts.length > 0);
+  const activeRunDetailTab: RunDetailTab =
+    runDetailTab === "social" && !selectedRunHasSocial ? "draft" : runDetailTab;
+  const runDetailTabs = [
+    { id: "draft" as const, label: "Draft" },
+    { id: "research" as const, label: "Research" },
+    { id: "images" as const, label: "Images" },
+    ...(selectedRunHasSocial ? [{ id: "social" as const, label: "Social" }] : []),
+  ];
+  const socialReviewPlatforms = [
+    { key: "instagram" as const, label: "Instagram" },
+    { key: "facebook" as const, label: "Facebook" },
+    { key: "linkedin" as const, label: "LinkedIn" },
+  ];
 
   return (
     <div className="min-h-screen bg-deep-navy text-white/80 font-sans flex flex-col">
@@ -400,7 +424,11 @@ export default function BusinessDashboardPage() {
                 key={tab.id}
                 onClick={() => {
                   setActiveTab(tab.id as any);
-                  if (tab.id === "pipeline") setSelectedRun(null);
+                  if (tab.id === "pipeline") {
+                    setSelectedRun(null);
+                    setRunDetailTab("draft");
+                    setEditingPlatform(null);
+                  }
                 }}
                 className={`py-1.5 px-2 rounded-xl text-[9.5px] transition-all flex items-center gap-1 cursor-pointer border ${
                   activeTab === tab.id
@@ -654,7 +682,11 @@ export default function BusinessDashboardPage() {
                   <div className="flex items-center gap-3">
                     {selectedRun && (
                       <button
-                        onClick={() => setSelectedRun(null)}
+                        onClick={() => {
+                          setSelectedRun(null);
+                          setRunDetailTab("draft");
+                          setEditingPlatform(null);
+                        }}
                         className="bg-dark-overlay-navy hover:bg-white/5 text-white/80 border border-white/20 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
                       >
                         ← Back to List
@@ -686,256 +718,349 @@ export default function BusinessDashboardPage() {
                       </div>
                       <h3 className="text-lg font-serif font-bold text-white leading-snug">{selectedRun.topic}</h3>
 
-                      {/* Collapsible Research Brief Accordion */}
-                      {selectedRun.research_brief && (
-                        <div className="border border-white/10 rounded-xl overflow-hidden bg-dark-overlay-navy">
-                          <button
-                            onClick={() => setIsResearchBriefExpanded(!isResearchBriefExpanded)}
-                            className="w-full text-left px-4 py-3 bg-primary-navy/80 hover:bg-primary-navy flex justify-between items-center text-[11px] text-white/80 transition-colors cursor-pointer"
-                          >
-                            <span className="flex items-center gap-2">
-                              <span>🔬</span>
-                              <span>Research Brief &amp; Literature Sources</span>
-                            </span>
-                            <span>{isResearchBriefExpanded ? "▲ Collapse" : "▼ Expand Material"}</span>
-                          </button>
-
-                          {isResearchBriefExpanded && (
-                            <div 
-                              className="p-5 space-y-4 text-[9px] border-t border-white/10 custom-scrollbar"
-                              style={{ maxHeight: '480px', overflowY: 'auto' }}
-                            >
-                              <p className="text-white/80 leading-relaxed">{selectedRun.research_brief.summary}</p>
-
-                              {/* Key Points */}
-                              {selectedRun.research_brief.key_points && selectedRun.research_brief.key_points.length > 0 && (
-                                <div>
-                                  <span className="text-clinical-teal block mb-1 text-[10px]">Key Clinical Findings:</span>
-                                  <ul className="list-disc pl-5 text-white/80 space-y-1">
-                                    {selectedRun.research_brief.key_points.map((pt, i) => (
-                                      <li key={i}>{pt}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-
-                              {/* Conflicting Findings / Nuances */}
-                              {selectedRun.research_brief.conflicting_findings && selectedRun.research_brief.conflicting_findings.length > 0 && (
-                                <div className="bg-dark-overlay-navy border-l-2 border-amber-500/70 p-3 rounded-r-lg space-y-1">
-                                  <span className="text-amber-300/90 block mb-0.5 text-[10px]">⚠️ Conflicting Findings &amp; Clinical Nuances:</span>
-                                  <ul className="list-disc pl-4 text-amber-200/80 text-[9px] space-y-1">
-                                    {selectedRun.research_brief.conflicting_findings.map((cf, i) => (
-                                      <li key={i}>{cf}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-
-                              {/* Clinical Indications */}
-                              {selectedRun.research_brief.clinical_indications && selectedRun.research_brief.clinical_indications.length > 0 && (
-                                <div>
-                                  <span className="text-clinical-teal block mb-1 text-[10px]">Clinical Indication Criteria:</span>
-                                  <ul className="list-disc pl-5 text-white/80 space-y-1">
-                                    {selectedRun.research_brief.clinical_indications.map((ci, i) => (
-                                      <li key={i}>{ci}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-
-                              {/* PubMed Articles */}
-                              {selectedRun.research_brief.pubmed_articles && selectedRun.research_brief.pubmed_articles.length > 0 && (
-                                <div>
-                                  <span className="text-clinical-teal block mb-1.5 text-[10px]">Verified PubMed Literature (NCBI):</span>
-                                  <div className="space-y-2">
-                                    {selectedRun.research_brief.pubmed_articles.map((art, i) => (
-                                      <div key={i} className="bg-primary-navy p-3 rounded-lg border border-white/10 space-y-1">
-                                        <a
-                                          href={art.url}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          className="text-clinical-teal hover:underline flex items-center gap-1 leading-snug text-[10px]"
-                                        >
-                                          <span>📄</span>
-                                          <span>{art.title}</span>
-                                          <span className="text-[8px] text-white/60">↗</span>
-                                        </a>
-                                        <div className="text-[9px] text-white/70 flex flex-wrap items-center gap-x-3 gap-y-1">
-                                          <span>Authors: {art.authors}</span>
-                                          <span>Journal: {art.journal} ({art.pubdate})</span>
-                                          <span className="font-mono text-clinical-teal/80">PMID: {art.pmid}</span>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Sources */}
-                              {selectedRun.research_brief.sources && selectedRun.research_brief.sources.length > 0 && (
-                                <div>
-                                  <span className="text-white/60 uppercase tracking-wider text-[10px] block mb-1">Source Citations Log:</span>
-                                  <div className="space-y-1">
-                                    {selectedRun.research_brief.sources.map((src, i) => (
-                                      <div key={i} className="text-white/60 bg-primary-navy/40 p-2 rounded border border-white/10 font-mono text-[9px]">
-                                        📄 {src}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
 
-                    {/* STAGE 1: BLOG DRAFT REVIEW (Awaiting Blog Approval) */}
-                    {(selectedRun.status === "awaiting_blog_approval" || selectedRun.status === "writing_blog") && (
-                      <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-xl space-y-6">
-                        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                    {/* RUN REVIEW WORKSPACE */}
+                    <div className="bg-primary-navy border border-white/10 rounded-2xl shadow-xl overflow-y-auto custom-scrollbar max-h-[calc(100vh-9rem)]">
+                      <div className="sticky top-0 z-30 bg-primary-navy border-b border-white/10 shadow-[0_10px_24px_rgba(0,0,0,0.22)] px-4 sm:px-6 py-4">
+                        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                           <div>
-                            <h3 className="text-base font-bold text-white flex items-center gap-2">
-                              <span>📝</span>
-                              <span>Blog Article Draft (Version {selectedRun.blog_drafts[0]?.version || 1})</span>
+                            <h3 className="text-base font-bold text-white">
+                              {selectedRun.status === "awaiting_social_approval"
+                                ? "Multi-Platform Social Media Review"
+                                : (
+                                  <>
+                                    Blog Article Draft (Version {selectedRun.blog_drafts[0]?.version || 1})
+                                  </>
+                                )}
                             </h3>
-                            <p className="text-xs text-white/60">Review clinical accuracy and patient-facing tone.</p>
+                            <p className="text-xs text-white/60">
+                              {selectedRun.status === "awaiting_social_approval"
+                                ? "Approve each platform caption independently or publish all platforms."
+                                : "Review clinical accuracy and patient-facing tone."}
+                            </p>
                           </div>
-                          {!isEditMode && (
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => handleReviewSubmission("blog", "approved")}
-                                disabled={isSubmittingReview}
-                                className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
-                              >
-                                ✓ Approve Draft
-                              </button>
-                              <button
-                                onClick={() => setIsEditMode(true)}
-                                className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
-                              >
-                                ✏️ Edit Draft
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setRevisionStage("blog");
-                                  setIsRevisionModalOpen(true);
-                                }}
-                                className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
-                              >
-                                🔄 Request Revision
-                              </button>
+
+                          {(selectedRun.status === "awaiting_blog_approval" || selectedRun.status === "writing_blog") && (
+                            <div className="flex flex-wrap items-center gap-2">
+                              {isEditMode ? (
+                                <>
+                                  <button
+                                    onClick={() => setIsEditMode(false)}
+                                    className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    onClick={() => handleReviewSubmission("blog", "edited")}
+                                    disabled={isSubmittingReview}
+                                    className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-60"
+                                  >
+                                    {isSubmittingReview ? "Saving..." : "Save & Approve Edited Draft"}
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => handleReviewSubmission("blog", "approved")}
+                                    disabled={isSubmittingReview}
+                                    className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer disabled:opacity-60"
+                                  >
+                                    Approve Draft
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setRunDetailTab("draft");
+                                      setIsEditMode(true);
+                                    }}
+                                    className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                                  >
+                                    Edit Draft
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setRevisionStage("blog");
+                                      setIsRevisionModalOpen(true);
+                                    }}
+                                    className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                                  >
+                                    Request Revision
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
+
+                          {selectedRun.status === "awaiting_social_approval" && (
+                            <div className="space-y-3 lg:min-w-[420px]">
+                              <div className="flex flex-wrap items-center justify-start lg:justify-end gap-2">
+                                <button
+                                  onClick={() => handleReviewSubmission("social", "approved")}
+                                  disabled={isSubmittingReview}
+                                  className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer disabled:opacity-60"
+                                >
+                                  Approve All Platforms
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setRevisionStage("social");
+                                    setRevisionPlatform(undefined);
+                                    setIsRevisionModalOpen(true);
+                                  }}
+                                  className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                                >
+                                  Request Revision
+                                </button>
+                              </div>
+
+                              {selectedRun.social_drafts.length > 0 && (
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-3 border-t border-white/10">
+                                  {socialReviewPlatforms.map((platform) => {
+                                    const platformDraft = selectedRun.social_drafts[0]?.[platform.key];
+                                    const isApproved = platformDraft?.status === "approved";
+
+                                    return (
+                                      <div
+                                        key={platform.key}
+                                        className="bg-dark-overlay-navy border border-white/10 rounded-lg p-2 space-y-2"
+                                      >
+                                        <span className="block text-[10px] text-white/70">{platform.label}</span>
+                                        <div className="flex flex-wrap gap-1.5">
+                                          <button
+                                            onClick={() => handleReviewSubmission("social", "approved", undefined, platform.key)}
+                                            disabled={isSubmittingReview || isApproved}
+                                            className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-[10px] px-2.5 py-1 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                                          >
+                                            {isApproved ? "Approved" : "Approve"}
+                                          </button>
+                                          <button
+                                            onClick={() => {
+                                              setRunDetailTab("social");
+                                              setEditingPlatform(platform.key);
+                                            }}
+                                            disabled={isApproved}
+                                            className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-[10px] px-2.5 py-1 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                                          >
+                                            Edit
+                                          </button>
+                                          <button
+                                            onClick={() => {
+                                              setRevisionStage("social");
+                                              setRevisionPlatform(platform.key);
+                                              setIsRevisionModalOpen(true);
+                                            }}
+                                            className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[10px] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                                          >
+                                            Revision
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
+                      </div>
 
-                        {/* EDIT MODE FORM */}
-                        {isEditMode ? (
-                          <div className="space-y-4 bg-dark-overlay-navy p-5 rounded-xl border border-clinical-teal/30">
-                            <div>
-                              <label className="block text-xs text-clinical-teal mb-1">Article Title</label>
-                              <input
-                                type="text"
-                                value={editTitle}
-                                onChange={(e) => setEditTitle(e.target.value)}
-                                className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-clinical-teal mb-1">Excerpt / Meta Summary</label>
-                              <textarea
-                                value={editExcerpt}
-                                onChange={(e) => setEditExcerpt(e.target.value)}
-                                rows={2}
-                                className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-clinical-teal mb-1">Formatted Body Content (Markdown supported)</label>
-                              <textarea
-                                value={editBody}
-                                onChange={(e) => setEditBody(e.target.value)}
-                                className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-3 text-xs font-mono focus:border-clinical-teal focus:outline-none leading-relaxed custom-scrollbar"
-                                style={{ height: '320px', overflowY: 'auto' }}
-                              />
-                            </div>
-                            <div className="flex justify-end gap-3 pt-2">
-                              <button
-                                onClick={() => setIsEditMode(false)}
-                                className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                onClick={() => handleReviewSubmission("blog", "edited")}
-                                disabled={isSubmittingReview}
-                                className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl cursor-pointer"
-                              >
-                                {isSubmittingReview ? "Saving..." : "Save & Approve Edited Draft"}
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          /* READ/PREVIEW MODE */
-                          <div className="space-y-6">
-                            {/* Prominent Clinical Review Flag Banner */}
-                            {selectedRun.blog_drafts[0]?.flags && selectedRun.blog_drafts[0].flags.length > 0 && (
-                              <div className="bg-dark-overlay-navy border border-amber-500/50 text-amber-200/90 p-4 rounded-xl shadow-md space-y-2">
-                                <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-400/90 font-normal">
-                                  <span>⚠️</span>
-                                  <span>Action Required: Clinical Items Highlighted</span>
-                                </div>
-                                <ul className="list-disc pl-5 text-xs space-y-1 text-white/80 font-normal">
-                                  {selectedRun.blog_drafts[0].flags.map((flag, idx) => (
-                                    <li key={idx}>{flag}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-
-                            {/* Rendered Formatted Article Body */}
-                            <div 
-                              className="bg-dark-overlay-navy p-6 rounded-xl border border-white/10 space-y-4 custom-scrollbar"
-                              style={{ maxHeight: '550px', overflowY: 'auto' }}
+                      <div className="px-4 sm:px-6 pt-4">
+                        <div className="flex flex-wrap items-center gap-1 border-b border-white/10 pb-3">
+                          {runDetailTabs.map((tab) => (
+                            <button
+                              key={tab.id}
+                              onClick={() => setRunDetailTab(tab.id)}
+                              className={
+                                "py-1 px-2 rounded-lg text-[9px] transition-all flex items-center gap-1 cursor-pointer border " +
+                                (activeRunDetailTab === tab.id
+                                  ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-sm"
+                                  : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20")
+                              }
                             >
-                              {/* PROMINENT FEATURED ARTICLE IMAGE */}
-                              {getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images) && (
-                                <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-lg max-h-80 mb-4">
-                                  <img
-                                    src={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)!}
-                                    alt="Attached Blog Visual"
-                                    className="w-full max-h-80 object-cover"
+                              {tab.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="p-4 sm:p-6">
+                        {activeRunDetailTab === "draft" && (
+                          <div className="space-y-6">
+                            {isEditMode ? (
+                              <div className="space-y-4 bg-dark-overlay-navy p-5 rounded-xl border border-clinical-teal/30">
+                                <div>
+                                  <label className="block text-xs text-clinical-teal mb-1">Article Title</label>
+                                  <input
+                                    type="text"
+                                    value={editTitle}
+                                    onChange={(e) => setEditTitle(e.target.value)}
+                                    className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
                                   />
-                                  <div className="absolute bottom-3 left-3 bg-dark-overlay-navy/90 backdrop-blur text-[11px] text-clinical-teal px-3 py-1 rounded-full border border-white/10 flex items-center gap-1.5">
-                                    <span>🖼️</span>
-                                    <span>Attached Featured Image</span>
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-clinical-teal mb-1">Excerpt / Meta Summary</label>
+                                  <textarea
+                                    value={editExcerpt}
+                                    onChange={(e) => setEditExcerpt(e.target.value)}
+                                    rows={2}
+                                    className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-clinical-teal mb-1">Formatted Body Content (Markdown supported)</label>
+                                  <textarea
+                                    value={editBody}
+                                    onChange={(e) => setEditBody(e.target.value)}
+                                    className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-3 text-xs font-mono focus:border-clinical-teal focus:outline-none leading-relaxed custom-scrollbar"
+                                    style={{ height: "320px", overflowY: "auto" }}
+                                  />
+                                </div>
+                                <div className="flex justify-end gap-3 pt-2">
+                                  <button
+                                    onClick={() => setIsEditMode(false)}
+                                    className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    onClick={() => handleReviewSubmission("blog", "edited")}
+                                    disabled={isSubmittingReview}
+                                    className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-60"
+                                  >
+                                    {isSubmittingReview ? "Saving..." : "Save & Approve Edited Draft"}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                {selectedRun.blog_drafts[0]?.flags && selectedRun.blog_drafts[0].flags.length > 0 && (
+                                  <div className="bg-dark-overlay-navy border border-amber-500/50 text-amber-200/90 p-4 rounded-xl shadow-md space-y-2">
+                                    <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-400/90 font-normal">
+                                      <span>Action Required: Clinical Items Highlighted</span>
+                                    </div>
+                                    <ul className="list-disc pl-5 text-xs space-y-1 text-white/80 font-normal">
+                                      {selectedRun.blog_drafts[0].flags.map((flag, idx) => (
+                                        <li key={idx}>{flag}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+
+                                <div
+                                  className="bg-dark-overlay-navy p-6 rounded-xl border border-white/10 space-y-4 custom-scrollbar"
+                                  style={{ maxHeight: "620px", overflowY: "auto" }}
+                                >
+                                  <h1 className="font-serif text-xl font-bold text-white tracking-tight">
+                                    {selectedRun.blog_drafts[0]?.title}
+                                  </h1>
+                                  {selectedRun.blog_drafts[0]?.excerpt && (
+                                    <p className="text-[9px] text-white/70 italic border-l-2 border-clinical-teal pl-3 py-1">
+                                      {selectedRun.blog_drafts[0].excerpt}
+                                    </p>
+                                  )}
+                                  <div className="text-[9px] text-white/80 space-y-4 leading-relaxed font-sans border-t border-white/10 pt-4">
+                                    <FormattedContent body={selectedRun.blog_drafts[0]?.body_markdown || selectedRun.blog_drafts[0]?.body || ""} />
                                   </div>
                                 </div>
-                              )}
+                              </>
+                            )}
+                          </div>
+                        )}
 
-                              <h1 className="font-serif text-xl font-bold text-white tracking-tight">
-                                {selectedRun.blog_drafts[0]?.title}
-                              </h1>
-                              {selectedRun.blog_drafts[0]?.excerpt && (
-                                <p className="text-[9px] text-white/70 italic border-l-2 border-clinical-teal pl-3 py-1">
-                                  {selectedRun.blog_drafts[0].excerpt}
-                                </p>
-                              )}
-                              <div className="text-[9px] text-white/80 space-y-4 leading-relaxed font-sans border-t border-white/10 pt-4">
-                                <FormattedContent body={selectedRun.blog_drafts[0]?.body_markdown || selectedRun.blog_drafts[0]?.body || ""} />
-                              </div>
-                            </div>
+                        {activeRunDetailTab === "research" && (
+                          <div className="bg-dark-overlay-navy p-5 rounded-xl border border-white/10 space-y-4 text-[9px]">
+                            {selectedRun.research_brief ? (
+                              <>
+                                <p className="text-white/80 leading-relaxed">{selectedRun.research_brief.summary}</p>
 
-                            {/* ATTACH IMAGE & ASSET CONTROL PANEL */}
+                                {selectedRun.research_brief.key_points && selectedRun.research_brief.key_points.length > 0 && (
+                                  <div>
+                                    <span className="text-clinical-teal block mb-1 text-[10px]">Key Clinical Findings:</span>
+                                    <ul className="list-disc pl-5 text-white/80 space-y-1">
+                                      {selectedRun.research_brief.key_points.map((pt, i) => (
+                                        <li key={i}>{pt}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+
+                                {selectedRun.research_brief.conflicting_findings && selectedRun.research_brief.conflicting_findings.length > 0 && (
+                                  <div className="bg-primary-navy/50 border-l-2 border-amber-500/70 p-3 rounded-r-lg space-y-1">
+                                    <span className="text-amber-300/90 block mb-0.5 text-[10px]">Conflicting Findings &amp; Clinical Nuances:</span>
+                                    <ul className="list-disc pl-4 text-amber-200/80 text-[9px] space-y-1">
+                                      {selectedRun.research_brief.conflicting_findings.map((cf, i) => (
+                                        <li key={i}>{cf}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+
+                                {selectedRun.research_brief.clinical_indications && selectedRun.research_brief.clinical_indications.length > 0 && (
+                                  <div>
+                                    <span className="text-clinical-teal block mb-1 text-[10px]">Clinical Indication Criteria:</span>
+                                    <ul className="list-disc pl-5 text-white/80 space-y-1">
+                                      {selectedRun.research_brief.clinical_indications.map((ci, i) => (
+                                        <li key={i}>{ci}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+
+                                {selectedRun.research_brief.pubmed_articles && selectedRun.research_brief.pubmed_articles.length > 0 && (
+                                  <div>
+                                    <span className="text-clinical-teal block mb-1.5 text-[10px]">Verified PubMed Literature (NCBI):</span>
+                                    <div className="space-y-2">
+                                      {selectedRun.research_brief.pubmed_articles.map((art, i) => (
+                                        <div key={i} className="bg-primary-navy p-3 rounded-lg border border-white/10 space-y-1">
+                                          <a
+                                            href={art.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="text-clinical-teal hover:underline flex items-center gap-1 leading-snug text-[10px]"
+                                          >
+                                            <span>{art.title}</span>
+                                            <span className="text-[8px] text-white/60">Open</span>
+                                          </a>
+                                          <div className="text-[9px] text-white/70 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                            <span>Authors: {art.authors}</span>
+                                            <span>Journal: {art.journal} ({art.pubdate})</span>
+                                            <span className="font-mono text-clinical-teal/80">PMID: {art.pmid}</span>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {selectedRun.research_brief.sources && selectedRun.research_brief.sources.length > 0 && (
+                                  <div>
+                                    <span className="text-white/60 uppercase tracking-wider text-[10px] block mb-1">Source Citations Log:</span>
+                                    <div className="space-y-1">
+                                      {selectedRun.research_brief.sources.map((src, i) => (
+                                        <div key={i} className="text-white/60 bg-primary-navy/40 p-2 rounded border border-white/10 font-mono text-[9px]">
+                                          {src}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <p className="text-white/50 italic">Research material is not available for this run yet.</p>
+                            )}
+                          </div>
+                        )}
+
+                        {activeRunDetailTab === "images" && (
+                          <div className="space-y-6">
                             <div className="bg-dark-overlay-navy p-5 rounded-xl border border-white/10 space-y-4">
-                              <div className="flex items-center justify-between">
-                                <span className="text-clinical-teal uppercase tracking-wider text-xs flex items-center gap-1.5">
-                                  <span>🖼️</span>
-                                  <span>Attached Media Asset &amp; Image Controls</span>
+                              <div className="flex items-center justify-between gap-3 flex-wrap">
+                                <span className="text-clinical-teal uppercase tracking-wider text-xs">
+                                  Attached Media Asset &amp; Image Controls
                                 </span>
                                 {getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images) ? (
                                   <span className="text-[11px] text-clinical-teal bg-primary-navy border border-clinical-teal/30 px-2.5 py-0.5 rounded-full">
-                                    ✓ Active Image Attached
+                                    Active Image Attached
                                   </span>
                                 ) : (
                                   <span className="text-[11px] text-white/70 bg-primary-navy border border-white/20 px-2.5 py-0.5 rounded-full">
@@ -944,24 +1069,28 @@ export default function BusinessDashboardPage() {
                                 )}
                               </div>
 
-                              {!getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images) && (
-                                <div className="bg-primary-navy/60 p-3.5 rounded-xl border border-dashed border-white/20 text-white/70 text-xs flex items-center justify-between gap-3">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-base">🖼️</span>
-                                    <div>
-                                      <span className="block text-white/90">No image attached yet</span>
-                                      <span className="text-white/60 text-[11px]">
-                                        Upload an image or paste a URL below to attach it to this blog post and all social media cards.
-                                      </span>
-                                    </div>
+                              {getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images) ? (
+                                <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-lg max-h-80">
+                                  <img
+                                    src={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)!}
+                                    alt="Attached Blog Visual"
+                                    className="w-full max-h-80 object-cover"
+                                  />
+                                  <div className="absolute bottom-3 left-3 bg-dark-overlay-navy/90 backdrop-blur text-[11px] text-clinical-teal px-3 py-1 rounded-full border border-white/10">
+                                    Attached Featured Image
                                   </div>
+                                </div>
+                              ) : (
+                                <div className="bg-primary-navy/60 p-3.5 rounded-xl border border-dashed border-white/20 text-white/70 text-xs">
+                                  <span className="block text-white/90">No image attached yet</span>
+                                  <span className="text-white/60 text-[11px]">
+                                    Upload an image or paste a URL below to attach it to this blog post and all social media cards.
+                                  </span>
                                 </div>
                               )}
 
-                              {/* Controls: File Upload & URL Paste */}
                               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t border-white/10">
                                 <label className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-colors inline-flex items-center justify-center gap-2 shrink-0 shadow">
-                                  <span>📁</span>
                                   <span>{isUploadingImage ? "Uploading to Storage..." : "Upload Image File"}</span>
                                   <input
                                     type="file"
@@ -997,7 +1126,6 @@ export default function BusinessDashboardPage() {
                               </div>
                             </div>
 
-                            {/* References & Image Prompts */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                               <div className="bg-dark-overlay-navy p-4 rounded-xl border border-white/10 space-y-2">
                                 <span className="text-clinical-teal uppercase tracking-wider text-[10px] block">Suggested Visual Prompts</span>
@@ -1018,137 +1146,110 @@ export default function BusinessDashboardPage() {
                             </div>
                           </div>
                         )}
+
+                        {activeRunDetailTab === "social" && (
+                          <>
+                            {selectedRunHasSocial ? (
+                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <PlatformCard
+                                  platformKey="instagram"
+                                  platformLabel="Instagram"
+                                  icon="IG"
+                                  color=""
+                                  borderColor=""
+                                  caption={selectedRun.social_drafts[0]?.instagram?.caption || ""}
+                                  status={selectedRun.social_drafts[0]?.instagram?.status || "pending"}
+                                  isPublished={selectedRun.status === "published"}
+                                  attachedImageUrl={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)}
+                                  isExternalEditing={editingPlatform === "instagram"}
+                                  onCancelExternalEdit={() => setEditingPlatform(null)}
+                                  onApprove={() => handleReviewSubmission("social", "approved", undefined, "instagram")}
+                                  onSaveEdit={(newCaption) =>
+                                    handleReviewSubmission("social", "edited", { caption: newCaption }, "instagram")
+                                  }
+                                  onRequestRevision={() => {
+                                    setRevisionStage("social");
+                                    setRevisionPlatform("instagram");
+                                    setIsRevisionModalOpen(true);
+                                  }}
+                                  onCopy={() =>
+                                    handleCopyToClipboard(
+                                      selectedRun.social_drafts[0]?.instagram?.caption || "",
+                                      "ig"
+                                    )
+                                  }
+                                  isCopied={copiedKey === "ig"}
+                                />
+
+                                <PlatformCard
+                                  platformKey="facebook"
+                                  platformLabel="Facebook"
+                                  icon="FB"
+                                  color=""
+                                  borderColor=""
+                                  caption={selectedRun.social_drafts[0]?.facebook?.caption || ""}
+                                  status={selectedRun.social_drafts[0]?.facebook?.status || "pending"}
+                                  isPublished={selectedRun.status === "published"}
+                                  attachedImageUrl={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)}
+                                  isExternalEditing={editingPlatform === "facebook"}
+                                  onCancelExternalEdit={() => setEditingPlatform(null)}
+                                  onApprove={() => handleReviewSubmission("social", "approved", undefined, "facebook")}
+                                  onSaveEdit={(newCaption) =>
+                                    handleReviewSubmission("social", "edited", { caption: newCaption }, "facebook")
+                                  }
+                                  onRequestRevision={() => {
+                                    setRevisionStage("social");
+                                    setRevisionPlatform("facebook");
+                                    setIsRevisionModalOpen(true);
+                                  }}
+                                  onCopy={() =>
+                                    handleCopyToClipboard(
+                                      selectedRun.social_drafts[0]?.facebook?.caption || "",
+                                      "fb"
+                                    )
+                                  }
+                                  isCopied={copiedKey === "fb"}
+                                />
+
+                                <PlatformCard
+                                  platformKey="linkedin"
+                                  platformLabel="LinkedIn"
+                                  icon="LI"
+                                  color=""
+                                  borderColor=""
+                                  caption={selectedRun.social_drafts[0]?.linkedin?.caption || ""}
+                                  status={selectedRun.social_drafts[0]?.linkedin?.status || "pending"}
+                                  isPublished={selectedRun.status === "published"}
+                                  attachedImageUrl={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)}
+                                  isExternalEditing={editingPlatform === "linkedin"}
+                                  onCancelExternalEdit={() => setEditingPlatform(null)}
+                                  onApprove={() => handleReviewSubmission("social", "approved", undefined, "linkedin")}
+                                  onSaveEdit={(newCaption) =>
+                                    handleReviewSubmission("social", "edited", { caption: newCaption }, "linkedin")
+                                  }
+                                  onRequestRevision={() => {
+                                    setRevisionStage("social");
+                                    setRevisionPlatform("linkedin");
+                                    setIsRevisionModalOpen(true);
+                                  }}
+                                  onCopy={() =>
+                                    handleCopyToClipboard(
+                                      selectedRun.social_drafts[0]?.linkedin?.caption || "",
+                                      "li"
+                                    )
+                                  }
+                                  isCopied={copiedKey === "li"}
+                                />
+                              </div>
+                            ) : (
+                              <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-6 text-xs text-white/60">
+                                Social captions are not available for this run yet.
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
-                    )}
-
-                    {/* STAGE 2: SOCIAL DRAFTS REVIEW (Awaiting Social Approval or Published) */}
-                    {(selectedRun.status === "awaiting_social_approval" ||
-                      selectedRun.status === "published" ||
-                      selectedRun.social_drafts.length > 0) && (
-                      <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-xl space-y-6">
-                        <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                          <div>
-                            <h3 className="text-base font-bold text-white flex items-center gap-2">
-                              <span>📱</span>
-                              <span>Multi-Platform Social Media Drafts</span>
-                            </h3>
-                            <p className="text-xs text-white/60">
-                              Approve each platform's caption independently or publish all.
-                            </p>
-                          </div>
-                          {selectedRun.status === "awaiting_social_approval" && (
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => handleReviewSubmission("social", "approved")}
-                                disabled={isSubmittingReview}
-                                className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
-                              >
-                                ✓ Approve All Platforms
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setRevisionStage("social");
-                                  setIsRevisionModalOpen(true);
-                                }}
-                                className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
-                              >
-                                🔄 Request Revision
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* 3 Independent Platform Cards */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                          {/* Instagram Card */}
-                          <PlatformCard
-                            platformKey="instagram"
-                            platformLabel="Instagram"
-                            icon="📸"
-                            color=""
-                            borderColor=""
-                            caption={selectedRun.social_drafts[0]?.instagram?.caption || ""}
-                            status={selectedRun.social_drafts[0]?.instagram?.status || "pending"}
-                            isPublished={selectedRun.status === "published"}
-                            attachedImageUrl={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)}
-                            onApprove={() => handleReviewSubmission("social", "approved", undefined, "instagram")}
-                            onSaveEdit={(newCaption) =>
-                              handleReviewSubmission("social", "edited", { caption: newCaption }, "instagram")
-                            }
-                            onRequestRevision={() => {
-                              setRevisionStage("social");
-                              setRevisionPlatform("instagram");
-                              setIsRevisionModalOpen(true);
-                            }}
-                            onCopy={() =>
-                              handleCopyToClipboard(
-                                selectedRun.social_drafts[0]?.instagram?.caption || "",
-                                "ig"
-                              )
-                            }
-                            isCopied={copiedKey === "ig"}
-                          />
-
-                          {/* Facebook Card */}
-                          <PlatformCard
-                            platformKey="facebook"
-                            platformLabel="Facebook"
-                            icon="📘"
-                            color=""
-                            borderColor=""
-                            caption={selectedRun.social_drafts[0]?.facebook?.caption || ""}
-                            status={selectedRun.social_drafts[0]?.facebook?.status || "pending"}
-                            isPublished={selectedRun.status === "published"}
-                            attachedImageUrl={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)}
-                            onApprove={() => handleReviewSubmission("social", "approved", undefined, "facebook")}
-                            onSaveEdit={(newCaption) =>
-                              handleReviewSubmission("social", "edited", { caption: newCaption }, "facebook")
-                            }
-                            onRequestRevision={() => {
-                              setRevisionStage("social");
-                              setRevisionPlatform("facebook");
-                              setIsRevisionModalOpen(true);
-                            }}
-                            onCopy={() =>
-                              handleCopyToClipboard(
-                                selectedRun.social_drafts[0]?.facebook?.caption || "",
-                                "fb"
-                              )
-                            }
-                            isCopied={copiedKey === "fb"}
-                          />
-
-                          {/* LinkedIn Card */}
-                          <PlatformCard
-                            platformKey="linkedin"
-                            platformLabel="LinkedIn"
-                            icon="💼"
-                            color=""
-                            borderColor=""
-                            caption={selectedRun.social_drafts[0]?.linkedin?.caption || ""}
-                            status={selectedRun.social_drafts[0]?.linkedin?.status || "pending"}
-                            isPublished={selectedRun.status === "published"}
-                            attachedImageUrl={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)}
-                            onApprove={() => handleReviewSubmission("social", "approved", undefined, "linkedin")}
-                            onSaveEdit={(newCaption) =>
-                              handleReviewSubmission("social", "edited", { caption: newCaption }, "linkedin")
-                            }
-                            onRequestRevision={() => {
-                              setRevisionStage("social");
-                              setRevisionPlatform("linkedin");
-                              setIsRevisionModalOpen(true);
-                            }}
-                            onCopy={() =>
-                              handleCopyToClipboard(
-                                selectedRun.social_drafts[0]?.linkedin?.caption || "",
-                                "li"
-                              )
-                            }
-                            isCopied={copiedKey === "li"}
-                          />
-                        </div>
-                      </div>
-                    )}
+                    </div>
 
                     {/* PUBLISHED RUN DETAILS & ASSET DOWNLOADS */}
                     {selectedRun.status === "published" && (
@@ -1580,6 +1681,8 @@ function PlatformCard({
   status,
   isPublished,
   attachedImageUrl,
+  isExternalEditing = false,
+  onCancelExternalEdit,
   onApprove,
   onSaveEdit,
   onRequestRevision,
@@ -1595,6 +1698,8 @@ function PlatformCard({
   status: string;
   isPublished: boolean;
   attachedImageUrl?: string | null;
+  isExternalEditing?: boolean;
+  onCancelExternalEdit?: () => void;
   onApprove: () => void;
   onSaveEdit: (newCaption: string) => void;
   onRequestRevision: () => void;
@@ -1603,10 +1708,17 @@ function PlatformCard({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(caption);
+  const isCardEditing = isEditing || isExternalEditing;
 
   useEffect(() => {
     setEditedText(caption);
   }, [caption]);
+
+  useEffect(() => {
+    if (isExternalEditing) {
+      setEditedText(caption);
+    }
+  }, [caption, isExternalEditing]);
 
   return (
     <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4">
@@ -1646,7 +1758,7 @@ function PlatformCard({
           </div>
         )}
 
-        {isEditing ? (
+        {isCardEditing ? (
           <div className="space-y-2">
             <textarea
               value={editedText}
@@ -1656,7 +1768,10 @@ function PlatformCard({
             />
             <div className="flex justify-end gap-2">
               <button
-                onClick={() => setIsEditing(false)}
+                onClick={() => {
+                  setIsEditing(false);
+                  onCancelExternalEdit?.();
+                }}
                 className="border border-white/20 text-white/70 hover:bg-white/5 text-[11px] px-3 py-1 rounded-lg cursor-pointer"
               >
                 Cancel
@@ -1665,6 +1780,7 @@ function PlatformCard({
                 onClick={() => {
                   onSaveEdit(editedText);
                   setIsEditing(false);
+                  onCancelExternalEdit?.();
                 }}
                 className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-[11px] px-3 py-1 rounded-lg cursor-pointer"
               >
@@ -1687,7 +1803,7 @@ function PlatformCard({
           <span>{isCopied ? "✓ Copied!" : "📋 Copy"}</span>
         </button>
 
-        {status !== "approved" && !isPublished && !isEditing && (
+        {status !== "approved" && !isPublished && !isCardEditing && (
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setIsEditing(true)}
