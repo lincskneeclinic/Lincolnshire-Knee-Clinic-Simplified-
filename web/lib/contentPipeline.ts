@@ -500,27 +500,38 @@ export async function submitPipelineReview(
         const latestVersionNumber = (run.blog_drafts?.[0]?.version || 1) + 1;
         const editedBody = payload.editedContent.body_markdown || payload.editedContent.body || "";
 
-        // Parse placeholders from the edited body to keep suggested_images in sync!
+        // Scan body for any remaining [IMAGE PLACEHOLDER: ...] markers (i.e. ones not yet replaced
+        // with real ![alt](url) syntax). Build suggested_images from these, preserving any URLs that
+        // were set during the editing session (via payload.editedContent.suggestedImages) or from
+        // the previous saved draft.
         const placeholderRegex = /\[IMAGE PLACEHOLDER:\s*(.*?)\]/gi;
         let match;
-        const suggestedImages: any[] = [
-          "Patient undergoing functional knee rehabilitation and symmetry testing with a physical therapist",
-          "Anatomical diagram illustrating knee joint structures and surgical repair integrity"
-        ];
+        // Carry over any non-placeholder suggestedImages (e.g. string URLs for featured images)
+        const payloadImages: any[] = payload.editedContent.suggestedImages || [];
+        const previousImages: any[] = run.blog_drafts[0]?.suggested_images || [];
+        const suggestedImages: any[] = payloadImages.filter((img: any) => typeof img === "string");
         let count = 1;
-        const previousImages = run.blog_drafts[0]?.suggested_images || [];
+
         while ((match = placeholderRegex.exec(editedBody)) !== null) {
           const label = match[1].trim();
+          // Check payload images first (most up-to-date), then fall back to previous draft images
+          const payloadResolved = payloadImages.find(
+            (img: any) =>
+              typeof img === "object" &&
+              img !== null &&
+              img.label?.trim().toLowerCase() === label.toLowerCase()
+          ) as any;
           const previousResolved = previousImages.find(
             (img: any) =>
               typeof img === "object" &&
               img !== null &&
               img.label?.trim().toLowerCase() === label.toLowerCase()
           ) as any;
+          const resolved = payloadResolved || previousResolved;
           suggestedImages.push({
-            placeholderId: previousResolved?.placeholderId || `placeholder-${count++}`,
+            placeholderId: resolved?.placeholderId || `placeholder-${count++}`,
             label,
-            url: previousResolved?.url || ""
+            url: resolved?.url || ""
           });
         }
 

@@ -240,42 +240,38 @@ export default function BusinessDashboardPage() {
     }
   };
 
-  const handleAttachPlaceholderImage = async (placeholderId: string, label: string, url: string) => {
-    if (!selectedRun) return;
 
-    const exists = editSuggestedImages.some(
-      (img) => typeof img === "object" && img !== null && (img as any).placeholderId === placeholderId
+  const handleAttachPlaceholderImage = (placeholderId: string, label: string, url: string) => {
+    // Replace the [IMAGE PLACEHOLDER: label] marker in the body with real Markdown image syntax.
+    // This makes the image a permanent part of body_markdown — no separate side-channel lookup needed.
+    // ReactMarkdown's standard <img> renderer then displays it automatically.
+    const placeholderPattern = new RegExp(
+      `\\[IMAGE PLACEHOLDER:\\s*${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\]`,
+      "gi"
+    );
+    const imageMarkdown = `![${label}](${url})`;
+    const newBody = editBody.replace(placeholderPattern, imageMarkdown);
+    setEditBody(newBody);
+    pushHistory(newBody);
+
+    // Also remove this placeholder from editSuggestedImages so the upload UI disappears
+    setEditSuggestedImages((prev) =>
+      prev.filter(
+        (img) => !(typeof img === "object" && img !== null && (img as any).placeholderId === placeholderId)
+      )
     );
 
-    let updatedImages;
-    if (exists) {
-      updatedImages = editSuggestedImages.map((img) => {
-        if (typeof img === "object" && img !== null && (img as any).placeholderId === placeholderId) {
-          return { ...(img as any), url };
-        }
-        return img;
+    // If we're NOT in edit mode (read-only view), save the image attachment to the server immediately.
+    if (!isEditMode && selectedRun) {
+      const currentDraft = selectedRun.blog_drafts[0];
+      handleReviewSubmission("blog", "edited", {
+        title: editTitle || currentDraft?.title,
+        excerpt: editExcerpt || currentDraft?.excerpt,
+        body_markdown: newBody,
+        body: newBody,
+        references: currentDraft?.references,
       });
-    } else {
-      updatedImages = [...editSuggestedImages, { placeholderId, label, url }];
     }
-
-    // Always update local preview state immediately
-    setEditSuggestedImages(updatedImages);
-
-    // If we are in edit mode, keep editing — the server save happens when the user clicks
-    // "Save & Approve". Do not call handleReviewSubmission here, as that would close the editor.
-    if (isEditMode) return;
-
-    // Outside edit mode (read-only view), persist to server immediately as before
-    const currentDraft = selectedRun.blog_drafts[0];
-    await handleReviewSubmission("blog", "edited", {
-      title: currentDraft?.title,
-      excerpt: currentDraft?.excerpt,
-      body_markdown: currentDraft?.body_markdown || currentDraft?.body,
-      body: currentDraft?.body_markdown || currentDraft?.body,
-      suggestedImages: updatedImages,
-      references: currentDraft?.references,
-    });
   };
 
   // Fetch telemetry stats
@@ -524,6 +520,9 @@ export default function BusinessDashboardPage() {
   };
 
   // Image attachment helpers
+  // Note: handleAttachImage handles the featured/main image (uploaded via the Images tab or the
+  // featured image section), NOT inline placeholder images. Inline placeholders are handled by
+  // handleAttachPlaceholderImage above, which writes them directly into body_markdown.
   const handleAttachImage = async (newImageUrl: string) => {
     if (!selectedRun) return;
     const cleanUrl = newImageUrl.trim();
@@ -532,17 +531,16 @@ export default function BusinessDashboardPage() {
     // Always update local preview state immediately
     setEditSuggestedImages(updatedImages);
 
-    // If we are in edit mode, keep editing — the server save happens when the user clicks
-    // "Save & Approve". Do not call handleReviewSubmission here, as that would close the editor.
+    // If we are in edit mode, keep editing — save happens on "Save & Approve".
     if (isEditMode) return;
 
-    // Outside edit mode (read-only view), persist to server immediately as before
+    // Outside edit mode (read-only view), persist to server immediately
     const currentDraft = selectedRun.blog_drafts[0];
     await handleReviewSubmission("blog", "edited", {
-      title: currentDraft?.title,
-      excerpt: currentDraft?.excerpt,
-      body_markdown: currentDraft?.body_markdown || currentDraft?.body,
-      body: currentDraft?.body_markdown || currentDraft?.body,
+      title: editTitle || currentDraft?.title,
+      excerpt: editExcerpt || currentDraft?.excerpt,
+      body_markdown: editBody || currentDraft?.body_markdown || currentDraft?.body,
+      body: editBody || currentDraft?.body_markdown || currentDraft?.body,
       suggestedImages: updatedImages,
       references: currentDraft?.references,
     });
@@ -2314,6 +2312,20 @@ function FormattedContent({
             <blockquote className="border-l-4 border-clinical-teal bg-dark-overlay-navy pl-4 py-2 italic text-white/80 my-3 rounded-r">
               {children}
             </blockquote>
+          ),
+          img: ({ src, alt }) => (
+            <div className="my-4 space-y-1.5 text-center">
+              <img
+                src={src || ""}
+                alt={alt || ""}
+                className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-cover"
+              />
+              {alt && (
+                <span className="text-[10px] text-white/50 italic block">
+                  {alt}
+                </span>
+              )}
+            </div>
           ),
         }}
       >
