@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { blogArticles } from "@/data/articles";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import Link from "next/link";
+import { SITE_URL } from "@/lib/site";
 
 interface PageProps {
   params: Promise<{
@@ -32,9 +33,38 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
+  const pageTitle = `${data.title} | Blog & Article`;
+  const pageUrl = `${SITE_URL}/education/${category}/${article}`;
+  const imageUrl = data.image ? `${SITE_URL}${data.image}` : `${SITE_URL}/brand/lkc-logo-k-transparent.png`;
+
   return {
-    title: `${data.title} | Blog & Article`,
+    title: pageTitle,
     description: data.description,
+    alternates: {
+      canonical: pageUrl,
+    },
+    openGraph: {
+      title: pageTitle,
+      description: data.description,
+      url: pageUrl,
+      type: "article",
+      publishedTime: data.datePublished,
+      authors: [data.author],
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: data.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: pageTitle,
+      description: data.description,
+      images: [imageUrl],
+    },
   };
 }
 
@@ -47,8 +77,58 @@ export default async function ArticlePage({ params }: PageProps) {
     notFound();
   }
 
+  const pageUrl = `${SITE_URL}/education/${category}/${article}`;
+  
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        "@id": `${pageUrl}#article`,
+        "headline": data.title,
+        "description": data.description,
+        "image": data.image ? `${SITE_URL}${data.image}` : undefined,
+        "author": {
+          "@type": "Person",
+          "name": data.author,
+          "jobTitle": data.authorTitle
+        },
+        "publisher": {
+          "@type": "MedicalOrganization",
+          "name": "Lincolnshire Knee Clinic",
+          "logo": {
+            "@type": "ImageObject",
+            "url": `${SITE_URL}/brand/lkc-logo-k-transparent.png`
+          }
+        },
+        "datePublished": data.datePublished,
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": pageUrl
+        }
+      },
+      {
+        "@type": "MedicalWebPage",
+        "@id": `${pageUrl}#medicalwebpage`,
+        "name": data.title,
+        "description": data.description,
+        "about": {
+          "@type": "MedicalCondition",
+          "name": data.categoryLabel
+        },
+        "reviewedBy": {
+          "@type": "Person",
+          "name": data.author,
+          "jobTitle": data.authorTitle
+        },
+        "lastReviewed": data.datePublished
+      }
+    ]
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-10 md:py-16 font-sans">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       
       {/* Breadcrumbs */}
       <Breadcrumbs
