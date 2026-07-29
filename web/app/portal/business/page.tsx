@@ -1264,6 +1264,14 @@ export default function BusinessDashboardPage() {
                           >
                             {isSavingReview ? "Saving…" : "Save"}
                           </button>
+                          {reviewFormReviewed && (
+                            <button
+                              onClick={() => setReviewFormReviewed(false)}
+                              className="border border-orange-500/30 hover:border-orange-500/50 text-orange-400 hover:bg-orange-500/5 text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer"
+                            >
+                              Reset to Awaiting Review
+                            </button>
+                          )}
                           <button
                             onClick={() => setSelectedReviewPageId(null)}
                             className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer"
@@ -1394,6 +1402,10 @@ export default function BusinessDashboardPage() {
                                 {page.review.reviewed ? (
                                   <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-clinical-teal/10 text-clinical-teal border border-clinical-teal/30 shrink-0">
                                     Reviewed{page.review.lastReviewedDate ? ` — ${page.review.lastReviewedDate}` : ""}
+                                  </span>
+                                ) : page.review.staleReview ? (
+                                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/30 shrink-0">
+                                    ⚠ Needs Re-Review{page.review.lastReviewedDate ? ` (was: ${page.review.lastReviewedDate})` : ""}
                                   </span>
                                 ) : (
                                   <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0">

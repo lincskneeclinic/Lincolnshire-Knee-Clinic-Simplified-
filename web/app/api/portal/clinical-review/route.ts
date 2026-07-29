@@ -3,16 +3,16 @@ import {
   getAllReviewablePages,
   getReviewRegistry,
   writeReviewRegistry,
+  getClinicalReviewStatus,
   ClinicalReviewEntry,
 } from "@/lib/clinicalReview";
 
 export async function GET() {
   const pages = getAllReviewablePages();
-  const registry = getReviewRegistry();
 
   const results = pages.map((page) => ({
     ...page,
-    review: registry[page.pageId] || { reviewed: false },
+    review: getClinicalReviewStatus(page.pageId),
   }));
 
   return NextResponse.json({ success: true, pages: results });
@@ -27,19 +27,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "pageId is required" }, { status: 400 });
     }
 
-    const knownPageIds = new Set(getAllReviewablePages().map((page) => page.pageId));
-    if (!knownPageIds.has(pageId)) {
+    const matchingPage = getAllReviewablePages().find((page) => page.pageId === pageId);
+    if (!matchingPage) {
       return NextResponse.json({ success: false, error: "Unknown pageId" }, { status: 400 });
     }
 
     const registry = getReviewRegistry();
+    const isReviewed = Boolean(reviewed);
     const entry: ClinicalReviewEntry = {
-      reviewed: Boolean(reviewed),
+      reviewed: isReviewed,
       reviewerName: typeof reviewerName === "string" ? reviewerName.trim() : undefined,
       reviewerTitle: typeof reviewerTitle === "string" ? reviewerTitle.trim() : undefined,
       lastReviewedDate: typeof lastReviewedDate === "string" ? lastReviewedDate.trim() : undefined,
       evidenceSource: typeof evidenceSource === "string" ? evidenceSource.trim() : undefined,
       updatedAt: new Date().toISOString(),
+      // Snapshot the content hash at the moment of approval so later edits to
+      // this page's data can be detected and auto-revert the review status.
+      reviewedContentHash: isReviewed && matchingPage.contentHash ? matchingPage.contentHash : undefined,
     };
 
     registry[pageId] = entry;

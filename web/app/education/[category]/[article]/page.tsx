@@ -24,7 +24,7 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { article } = await params;
+  const { category, article } = await params;
   const data = blogArticles[article];
 
   if (!data) {

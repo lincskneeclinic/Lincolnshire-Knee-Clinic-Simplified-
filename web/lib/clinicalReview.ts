@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { symptomsData } from "@/data/symptoms";
 import { conditionsData } from "@/data/conditions";
 import { treatmentsData } from "@/data/treatments";
@@ -13,6 +14,9 @@ export interface ReviewablePage {
   slug: string;
   name: string;
   url: string;
+  // null for pages with no backing data-file entry (e.g. injections/hub) —
+  // there's nothing to diff, so they're manual-review-only.
+  contentHash: string | null;
 }
 
 export interface ClinicalReviewEntry {
@@ -22,6 +26,17 @@ export interface ClinicalReviewEntry {
   lastReviewedDate?: string;
   evidenceSource?: string;
   updatedAt?: string;
+  // Content hash captured at the moment `reviewed` was set true, so later
+  // edits to the underlying data can be detected.
+  reviewedContentHash?: string;
+  // Runtime-only, never persisted: true when reviewed was auto-reverted to
+  // false because the page's content changed since reviewedContentHash was
+  // captured. Computed fresh on every read by getClinicalReviewStatus().
+  staleReview?: boolean;
+}
+
+function hashContent(entry: unknown): string {
+  return crypto.createHash("sha256").update(JSON.stringify(entry)).digest("hex");
 }
 
 const REGISTRY_PATH = path.join(process.cwd(), "data", "clinical-review-status.json");
@@ -42,6 +57,7 @@ export function getAllReviewablePages(): ReviewablePage[] {
       slug: symptom.slug,
       name: symptom.name,
       url: `/symptoms/${symptom.slug}`,
+      contentHash: hashContent(symptom),
     });
   }
 
@@ -52,6 +68,7 @@ export function getAllReviewablePages(): ReviewablePage[] {
       slug: condition.slug,
       name: condition.name,
       url: `/conditions/${condition.slug}`,
+      contentHash: hashContent(condition),
     });
   }
 
@@ -62,6 +79,7 @@ export function getAllReviewablePages(): ReviewablePage[] {
       slug: treatment.slug,
       name: treatment.name,
       url: `/treatments/${treatment.slug}`,
+      contentHash: hashContent(treatment),
     });
   }
 
@@ -72,6 +90,7 @@ export function getAllReviewablePages(): ReviewablePage[] {
       slug: injection.slug,
       name: injection.title,
       url: `/injections/${injection.slug}`,
+      contentHash: hashContent(injection),
     });
   }
 
@@ -81,6 +100,7 @@ export function getAllReviewablePages(): ReviewablePage[] {
     slug: "hub",
     name: "Injections Hub",
     url: "/injections",
+    contentHash: null,
   });
   pages.push({
     pageId: "injections/ultrasound-guided-knee-injections",
@@ -88,6 +108,7 @@ export function getAllReviewablePages(): ReviewablePage[] {
     slug: "ultrasound-guided-knee-injections",
     name: "Ultrasound-Guided Knee Injections",
     url: "/injections/ultrasound-guided-knee-injections",
+    contentHash: null,
   });
 
   return pages;
@@ -117,8 +138,32 @@ export function writeReviewRegistry(registry: Record<string, ClinicalReviewEntry
   }
 }
 
-/** Used by public page templates to render ClinicalMetadataBlock. */
+/** Current content hash for a page, or null if it has no backing data entry. */
+export function getCurrentContentHash(pageId: string): string | null {
+  const page = getAllReviewablePages().find((p) => p.pageId === pageId);
+  return page?.contentHash ?? null;
+}
+
+/**
+ * Used by public page templates to render ClinicalMetadataBlock, and by the
+ * dashboard's list/detail views. If a page was marked reviewed but its
+ * content has since changed (current hash no longer matches what was
+ * reviewed), this auto-reports reviewed:false (with staleReview:true) even
+ * though the stored registry entry still says reviewed:true — the
+ * underlying reviewer/date/evidence fields are left untouched so the
+ * dashboard can still show what was last approved.
+ */
 export function getClinicalReviewStatus(pageId: string): ClinicalReviewEntry {
   const registry = getReviewRegistry();
-  return registry[pageId] || { reviewed: false };
+  const entry = registry[pageId];
+  if (!entry) return { reviewed: false };
+
+  if (entry.reviewed) {
+    const currentHash = getCurrentContentHash(pageId);
+    if (currentHash !== null && currentHash !== entry.reviewedContentHash) {
+      return { ...entry, reviewed: false, staleReview: true };
+    }
+  }
+
+  return entry;
 }
