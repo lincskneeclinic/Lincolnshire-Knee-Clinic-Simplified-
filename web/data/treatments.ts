@@ -16,8 +16,7 @@ export interface TreatmentData {
   relatedConditions: string[]; // slugs
   relatedSymptoms: string[]; // slugs
   relatedTreatments: string[]; // slugs
-  imagePath: string;
-  imageAltText: string;
+  references?: { text: string; url: string }[];
   metadataTitle: string;
   metadataDescription: string;
   reviewStatus: string;
@@ -91,8 +90,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-arthritis", "meniscal-tear", "acl-injury", "patellofemoral-pain", "cartilage-injury", "knee-instability", "bakers-cyst", "knee-tendinopathy"],
     relatedSymptoms: ["knee-pain", "swollen-knee", "stiff-knee", "clicking-knee"],
     relatedTreatments: ["activity-modification", "pain-management", "knee-bracing", "preparing-for-surgery"],
-    imagePath: "/images/treatments/physiotherapy/overview.png",
-    imageAltText: "Patient performing rehabilitative exercises under guidance",
+    references: [
+      { text: "NHS — Physiotherapy", url: "https://www.nhs.uk/conditions/physiotherapy/" }
+    ],
     metadataTitle: "Physiotherapy & Rehabilitation | Lincolnshire Knee Clinic",
     metadataDescription: "Explore physiotherapy and rehabilitation options for knee conditions. Learn about clinical exercise programs, suitability, and non-surgical care.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -149,8 +149,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-arthritis", "patellofemoral-pain", "knee-tendinopathy", "cartilage-injury"],
     relatedSymptoms: ["knee-pain", "swollen-knee", "stiff-knee"],
     relatedTreatments: ["physiotherapy", "pain-management", "knee-bracing"],
-    imagePath: "/images/treatments/activity-modification/overview.png",
-    imageAltText: "Individual using stationary bicycle for low-impact joint mobility",
+    references: [
+      { text: "NICE guideline NG226 — Osteoarthritis in over 16s: diagnosis and management", url: "https://www.nice.org.uk/guidance/ng226" }
+    ],
     metadataTitle: "Activity Modification for Knee Pain | Lincolnshire Knee Clinic",
     metadataDescription: "Learn about activity modification, load management, and transitioning to low-impact exercises to protect the knee joint.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -209,8 +210,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-arthritis", "meniscal-tear", "patellofemoral-pain", "bakers-cyst"],
     relatedSymptoms: ["knee-pain", "stiff-knee", "swollen-knee"],
     relatedTreatments: ["physiotherapy", "activity-modification"],
-    imagePath: "/images/treatments/pain-management/overview.png",
-    imageAltText: "Ice pack application to manage localized joint swelling",
+    references: [
+      { text: "NICE guideline NG193 — Chronic pain (primary and secondary) in over 16s", url: "https://www.nice.org.uk/guidance/ng193" }
+    ],
     metadataTitle: "Pain Management for Knee Conditions | Lincolnshire Knee Clinic",
     metadataDescription: "Explore pain management options for knee arthritis and injuries. Learn about medical guidelines, thermal therapies, and conservative care.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -271,8 +273,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-arthritis", "acl-injury", "knee-instability", "patellofemoral-pain"],
     relatedSymptoms: ["knee-giving-way", "knee-pain", "swollen-knee"],
     relatedTreatments: ["physiotherapy", "activity-modification"],
-    imagePath: "/images/treatments/knee-bracing/overview.png",
-    imageAltText: "Patient wearing a supportive knee brace during rehabilitation",
+    references: [
+      { text: "NICE guideline NG226 — Osteoarthritis in over 16s: diagnosis and management (bracing recommendations)", url: "https://www.nice.org.uk/guidance/ng226/chapter/Recommendations" }
+    ],
     metadataTitle: "Knee Bracing: Offloader & Stabilising | Lincolnshire Knee Clinic",
     metadataDescription: "Learn about knee bracing options, including unloading braces for arthritis, functional braces for stability, and recovery sleeves.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -336,8 +339,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["meniscal-tear", "cartilage-injury", "bakers-cyst"],
     relatedSymptoms: ["locked-knee", "unable-to-straighten-knee", "clicking-knee", "swollen-knee"],
     relatedTreatments: ["meniscal-surgery", "cartilage-procedures", "preparing-for-surgery", "enhanced-recovery", "physiotherapy-after-surgery", "returning-to-driving", "returning-to-work", "returning-to-sport", "recovery-faqs"],
-    imagePath: "/images/treatments/knee-arthroscopy/overview.png",
-    imageAltText: "Diagram illustrating portal incisions for keyhole knee surgery",
+    references: [
+      { text: "NHS — Arthroscopy", url: "https://www.nhs.uk/tests-and-treatments/arthroscopy/" }
+    ],
     metadataTitle: "Knee Arthroscopy (Keyhole Surgery) | Lincolnshire Knee Clinic",
     metadataDescription: "Learn about knee arthroscopy, what keyhole surgery involves, suitability, mechanical indications, and postoperative recovery.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -399,8 +403,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["meniscal-tear", "knee-arthritis", "cartilage-injury"],
     relatedSymptoms: ["locked-knee", "unable-to-straighten-knee", "knee-pain", "swollen-knee"],
     relatedTreatments: ["knee-arthroscopy", "preparing-for-surgery", "enhanced-recovery", "physiotherapy-after-surgery", "returning-to-driving", "returning-to-work", "returning-to-sport", "recovery-faqs"],
-    imagePath: "/images/treatments/meniscal-surgery/overview.png",
-    imageAltText: "Illustration of meniscal repair sutures holding cartilage tear together",
+    references: [
+      { text: "NHS — Meniscus tear (knee cartilage damage)", url: "https://www.nhs.uk/conditions/meniscus-tear/" }
+    ],
     metadataTitle: "Meniscal Surgery: Repair & Meniscectomy | Lincolnshire Knee Clinic",
     metadataDescription: "Learn about meniscal surgery, including keyhole meniscal repair and partial meniscectomy, suitability, and postoperative recovery.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -464,8 +469,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["acl-injury", "knee-instability", "meniscal-tear", "cartilage-injury"],
     relatedSymptoms: ["knee-giving-way", "knee-pain-after-injury", "swollen-knee"],
     relatedTreatments: ["physiotherapy", "knee-bracing", "preparing-for-surgery", "enhanced-recovery", "physiotherapy-after-surgery", "returning-to-driving", "returning-to-work", "returning-to-sport", "recovery-faqs"],
-    imagePath: "/images/treatments/acl-reconstruction/overview.png",
-    imageAltText: "Diagram showing ACL graft placement and bone tunnel fixation",
+    references: [
+      { text: "North Tees and Hartlepool NHS Foundation Trust — Surgical Management of ACL Injury", url: "https://www.nth.nhs.uk/resources/surgical-management-of-anterior-cruciate-ligament-acl-injury/" }
+    ],
     metadataTitle: "ACL Reconstruction Surgery | Lincolnshire Knee Clinic",
     metadataDescription: "Learn about ACL reconstruction surgery, including graft choices, bone tunnels, surgical suitability, and the 9-12 month rehabilitation process.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -527,8 +533,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["cartilage-injury", "knee-arthritis", "meniscal-tear"],
     relatedSymptoms: ["knee-pain", "swollen-knee", "clicking-knee", "locked-knee"],
     relatedTreatments: ["knee-arthroscopy", "preparing-for-surgery", "enhanced-recovery", "physiotherapy-after-surgery", "returning-to-driving", "returning-to-work", "returning-to-sport", "recovery-faqs"],
-    imagePath: "/images/treatments/cartilage-procedures/overview.png",
-    imageAltText: "Illustration of microfracture surgery stimulating cartilage repair",
+    references: [
+      { text: "NICE guidance TA477 — Autologous chondrocyte implantation for treating symptomatic articular cartilage defects of the knee", url: "https://www.nice.org.uk/guidance/ta477" }
+    ],
     metadataTitle: "Cartilage Procedures & Restoration | Lincolnshire Knee Clinic",
     metadataDescription: "Learn about knee cartilage procedures, including microfracture, cartilage cell implantation (ACI), suitability, and recovery restrictions.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -594,8 +601,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-instability", "patellofemoral-pain", "knee-arthritis"],
     relatedSymptoms: ["knee-giving-way", "front-of-knee-pain", "clicking-knee"],
     relatedTreatments: ["physiotherapy", "knee-bracing", "preparing-for-surgery", "enhanced-recovery", "physiotherapy-after-surgery", "returning-to-driving", "returning-to-work", "returning-to-sport", "recovery-faqs"],
-    imagePath: "/images/treatments/patellar-stabilisation/overview.png",
-    imageAltText: "Illustration of MPFL reconstruction graft securing the kneecap",
+    references: [
+      { text: "University Hospitals Sussex NHS Foundation Trust — Dislocation of your patella (kneecap)", url: "https://www.uhsussex.nhs.uk/resources/dislocation-of-your-patella-kneecap/" }
+    ],
     metadataTitle: "Patellar Stabilisation Surgery | Lincolnshire Knee Clinic",
     metadataDescription: "Learn about patellar stabilisation surgery, including MPFL reconstruction, bone realignment, suitability, and postoperative rehabilitation.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -663,8 +671,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-arthritis", "cartilage-injury", "meniscal-tear"],
     relatedSymptoms: ["knee-pain", "stiff-knee", "swollen-knee"],
     relatedTreatments: ["total-knee-replacement", "physiotherapy", "knee-bracing", "preparing-for-surgery", "enhanced-recovery", "physiotherapy-after-surgery", "returning-to-driving", "returning-to-work", "returning-to-sport", "recovery-faqs"],
-    imagePath: "/images/treatments/partial-knee-replacement/overview.png",
-    imageAltText: "Diagram showing unicompartmental partial knee replacement implants",
+    references: [
+      { text: "NHS — What is a knee replacement?", url: "https://www.nhs.uk/conditions/knee-replacement/what-is-a-knee-replacement/" }
+    ],
     metadataTitle: "Partial Knee Replacement | Lincolnshire Knee Clinic",
     metadataDescription: "Learn about partial knee replacement (unicompartmental surgery), suitability criteria, preservation of ligaments, and recovery outcomes.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -729,8 +738,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-arthritis"],
     relatedSymptoms: ["knee-pain", "stiff-knee", "swollen-knee", "unable-to-straighten-knee"],
     relatedTreatments: ["partial-knee-replacement", "revision-knee-replacement", "preparing-for-surgery", "enhanced-recovery", "physiotherapy-after-surgery", "returning-to-driving", "returning-to-work", "returning-to-sport", "recovery-faqs"],
-    imagePath: "/images/treatments/total-knee-replacement/overview.png",
-    imageAltText: "Illustration of total knee replacement implants on femur and tibia",
+    references: [
+      { text: "NHS — Knee replacement", url: "https://www.nhs.uk/conditions/knee-replacement/" }
+    ],
     metadataTitle: "Total Knee Replacement Arthroplasty | Lincolnshire Knee Clinic",
     metadataDescription: "Explore total knee replacement surgery. Learn about resurfacing joint surfaces, implant materials, suitability, and postoperative recovery stages.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -792,8 +802,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-arthritis"],
     relatedSymptoms: ["knee-pain", "stiff-knee", "swollen-knee"],
     relatedTreatments: ["total-knee-replacement", "preparing-for-surgery", "enhanced-recovery", "physiotherapy-after-surgery", "returning-to-driving", "returning-to-work", "returning-to-sport", "recovery-faqs"],
-    imagePath: "/images/treatments/revision-knee-replacement/overview.png",
-    imageAltText: "Illustration of revision knee replacement implants with stems",
+    references: [
+      { text: "NHS — Knee replacement: Risks", url: "https://www.nhs.uk/conditions/knee-replacement/risks/" }
+    ],
     metadataTitle: "Revision Knee Replacement Surgery | Lincolnshire Knee Clinic",
     metadataDescription: "Learn about revision knee replacement, reasons for implant failure (loosening, infection), surgical complexity, and recovery.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -845,8 +856,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-arthritis", "acl-injury", "meniscal-tear"],
     relatedSymptoms: ["knee-pain", "stiff-knee"],
     relatedTreatments: ["total-knee-replacement", "partial-knee-replacement", "acl-reconstruction", "meniscal-surgery", "enhanced-recovery"],
-    imagePath: "/images/treatments/preparing-for-surgery/overview.png",
-    imageAltText: "Patient performing preoperative prehab exercises at home",
+    references: [
+      { text: "NICE guideline NG180 — Perioperative care in adults", url: "https://www.nice.org.uk/guidance/ng180" }
+    ],
     metadataTitle: "Preparing for Knee Surgery | Lincolnshire Knee Clinic",
     metadataDescription: "Get guidelines on preparing for knee surgery, including prehab exercises, home preparation tips, and optimizing health prior to admission.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -899,8 +911,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-arthritis"],
     relatedSymptoms: ["knee-pain", "stiff-knee"],
     relatedTreatments: ["total-knee-replacement", "partial-knee-replacement", "preparing-for-surgery", "physiotherapy-after-surgery"],
-    imagePath: "/images/treatments/enhanced-recovery/overview.png",
-    imageAltText: "Patient walking with crutches on the hospital ward",
+    references: [
+      { text: "NICE guideline NG180 — Perioperative care in adults (enhanced recovery programmes)", url: "https://www.nice.org.uk/guidance/ng180" }
+    ],
     metadataTitle: "Enhanced Recovery After Knee Surgery | Lincolnshire Knee Clinic",
     metadataDescription: "Learn about the Enhanced Recovery After Surgery (ERAS) pathway for knee replacement, focusing on early mobility and pain control.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -954,8 +967,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-arthritis", "acl-injury", "meniscal-tear"],
     relatedSymptoms: ["stiff-knee", "knee-pain", "swollen-knee"],
     relatedTreatments: ["total-knee-replacement", "partial-knee-replacement", "acl-reconstruction", "meniscal-surgery", "enhanced-recovery"],
-    imagePath: "/images/treatments/physiotherapy-after-surgery/overview.png",
-    imageAltText: "Therapist assisting patient with post-operative range of motion exercises",
+    references: [
+      { text: "NHS — Recovering from a knee replacement", url: "https://www.nhs.uk/conditions/knee-replacement/recovery/" }
+    ],
     metadataTitle: "Postoperative Physiotherapy & Rehab | Lincolnshire Knee Clinic",
     metadataDescription: "Explore postoperative physiotherapy guidelines. Learn about rehabilitation phases, exercises, and restoring mobility after knee surgery.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -1010,8 +1024,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-arthritis", "acl-injury", "meniscal-tear"],
     relatedSymptoms: ["stiff-knee", "knee-pain"],
     relatedTreatments: ["total-knee-replacement", "partial-knee-replacement", "acl-reconstruction", "knee-arthroscopy"],
-    imagePath: "/images/treatments/returning-to-driving/overview.png",
-    imageAltText: "Close-up of driver pressing a car brake pedal",
+    references: [
+      { text: "GOV.UK / DVLA — Assessing fitness to drive: a guide for medical professionals", url: "https://www.gov.uk/government/publications/assessing-fitness-to-drive-a-guide-for-medical-professionals" }
+    ],
     metadataTitle: "Returning to Driving After Knee Surgery | Lincolnshire Knee Clinic",
     metadataDescription: "Read guidelines on returning to driving after knee replacement or arthroscopy, including safety tests and insurance rules.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -1063,8 +1078,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-arthritis", "acl-injury", "meniscal-tear"],
     relatedSymptoms: ["knee-pain", "swollen-knee", "stiff-knee"],
     relatedTreatments: ["total-knee-replacement", "partial-knee-replacement", "acl-reconstruction", "knee-arthroscopy"],
-    imagePath: "/images/treatments/returning-to-work/overview.png",
-    imageAltText: "Professional working at a desk with ergonomically positioned chair",
+    references: [
+      { text: "NHS — Recovering from a knee replacement", url: "https://www.nhs.uk/conditions/knee-replacement/recovery/" }
+    ],
     metadataTitle: "Returning to Work After Knee Surgery | Lincolnshire Knee Clinic",
     metadataDescription: "Read about returning to work after knee surgery, comparing recovery timelines for desk jobs and manual labour.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -1118,8 +1134,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["acl-injury", "meniscal-tear", "cartilage-injury", "knee-instability"],
     relatedSymptoms: ["knee-giving-way", "knee-pain-after-injury"],
     relatedTreatments: ["acl-reconstruction", "meniscal-surgery", "cartilage-procedures", "physiotherapy-after-surgery"],
-    imagePath: "/images/treatments/returning-to-sport/overview.png",
-    imageAltText: "Athlete performing agility ladder drills under physical therapy guidance",
+    references: [
+      { text: "Cambridge University Hospitals NHS Foundation Trust — ACL reconstruction rehabilitation", url: "https://www.cuh.nhs.uk/patient-information/anterior-cruciate-ligament-acl-reconstruction-rehabilitation/" }
+    ],
     metadataTitle: "Returning to Sport After Knee Surgery | Lincolnshire Knee Clinic",
     metadataDescription: "Read guidelines on returning to sport after knee surgery. Understand milestones for running, golf, and pivoting sports.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -1173,8 +1190,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-arthritis", "acl-injury", "meniscal-tear"],
     relatedSymptoms: ["swollen-knee", "stiff-knee", "knee-pain"],
     relatedTreatments: ["total-knee-replacement", "partial-knee-replacement", "acl-reconstruction", "knee-arthroscopy", "physiotherapy-after-surgery"],
-    imagePath: "/images/treatments/recovery-faqs/overview.png",
-    imageAltText: "Consultant discussing postoperative guidelines with a patient",
+    references: [
+      { text: "NHS — Knee replacement", url: "https://www.nhs.uk/conditions/knee-replacement/" }
+    ],
     metadataTitle: "Knee Surgery Recovery FAQs | Lincolnshire Knee Clinic",
     metadataDescription: "Access answers to frequently asked questions about knee surgery recovery, wound care, swelling management, and activity rules.",
     reviewStatus: "Draft - Awaiting clinical review"
@@ -1260,8 +1278,9 @@ export const treatmentsData: Record<string, TreatmentData> = {
     relatedConditions: ["knee-arthritis", "patellofemoral-pain", "knee-tendinopathy", "meniscal-tear"],
     relatedSymptoms: ["knee-pain", "stiff-knee", "swollen-knee"],
     relatedTreatments: ["physiotherapy", "activity-modification", "pain-management", "total-knee-replacement", "partial-knee-replacement"],
-    imagePath: "/images/treatments/weight-management/overview.png",
-    imageAltText: "Balanced nutrition and low-impact physical activity items supporting joint health",
+    references: [
+      { text: "NICE guideline NG246 — Overweight and obesity management", url: "https://www.nice.org.uk/guidance/ng246" }
+    ],
     metadataTitle: "Weight Management & Knee Health | Lincolnshire Knee Clinic",
     metadataDescription: "Learn about the role of healthy weight management in knee care. Read about low-impact physical activity, balanced nutrition, and supportive care.",
     reviewStatus: "Draft - Awaiting clinical review"

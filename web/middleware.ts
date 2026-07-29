@@ -36,7 +36,6 @@ function isAuthorized(request: NextRequest): boolean {
 }
 
 export function middleware(request: NextRequest) {
-  console.log("MAINTENANCE CHECK:", process.env.MAINTENANCE_MODE);
   const { pathname } = request.nextUrl;
 
   const maintenanceMode = process.env.MAINTENANCE_MODE?.toLowerCase() === "true";
@@ -73,8 +72,11 @@ export function middleware(request: NextRequest) {
         </html>
       `;
       return new NextResponse(html, {
-        status: 200,
-        headers: { "content-type": "text/html; charset=utf-8" },
+        status: 503,
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+          "Retry-After": "3600",
+        },
       });
     }
   }
@@ -82,8 +84,14 @@ export function middleware(request: NextRequest) {
   const isDashboardRoute =
     pathname === "/portal/business" ||
     pathname.startsWith("/portal/business/") ||
+    pathname === "/portal/clinician-intake" ||
+    pathname.startsWith("/portal/clinician-intake/") ||
     pathname === "/api/portal/stats" ||
-    pathname.startsWith("/api/portal/content-pipeline");
+    pathname.startsWith("/api/portal/clinical-review") ||
+    pathname.startsWith("/api/portal/content-pipeline") ||
+    pathname.startsWith("/api/portal/patients") ||
+    pathname.startsWith("/api/portal/injections") ||
+    pathname.startsWith("/api/portal/messages");
 
   if (isDashboardRoute) {
     if (!isAuthorized(request)) {
@@ -96,11 +104,15 @@ export function middleware(request: NextRequest) {
   }
 
   // Everything else under /portal and /api/portal stays fully blocked with 404.
+  // /api/intake is included here too: it's the clinical intake registry endpoint
+  // used by the /portal intake form, which is itself blocked below — so the API
+  // route must be blocked the same way rather than left open to the public.
   if (
     pathname === "/portal" ||
     pathname.startsWith("/portal/") ||
     pathname === "/api/portal" ||
-    pathname.startsWith("/api/portal/")
+    pathname.startsWith("/api/portal/") ||
+    pathname === "/api/intake"
   ) {
     return new NextResponse("Not Found", { status: 404 });
   }

@@ -1,13 +1,45 @@
 import React from "react";
+import { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { NewsletterSignup } from "@/components/NewsletterSignup";
 import { clinicLocations } from "@/data/clinics";
 
+export const metadata: Metadata = {
+  title: "Lincolnshire Knee Clinic | Consultant-Led Knee Care",
+  description:
+    "Consultant-led specialist assessment and treatment for knee pain, arthritis, sports knee injuries, injections and knee replacement across Lincolnshire.",
+  openGraph: {
+    title: "Lincolnshire Knee Clinic | Consultant-Led Knee Care",
+    description:
+      "Consultant-led specialist assessment and treatment for knee pain, arthritis, sports knee injuries, injections and knee replacement across Lincolnshire.",
+    url: "/",
+    siteName: "Lincolnshire Knee Clinic",
+    type: "website",
+    locale: "en_GB",
+    images: [
+      {
+        url: "/images/knee-clinic-hero.png",
+        width: 1024,
+        height: 1024,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lincolnshire Knee Clinic | Consultant-Led Knee Care",
+    description:
+      "Consultant-led specialist assessment and treatment for knee pain, arthritis, sports knee injuries, injections and knee replacement across Lincolnshire.",
+    images: ["/images/knee-clinic-hero.png"],
+  },
+};
+
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Structured Data: sitewide MedicalClinic/Organization schema now lives in app/layout.tsx */}
       {/* 1. Rich Medical Navy-to-Blue Hero Section */}
       <section className="bg-gradient-to-br from-[#0B2D4D] via-[#003B5C] to-[#0A1F33] py-20 md:py-28 border-b border-border-clinical relative overflow-hidden">
         {/* Decorative subtle background highlights for premium depth */}
@@ -44,11 +76,14 @@ export default function Home() {
 
             {/* Hero Right: Image — top-aligned with label, constrained height */}
             <div className="lg:col-span-5 flex justify-center">
-              <div className="relative w-full max-w-sm max-h-[280px] rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-white/5 group">
-                <img
+              <div className="relative w-full max-w-sm h-[280px] rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-white/5 group">
+                <Image
                   src="/images/knee-clinic-hero.png"
-                  alt="Orthopaedic Consultation Room / Diagnostic Imaging Abstract Panel"
-                  className="w-full h-full object-cover"
+                  alt="Orthopaedic surgeon and theatre team performing a knee procedure in an operating theatre"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 400px"
+                  className="object-cover"
+                  priority
                 />
                 <div className="absolute bottom-4 left-4 right-4 bg-black/70 backdrop-blur-sm border border-white/10 p-3 rounded-lg text-center shadow-sm">
                   <span className="text-[10px] font-bold text-clinical-teal block uppercase tracking-widest">
@@ -155,10 +190,12 @@ export default function Home() {
           {/* Left: Consultant Portrait Photo (using real path and cropped styling) */}
           <div className="lg:col-span-5 flex justify-center">
             <div className="relative w-full max-w-sm aspect-[3/4] rounded-xl overflow-hidden border border-border-clinical shadow-[0_8px_30px_rgba(8,47,73,0.08)] bg-white group">
-              <img
+              <Image
                 src="/images/consultant/ricardo-pacheco.jpg"
-                alt="Consultant Knee Surgeon"
-                className="w-full h-full object-cover object-top"
+                alt="Mr Ricardo J Pacheco, Consultant Trauma & Orthopaedic Surgeon at Lincolnshire Knee Clinic"
+                fill
+                sizes="(max-width: 1024px) 100vw, 400px"
+                className="object-cover object-top"
               />
               <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-sm border border-border-clinical p-3.5 rounded-lg text-left shadow-sm">
                 <span className="text-[10px] font-bold text-clinical-teal block uppercase tracking-widest">
@@ -294,7 +331,9 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>      {/* 5.5. Patient Reviews & Experiences Section - White Background */}
+      </section>
+
+      {/* 5.5. Patient Reviews & Experiences Section - White Background */}
       <section className="bg-white py-20 md:py-28 w-full border-b border-border-clinical">
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           <div className="text-center max-w-3xl mx-auto mb-12">
@@ -309,54 +348,22 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Google Reviews Card */}
-            <div className="bg-soft-blue border border-border-clinical/30 rounded-xl p-6 md:p-8 flex flex-col justify-between shadow-[0_4px_20px_rgba(8,47,73,0.02)]">
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-border-clinical text-blue-600 font-bold shrink-0">
-                    G
-                  </div>
-                  <h3 className="font-sans text-lg font-bold text-deep-navy">Google Reviews</h3>
-                </div>
-                <p className="text-text-secondary text-sm leading-relaxed mb-4">
-                  Read verified patient reviews on Google.
-                </p>
-                <div className="text-xs text-text-muted italic bg-white/60 p-2.5 rounded border border-border-clinical/20 mb-6">
-                  Reviews coming soon.
-                </div>
+          <div className="max-w-2xl mx-auto bg-soft-blue border border-border-clinical/30 rounded-xl p-6 md:p-8 text-center shadow-[0_4px_20px_rgba(8,47,73,0.02)]">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-border-clinical text-blue-600 font-bold shrink-0">
+                G
               </div>
-              <Button disabled variant="secondary" className="w-full text-xs py-2 h-10 min-h-[40px]">
-                View Reviews
-              </Button>
-            </div>
-
-            {/* Doctify Reviews Card */}
-            <div className="bg-soft-blue border border-border-clinical/30 rounded-xl p-6 md:p-8 flex flex-col justify-between shadow-[0_4px_20px_rgba(8,47,73,0.02)]">
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-border-clinical text-clinical-teal font-bold shrink-0">
-                    D
-                  </div>
-                  <h3 className="font-sans text-lg font-bold text-deep-navy">Doctify Reviews</h3>
-                </div>
-                <p className="text-text-secondary text-sm leading-relaxed mb-4">
-                  Read verified patient reviews on Doctify.
-                </p>
-                <div className="text-xs text-text-muted italic bg-white/60 p-2.5 rounded border border-border-clinical/20 mb-6">
-                  Reviews coming soon.
-                </div>
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-border-clinical text-clinical-teal font-bold shrink-0">
+                D
               </div>
-              <Button disabled variant="secondary" className="w-full text-xs py-2 h-10 min-h-[40px]">
-                View Reviews
-              </Button>
             </div>
-          </div>
-
-          <div className="text-center mt-10">
-            <Link href="/patient-reviews" className="text-sm font-bold text-clinical-teal hover:underline flex items-center justify-center gap-1">
-              Read our patient feedback and verification policy &gt;
-            </Link>
+            <p className="text-text-secondary text-sm leading-relaxed mb-6">
+              We are in the process of collecting independent, verified patient reviews via Google and Doctify.
+              Read our patient feedback and verification policy for full details on how reviews are gathered.
+            </p>
+            <Button href="/patient-reviews" variant="secondary">
+              Read Our Patient Feedback Policy
+            </Button>
           </div>
         </div>
       </section>
@@ -425,6 +432,28 @@ export default function Home() {
             Appointments are booked through Google Calendar appointment schedules. Payment, where required,
             is handled securely through Stripe. Contact our team for booking support.
           </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-left">
+            <div className="p-4 bg-soft-blue border border-border-clinical rounded-xl space-y-1">
+              <div className="text-xs font-bold uppercase tracking-wider text-clinical-teal">💳 Self-Pay</div>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Self-refer and schedule a consultation directly, no GP referral required.
+              </p>
+            </div>
+            <div className="p-4 bg-soft-blue border border-border-clinical rounded-xl space-y-1">
+              <div className="text-xs font-bold uppercase tracking-wider text-clinical-teal">🛡️ Private Insurance</div>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Recognized by Bupa, AXA, Aviva &amp; Vitality. Obtain a pre-authorisation code before your appointment.
+              </p>
+            </div>
+            <div className="p-4 bg-soft-blue border border-border-clinical rounded-xl space-y-1">
+              <div className="text-xs font-bold uppercase tracking-wider text-clinical-teal">🏥 NHS e-Referral</div>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                NHS patients can be referred via the NHS e-Referral (Choose &amp; Book) service.
+              </p>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button href="/book-appointment" variant="teal">
               Book Online

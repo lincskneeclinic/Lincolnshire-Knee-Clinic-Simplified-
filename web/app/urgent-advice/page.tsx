@@ -1,6 +1,38 @@
 import React from "react";
+import { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PageHeader } from "@/components/PageHeader";
+import { SITE_URL } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Urgent Knee Advice | Red-Flag Symptoms | Lincolnshire Knee Clinic",
+  description:
+    "Guidance on red-flag knee symptoms requiring emergency or urgent medical attention. Lincolnshire Knee Clinic does not provide emergency care — find out where to seek help.",
+  alternates: {
+    canonical: `${SITE_URL}/urgent-advice`,
+  },
+  openGraph: {
+    title: "Urgent Knee Advice | Red-Flag Symptoms | Lincolnshire Knee Clinic",
+    description:
+      "Guidance on red-flag knee symptoms requiring emergency or urgent medical attention. Lincolnshire Knee Clinic does not provide emergency care — find out where to seek help.",
+    url: `${SITE_URL}/urgent-advice`,
+    type: "website",
+    images: [
+      {
+        url: `${SITE_URL}/brand/lkc-logo-k-transparent.png`,
+        width: 800,
+        height: 800,
+        alt: "Lincolnshire Knee Clinic logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Urgent Knee Advice | Red-Flag Symptoms | Lincolnshire Knee Clinic",
+    description:
+      "Guidance on red-flag knee symptoms requiring emergency or urgent medical attention. Lincolnshire Knee Clinic does not provide emergency care.",
+  },
+};
 
 export default function UrgentAdvice() {
   return (

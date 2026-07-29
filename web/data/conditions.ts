@@ -16,8 +16,7 @@ export interface ConditionData {
   relatedSymptoms: string[]; // e.g. ["Knee Pain", "Stiff Knee"]
   relatedConditions: string[]; // e.g. ["meniscal-tear", "acl-injury"]
   relatedTreatments: string[]; // e.g. ["Physiotherapy", "Knee Injections"]
-  imagePath: string;
-  imageAltText: string;
+  references?: { text: string; url: string }[];
   metadataTitle: string;
   metadataDescription: string;
   reviewStatus: string;
@@ -111,12 +110,14 @@ export const conditionsData: Record<string, ConditionData> = {
       }
     ],
     relatedSymptoms: ["Knee Pain", "Stiff Knee", "Swollen Knee", "Clicking or Grinding"],
-    relatedConditions: ["meniscal-tear", "patellofemoral-pain", "cartilage-injury"],
+    relatedConditions: ["meniscal-tear", "patellofemoral-pain", "cartilage-injury", "bakers-cyst", "loose-bodies"],
     relatedTreatments: ["Physiotherapy", "Knee Injections", "Weight Management & Knee Health", "Partial Knee Replacement", "Total Knee Replacement"],
-    imagePath: "/images/conditions/knee-arthritis/overview.png",
-    imageAltText: "Diagram of the knee joint showing areas commonly affected by knee arthritis",
-    metadataTitle: "Knee Arthritis: Symptoms, Diagnosis and Treatment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about knee arthritis, common symptoms, diagnosis, investigations and treatment options, including non-surgical care, injections and knee replacement.",
+    references: [
+      { text: "NICE guideline NG226 — Osteoarthritis in over 16s: diagnosis and management", url: "https://www.nice.org.uk/guidance/ng226" },
+      { text: "NHS — Osteoarthritis", url: "https://www.nhs.uk/conditions/osteoarthritis/" }
+    ],
+    metadataTitle: "Knee Arthritis: Causes & Care | Lincolnshire Knee Clinic",
+    metadataDescription: "Knee arthritis causes pain, stiffness and swelling that worsen with activity. Explore diagnosis, investigations and treatments, from conservative care to joint replacement.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "meniscal-tear": {
@@ -185,12 +186,14 @@ export const conditionsData: Record<string, ConditionData> = {
       }
     ],
     relatedSymptoms: ["Knee Pain", "Swollen Knee", "Locking Knee", "Clicking or Grinding"],
-    relatedConditions: ["knee-arthritis", "acl-injury", "cartilage-injury", "knee-instability"],
+    relatedConditions: ["knee-arthritis", "acl-injury", "cartilage-injury", "knee-instability", "loose-bodies"],
     relatedTreatments: ["Physiotherapy", "Knee Injections", "Weight Management & Knee Health"],
-    imagePath: "/images/conditions/meniscal-tear/overview.png",
-    imageAltText: "Illustration of medial and lateral meniscus tears inside the knee joint",
-    metadataTitle: "Meniscal Tear: Symptoms, Diagnosis and Treatment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about meniscal tears, common symptoms (locking, swelling), diagnosis, MRI investigations and surgical vs non-surgical treatment pathways.",
+    references: [
+      { text: "NHS — Meniscus tear (knee cartilage damage)", url: "https://www.nhs.uk/conditions/meniscus-tear/" },
+      { text: "NICE Clinical Knowledge Summary — Knee pain – assessment", url: "https://cks.nice.org.uk/topics/knee-pain-assessment/" }
+    ],
+    metadataTitle: "Meniscal Tear: Causes & Care | Lincolnshire Knee Clinic",
+    metadataDescription: "A torn meniscus can cause knee locking, swelling and catching after a twisting injury. Discover how MRI diagnosis guides surgical and non-surgical treatment choices.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "acl-injury": {
@@ -262,10 +265,12 @@ export const conditionsData: Record<string, ConditionData> = {
     relatedSymptoms: ["Knee Pain", "Swollen Knee", "Knee Giving Way"],
     relatedConditions: ["meniscal-tear", "knee-instability", "cartilage-injury"],
     relatedTreatments: ["Physiotherapy"],
-    imagePath: "/images/conditions/acl-injury/overview.png",
-    imageAltText: "Illustration of a torn anterior cruciate ligament inside the knee joint",
-    metadataTitle: "ACL Injury: Symptoms, Diagnosis and Treatment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about ACL tears, symptoms (giving way, pop), diagnosis, laxity testing, and reconstruction vs physical therapy pathways.",
+    references: [
+      { text: "North Tees and Hartlepool NHS Foundation Trust — Anterior Cruciate Ligament (ACL) Injury", url: "https://www.nth.nhs.uk/resources/acl-injury/" },
+      { text: "Royal Berkshire NHS Foundation Trust — ACL injury: non-operative management", url: "https://www.royalberkshire.nhs.uk/media/ycqhnrh4/anterior-cruciate-ligament-injury-non-operative-management_nov24.pdf" }
+    ],
+    metadataTitle: "ACL Injury: Symptoms & Treatment | Lincolnshire Knee Clinic",
+    metadataDescription: "An ACL tear often causes a pop, swelling and a feeling the knee gives way. Understand diagnosis, laxity testing, and whether reconstruction or rehabilitation suits you.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "patellofemoral-pain": {
@@ -337,10 +342,12 @@ export const conditionsData: Record<string, ConditionData> = {
     relatedSymptoms: ["Knee Pain", "Stiff Knee", "Clicking or Grinding"],
     relatedConditions: ["knee-arthritis", "knee-tendinopathy", "knee-instability"],
     relatedTreatments: ["Physiotherapy", "Weight Management & Knee Health"],
-    imagePath: "/images/conditions/patellofemoral-pain/overview.png",
-    imageAltText: "Illustration of the patella gliding in the femoral groove",
-    metadataTitle: "Patellofemoral Pain: Symptoms, Diagnosis and Treatment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about patellofemoral pain (Runner's Knee), symptoms (stairs, sitting), diagnosis, contributing factors, and load management therapy.",
+    references: [
+      { text: "Sussex Community NHS Foundation Trust — Patellofemoral Pain Syndrome", url: "https://www.sussexcommunity.nhs.uk/patients-and-visitors/resources/patient-resources/patellofemoral-pain-syndrome" },
+      { text: "Whittington Health NHS Trust — Patellofemoral Pain Syndrome (PFPS)", url: "https://www.whittington.nhs.uk/default.asp?c=47702" }
+    ],
+    metadataTitle: "Patellofemoral Pain: Causes | Lincolnshire Knee Clinic",
+    metadataDescription: "Pain around or behind the kneecap, worse on stairs and sitting, is often patellofemoral pain (runner's knee). See causes, diagnosis and load management therapy options.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "cartilage-injury": {
@@ -409,12 +416,14 @@ export const conditionsData: Record<string, ConditionData> = {
       }
     ],
     relatedSymptoms: ["Knee Pain", "Swollen Knee", "Clicking or Grinding"],
-    relatedConditions: ["knee-arthritis", "meniscal-tear", "acl-injury"],
+    relatedConditions: ["knee-arthritis", "meniscal-tear", "acl-injury", "loose-bodies"],
     relatedTreatments: ["Physiotherapy", "Knee Injections"],
-    imagePath: "/images/conditions/cartilage-injury/overview.png",
-    imageAltText: "Illustration of a focal articular cartilage defect in the knee",
-    metadataTitle: "Cartilage Injury: Symptoms, Diagnosis and Treatment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about knee cartilage injuries (chondral defects), symptoms, MRI diagnosis, and joint preservation options.",
+    references: [
+      { text: "NICE guidance TA477 — Autologous chondrocyte implantation for treating symptomatic articular cartilage defects of the knee", url: "https://www.nice.org.uk/guidance/ta477" },
+      { text: "NICE guideline NG226 — Osteoarthritis in over 16s: diagnosis and management", url: "https://www.nice.org.uk/guidance/ng226" }
+    ],
+    metadataTitle: "Cartilage Injury: Symptoms & Care | Lincolnshire Knee Clinic",
+    metadataDescription: "A focal cartilage defect in the knee can cause pain, swelling and catching during movement. Explore MRI diagnosis and joint preservation treatment pathways available.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "knee-instability": {
@@ -485,12 +494,14 @@ export const conditionsData: Record<string, ConditionData> = {
       }
     ],
     relatedSymptoms: ["Knee Giving Way", "Knee Pain", "Swollen Knee"],
-    relatedConditions: ["acl-injury", "patellofemoral-pain", "meniscal-tear", "patellar-instability"],
+    relatedConditions: ["acl-injury", "patellofemoral-pain", "meniscal-tear", "patellar-instability", "bakers-cyst"],
     relatedTreatments: ["Physiotherapy"],
-    imagePath: "/images/conditions/knee-instability/overview.png",
-    imageAltText: "Illustration of knee joint showing laxity and potential shift",
-    metadataTitle: "Knee Instability: Symptoms, Diagnosis and Treatment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about knee instability (giving way), common causes (ligament injuries, patellar tracking), assessment, and stabilization methods.",
+    references: [
+      { text: "NHS Greater Glasgow and Clyde (Right Decisions) — Ligament injuries", url: "https://www.rightdecisions.scot.nhs.uk/ggc-msk-index/knee/ligament-injuries/" },
+      { text: "Whittington Health NHS Trust — Ligament Injuries", url: "https://www.whittington.nhs.uk/default.asp?c=47694" }
+    ],
+    metadataTitle: "Knee Instability: Causes & Care | Lincolnshire Knee Clinic",
+    metadataDescription: "A knee that gives way or feels unstable during twisting or pivoting may signal ligament or patellar tracking problems. See assessment and stabilisation options.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "bakers-cyst": {
@@ -561,10 +572,11 @@ export const conditionsData: Record<string, ConditionData> = {
     relatedSymptoms: ["Swollen Knee", "Stiff Knee", "Knee Pain"],
     relatedConditions: ["knee-arthritis", "meniscal-tear", "cartilage-injury"],
     relatedTreatments: ["Pain Management", "Knee Injections", "Physiotherapy"],
-    imagePath: "/images/conditions/bakers-cyst/overview.png",
-    imageAltText: "Illustration of a popliteal fluid-filled cyst behind the knee joint",
-    metadataTitle: "Baker's Cyst: Symptoms, Diagnosis and Treatment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about Baker's Cysts (popliteal swellings), symptoms (calf radiation), ultrasound diagnosis, and treating the underlying cause.",
+    references: [
+      { text: "NHS — Baker's cyst", url: "https://www.nhs.uk/conditions/bakers-cyst/" }
+    ],
+    metadataTitle: "Baker's Cyst: Causes & Care | Lincolnshire Knee Clinic",
+    metadataDescription: "A Baker's cyst is a fluid-filled swelling behind the knee that can radiate into the calf. Find out how ultrasound diagnosis identifies and treats the underlying cause.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "knee-tendinopathy": {
@@ -636,10 +648,12 @@ export const conditionsData: Record<string, ConditionData> = {
     relatedSymptoms: ["Knee Pain", "Stiff Knee"],
     relatedConditions: ["patellofemoral-pain", "knee-arthritis"],
     relatedTreatments: ["Physiotherapy", "Knee Injections", "Weight Management & Knee Health"],
-    imagePath: "/images/conditions/knee-tendinopathy/overview.png",
-    imageAltText: "Illustration of the patellar tendon showing areas of tendinopathy",
-    metadataTitle: "Knee Tendinopathy: Symptoms, Diagnosis and Treatment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about knee tendinopathies, symptoms, ultrasound diagnostic testing, and progressive loading exercise pathways.",
+    references: [
+      { text: "NHS Lanarkshire — Patellar Tendinopathy", url: "https://www.nhslanarkshire.scot.nhs.uk/services/physiotherapy-msk/patellar-tendinopathy/" },
+      { text: "Musculoskeletal Matters (Dorset) — Knee pain: Patella tendinopathy", url: "https://www.mskdorset.nhs.uk/knee-pain/knee-pain-patella-tendinopathy/" }
+    ],
+    metadataTitle: "Knee Tendinopathy: Causes & Care | Lincolnshire Knee Clinic",
+    metadataDescription: "Persistent pain at the front of the knee during jumping or running may be tendinopathy. Discover ultrasound diagnosis and progressive loading rehabilitation programmes.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "patellar-instability": {
@@ -739,10 +753,12 @@ export const conditionsData: Record<string, ConditionData> = {
     relatedSymptoms: ["Knee Pain", "Swollen Knee", "Knee Giving Way", "Front of Knee Pain", "Knee Pain After Injury"],
     relatedConditions: ["knee-instability", "patellofemoral-pain", "cartilage-injury", "acl-injury"],
     relatedTreatments: ["Physiotherapy", "Knee Bracing", "Patellar Stabilisation", "Cartilage Procedures"],
-    imagePath: "/images/conditions/patellar-instability/overview.png",
-    imageAltText: "Diagram showing the kneecap and patellofemoral joint in patellar instability",
-    metadataTitle: "Patellar Instability and Kneecap Dislocation | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about kneecap instability and patellar dislocation, including symptoms, assessment, investigations, rehabilitation and possible treatment options.",
+    references: [
+      { text: "University Hospitals Sussex NHS Foundation Trust — Dislocation of your patella (kneecap)", url: "https://www.uhsussex.nhs.uk/resources/dislocation-of-your-patella-kneecap/" },
+      { text: "Norfolk & Waveney Community MSK — Patella (Kneecap) Dislocation", url: "https://norfolkandwaveneycommunityhealth.nhs.uk/msk/self-help/knee/patella-kneecap-dislocation/" }
+    ],
+    metadataTitle: "Patellar Instability | Lincolnshire Knee Clinic",
+    metadataDescription: "A kneecap that dislocates or feels loose indicates patellar instability. Review assessment, investigations, rehabilitation, and surgical stabilisation options available.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "loose-bodies": {
@@ -797,11 +813,13 @@ export const conditionsData: Record<string, ConditionData> = {
     ],
     relatedSymptoms: ["Locked Knee", "Clicking or Grinding", "Swollen Knee", "Knee Pain"],
     relatedConditions: ["cartilage-injury", "meniscal-tear", "knee-arthritis"],
-    relatedTreatments: ["Physiotherapy", "Book Appointment"],
-    imagePath: "/images/conditions/loose-bodies/overview.png",
-    imageAltText: "Illustration of loose bony or cartilage fragments floating in the knee joint cavity",
-    metadataTitle: "Loose Bodies in the Knee: Causes, Symptoms & Removal | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about loose bodies in the knee joint. Find out how fragments of bone or cartilage cause locking, pain, or catching, and how they are diagnosed and removed.",
+    relatedTreatments: ["Physiotherapy", "Knee Arthroscopy"],
+    references: [
+      { text: "NHS Tayside (Right Decisions) — Loose Bodies", url: "https://www.rightdecisions.scot.nhs.uk/nhs-tayside-refguide/surgery-and-orthopaedics/orthopaedic-and-trauma-surgery/knee/loose-bodies/" },
+      { text: "NHS — Arthroscopy", url: "https://www.nhs.uk/tests-and-treatments/arthroscopy/" }
+    ],
+    metadataTitle: "Loose Bodies in the Knee | Lincolnshire Knee Clinic",
+    metadataDescription: "Fragments of bone or cartilage floating in the knee joint can cause sudden locking, catching or pain. Find out how loose bodies are diagnosed and safely removed.",
     reviewStatus: "Draft - Awaiting clinical review"
   }
 };

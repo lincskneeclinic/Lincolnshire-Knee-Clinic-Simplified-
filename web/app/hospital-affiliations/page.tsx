@@ -1,6 +1,19 @@
 import React from "react";
+import { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PageHeader } from "@/components/PageHeader";
+
+// Draft/unreviewed legal-administrative content (see banner below) — kept out of
+// search results and the sitemap until clinical/legal review is complete.
+export const metadata: Metadata = {
+  title: "Hospital Affiliations | Lincolnshire Knee Clinic",
+  description:
+    "Draft content awaiting clinical and legal review — hospital affiliations and practising privileges for Lincolnshire Knee Clinic.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function HospitalAffiliations() {
   return (

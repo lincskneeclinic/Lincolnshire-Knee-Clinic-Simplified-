@@ -74,7 +74,7 @@ export default function RecoveryHub() {
       </div>
 
       <p className="text-xs text-text-secondary/70 italic border-t border-border-clinical/30 pt-4">
-        Content is consultant reviewed and intended for general patient education.
+        Content is intended for general patient education. Each page shows its current clinical review status below.
       </p>
 
       {/* Grid of Recovery Resources */}

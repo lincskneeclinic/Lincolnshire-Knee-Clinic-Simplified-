@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Lincolnshire Knee Clinic — Patellofemoral Joint Schematic (Skyline / Axial View)
+  =================================================================================
+  Educational schematic showing the kneecap (patella) tracking within the
+  trochlear groove of the femur, viewed looking down the thigh (axial/"skyline" view).
+
+  CLINICAL REVIEW STATUS: Awaiting clinical review
+  Do NOT use this as a clinical reference until reviewed.
+
+  Attribution: Internal — Lincolnshire Knee Clinic
+  Licence: All rights reserved — Lincolnshire Knee Clinic
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 800 600"
+  role="img"
+  aria-labelledby="pfp-title"
+  aria-describedby="pfp-desc"
+  focusable="false"
+  style="font-family: sans-serif; background-color: #071324;"
+>
+  <title id="pfp-title">Schematic axial view of the patellofemoral joint showing lateral kneecap tracking</title>
+  <desc id="pfp-desc">
+    An educational schematic viewed looking down the thigh, showing the kneecap (patella) resting in the trochlear groove of the femur and tracking laterally, with increased pressure highlighted on the outer (lateral) cartilage facet.
+  </desc>
+
+  <rect width="800" height="600" fill="#071324" rx="16"/>
+
+  <defs>
+    <pattern id="pfp-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <pattern id="pfp-stripes" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#F97316" stroke-width="2" opacity="0.4"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="600" fill="url(#pfp-grid)" rx="16" aria-hidden="true"/>
+
+  <!-- Femoral condyles (trochlear groove), medial (left, larger) and lateral (right, taller) -->
+  <g data-region="femoral-condyles" aria-label="Femoral condyles forming the trochlear groove">
+    <path d="M 150 420 C 130 340, 160 240, 260 210 C 320 195, 360 260, 400 300 L 400 460 C 340 480, 260 480, 200 460 C 175 450, 158 438, 150 420 Z"
+          fill="rgba(255,255,255,0.10)" stroke="rgba(148,163,184,0.65)" stroke-width="2"/>
+    <path d="M 650 420 C 672 335, 648 225, 540 195 C 470 178, 430 250, 400 300 L 400 460 C 470 482, 570 482, 620 460 C 638 452, 646 438, 650 420 Z"
+          fill="rgba(255,255,255,0.10)" stroke="rgba(148,163,184,0.65)" stroke-width="2"/>
+  </g>
+
+  <!-- Cartilage lining the groove -->
+  <g data-region="trochlear-cartilage" aria-label="Cartilage lining the trochlear groove">
+    <path d="M 260 300 C 300 275, 340 275, 400 300 C 340 320, 300 320, 260 300 Z" fill="rgba(0,175,200,0.25)" stroke="rgba(0,175,200,0.8)" stroke-width="2"/>
+    <path d="M 400 300 C 460 270, 520 275, 560 305 C 510 335, 450 330, 400 300 Z" fill="url(#pfp-stripes)" stroke="#F97316" stroke-width="2.5"/>
+  </g>
+
+  <!-- Patella, tracking laterally (toward the right / viewer's left in this axial convention) -->
+  <g data-region="patella" aria-label="Patella tracking laterally">
+    <ellipse cx="470" cy="330" rx="90" ry="60" fill="rgba(255,255,255,0.14)" stroke="rgba(226,232,240,0.85)" stroke-width="2.5"/>
+    <path d="M 460 300 C 490 305, 520 320, 528 335 C 505 340, 475 335, 460 320 Z" fill="rgba(249,115,22,0.35)" stroke="#F97316" stroke-width="2"/>
+  </g>
+
+  <!-- Lateral tracking force arrow -->
+  <g data-region="tracking-force" aria-label="Lateral tracking force vector">
+    <path d="M 380 200 C 430 220, 470 260, 490 300" fill="none" stroke="#fdba74" stroke-width="3" stroke-dasharray="1,5" stroke-linecap="round"/>
+    <path d="M 480 288 L 494 302 L 476 308 Z" fill="#fdba74"/>
+  </g>
+
+  <!-- Labels -->
+  <line x1="640" y1="150" x2="560" y2="230" stroke="#00AFC8" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="645" y="153" fill="#a5f3fc" font-size="15" font-weight="bold">Lateral Femoral Condyle</text>
+
+  <line x1="130" y1="150" x2="230" y2="235" stroke="#00AFC8" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="125" y="153" text-anchor="end" fill="#a5f3fc" font-size="15" font-weight="bold">Medial Femoral Condyle</text>
+
+  <line x1="655" y1="480" x2="545" y2="335" stroke="#fdba74" stroke-width="1" stroke-dasharray="2,2" opacity="0.8"/>
+  <text x="660" y="483" fill="#fdba74" font-size="15" font-weight="bold">Overloaded Lateral Facet</text>
+
+  <line x1="145" y1="500" x2="430" y2="340" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="140" y="503" text-anchor="end" fill="#e2e8f0" font-size="15" font-weight="bold">Patella (Kneecap)</text>
+
+  <line x1="130" y1="230" x2="255" y2="290" stroke="#f97316" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="125" y="233" text-anchor="end" fill="#fdba74" font-size="15" font-weight="bold">Lateral Tracking</text>
+
+  <!-- Watermark banner -->
+  <rect x="0" y="555" width="800" height="45" fill="#1e293b" rx="0"/>
+  <rect x="0" y="555" width="6" height="45" fill="#f97316"/>
+  <text x="20" y="575" font-size="14" font-weight="bold" fill="#fdba74">EDUCATIONAL ILLUSTRATION — AWAITING CLINICAL REVIEW</text>
+  <text x="20" y="592" font-size="12" fill="#cbd5e1">Not a clinical reference. Not for diagnosis. All rights reserved — Lincolnshire Knee Clinic.</text>
+</svg>

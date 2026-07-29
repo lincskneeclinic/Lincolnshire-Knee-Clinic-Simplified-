@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Lincolnshire Knee Clinic — Knee Instability Schematic (Anterior View)
+  ======================================================================
+  Educational schematic showing abnormal forward translation of the tibia
+  relative to the femur due to ligament laxity ("joint instability").
+
+  CLINICAL REVIEW STATUS: Awaiting clinical review
+  Do NOT use this as a clinical reference until reviewed.
+
+  Attribution: Internal — Lincolnshire Knee Clinic
+  Licence: All rights reserved — Lincolnshire Knee Clinic
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 800 600"
+  role="img"
+  aria-labelledby="ki-title"
+  aria-describedby="ki-desc"
+  focusable="false"
+  style="font-family: sans-serif; background-color: #071324;"
+>
+  <title id="ki-title">Schematic anterior view of a knee joint demonstrating instability and abnormal tibial translation</title>
+  <desc id="ki-desc">
+    An educational schematic of the front of the knee joint, showing the shin bone (tibia) shifted and rotated forward relative to its normal aligned position beneath the thigh bone (femur), due to lax or insufficient stabilizing ligaments.
+  </desc>
+
+  <rect width="800" height="600" fill="#071324" rx="16"/>
+
+  <defs>
+    <pattern id="ki-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="600" fill="url(#ki-grid)" rx="16" aria-hidden="true"/>
+
+  <!-- Femur -->
+  <g data-region="femur" aria-label="Femur">
+    <path d="M 330 40 L 470 40 L 470 220 C 470 240, 500 250, 520 265 C 555 285, 565 315, 555 345 C 540 380, 495 400, 445 400 C 420 400, 405 375, 400 360 C 395 375, 380 400, 355 400 C 305 400, 260 380, 245 345 C 235 315, 245 285, 280 265 C 300 250, 330 240, 330 220 Z"
+          fill="rgba(255,255,255,0.10)" stroke="rgba(148,163,184,0.65)" stroke-width="2.5"/>
+  </g>
+
+  <!-- Normal tibia position (faint, dashed reference) -->
+  <g data-region="tibia-normal-reference" aria-label="Normal tibia alignment (reference)" opacity="0.35">
+    <path d="M 345 405 C 355 398, 445 398, 455 405 L 455 560 L 400 560 L 400 460 L 345 460 Z"
+          fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6,4"/>
+  </g>
+
+  <!-- Tibia, shifted / rotated forward (instability) -->
+  <g data-region="tibia-shifted" aria-label="Tibia in abnormal forward-translated position">
+    <path d="M 375 415 C 385 407, 475 415, 490 428 L 505 575 L 450 570 L 435 470 L 385 470 L 375 570 L 320 565 Z"
+          fill="rgba(249,115,22,0.16)" stroke="#F97316" stroke-width="2.5"/>
+  </g>
+
+  <!-- Lax / stretched ligament -->
+  <g data-region="lax-ligament" aria-label="Lax stabilizing ligament">
+    <path d="M 370 350 C 385 380, 400 400, 415 425" fill="none" stroke="#fdba74" stroke-width="4" stroke-dasharray="5,4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Translation arrow -->
+  <g data-region="translation-arrow" aria-label="Direction of abnormal forward translation">
+    <path d="M 490 440 C 520 450, 545 460, 560 470" fill="none" stroke="#fde68a" stroke-width="3" stroke-linecap="round"/>
+    <path d="M 550 458 L 566 472 L 546 480 Z" fill="#fde68a"/>
+  </g>
+
+  <!-- Labels -->
+  <line x1="600" y1="120" x2="465" y2="150" stroke="#00AFC8" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="605" y="123" fill="#a5f3fc" font-size="15" font-weight="bold">Femur (Thigh Bone)</text>
+
+  <line x1="620" y1="330" x2="425" y2="380" stroke="#fdba74" stroke-width="1" stroke-dasharray="2,2" opacity="0.8"/>
+  <text x="625" y="333" fill="#fdba74" font-size="15" font-weight="bold">Lax / Insufficient Ligament</text>
+
+  <line x1="120" y1="460" x2="330" y2="450" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2,2" opacity="0.6"/>
+  <text x="115" y="463" text-anchor="end" fill="#cbd5e1" font-size="15" font-weight="bold">Normal Alignment (Reference)</text>
+
+  <line x1="640" y1="520" x2="480" y2="480" stroke="#f97316" stroke-width="1" stroke-dasharray="2,2" opacity="0.8"/>
+  <text x="645" y="523" fill="#fdba74" font-size="15" font-weight="bold">Tibia — Abnormal Forward Shift</text>
+
+  <!-- Watermark banner -->
+  <rect x="0" y="555" width="800" height="45" fill="#1e293b" rx="0"/>
+  <rect x="0" y="555" width="6" height="45" fill="#f97316"/>
+  <text x="20" y="575" font-size="14" font-weight="bold" fill="#fdba74">EDUCATIONAL ILLUSTRATION — AWAITING CLINICAL REVIEW</text>
+  <text x="20" y="592" font-size="12" fill="#cbd5e1">Not a clinical reference. Not for diagnosis. All rights reserved — Lincolnshire Knee Clinic.</text>
+</svg>

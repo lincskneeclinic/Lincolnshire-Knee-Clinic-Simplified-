@@ -10,12 +10,11 @@ import { VisualCaption } from "./VisualCaption";
 import backOfKneePain from "@/public/images/symptoms/back-of-knee-pain-overview.png";
 import clickingKnee from "@/public/images/symptoms/clicking-knee-overview.jpg";
 import frontOfKneePain from "@/public/images/symptoms/front-of-knee-pain-overview.png";
-import innerKneePain from "@/public/images/symptoms/inner-knee-pain-overview.png";
 import kneeGivingWay from "@/public/images/symptoms/knee-giving-way-overview.jpg";
 import kneePain from "@/public/images/symptoms/knee-pain-overview.png";
 import kneePainAfterInjury from "@/public/images/symptoms/knee-pain-after-injury-overview.png";
 import lockedKnee from "@/public/images/symptoms/locked-knee-overview.jpg";
-import outerKneePain from "@/public/images/symptoms/outer-knee-pain-overview.svg";
+import outerKneePain from "@/public/images/symptoms/outer-knee-pain-overview.png";
 import stiffKnee from "@/public/images/symptoms/stiff-knee-overview.png";
 import swollenKnee from "@/public/images/symptoms/swollen-knee-overview.png";
 import unableToStraightenKnee from "@/public/images/symptoms/unable-to-straighten-knee-overview.jpg";
@@ -29,7 +28,6 @@ const staticImages: Record<string, any> = {
   "symptoms/back-of-knee-pain-overview": backOfKneePain,
   "symptoms/clicking-knee-overview": clickingKnee,
   "symptoms/front-of-knee-pain-overview": frontOfKneePain,
-  "symptoms/inner-knee-pain-overview": innerKneePain,
   "symptoms/knee-giving-way-overview": kneeGivingWay,
   "symptoms/knee-pain-overview": kneePain,
   "symptoms/knee-pain-after-injury-overview": kneePainAfterInjury,

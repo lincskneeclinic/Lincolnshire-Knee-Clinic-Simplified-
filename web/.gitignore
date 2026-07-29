@@ -50,5 +50,6 @@ next-env.d.ts
 /data/newsletter-subscribers.json
 /data/event-counters.json
 /data/newsletter-poll.json
+/data/clinical-review-status.json
 
 

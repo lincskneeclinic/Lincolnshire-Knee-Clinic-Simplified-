@@ -2,22 +2,52 @@ import React from "react";
 import { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Button } from "@/components/Button";
+import { Card } from "@/components/Card";
 import { PageHeader } from "@/components/PageHeader";
 import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { ClinicalMetadataBlock } from "@/components/ClinicalMetadataBlock";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { injectionsData } from "@/data/injections";
+import { getVisualAsset } from "@/data/visualsInventory";
+import { getClinicalReviewStatus } from "@/lib/clinicalReview";
 import Link from "next/link";
+import { SITE_URL } from "@/lib/site";
+
+const PAGE_TITLE = "Knee Injection Treatments | Lincolnshire Knee Clinic";
+const PAGE_DESCRIPTION =
+  "Educational guide to corticosteroid, hyaluronic acid, PRP, and Arthrosamid knee injections. Factual patient guidance on joint injection choices.";
+const PAGE_URL = `${SITE_URL}/injections`;
 
 export const metadata: Metadata = {
-  title: "Knee Injection Treatments | Lincolnshire Knee Clinic",
-  description: "Educational guide to corticosteroid, hyaluronic acid, PRP, and Arthrosamid knee injections. Factual patient guidance on joint injection choices.",
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION,
   alternates: {
-    canonical: "https://lincolnshirekneeclinic.co.uk/injections",
+    canonical: PAGE_URL,
+  },
+  openGraph: {
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    url: PAGE_URL,
+    type: "website",
+    images: [
+      {
+        url: `${SITE_URL}/brand/lkc-logo-k-transparent.png`,
+        width: 800,
+        height: 800,
+        alt: "Lincolnshire Knee Clinic logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    images: [`${SITE_URL}/brand/lkc-logo-k-transparent.png`],
   },
 };
 
 export default function InjectionsHub() {
+  const clinicalReview = getClinicalReviewStatus("injections/hub");
   const genericFaqs = [
     {
       question: "Are knee injections a permanent cure for arthritis?",
@@ -45,8 +75,24 @@ export default function InjectionsHub() {
     }
   ];
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${PAGE_URL}#webpage`,
+    "url": PAGE_URL,
+    "name": PAGE_TITLE,
+    "description": PAGE_DESCRIPTION,
+    "inLanguage": "en-GB",
+    "hasPart": injectionsData.map(t => ({
+      "@type": "MedicalWebPage",
+      "url": `${SITE_URL}/injections/${t.slug}`,
+      "name": t.title
+    }))
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-16 font-sans">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Breadcrumbs items={[{ label: "Injections" }]} />
 
       <PageHeader
@@ -73,46 +119,20 @@ export default function InjectionsHub() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {injectionsData.map((injection, index) => {
-            // Choose clean inline SVG icons for each card
-            const icons = [
-              // Corticosteroid
-              <svg key="0" className="w-8 h-8 text-clinical-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-              </svg>,
-              // Hyaluronic Acid
-              <svg key="1" className="w-8 h-8 text-clinical-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>,
-              // PRP
-              <svg key="2" className="w-8 h-8 text-clinical-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21V9.75M3.284 14.253A8.966 8.966 0 0112 3c2.868 0 5.437 1.343 7.11 3.424M12 3a8.966 8.966 0 00-8.716 6.747m17.432 0A8.966 8.966 0 0012 3" />
-              </svg>,
-              // Arthrosamid
-              <svg key="3" className="w-8 h-8 text-clinical-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-3.75-3.75m11.25-3.75a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            ];
+            const visualAsset = getVisualAsset(`injections/${injection.slug}`, "anatomy");
+            // Check if the visual asset is a placeholder. If not, we can display it.
+            const imageUrl = (!visualAsset.imagePath.includes("placeholder") && visualAsset.imagePath) ? visualAsset.imagePath : undefined;
 
             return (
-              <div
+              <Card
                 key={index}
-                className="bg-white border border-border-clinical p-6 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="w-12 h-12 rounded-lg bg-clinical-teal/5 flex items-center justify-center mb-4">
-                    {icons[index] || icons[0]}
-                  </div>
-                  <h3 className="font-serif text-lg font-bold text-deep-navy mb-2">
-                    {injection.title}
-                  </h3>
-                  <p className="text-xs text-text-secondary leading-relaxed mb-6 font-medium">
-                    {injection.oneSentenceDescription}
-                  </p>
-                </div>
-                <Button href={`/injections/${injection.slug}`} variant="teal" className="w-full text-xs py-2">
-                  Explore Treatment
-                </Button>
-              </div>
+                category="Injection Therapy"
+                title={injection.title}
+                description={injection.oneSentenceDescription}
+                href={`/injections/${injection.slug}`}
+                linkText="Explore Treatment"
+                imageUrl={imageUrl}
+              />
             );
           })}
         </div>
@@ -229,7 +249,16 @@ export default function InjectionsHub() {
 
       {/* Clinical Review */}
       <section className="my-8">
-        <ClinicalMetadataBlock />
+        <ClinicalMetadataBlock
+          {...(clinicalReview.reviewed
+            ? {
+                reviewerName: clinicalReview.reviewerName,
+                reviewerTitle: clinicalReview.reviewerTitle,
+                lastReviewedDate: clinicalReview.lastReviewedDate,
+                evidenceSource: clinicalReview.evidenceSource,
+              }
+            : {})}
+        />
       </section>
 
       {/* References */}

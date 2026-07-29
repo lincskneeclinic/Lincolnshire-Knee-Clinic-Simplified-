@@ -122,7 +122,13 @@ export const ReviewPlatformCard: React.FC<ReviewPlatformCardProps> = ({
             </span>
           </div>
         ) : (
-          <Button href={platformUrl!} variant="secondary" className="w-full text-sm py-2 h-10 min-h-[40px]">
+          <Button
+            href={platformUrl!}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="secondary"
+            className="w-full text-sm py-2 h-10 min-h-[40px]"
+          >
             View Reviews on {platformName}
           </Button>
         )}

@@ -9,10 +9,14 @@ import { UrgentAdviceBanner } from "@/components/UrgentAdviceBanner";
 import Link from "next/link";
 import { symptomsData } from "@/data/symptoms";
 import { conditionsData } from "@/data/conditions";
+import { getVisualAsset } from "@/data/visualsInventory";
+import { getClinicalReviewStatus } from "@/lib/clinicalReview";
+import { SITE_URL } from "@/lib/site";
 import { ContinueYourKneeJourney } from "@/components/ContinueYourKneeJourney";
 import { MedicalIllustrationBlock } from "@/components/visuals/MedicalIllustrationBlock";
 import { PainLocationMap } from "@/components/visuals/PainLocationMap";
 import { VisualPathwayBlock } from "@/components/visuals/VisualPathwayBlock";
+import MedialKneePainDiagram from "@/components/visuals/MedialKneePainDiagram";
 
 // Dynamic metadata helper for individual routes
 export function getSymptomMetadata(slug: string): Metadata {
@@ -22,30 +26,41 @@ export function getSymptomMetadata(slug: string): Metadata {
       title: "Symptom Details | Lincolnshire Knee Clinic",
     };
   }
+  // Prefer the symptom's own overview illustration for the share image; fall back
+  // to the clinic logo if no real asset exists yet for this symptom.
+  const visualAsset = getVisualAsset(`symptoms/${slug}`, "overview");
+  const shareImage = visualAsset.imagePath
+    ? {
+        url: `${SITE_URL}${visualAsset.imagePath}`,
+        width: visualAsset.requiredDimensions.width,
+        height: visualAsset.requiredDimensions.height,
+        alt: visualAsset.altText,
+      }
+    : {
+        url: `${SITE_URL}/brand/lkc-logo-k-transparent.png`,
+        width: 800,
+        height: 800,
+        alt: "Lincolnshire Knee Clinic logo",
+      };
+
   return {
     title: symptom.metadataTitle,
     description: symptom.metadataDescription,
     alternates: {
-      canonical: `https://lincolnshirekneeclinic.co.uk/symptoms/${symptom.slug}`,
+      canonical: `${SITE_URL}/symptoms/${symptom.slug}`,
     },
     openGraph: {
       title: symptom.metadataTitle,
       description: symptom.metadataDescription,
-      url: `https://lincolnshirekneeclinic.co.uk/symptoms/${symptom.slug}`,
+      url: `${SITE_URL}/symptoms/${symptom.slug}`,
       type: "article",
-      images: [
-        {
-          url: "https://lincolnshirekneeclinic.co.uk/brand/lkc-logo-k-transparent.png",
-          width: 800,
-          height: 800,
-          alt: "Lincolnshire Knee Clinic logo",
-        },
-      ],
+      images: [shareImage],
     },
     twitter: {
       card: "summary",
       title: symptom.metadataTitle,
       description: symptom.metadataDescription,
+      images: [shareImage.url],
     },
   };
 }
@@ -56,6 +71,7 @@ interface SymptomPageProps {
 
 export const SymptomPage: React.FC<SymptomPageProps> = ({ slug }) => {
   const symptom = symptomsData[slug];
+  const clinicalReview = getClinicalReviewStatus(`symptoms/${slug}`);
 
   if (!symptom) {
     return (
@@ -87,8 +103,8 @@ export const SymptomPage: React.FC<SymptomPageProps> = ({ slug }) => {
     "@graph": [
       {
         "@type": "MedicalWebPage",
-        "@id": `https://lincolnshirekneeclinic.co.uk/symptoms/${symptom.slug}#webpage`,
-        "url": `https://lincolnshirekneeclinic.co.uk/symptoms/${symptom.slug}`,
+        "@id": `${SITE_URL}/symptoms/${symptom.slug}#webpage`,
+        "url": `${SITE_URL}/symptoms/${symptom.slug}`,
         "name": symptom.metadataTitle,
         "headline": symptom.name,
         "description": symptom.metadataDescription,
@@ -102,13 +118,13 @@ export const SymptomPage: React.FC<SymptomPageProps> = ({ slug }) => {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://lincolnshirekneeclinic.co.uk/"
+              "item": `${SITE_URL}/`
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Symptoms",
-              "item": "https://lincolnshirekneeclinic.co.uk/symptoms"
+              "item": `${SITE_URL}/symptoms`
             },
             {
               "@type": "ListItem",
@@ -152,6 +168,28 @@ export const SymptomPage: React.FC<SymptomPageProps> = ({ slug }) => {
     if (cleanName.includes("revision")) return "/treatments/revision-knee-replacement";
     if (cleanName.includes("weight")) return "/treatments/weight-management";
     return "/treatments"; // Default safe hub
+  };
+
+  // Short, treatment-specific description shown on each Related Treatments card
+  const getTreatmentBlurb = (name: string): string => {
+    const cleanName = name.toLowerCase();
+    if (cleanName.includes("injection")) return "Cortisone, hyaluronic acid, PRP and Arthrosamid options explained.";
+    if (cleanName.includes("appointment") || cleanName.includes("book")) return "Arrange a specialist assessment to discuss your symptoms directly.";
+    if (cleanName.includes("second opinion") || cleanName.includes("consultation")) return "Discuss previous imaging or treatment recommendations with our team.";
+    if (cleanName.includes("physiotherapy") || cleanName.includes("rehab")) return "Structured, exercise-based rehabilitation to strengthen and stabilise the joint.";
+    if (cleanName.includes("activity")) return "Guidance on adapting activity levels to reduce symptom flare-ups.";
+    if (cleanName.includes("pain")) return "Approaches to help manage and reduce ongoing knee pain.";
+    if (cleanName.includes("brace") || cleanName.includes("bracing")) return "Support options to stabilise the joint during activity or recovery.";
+    if (cleanName.includes("arthroscopy")) return "Minimally invasive surgical assessment and treatment of joint problems.";
+    if (cleanName.includes("meniscal") || cleanName.includes("meniscus")) return "Surgical repair or partial removal of a torn meniscus.";
+    if (cleanName.includes("acl")) return "Surgical reconstruction of a torn anterior cruciate ligament.";
+    if (cleanName.includes("cartilage")) return "Surgical options to repair or manage cartilage damage.";
+    if (cleanName.includes("stabilisation") || cleanName.includes("stabilization")) return "Surgical options to address recurrent kneecap instability.";
+    if (cleanName.includes("partial knee")) return "Replacing only the damaged compartment of the knee joint.";
+    if (cleanName.includes("total knee")) return "Full joint replacement for advanced, widespread knee wear.";
+    if (cleanName.includes("revision")) return "Revising a previous knee replacement that has worn or failed.";
+    if (cleanName.includes("weight")) return "How body weight affects joint loading and long-term knee health.";
+    return "Learn more about this treatment option.";
   };
 
   return (
@@ -232,7 +270,11 @@ export const SymptomPage: React.FC<SymptomPageProps> = ({ slug }) => {
             <h3 className="font-sans text-base font-bold text-deep-navy uppercase tracking-wider border-b border-border-clinical/30 pb-2">
               Anatomical Overview
             </h3>
-            <MedicalIllustrationBlock pageSlug={`symptoms/${slug}`} section="overview" />
+            {slug === "inner-knee-pain" ? (
+              <MedialKneePainDiagram className="my-6" />
+            ) : (
+              <MedicalIllustrationBlock pageSlug={`symptoms/${slug}`} section="overview" />
+            )}
           </section>
 
           {/* Interactive Pain Location Map */}
@@ -470,7 +512,7 @@ export const SymptomPage: React.FC<SymptomPageProps> = ({ slug }) => {
                     <div>
                       <h4 className="font-sans text-xs md:text-sm font-bold text-deep-navy mb-1">{treatment}</h4>
                       <p className="text-[11px] text-text-secondary leading-normal mb-3 font-medium">
-                        Standard treatment pathway considered following medical assessment.
+                        {getTreatmentBlurb(treatment)}
                       </p>
                     </div>
                     <Link href={getTreatmentLink(treatment)} className="text-xs font-bold text-clinical-teal hover:underline">
@@ -483,10 +525,16 @@ export const SymptomPage: React.FC<SymptomPageProps> = ({ slug }) => {
           </section>
 
           {/* 17. Clinical Review card */}
-          <ClinicalMetadataBlock 
+          <ClinicalMetadataBlock
             className="w-full bg-pale-clinical-blue/20"
-            evidenceSource="NICE clinical knowledge summaries and British Orthopaedic Association (BOA) guidelines."
-            lastReviewedDate="July 2026"
+            {...(clinicalReview.reviewed
+              ? {
+                  reviewerName: clinicalReview.reviewerName,
+                  reviewerTitle: clinicalReview.reviewerTitle,
+                  lastReviewedDate: clinicalReview.lastReviewedDate,
+                  evidenceSource: clinicalReview.evidenceSource,
+                }
+              : {})}
           />
 
           {/* 18. References */}
@@ -494,14 +542,33 @@ export const SymptomPage: React.FC<SymptomPageProps> = ({ slug }) => {
             <span className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2.5">
               References
             </span>
-            <ul className="list-decimal pl-5 space-y-1.5 text-xs text-text-muted font-medium">
-              <li>[Evidence Source 1]</li>
-              <li>[Evidence Source 2]</li>
-              <li>[Evidence Source 3]</li>
-            </ul>
-            <p className="text-[10px] text-text-muted italic mt-2.5">
-              References will be completed and clinically reviewed before publication.
-            </p>
+            {symptom.references && symptom.references.length > 0 ? (
+              <ol className="list-decimal pl-5 space-y-1.5 text-xs text-text-muted font-medium">
+                {symptom.references.map((reference, idx) => (
+                  <li key={idx}>
+                    <a
+                      href={reference.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-clinical-teal hover:underline"
+                    >
+                      {reference.text}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <>
+                <ul className="list-decimal pl-5 space-y-1.5 text-xs text-text-muted font-medium">
+                  <li>[Evidence Source 1]</li>
+                  <li>[Evidence Source 2]</li>
+                  <li>[Evidence Source 3]</li>
+                </ul>
+                <p className="text-[10px] text-text-muted italic mt-2.5">
+                  References will be completed and clinically reviewed before publication.
+                </p>
+              </>
+            )}
           </section>
 
         </main>

@@ -4,12 +4,15 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ContentPipelineRun, ContentPipelineReview } from "@/lib/contentPipeline";
 import { MIN_BLOG_BODY_LENGTH } from "@/lib/contentPipelineConstants";
+import { ReviewablePage, ClinicalReviewEntry } from "@/lib/clinicalReview";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
 import rehypeRaw from "rehype-raw";
 
 type RunDetailTab = "draft" | "research" | "images" | "social";
+type ClinicalReviewListItem = ReviewablePage & { review: ClinicalReviewEntry };
+type SearchReference = { title: string; url: string; source: string; summary: string };
 
 function getRenderableImageUrl(suggestedImages?: any[]): string | null {
   if (!suggestedImages || !Array.isArray(suggestedImages) || suggestedImages.length === 0) return null;
@@ -26,7 +29,7 @@ function getRenderableImageUrl(suggestedImages?: any[]): string | null {
 
 export default function BusinessDashboardPage() {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "pipeline">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "pipeline" | "clinicalReview">("overview");
   const [statsData, setStatsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -69,6 +72,24 @@ export default function BusinessDashboardPage() {
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Clinical Review State
+  const [clinicalReviewPages, setClinicalReviewPages] = useState<ClinicalReviewListItem[]>([]);
+  const [clinicalReviewLoading, setClinicalReviewLoading] = useState(false);
+  const [selectedReviewPageId, setSelectedReviewPageId] = useState<string | null>(null);
+  const [reviewFormReviewed, setReviewFormReviewed] = useState(false);
+  const [reviewFormReviewerName, setReviewFormReviewerName] = useState("");
+  const [reviewFormReviewerTitle, setReviewFormReviewerTitle] = useState("");
+  const [reviewFormLastReviewedDate, setReviewFormLastReviewedDate] = useState("");
+  const [reviewFormEvidenceSource, setReviewFormEvidenceSource] = useState("");
+  const [isSavingReview, setIsSavingReview] = useState(false);
+
+  // Suggested Evidence Sources (web search panel) state
+  const [searchResults, setSearchResults] = useState<SearchReference[]>([]);
+  const [addedResults, setAddedResults] = useState<SearchReference[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchPageCursor, setSearchPageCursor] = useState(1);
 
   // Initialize/reset history stack when entering Edit mode
   useEffect(() => {
@@ -360,6 +381,9 @@ export default function BusinessDashboardPage() {
           fetchRunDetail(runIdParam);
         }
       }
+      if (tabParam === "clinicalReview") {
+        setActiveTab("clinicalReview");
+      }
     }
   }, [fetchPipelineRuns, fetchRunDetail]);
 
@@ -368,6 +392,140 @@ export default function BusinessDashboardPage() {
       fetchPipelineRuns();
     }
   }, [activeTab, fetchPipelineRuns, pipelineRuns.length]);
+
+  // Fetch clinical review pages list
+  const fetchClinicalReviewPages = useCallback(async () => {
+    setClinicalReviewLoading(true);
+    try {
+      const res = await fetch("/api/portal/clinical-review");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.pages)) {
+        setClinicalReviewPages(data.pages);
+      }
+    } catch (err) {
+      console.error("Failed to fetch clinical review pages:", err);
+    } finally {
+      setClinicalReviewLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "clinicalReview" && clinicalReviewPages.length === 0) {
+      fetchClinicalReviewPages();
+    }
+  }, [activeTab, fetchClinicalReviewPages, clinicalReviewPages.length]);
+
+  const buildReferenceLine = (result: SearchReference) => `${result.title} (${result.source}) — ${result.url}`;
+
+  const handleSelectReviewPage = (page: ClinicalReviewListItem) => {
+    setSelectedReviewPageId(page.pageId);
+    setReviewFormReviewed(page.review.reviewed);
+    setReviewFormReviewerName(page.review.reviewerName || "Mr Ricardo J Pacheco (GMC 4145976)");
+    setReviewFormReviewerTitle(page.review.reviewerTitle || "Consultant Trauma & Orthopaedic Surgeon");
+    setReviewFormLastReviewedDate(page.review.lastReviewedDate || "");
+    // Evidence Sources starts blank — it's populated only by ticking references
+    // from the search panel, not pre-filled from any previously-saved draft text.
+    setReviewFormEvidenceSource("");
+    setAddedResults([]);
+    setSearchPageCursor(1);
+    fetchSearchReferences(page.pageId, 1);
+  };
+
+  const fetchSearchReferences = async (pageId: string, cursor: number) => {
+    setSearchLoading(true);
+    setSearchError(null);
+    try {
+      const res = await fetch("/api/portal/clinical-review/search-references", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageId, page: cursor }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Don't re-show a result that's already been added, in case a refreshed
+        // page of search results happens to overlap with an earlier one.
+        const addedUrls = new Set(addedResults.map((r) => r.url));
+        setSearchResults((data.results || []).filter((r: SearchReference) => !addedUrls.has(r.url)));
+      } else {
+        setSearchResults([]);
+        setSearchError(data.error || "Failed to fetch search results.");
+      }
+    } catch (err: any) {
+      setSearchResults([]);
+      setSearchError(err.message || "Failed to fetch search results.");
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleRefreshSearch = () => {
+    if (!selectedReviewPageId) return;
+    const nextCursor = searchPageCursor >= 3 ? 1 : searchPageCursor + 1;
+    setSearchPageCursor(nextCursor);
+    fetchSearchReferences(selectedReviewPageId, nextCursor);
+  };
+
+  // Ticking a reference moves it from "Suggested" into "Added to Evidence
+  // Sources" and appends its line into the Evidence Sources field. Any number
+  // of references can be added — there's no cap.
+  const handleTickSearchResult = (result: SearchReference) => {
+    setReviewFormEvidenceSource((current) => {
+      const line = buildReferenceLine(result);
+      return current ? `${current}\n${line}` : line;
+    });
+    setSearchResults((prev) => prev.filter((r) => r.url !== result.url));
+    setAddedResults((prev) => [...prev, result]);
+  };
+
+  // Moves a reference back from "Added" to "Suggested" and removes its line
+  // from Evidence Sources — undoes an accidental tick. If the textarea was
+  // hand-edited afterwards the exact line may no longer match and won't be
+  // removed automatically, but the reference still reappears in Suggested.
+  const handleUndoSearchResult = (result: SearchReference) => {
+    const line = buildReferenceLine(result);
+    setReviewFormEvidenceSource((current) =>
+      current
+        .split("\n")
+        .filter((existingLine) => existingLine !== line)
+        .join("\n")
+    );
+    setAddedResults((prev) => prev.filter((r) => r.url !== result.url));
+    setSearchResults((prev) => [result, ...prev]);
+  };
+
+  const handleSaveReview = async () => {
+    if (!selectedReviewPageId) return;
+    setIsSavingReview(true);
+    setActionError(null);
+    try {
+      const res = await fetch("/api/portal/clinical-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pageId: selectedReviewPageId,
+          reviewed: reviewFormReviewed,
+          reviewerName: reviewFormReviewerName,
+          reviewerTitle: reviewFormReviewerTitle,
+          lastReviewedDate: reviewFormLastReviewedDate,
+          evidenceSource: reviewFormEvidenceSource,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActionFeedback("✓ Clinical review status saved.");
+        setTimeout(() => setActionFeedback(null), 4000);
+        setSelectedReviewPageId(null);
+        await fetchClinicalReviewPages();
+      } else {
+        throw new Error(data.error || "Failed to save clinical review status.");
+      }
+    } catch (err: any) {
+      console.error("Error saving clinical review status:", err);
+      setActionError(err.message || "Failed to save clinical review status.");
+    } finally {
+      setIsSavingReview(false);
+    }
+  };
 
   // Handle trigger new run submission
   const handleTriggerRun = async (e: React.FormEvent) => {
@@ -602,6 +760,7 @@ export default function BusinessDashboardPage() {
   const otherRuns = pipelineRuns.filter(
     (r) => r.status !== "awaiting_blog_approval" && r.status !== "awaiting_social_approval"
   );
+  const reviewNeededPages = clinicalReviewPages.filter((page) => !page.review.reviewed);
   const selectedRunHasSocial =
     !!selectedRun &&
     (selectedRun.status === "awaiting_social_approval" ||
@@ -621,15 +780,21 @@ export default function BusinessDashboardPage() {
     { key: "linkedin" as const, label: "LinkedIn" },
   ];
   const navTabs = [
-    { id: "overview", label: "Executive Overview", icon: "📊" },
-    { id: "topics", label: "Trending Questions & Polls", icon: "💡" },
-    { id: "events", label: "Click Event Telemetry", icon: "👆" },
-    { id: "newsletter", label: "Subscriber Growth & Segments", icon: "📧" },
+    { id: "overview", label: "Overview", icon: "📊" },
+    { id: "topics", label: "Topics", icon: "💡" },
+    { id: "events", label: "Clicks", icon: "👆" },
+    { id: "newsletter", label: "Subscribers", icon: "📧" },
     {
       id: "pipeline",
-      label: "Content Pipeline",
+      label: "Pipeline",
       icon: "📝",
       badge: reviewNeededRuns.length > 0 ? reviewNeededRuns.length : null,
+    },
+    {
+      id: "clinicalReview",
+      label: "Review",
+      icon: "🩺",
+      badge: reviewNeededPages.length > 0 ? reviewNeededPages.length : null,
     },
   ];
   const handleNavTabClick = (tabId: string) => {
@@ -638,6 +803,9 @@ export default function BusinessDashboardPage() {
       setSelectedRun(null);
       setRunDetailTab("draft");
       setEditingPlatform(null);
+    }
+    if (tabId === "clinicalReview") {
+      setSelectedReviewPageId(null);
     }
   };
 
@@ -745,28 +913,33 @@ export default function BusinessDashboardPage() {
           </div>
 
           {/* Desktop/Tablet: horizontal-scrollable, never wraps */}
-          <div className="hidden md:block overflow-x-auto scrollbar-hide">
-            <div className="flex items-center justify-center gap-0.5 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-              {navTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => handleNavTabClick(tab.id)}
-                  className={`py-1 px-1.5 rounded-xl text-[9.5px] transition-all flex items-center gap-1 cursor-pointer border shrink-0 whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-md"
-                      : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20"
-                  }`}
-                >
-                  <span className="text-[9px]">{tab.icon}</span>
-                  <span>{tab.label}</span>
-                  {tab.badge && (
-                    <span className="bg-clinical-teal text-deep-navy text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                      {tab.badge}
-                    </span>
-                  )}
-                </button>
-              ))}
+          <div className="hidden md:block relative">
+            <div className="overflow-x-auto scrollbar-hide">
+              <div className="flex items-center justify-center gap-1.5 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+                {navTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleNavTabClick(tab.id)}
+                    className={`py-1.5 px-2 rounded-lg text-[13px] transition-all flex items-center gap-1 cursor-pointer border shrink-0 whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-md"
+                        : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20"
+                    }`}
+                  >
+                    <span className="text-[13px]">{tab.icon}</span>
+                    <span>{tab.label}</span>
+                    {tab.badge && (
+                      <span className="bg-clinical-teal text-deep-navy text-[13px] font-bold px-1.5 py-0.5 rounded-full">
+                        {tab.badge}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
+            {/* Scroll hints — justify-center means an overflowing bar can clip both edges at once, with no scrollbar (scrollbar-hide) to signal it */}
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-primary-navy to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-primary-navy to-transparent" />
           </div>
         </div>
       </header>
@@ -989,6 +1162,252 @@ export default function BusinessDashboardPage() {
                   <h2 className="text-base font-bold text-white">Verified Subscriber Directory</h2>
                   <p className="text-xs text-white/60">Total signups: {totalSignups}</p>
                 </div>
+              </div>
+            )}
+
+            {/* TAB: CLINICAL REVIEW */}
+            {activeTab === "clinicalReview" && (
+              <div className="space-y-8">
+                <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Clinical Review Status</h2>
+                    <p className="text-xs text-white/60 mt-1">
+                      Manage the &quot;Clinically Reviewed&quot; status shown on symptom, condition, treatment and injection pages.
+                    </p>
+                  </div>
+                  {selectedReviewPageId && (
+                    <button
+                      onClick={() => setSelectedReviewPageId(null)}
+                      className="bg-dark-overlay-navy hover:bg-white/5 text-white/80 border border-white/20 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+                    >
+                      ← Back to List
+                    </button>
+                  )}
+                </div>
+
+                {clinicalReviewLoading ? (
+                  <div className="text-center text-white/50 text-sm py-12">Loading pages…</div>
+                ) : selectedReviewPageId ? (
+                  (() => {
+                    const page = clinicalReviewPages.find((p) => p.pageId === selectedReviewPageId);
+                    if (!page) return null;
+                    return (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-xl space-y-5">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-clinical-teal">
+                            {page.contentType}
+                          </span>
+                          <h3 className="text-base font-bold text-white">{page.name}</h3>
+                          <Link href={page.url} target="_blank" className="text-xs text-clinical-teal hover:underline">
+                            View page →
+                          </Link>
+                        </div>
+
+                        <label className="flex items-center gap-2.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={reviewFormReviewed}
+                            onChange={(e) => setReviewFormReviewed(e.target.checked)}
+                            className="w-4 h-4 accent-clinical-teal cursor-pointer"
+                          />
+                          <span className="text-sm font-semibold text-white">Mark as clinically reviewed</span>
+                        </label>
+
+                        <div>
+                          <div className="text-xs text-clinical-teal mb-1 font-semibold">Reviewer Name</div>
+                          <input
+                            type="text"
+                            value={reviewFormReviewerName}
+                            onChange={(e) => setReviewFormReviewerName(e.target.value)}
+                            className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="text-xs text-clinical-teal mb-1 font-semibold">Reviewer Title</div>
+                          <input
+                            type="text"
+                            value={reviewFormReviewerTitle}
+                            onChange={(e) => setReviewFormReviewerTitle(e.target.value)}
+                            className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="text-xs text-clinical-teal mb-1 font-semibold">Last Reviewed Date</div>
+                          <input
+                            type="text"
+                            placeholder="e.g. July 2026"
+                            value={reviewFormLastReviewedDate}
+                            onChange={(e) => setReviewFormLastReviewedDate(e.target.value)}
+                            className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="text-xs text-clinical-teal mb-1 font-semibold">Evidence Sources</div>
+                          <textarea
+                            rows={3}
+                            placeholder="e.g. NICE clinical knowledge summaries and British Orthopaedic Association (BOA) guidelines."
+                            value={reviewFormEvidenceSource}
+                            onChange={(e) => setReviewFormEvidenceSource(e.target.value)}
+                            className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                          />
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                          <button
+                            onClick={handleSaveReview}
+                            disabled={isSavingReview}
+                            className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer disabled:opacity-60"
+                          >
+                            {isSavingReview ? "Saving…" : "Save"}
+                          </button>
+                          <button
+                            onClick={() => setSelectedReviewPageId(null)}
+                            className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-xl space-y-4 flex flex-col">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <h3 className="text-sm font-bold text-white">Suggested Evidence Sources</h3>
+                            <p className="text-[11px] text-white/50 mt-0.5">
+                              Web search results for &quot;{page.name}&quot;. Tick any references to move them into Evidence Sources.
+                            </p>
+                          </div>
+                          <button
+                            onClick={handleRefreshSearch}
+                            disabled={searchLoading}
+                            className="shrink-0 bg-dark-overlay-navy hover:bg-white/5 text-white/80 border border-white/20 text-xs px-3 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-60"
+                          >
+                            {searchLoading ? "Searching…" : "Refresh Search"}
+                          </button>
+                        </div>
+
+                        {addedResults.length > 0 && (
+                          <div className="space-y-2 border-b border-white/10 pb-4">
+                            <h4 className="text-[10px] font-bold uppercase tracking-wider text-clinical-teal">
+                              Added to Evidence Sources ({addedResults.length})
+                            </h4>
+                            <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                              {addedResults.map((result) => (
+                                <button
+                                  key={result.url}
+                                  type="button"
+                                  onClick={() => handleUndoSearchResult(result)}
+                                  className="w-full flex items-start gap-2.5 bg-dark-overlay-navy/60 border border-white/5 rounded-xl p-2.5 cursor-pointer hover:border-amber-400/40 transition-colors text-left"
+                                >
+                                  <span className="w-4 h-4 rounded-sm bg-clinical-teal flex items-center justify-center mt-0.5 shrink-0">
+                                    <svg viewBox="0 0 16 16" className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8.5l3 3 7-7" />
+                                    </svg>
+                                  </span>
+                                  <div className="min-w-0">
+                                    {result.source && (
+                                      <span className="text-[9px] font-bold uppercase tracking-wider text-white/30 block">
+                                        {result.source}
+                                      </span>
+                                    )}
+                                    <span className="text-xs font-semibold text-white/50 line-through block truncate">
+                                      {result.title}
+                                    </span>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                            <p className="text-[10px] text-white/40">Click a reference above to move it back to Suggested.</p>
+                          </div>
+                        )}
+
+                        {searchLoading ? (
+                          <div className="text-center text-white/50 text-xs py-10">Searching…</div>
+                        ) : searchError ? (
+                          <div className="text-center text-xs py-10 space-y-2">
+                            <p className="text-amber-400">{searchError}</p>
+                          </div>
+                        ) : searchResults.length === 0 ? (
+                          <div className="text-center text-white/50 text-xs py-10">No results found.</div>
+                        ) : (
+                          <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
+                            {searchResults.map((result) => (
+                              <label
+                                key={result.url}
+                                className="flex items-start gap-2.5 bg-dark-overlay-navy border border-white/5 rounded-xl p-3 cursor-pointer hover:border-clinical-teal/40 transition-colors"
+                              >
+                                <input
+                                  type="checkbox"
+                                  onChange={() => handleTickSearchResult(result)}
+                                  className="w-4 h-4 accent-clinical-teal cursor-pointer mt-0.5 shrink-0"
+                                />
+                                <div className="space-y-1 min-w-0">
+                                  {result.source && (
+                                    <span className="text-[9px] font-bold uppercase tracking-wider text-white/40 block">
+                                      {result.source}
+                                    </span>
+                                  )}
+                                  <a
+                                    href={result.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-xs font-semibold text-clinical-teal hover:underline block"
+                                  >
+                                    {result.title}
+                                  </a>
+                                  <p className="text-[11px] text-white/60 leading-relaxed">{result.summary}</p>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div className="space-y-6">
+                    {(["symptoms", "conditions", "treatments", "injections"] as const).map((contentType) => {
+                      const pagesOfType = clinicalReviewPages.filter((p) => p.contentType === contentType);
+                      if (pagesOfType.length === 0) return null;
+                      return (
+                        <div
+                          key={contentType}
+                          className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-3"
+                        >
+                          <h3 className="text-sm font-bold text-white uppercase tracking-wider capitalize">
+                            {contentType}
+                          </h3>
+                          <div className="space-y-2">
+                            {pagesOfType.map((page) => (
+                              <button
+                                key={page.pageId}
+                                onClick={() => handleSelectReviewPage(page)}
+                                className="w-full text-left bg-dark-overlay-navy border border-white/5 rounded-xl p-3.5 flex items-center justify-between gap-4 hover:border-clinical-teal/40 transition-colors cursor-pointer"
+                              >
+                                <span className="text-xs text-white/90 font-medium">{page.name}</span>
+                                {page.review.reviewed ? (
+                                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-clinical-teal/10 text-clinical-teal border border-clinical-teal/30 shrink-0">
+                                    Reviewed{page.review.lastReviewedDate ? ` — ${page.review.lastReviewedDate}` : ""}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0">
+                                    Awaiting review
+                                  </span>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 

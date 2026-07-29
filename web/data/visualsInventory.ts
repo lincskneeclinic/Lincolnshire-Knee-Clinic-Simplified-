@@ -200,11 +200,11 @@ export const visualsInventory: VisualAsset[] = [
     section: "overview",
     title: "Patellofemoral Tracking and Joint Anatomy",
     type: "anatomy",
-    imagePath: "/images/conditions/patellofemoral-pain-overview.png",
+    imagePath: "/images/conditions/patellofemoral-pain-overview.svg",
     altText: "Illustration of the kneecap resting in the trochlear groove showing lateral tracking forces.",
     caption: "The patellofemoral joint showing the sliding path of the kneecap in the femoral groove.",
     placeholderLabel: "Medical illustration pending",
-    status: "pending",
+    status: "approved",
     priority: "medium",
     clinicalReviewStatus: "pending-clinical-review",
     photographyOrIllustration: "illustration",
@@ -218,11 +218,11 @@ export const visualsInventory: VisualAsset[] = [
     section: "overview",
     title: "Focal Articular Cartilage Defect (Chondral Defect)",
     type: "anatomy",
-    imagePath: "/images/conditions/cartilage-injury-overview.png",
+    imagePath: "/images/conditions/cartilage-injury-overview.svg",
     altText: "Diagram showing a localized defect in the cartilage lining the femoral condyle, exposing the bone underneath.",
     caption: "Focal articular cartilage defect (chondral pothole) surrounded by healthy thick cartilage.",
     placeholderLabel: "Medical illustration pending",
-    status: "pending",
+    status: "approved",
     priority: "high",
     clinicalReviewStatus: "pending-clinical-review",
     photographyOrIllustration: "illustration",
@@ -239,11 +239,11 @@ export const visualsInventory: VisualAsset[] = [
     section: "overview",
     title: "Knee Joint Laxity and Structural Insufficiency",
     type: "anatomy",
-    imagePath: "/images/conditions/knee-instability-overview.png",
+    imagePath: "/images/conditions/knee-instability-overview.svg",
     altText: "Illustration of the knee joint showing path of abnormal tibia translation under joint laxity.",
     caption: "Biomechanical translation indicating potential joint translation or knee instability.",
     placeholderLabel: "Medical illustration pending",
-    status: "pending",
+    status: "approved",
     priority: "medium",
     clinicalReviewStatus: "pending-clinical-review",
     requiredDimensions: { width: 800, height: 600 }
@@ -256,11 +256,11 @@ export const visualsInventory: VisualAsset[] = [
     section: "overview",
     title: "Popliteal Space and Baker's Cyst Anatomy",
     type: "anatomy",
-    imagePath: "/images/conditions/bakers-cyst-overview.png",
+    imagePath: "/images/conditions/bakers-cyst-overview.svg",
     altText: "Posterior diagram of a knee showing a fluid-filled popliteal cyst emerging from the joint space.",
     caption: "Baker's cyst located in the popliteal space behind the knee joint.",
     placeholderLabel: "Medical illustration pending",
-    status: "pending",
+    status: "approved",
     priority: "medium",
     clinicalReviewStatus: "pending-clinical-review",
     requiredDimensions: { width: 800, height: 600 }
@@ -273,11 +273,11 @@ export const visualsInventory: VisualAsset[] = [
     section: "overview",
     title: "Patellar Tendon Structure and Inflammation Zone",
     type: "anatomy",
-    imagePath: "/images/conditions/knee-tendinopathy-overview.png",
+    imagePath: "/images/conditions/knee-tendinopathy-overview.svg",
     altText: "Diagram showing the patellar tendon connecting the kneecap to the shin bone with micro-tears highlighted.",
     caption: "Patellar tendinopathy affecting the proximal tendon attachment near the inferior pole of the patella.",
     placeholderLabel: "Medical illustration pending",
-    status: "pending",
+    status: "approved",
     priority: "medium",
     clinicalReviewStatus: "pending-clinical-review",
     requiredDimensions: { width: 800, height: 600 }
@@ -290,13 +290,31 @@ export const visualsInventory: VisualAsset[] = [
     section: "overview",
     title: "Kneecap Subluxation and Trochlear Groove Tracking",
     type: "anatomy",
-    imagePath: "/images/conditions/patellar-instability-overview.png",
+    imagePath: "/images/conditions/patellar-instability-overview.svg",
     altText: "Anterior diagram showing a kneecap displacing laterally outside the boundaries of the trochlear groove.",
     caption: "Lateral patellar dislocation showing rupture of the stabilizing medial patellofemoral ligament (MPFL).",
     placeholderLabel: "Medical illustration pending",
-    status: "pending",
+    status: "approved",
     priority: "high",
     clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Loose Bodies
+  {
+    id: "loose-bodies-overview",
+    page: "conditions/loose-bodies",
+    section: "overview",
+    title: "Free-Floating Loose Bodies in the Knee Joint",
+    type: "anatomy",
+    imagePath: "/images/conditions/loose-bodies-overview.svg",
+    altText: "Anterior diagram of a knee joint showing small free-floating fragments of bone or cartilage, including one wedged at the joint line.",
+    caption: "Loose bodies floating within the joint cavity, with one fragment wedged at the joint line causing mechanical locking.",
+    placeholderLabel: "Medical illustration pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    photographyOrIllustration: "illustration",
     requiredDimensions: { width: 800, height: 600 }
   },
 
@@ -330,7 +348,7 @@ export const visualsInventory: VisualAsset[] = [
     altText: "Biomechanical diagram showing how 1kg of body weight translates to 4kg of force across the patellofemoral joint during knee loading.",
     caption: "Mechanical loading magnification across the knee joint during walking and deep bending.",
     placeholderLabel: "Mechanical load visual pending",
-    status: "pending",
+    status: "approved",
     priority: "high",
     clinicalReviewStatus: "pending-clinical-review",
     requiredDimensions: { width: 800, height: 500 }
@@ -347,7 +365,7 @@ export const visualsInventory: VisualAsset[] = [
     altText: "Diagram of keyhole knee surgery showing femoral and tibial bone tunnels and tendon graft insertion to reconstruct the ACL.",
     caption: "ACL Reconstruction showing reconstruction tunnels and graft placement.",
     placeholderLabel: "Procedure illustration pending",
-    status: "pending",
+    status: "approved",
     priority: "high",
     clinicalReviewStatus: "pending-clinical-review",
     requiredDimensions: { width: 800, height: 600 }
@@ -364,12 +382,285 @@ export const visualsInventory: VisualAsset[] = [
     altText: "Diagram illustrating femoral component, tibial tray, and polyethylene spacer resurfacing the arthritic joint.",
     caption: "Tricompartmental total knee replacement showing prosthetic alignment.",
     placeholderLabel: "Prosthesis visual pending",
-    status: "pending",
+    status: "approved",
     priority: "high",
     clinicalReviewStatus: "pending-clinical-review",
     requiredDimensions: { width: 800, height: 600 }
   },
 
+
+  
+  // Activity Modification
+  {
+    id: "treatment-activity-modification-overview",
+    page: "treatments/activity-modification",
+    section: "overview",
+    title: "Activity Modification Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/activity-modification-overview.png",
+    altText: "Clinical illustration for activity modification",
+    caption: "Overview of activity modification.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Pain Management
+  {
+    id: "treatment-pain-management-overview",
+    page: "treatments/pain-management",
+    section: "overview",
+    title: "Pain Management Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/pain-management-overview.png",
+    altText: "Clinical illustration for pain management",
+    caption: "Overview of pain management.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Knee Bracing
+  {
+    id: "treatment-knee-bracing-overview",
+    page: "treatments/knee-bracing",
+    section: "overview",
+    title: "Knee Bracing Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/knee-bracing-overview.png",
+    altText: "Clinical illustration for knee bracing",
+    caption: "Overview of knee bracing.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Knee Arthroscopy
+  {
+    id: "treatment-knee-arthroscopy-overview",
+    page: "treatments/knee-arthroscopy",
+    section: "overview",
+    title: "Knee Arthroscopy Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/knee-arthroscopy-overview.png",
+    altText: "Clinical illustration for knee arthroscopy",
+    caption: "Overview of knee arthroscopy.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Meniscal Surgery
+  {
+    id: "treatment-meniscal-surgery-overview",
+    page: "treatments/meniscal-surgery",
+    section: "overview",
+    title: "Meniscal Surgery Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/meniscal-surgery-overview.png",
+    altText: "Clinical illustration for meniscal surgery",
+    caption: "Overview of meniscal surgery.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Cartilage Procedures
+  {
+    id: "treatment-cartilage-procedures-overview",
+    page: "treatments/cartilage-procedures",
+    section: "overview",
+    title: "Cartilage Procedures Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/cartilage-procedures-overview.png",
+    altText: "Clinical illustration for cartilage procedures",
+    caption: "Overview of cartilage procedures.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Patellar Stabilisation
+  {
+    id: "treatment-patellar-stabilisation-overview",
+    page: "treatments/patellar-stabilisation",
+    section: "overview",
+    title: "Patellar Stabilisation Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/patellar-stabilisation-overview.png",
+    altText: "Clinical illustration for patellar stabilisation",
+    caption: "Overview of patellar stabilisation.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Partial Knee Replacement
+  {
+    id: "treatment-partial-knee-replacement-overview",
+    page: "treatments/partial-knee-replacement",
+    section: "overview",
+    title: "Partial Knee Replacement Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/partial-knee-replacement-overview-v2.png",
+    altText: "Clinical illustration for partial knee replacement",
+    caption: "Overview of partial knee replacement.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Revision Knee Replacement
+  {
+    id: "treatment-revision-knee-replacement-overview",
+    page: "treatments/revision-knee-replacement",
+    section: "overview",
+    title: "Revision Knee Replacement Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/revision-knee-replacement-overview.png",
+    altText: "Clinical illustration for revision knee replacement",
+    caption: "Overview of revision knee replacement.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Preparing For Surgery
+  {
+    id: "treatment-preparing-for-surgery-overview",
+    page: "treatments/preparing-for-surgery",
+    section: "overview",
+    title: "Preparing For Surgery Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/preparing-for-surgery-overview.png",
+    altText: "Clinical illustration for preparing for surgery",
+    caption: "Overview of preparing for surgery.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Enhanced Recovery
+  {
+    id: "treatment-enhanced-recovery-overview",
+    page: "treatments/enhanced-recovery",
+    section: "overview",
+    title: "Enhanced Recovery Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/enhanced-recovery-overview.png",
+    altText: "Clinical illustration for enhanced recovery",
+    caption: "Overview of enhanced recovery.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Physiotherapy After Surgery
+  {
+    id: "treatment-physiotherapy-after-surgery-overview",
+    page: "treatments/physiotherapy-after-surgery",
+    section: "overview",
+    title: "Physiotherapy After Surgery Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/physiotherapy-after-surgery-overview.png",
+    altText: "Clinical illustration for physiotherapy after surgery",
+    caption: "Overview of physiotherapy after surgery.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Returning To Driving
+  {
+    id: "treatment-returning-to-driving-overview",
+    page: "treatments/returning-to-driving",
+    section: "overview",
+    title: "Returning To Driving Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/returning-to-driving-overview.png",
+    altText: "Clinical illustration for returning to driving",
+    caption: "Overview of returning to driving.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Returning To Work
+  {
+    id: "treatment-returning-to-work-overview",
+    page: "treatments/returning-to-work",
+    section: "overview",
+    title: "Returning To Work Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/returning-to-work-overview.png",
+    altText: "Clinical illustration for returning to work",
+    caption: "Overview of returning to work.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Returning To Sport
+  {
+    id: "treatment-returning-to-sport-overview",
+    page: "treatments/returning-to-sport",
+    section: "overview",
+    title: "Returning To Sport Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/returning-to-sport-overview.png",
+    altText: "Clinical illustration for returning to sport",
+    caption: "Overview of returning to sport.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
+  // Recovery Faqs
+  {
+    id: "treatment-recovery-faqs-overview",
+    page: "treatments/recovery-faqs",
+    section: "overview",
+    title: "Recovery Faqs Overview",
+    type: "procedure",
+    imagePath: "/images/treatments/recovery-faqs-overview.png",
+    altText: "Clinical illustration for recovery faqs",
+    caption: "Overview of recovery faqs.",
+    placeholderLabel: "Visual pending",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "pending-clinical-review",
+    requiredDimensions: { width: 800, height: 600 }
+  },
 
   // --- INJECTIONS PAGES ---
   // Corticosteroid
@@ -512,10 +803,10 @@ export const visualsInventory: VisualAsset[] = [
     imagePath: "/images/symptoms/inner-knee-pain-overview.png",
     altText: "Medial view of the knee joint with the medial compartment and collateral ligament highlighted in orange.",
     caption: "Medial anatomy of the knee, highlighting the inner joint line and collateral ligament.",
-    placeholderLabel: "Anatomical visual pending",
+    placeholderLabel: "Anatomical visual pending — awaiting a correct medial-view illustration",
     status: "approved",
     priority: "medium",
-    clinicalReviewStatus: "clinically-approved",
+    clinicalReviewStatus: "pending-clinical-review",
     requiredDimensions: { width: 800, height: 600 }
   },
   {
@@ -584,9 +875,9 @@ export const visualsInventory: VisualAsset[] = [
     section: "overview",
     title: "Anatomical Location: Outer Knee Pain",
     type: "anatomy",
-    imagePath: "/images/symptoms/outer-knee-pain-overview.svg",
-    altText: "Lateral view of the knee joint with the lateral collateral ligament and ITB insertion highlighted in orange.",
-    caption: "Lateral anatomy of the knee, highlighting the outer joint line and ITB pathway.",
+    imagePath: "/images/symptoms/outer-knee-pain-overview.png",
+    altText: "Lateral view of the knee joint with the lateral compartment and collateral ligament highlighted in orange.",
+    caption: "Lateral anatomy of the knee, highlighting the outer joint line and collateral ligament.",
     placeholderLabel: "Anatomical visual pending",
     status: "approved",
     priority: "medium",

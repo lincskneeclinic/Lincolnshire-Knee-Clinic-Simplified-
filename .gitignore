@@ -151,5 +151,6 @@ vite.config.ts.timestamp-*
 /web/data/newsletter-poll.json
 /web/data/content-pipeline-runs.json
 /web/data/content-pipeline-reviews.json
+/web/data/clinical-review-status.json
 
 

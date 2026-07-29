@@ -264,26 +264,26 @@ export const InjectionExplanationBlock: React.FC<InjectionExplanationBlockProps>
 
       {/* Comparison summary card */}
       {comparisonProps && (
-        <div className="bg-white border border-border-clinical rounded-xl p-5 text-left space-y-4">
-          <h5 className="font-serif text-sm font-bold text-deep-navy border-b border-border-clinical/30 pb-2">
+        <div className="bg-white border border-border-clinical rounded-xl p-5 md:p-6 text-left space-y-5 shadow-sm">
+          <h5 className="font-serif text-base font-bold text-deep-navy border-b border-border-clinical/40 pb-3">
             Clinical Characteristics Summary
           </h5>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-            <div>
-              <span className="text-text-muted uppercase text-[9px] tracking-wider block font-bold">Onset of Action</span>
-              <span className="text-deep-navy font-bold">{comparisonProps.onset}</span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="flex flex-col">
+              <span className="text-text-muted uppercase text-[10px] tracking-wider font-bold mb-1.5">Onset of Action</span>
+              <span className="text-deep-navy font-bold text-sm leading-snug">{comparisonProps.onset}</span>
             </div>
-            <div>
-              <span className="text-text-muted uppercase text-[9px] tracking-wider block font-bold">Typical Duration</span>
-              <span className="text-deep-navy font-bold">{comparisonProps.duration}</span>
+            <div className="flex flex-col">
+              <span className="text-text-muted uppercase text-[10px] tracking-wider font-bold mb-1.5">Typical Duration</span>
+              <span className="text-deep-navy font-bold text-sm leading-snug">{comparisonProps.duration}</span>
             </div>
-            <div>
-              <span className="text-text-muted uppercase text-[9px] tracking-wider block font-bold">Primary Mechanism</span>
-              <span className="text-deep-navy font-bold">{comparisonProps.primaryEffect}</span>
+            <div className="flex flex-col">
+              <span className="text-text-muted uppercase text-[10px] tracking-wider font-bold mb-1.5">Primary Mechanism</span>
+              <span className="text-deep-navy font-bold text-sm leading-snug">{comparisonProps.primaryEffect}</span>
             </div>
-            <div>
-              <span className="text-text-muted uppercase text-[9px] tracking-wider block font-bold">Main Indication</span>
-              <span className="text-deep-navy font-bold">{comparisonProps.suitability}</span>
+            <div className="flex flex-col">
+              <span className="text-text-muted uppercase text-[10px] tracking-wider font-bold mb-1.5">Main Indication</span>
+              <span className="text-deep-navy font-bold text-sm leading-snug">{comparisonProps.suitability}</span>
             </div>
           </div>
         </div>

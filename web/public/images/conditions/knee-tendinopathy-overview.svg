@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Lincolnshire Knee Clinic — Patellar Tendinopathy Schematic (Lateral View)
+  ===========================================================================
+  Educational schematic showing the patellar tendon connecting the kneecap
+  to the shin bone, with a highlighted zone of tendon degeneration.
+
+  CLINICAL REVIEW STATUS: Awaiting clinical review
+  Do NOT use this as a clinical reference until reviewed.
+
+  Attribution: Internal — Lincolnshire Knee Clinic
+  Licence: All rights reserved — Lincolnshire Knee Clinic
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 800 600"
+  role="img"
+  aria-labelledby="kt-title"
+  aria-describedby="kt-desc"
+  focusable="false"
+  style="font-family: sans-serif; background-color: #071324;"
+>
+  <title id="kt-title">Schematic side view of the knee showing patellar tendinopathy</title>
+  <desc id="kt-desc">
+    An educational schematic viewed from the side, showing the kneecap (patella), the patellar tendon running down to the shin bone (tibia), and a highlighted zone of thickened, degenerative tendon tissue near the lower pole of the kneecap.
+  </desc>
+
+  <rect width="800" height="600" fill="#071324" rx="16"/>
+
+  <defs>
+    <pattern id="kt-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="600" fill="url(#kt-grid)" rx="16" aria-hidden="true"/>
+
+  <!-- Femur -->
+  <g data-region="femur" aria-label="Femur">
+    <path d="M 310 40 L 430 40 L 430 250 C 415 265, 385 268, 360 262 C 335 256, 320 240, 310 220 Z"
+          fill="rgba(255,255,255,0.10)" stroke="rgba(148,163,184,0.65)" stroke-width="2.5"/>
+  </g>
+
+  <!-- Quadriceps tendon -->
+  <g data-region="quadriceps-tendon" aria-label="Quadriceps tendon">
+    <path d="M 345 250 L 340 190 L 400 190 L 400 250 Z" fill="rgba(226,232,240,0.18)" stroke="rgba(203,213,225,0.75)" stroke-width="2"/>
+  </g>
+
+  <!-- Patella -->
+  <g data-region="patella" aria-label="Patella (kneecap)">
+    <path d="M 340 255 C 340 245, 405 245, 405 255 C 405 300, 390 335, 372 350 C 355 335, 340 300, 340 255 Z"
+          fill="rgba(255,255,255,0.14)" stroke="rgba(226,232,240,0.85)" stroke-width="2.5"/>
+  </g>
+
+  <!-- Tibia -->
+  <g data-region="tibia" aria-label="Tibia (shin bone)">
+    <path d="M 330 470 C 345 460, 420 460, 435 470 L 445 570 L 320 570 Z"
+          fill="rgba(255,255,255,0.10)" stroke="rgba(148,163,184,0.65)" stroke-width="2.5"/>
+  </g>
+
+  <!-- Healthy tendon fibers (upper portion) -->
+  <g data-region="healthy-tendon" aria-label="Healthy patellar tendon fibres">
+    <path d="M 352 350 L 345 400 L 400 400 L 393 350 Z" fill="rgba(226,232,240,0.16)" stroke="rgba(203,213,225,0.7)" stroke-width="2"/>
+  </g>
+
+  <!-- Degenerative / thickened tendon zone -->
+  <g data-region="tendinopathy-zone" aria-label="Thickened, degenerative tendon tissue">
+    <path d="M 342 400 C 336 415, 336 440, 344 455 C 358 465, 388 465, 402 455 C 410 440, 410 415, 404 400 C 384 412, 362 412, 342 400 Z"
+          fill="rgba(249,115,22,0.28)" stroke="#F97316" stroke-width="3"/>
+    <path d="M 355 415 C 365 420, 380 420, 390 415" fill="none" stroke="#fde68a" stroke-width="2" opacity="0.7"/>
+  </g>
+
+  <!-- Lower tendon fibers to tibial tuberosity -->
+  <g data-region="lower-tendon" aria-label="Lower patellar tendon fibres to tibial tuberosity">
+    <path d="M 344 455 L 337 470 L 408 470 L 402 455 Z" fill="rgba(226,232,240,0.16)" stroke="rgba(203,213,225,0.7)" stroke-width="2"/>
+  </g>
+
+  <!-- Labels -->
+  <line x1="600" y1="120" x2="425" y2="150" stroke="#00AFC8" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="605" y="123" fill="#a5f3fc" font-size="15" font-weight="bold">Femur (Thigh Bone)</text>
+
+  <line x1="140" y1="290" x2="335" y2="290" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="135" y="293" text-anchor="end" fill="#cbd5e1" font-size="15" font-weight="bold">Patella (Kneecap)</text>
+
+  <line x1="620" y1="420" x2="410" y2="425" stroke="#f97316" stroke-width="1" stroke-dasharray="2,2" opacity="0.8"/>
+  <text x="625" y="423" fill="#fdba74" font-size="15" font-weight="bold">Degenerative Tendon Zone</text>
+
+  <line x1="140" y1="510" x2="335" y2="500" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2,2" opacity="0.6"/>
+  <text x="135" y="513" text-anchor="end" fill="#cbd5e1" font-size="15" font-weight="bold">Tibial Tuberosity (Attachment)</text>
+
+  <!-- Watermark banner -->
+  <rect x="0" y="555" width="800" height="45" fill="#1e293b" rx="0"/>
+  <rect x="0" y="555" width="6" height="45" fill="#f97316"/>
+  <text x="20" y="575" font-size="14" font-weight="bold" fill="#fdba74">EDUCATIONAL ILLUSTRATION — AWAITING CLINICAL REVIEW</text>
+  <text x="20" y="592" font-size="12" fill="#cbd5e1">Not a clinical reference. Not for diagnosis. All rights reserved — Lincolnshire Knee Clinic.</text>
+</svg>

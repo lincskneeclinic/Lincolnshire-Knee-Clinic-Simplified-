@@ -16,11 +16,10 @@ export interface SymptomData {
   relatedSymptoms: string[]; // slugs
   relatedConditions: string[]; // slugs
   relatedTreatments: string[]; // names
-  imagePath: string;
-  imageAltText: string;
   metadataTitle: string;
   metadataDescription: string;
   reviewStatus: string;
+  references?: { text: string; url: string }[];
 }
 
 export const symptomsData: Record<string, SymptomData> = {
@@ -87,11 +86,19 @@ export const symptomsData: Record<string, SymptomData> = {
     relatedSymptoms: ["swollen-knee", "stiff-knee", "clicking-knee", "knee-giving-way"],
     relatedConditions: ["knee-arthritis", "meniscal-tear", "patellofemoral-pain", "cartilage-injury"],
     relatedTreatments: ["Physiotherapy", "Knee Injections", "Weight Management & Knee Health", "Book Appointment"],
-    imagePath: "/images/symptoms/knee-pain/overview.png",
-    imageAltText: "Anatomical representation of common knee pain regions",
-    metadataTitle: "Knee Pain: Possible Causes and Assessment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about possible causes of knee pain, how it may be assessed and when to seek professional advice. Read about mechanical, traumatic, and degenerative causes.",
-    reviewStatus: "Draft - Awaiting clinical review"
+    metadataTitle: "Knee Pain: Causes & Assessment | Lincolnshire Knee Clinic",
+    metadataDescription: "Explore possible causes of knee pain, from ligament strains to arthritis, how it's assessed, and when to seek specialist advice from our consultants.",
+    reviewStatus: "Draft - Awaiting clinical review",
+    references: [
+      {
+        text: "NICE Clinical Knowledge Summary — Knee pain – assessment",
+        url: "https://cks.nice.org.uk/topics/knee-pain-assessment/",
+      },
+      {
+        text: "NICE guideline NG226 — Osteoarthritis in over 16s: diagnosis and management (2022)",
+        url: "https://www.nice.org.uk/guidance/ng226",
+      },
+    ],
   },
   "swollen-knee": {
     slug: "swollen-knee",
@@ -151,10 +158,8 @@ export const symptomsData: Record<string, SymptomData> = {
     relatedSymptoms: ["knee-pain", "stiff-knee", "unable-to-straighten-knee"],
     relatedConditions: ["knee-arthritis", "meniscal-tear", "acl-injury", "bakers-cyst"],
     relatedTreatments: ["Physiotherapy", "Knee Injections", "Weight Management & Knee Health"],
-    imagePath: "/images/symptoms/swollen-knee/overview.png",
-    imageAltText: "Diagram illustrating fluid accumulation within the knee joint capsule",
-    metadataTitle: "Swollen Knee: Possible Causes and Assessment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about possible causes of a swollen knee, how it may be assessed and when to seek professional advice. Discover the difference between rapid and gradual swelling.",
+    metadataTitle: "Swollen Knee: Causes & Advice | Lincolnshire Knee Clinic",
+    metadataDescription: "Learn about possible causes of a swollen knee, how it may be assessed, and when to seek advice. Discover the difference between rapid and gradual swelling.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "stiff-knee": {
@@ -213,10 +218,8 @@ export const symptomsData: Record<string, SymptomData> = {
     relatedSymptoms: ["knee-pain", "swollen-knee", "unable-to-straighten-knee"],
     relatedConditions: ["knee-arthritis", "meniscal-tear", "cartilage-injury"],
     relatedTreatments: ["Physiotherapy", "Knee Injections", "Weight Management & Knee Health"],
-    imagePath: "/images/symptoms/stiff-knee/overview.png",
-    imageAltText: "Illustration of knee range of movement restrictions",
-    metadataTitle: "Stiff Knee: Possible Causes and Assessment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about possible causes of a stiff knee, how it may be assessed and when to seek professional advice. Discover morning stiffness and flexion issues.",
+    metadataTitle: "Stiff Knee: Causes & Advice | Lincolnshire Knee Clinic",
+    metadataDescription: "Learn about possible causes of a stiff knee, how it may be assessed, and when to seek professional advice. Discover morning stiffness and flexion issues.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "clicking-knee": {
@@ -276,10 +279,8 @@ export const symptomsData: Record<string, SymptomData> = {
     relatedSymptoms: ["knee-pain", "front-of-knee-pain", "locked-knee"],
     relatedConditions: ["patellofemoral-pain", "knee-arthritis", "meniscal-tear"],
     relatedTreatments: ["Physiotherapy", "Book Appointment"],
-    imagePath: "/images/symptoms/clicking-knee/overview.png",
-    imageAltText: "Diagram showing kneecap cartilage and joint contact surfaces",
-    metadataTitle: "Clicking or Grinding Knee: Possible Causes | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about possible causes of a clicking or grinding knee, how it may be assessed and when to seek professional advice. Read about painless crepitus.",
+    metadataTitle: "Clicking or Grinding Knee: Causes | Lincolnshire Knee Clinic",
+    metadataDescription: "Learn about possible causes of a clicking or grinding knee, how it's assessed, and when a review is recommended. Read about harmless, painless crepitus.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "locked-knee": {
@@ -339,10 +340,8 @@ export const symptomsData: Record<string, SymptomData> = {
     relatedSymptoms: ["knee-pain", "unable-to-straighten-knee", "swollen-knee"],
     relatedConditions: ["meniscal-tear", "cartilage-injury", "knee-arthritis"],
     relatedTreatments: ["Physiotherapy", "Book Appointment"],
-    imagePath: "/images/symptoms/locked-knee/overview.png",
-    imageAltText: "Illustration of a mechanical block (e.g. meniscus fragment) inside the joint",
-    metadataTitle: "Locked Knee: Possible Causes and Assessment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about possible causes of a locked knee, how it may be assessed and when to seek professional advice. Understand mechanical locking vs pseudo-locking.",
+    metadataTitle: "Locked Knee: Causes & Advice | Lincolnshire Knee Clinic",
+    metadataDescription: "Learn about possible causes of a locked knee, how it's assessed, and when to seek advice. Understand true mechanical locking versus pseudo-locking.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "knee-giving-way": {
@@ -402,10 +401,8 @@ export const symptomsData: Record<string, SymptomData> = {
     relatedSymptoms: ["knee-pain-after-injury", "swollen-knee", "knee-pain"],
     relatedConditions: ["acl-injury", "knee-instability", "patellofemoral-pain", "meniscal-tear"],
     relatedTreatments: ["Physiotherapy", "Book Appointment"],
-    imagePath: "/images/symptoms/knee-giving-way/overview.png",
-    imageAltText: "Illustration of knee joint showing directional instability",
-    metadataTitle: "Knee Giving Way: Causes and Assessment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about possible causes of a knee giving way, how it may be assessed and when to seek professional advice. Discover ligamentous and muscular instability.",
+    metadataTitle: "Knee Giving Way: Causes | Lincolnshire Knee Clinic",
+    metadataDescription: "Learn about possible causes of a knee giving way, how it's assessed, and when to seek advice. Discover ligamentous and muscular sources of instability.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "unable-to-straighten-knee": {
@@ -465,10 +462,8 @@ export const symptomsData: Record<string, SymptomData> = {
     relatedSymptoms: ["locked-knee", "swollen-knee", "knee-pain-after-injury"],
     relatedConditions: ["meniscal-tear", "cartilage-injury", "knee-arthritis"],
     relatedTreatments: ["Physiotherapy", "Book Appointment"],
-    imagePath: "/images/symptoms/unable-to-straighten-knee/overview.png",
-    imageAltText: "Illustration comparing full extension with restricted knee extension",
-    metadataTitle: "Unable to Straighten Knee: Causes and Assessment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about possible causes of being unable to straighten the knee, how it may be assessed and when to seek professional advice. Read about mechanical extension blocks.",
+    metadataTitle: "Can't Straighten Your Knee | Lincolnshire Knee Clinic",
+    metadataDescription: "Learn about possible causes of being unable to straighten the knee, how it's assessed, and when to seek advice. Read about mechanical extension blocks.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "front-of-knee-pain": {
@@ -528,10 +523,8 @@ export const symptomsData: Record<string, SymptomData> = {
     relatedSymptoms: ["clicking-knee", "knee-pain"],
     relatedConditions: ["patellofemoral-pain", "knee-tendinopathy", "knee-arthritis"],
     relatedTreatments: ["Physiotherapy", "Book Appointment"],
-    imagePath: "/images/symptoms/front-of-knee-pain/overview.png",
-    imageAltText: "Anatomical view of the anterior knee showing patella and patellar tendon",
-    metadataTitle: "Pain at the Front of the Knee: Causes | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about possible causes of pain at the front of the knee, how it may be assessed and when to seek professional advice. Read about patellofemoral and tendon issues.",
+    metadataTitle: "Front of Knee Pain: Causes | Lincolnshire Knee Clinic",
+    metadataDescription: "Learn about possible causes of pain at the front of the knee, how it's assessed, and when to seek advice. Read about patellofemoral and tendon issues.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "back-of-knee-pain": {
@@ -590,10 +583,8 @@ export const symptomsData: Record<string, SymptomData> = {
     relatedSymptoms: ["swollen-knee", "stiff-knee", "knee-pain"],
     relatedConditions: ["bakers-cyst", "meniscal-tear", "knee-arthritis"],
     relatedTreatments: ["Physiotherapy", "Knee Injections"],
-    imagePath: "/images/symptoms/back-of-knee-pain/overview.png",
-    imageAltText: "Anatomical view of the posterior knee showing the popliteal fossa",
-    metadataTitle: "Pain at the Back of the Knee: Causes | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about possible causes of pain at the back of the knee, how it may be assessed and when to seek professional advice. Discover Baker's Cyst indications.",
+    metadataTitle: "Back of Knee Pain: Causes | Lincolnshire Knee Clinic",
+    metadataDescription: "Learn about possible causes of pain at the back of the knee, how it's assessed, and when to seek advice. Discover Baker's cyst indications and causes.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "inner-knee-pain": {
@@ -653,10 +644,8 @@ export const symptomsData: Record<string, SymptomData> = {
     relatedSymptoms: ["knee-pain", "swollen-knee", "locked-knee"],
     relatedConditions: ["knee-arthritis", "meniscal-tear"],
     relatedTreatments: ["Physiotherapy", "Knee Injections"],
-    imagePath: "/images/symptoms/inner-knee-pain/overview.png",
-    imageAltText: "Anatomical view of the medial knee showing the MCL and medial meniscus",
-    metadataTitle: "Pain on the Inside of the Knee: Causes | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about possible causes of pain on the inside of the knee, how it may be assessed and when to seek professional advice. Discover medial joint issues.",
+    metadataTitle: "Inner Knee Pain: Causes | Lincolnshire Knee Clinic",
+    metadataDescription: "Learn about possible causes of pain on the inside of the knee, how it's assessed, and when to seek advice. Discover medial joint and ligament issues.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "outer-knee-pain": {
@@ -716,10 +705,8 @@ export const symptomsData: Record<string, SymptomData> = {
     relatedSymptoms: ["knee-pain", "knee-giving-way", "knee-pain-after-injury"],
     relatedConditions: ["meniscal-tear", "knee-instability"],
     relatedTreatments: ["Physiotherapy", "Book Appointment"],
-    imagePath: "/images/symptoms/outer-knee-pain/overview.png",
-    imageAltText: "Anatomical view of the lateral knee showing the LCL and ITB location",
-    metadataTitle: "Pain on the Outside of the Knee: Causes | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about possible causes of pain on the outside of the knee, how it may be assessed and when to seek professional advice. Discover lateral joint and ITB details.",
+    metadataTitle: "Outer Knee Pain: Causes | Lincolnshire Knee Clinic",
+    metadataDescription: "Learn about possible causes of pain on the outside of the knee, how it's assessed, and when to seek advice. Discover lateral joint and ITB details.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "knee-pain-after-injury": {
@@ -780,10 +767,8 @@ export const symptomsData: Record<string, SymptomData> = {
     relatedSymptoms: ["swollen-knee", "locked-knee", "knee-giving-way", "unable-to-straighten-knee"],
     relatedConditions: ["acl-injury", "meniscal-tear", "cartilage-injury", "knee-instability"],
     relatedTreatments: ["Physiotherapy", "Book Appointment"],
-    imagePath: "/images/symptoms/knee-pain-after-injury/overview.png",
-    imageAltText: "Diagram of the knee joint illustrating common traumatic injury sites",
-    metadataTitle: "Knee Pain After an Injury: Assessment | Lincolnshire Knee Clinic",
-    metadataDescription: "Learn about possible causes of knee pain after an injury, how it may be assessed and when to seek professional advice. Discover acute trauma guidelines.",
+    metadataTitle: "Knee Pain After an Injury | Lincolnshire Knee Clinic",
+    metadataDescription: "Learn about possible causes of knee pain after an injury, how it's assessed, and when to seek advice. Discover acute trauma guidelines and red flags.",
     reviewStatus: "Draft - Awaiting clinical review"
   }
 };

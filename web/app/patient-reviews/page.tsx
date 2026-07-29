@@ -45,7 +45,7 @@ export default function PatientReviewsPage() {
           rating="[Overall Rating — Google Reviews]"
           reviewCount="[Total Review Count — Google Reviews]"
           featuredReviews={mockFeaturedReviews}
-          platformUrl={null} // Pending setup
+          platformUrl="https://g.page/r/CYqSfdXK1SGEEBM/review"
         />
         <ReviewPlatformCard
           platformName="Doctify"
@@ -89,10 +89,15 @@ export default function PatientReviewsPage() {
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <div className="flex flex-col items-center">
-            <Button disabled variant="secondary" className="min-w-[200px]">
+            <Button
+              href="https://g.page/r/CYqSfdXK1SGEEBM/review"
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="secondary"
+              className="min-w-[200px]"
+            >
               Leave a Google Review
             </Button>
-            <span className="text-[10px] text-text-muted mt-1 italic">Google link pending</span>
           </div>
           <div className="flex flex-col items-center">
             <Button disabled variant="secondary" className="min-w-[200px]">

@@ -6,10 +6,40 @@ import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { Button } from "@/components/Button";
 import { PageHeader } from "@/components/PageHeader";
 import { treatmentsData } from "@/data/treatments";
+import { getVisualAsset } from "@/data/visualsInventory";
+import { SITE_URL } from "@/lib/site";
+
+const PAGE_TITLE = "Knee Treatments & Procedures | Lincolnshire Knee Clinic";
+const PAGE_DESCRIPTION =
+  "Explore our surgical and non-surgical knee treatment options. Learn about physiotherapy, joint injections, knee arthroscopy, and knee replacements.";
+const PAGE_URL = `${SITE_URL}/treatments`;
 
 export const metadata: Metadata = {
-  title: "Knee Treatments & Procedures | Lincolnshire Knee Clinic",
-  description: "Explore our surgical and non-surgical knee treatment options. Learn about physiotherapy, joint injections, knee arthroscopy, and knee replacements.",
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION,
+  alternates: {
+    canonical: PAGE_URL,
+  },
+  openGraph: {
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    url: PAGE_URL,
+    type: "website",
+    images: [
+      {
+        url: `${SITE_URL}/brand/lkc-logo-k-transparent.png`,
+        width: 800,
+        height: 800,
+        alt: "Lincolnshire Knee Clinic logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    images: [`${SITE_URL}/brand/lkc-logo-k-transparent.png`],
+  },
 };
 
 export default function TreatmentsHub() {
@@ -30,8 +60,27 @@ export default function TreatmentsHub() {
   const surgical = allTreatments.filter((t) => t.category === "surgical");
   const recovery = allTreatments.filter((t) => t.category === "recovery");
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${PAGE_URL}#webpage`,
+    "url": PAGE_URL,
+    "name": PAGE_TITLE,
+    "description": PAGE_DESCRIPTION,
+    "inLanguage": "en-GB",
+    "hasPart": allTreatments.map(t => ({
+      "@type": "MedicalWebPage",
+      "url": `${SITE_URL}/treatments/${t.slug}`,
+      "name": t.name
+    }))
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-16 font-sans space-y-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Breadcrumbs items={[{ label: "Treatments" }]} />
 
       <PageHeader
@@ -41,7 +90,7 @@ export default function TreatmentsHub() {
       />
 
       <p className="text-xs text-text-secondary/70 italic border-t border-border-clinical/30 pt-4">
-        Content is consultant reviewed and intended for general patient education.
+        Content is intended for general patient education. Each page shows its current clinical review status below.
       </p>
 
       {/* NON-SURGICAL TREATMENTS Section */}
@@ -50,16 +99,23 @@ export default function TreatmentsHub() {
           Non-Surgical Treatments
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {nonSurgical.map((item, idx) => (
-            <Card
-              key={idx}
-              category="Non-Surgical"
-              title={item.name}
-              description={item.shortDescription}
-              href={"customHref" in item ? item.customHref : `/treatments/${item.slug}`}
-              linkText="Explore Treatment"
-            />
-          ))}
+          {nonSurgical.map((item, idx) => {
+            const visual = item.slug === "injections" 
+              ? { imagePath: "/images/injections/corticosteroid-anatomy.png" } 
+              : getVisualAsset(`treatments/${item.slug}`, "overview");
+
+            return (
+              <Card
+                key={idx}
+                category="Non-Surgical"
+                title={item.name}
+                description={item.shortDescription}
+                href={"customHref" in item ? item.customHref : `/treatments/${item.slug}`}
+                linkText="Explore Treatment"
+                imageUrl={visual.imagePath || undefined}
+              />
+            );
+          })}
         </div>
       </section>
 
@@ -69,16 +125,20 @@ export default function TreatmentsHub() {
           Surgical Treatments
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {surgical.map((item, idx) => (
-            <Card
-              key={idx}
-              category="Surgical"
-              title={item.name}
-              description={item.shortDescription}
-              href={`/treatments/${item.slug}`}
-              linkText="Explore Treatment"
-            />
-          ))}
+          {surgical.map((item, idx) => {
+            const visual = getVisualAsset(`treatments/${item.slug}`, "overview");
+            return (
+              <Card
+                key={idx}
+                category="Surgical"
+                title={item.name}
+                description={item.shortDescription}
+                href={`/treatments/${item.slug}`}
+                linkText="Explore Treatment"
+                imageUrl={visual.imagePath || undefined}
+              />
+            );
+          })}
         </div>
       </section>
 
@@ -88,16 +148,20 @@ export default function TreatmentsHub() {
           Recovery & Rehabilitation
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {recovery.map((item, idx) => (
-            <Card
-              key={idx}
-              category="Recovery Resource"
-              title={item.name}
-              description={item.shortDescription}
-              href={`/treatments/${item.slug}`}
-              linkText="Explore Resource"
-            />
-          ))}
+          {recovery.map((item, idx) => {
+            const visual = getVisualAsset(`treatments/${item.slug}`, "overview");
+            return (
+              <Card
+                key={idx}
+                category="Recovery Resource"
+                title={item.name}
+                description={item.shortDescription}
+                href={`/treatments/${item.slug}`}
+                linkText="Explore Resource"
+                imageUrl={visual.imagePath || undefined}
+              />
+            );
+          })}
         </div>
       </section>
 

@@ -19,6 +19,7 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
+  const [website, setWebsite] = useState(""); // honeypot — must stay empty; real users never see or fill this
   const [consentChecked, setConsentChecked] = useState(false); // MUST default to false
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -55,6 +56,7 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
           name: name.trim(),
           email: email.trim(),
           mobile: mobile.trim() || undefined,
+          website,
           consentChecked,
           consentSource: "newsletter-signup-component",
         }),
@@ -106,6 +108,19 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        {/* Honeypot — hidden from sighted/keyboard/screen-reader users, bots often fill every field */}
+        <div aria-hidden="true" className="absolute opacity-0 pointer-events-none h-0 w-0 overflow-hidden -z-10">
+          <label htmlFor="newsletter-website">Leave this field blank</label>
+          <input
+            id="newsletter-website"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+          />
+        </div>
+
         {/* Name (Required) */}
         <div className="flex flex-col gap-1">
           <label

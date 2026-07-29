@@ -6,10 +6,13 @@ import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { ClinicalMetadataBlock } from "@/components/ClinicalMetadataBlock";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { injectionsData } from "@/data/injections";
+import { getClinicalReviewStatus } from "@/lib/clinicalReview";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { InjectionExplanationBlock } from "@/components/visuals/InjectionExplanationBlock";
+import { getVisualAsset } from "@/data/visualsInventory";
+import { SITE_URL } from "@/lib/site";
 
 interface InjectionPageProps {
   slug: string;
@@ -19,7 +22,7 @@ export function getInjectionMetadata(slug: string): Metadata {
   const injection = injectionsData.find((inj) => inj.slug === slug);
   if (!injection) return {};
   
-  const siteUrl = "https://lincolnshirekneeclinic.co.uk";
+  const siteUrl = SITE_URL;
   
   return {
     title: injection.metaTitle,
@@ -32,6 +35,14 @@ export function getInjectionMetadata(slug: string): Metadata {
       description: injection.metaDescription,
       url: `${siteUrl}/injections/${slug}`,
       type: "website",
+      images: [
+        {
+          url: `${siteUrl}/images/injections/${slug}-anatomy.png`,
+          width: 800,
+          height: 600,
+          alt: injection.metaTitle,
+        }
+      ]
     },
     twitter: {
       title: injection.metaTitle,
@@ -46,6 +57,7 @@ export const InjectionPage: React.FC<InjectionPageProps> = ({ slug }) => {
   if (!injection) {
     notFound();
   }
+  const clinicalReview = getClinicalReviewStatus(`injections/${slug}`);
 
   const tableOfContents = [
     { label: "Overview", id: "overview" },
@@ -59,18 +71,21 @@ export const InjectionPage: React.FC<InjectionPageProps> = ({ slug }) => {
     { label: "References", id: "references" },
   ];
 
+  const visualAsset = getVisualAsset(`injections/${slug}`, "anatomy");
+
   // Dynamic JSON-LD Schema
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "MedicalWebPage",
-        "@id": `https://lincolnshirekneeclinic.co.uk/injections/${injection.slug}#webpage`,
-        "url": `https://lincolnshirekneeclinic.co.uk/injections/${injection.slug}`,
+        "@id": `${SITE_URL}/injections/${injection.slug}#webpage`,
+        "url": `${SITE_URL}/injections/${injection.slug}`,
         "name": injection.metaTitle,
         "headline": injection.title,
         "description": injection.metaDescription,
         "inLanguage": "en-GB",
+        ...(visualAsset.imagePath ? { "image": `${SITE_URL}${visualAsset.imagePath}` } : {}),
         "medicalAudience": "Patient",
         "specialty": "Orthopedic",
         "breadcrumb": {
@@ -80,13 +95,13 @@ export const InjectionPage: React.FC<InjectionPageProps> = ({ slug }) => {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://lincolnshirekneeclinic.co.uk/"
+              "item": `${SITE_URL}/`
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Injections",
-              "item": "https://lincolnshirekneeclinic.co.uk/injections"
+              "item": `${SITE_URL}/injections`
             },
             {
               "@type": "ListItem",
@@ -96,17 +111,17 @@ export const InjectionPage: React.FC<InjectionPageProps> = ({ slug }) => {
           ]
         },
         "about": {
-          "@id": `https://lincolnshirekneeclinic.co.uk/injections/${injection.slug}#procedure`
+          "@id": `${SITE_URL}/injections/${injection.slug}#procedure`
         }
       },
       {
         "@type": "MedicalProcedure",
-        "@id": `https://lincolnshirekneeclinic.co.uk/injections/${injection.slug}#procedure`,
+        "@id": `${SITE_URL}/injections/${injection.slug}#procedure`,
         "name": injection.title,
         "description": injection.oneSentenceDescription,
         "bodyLocation": "Knee joint",
         "relevantSpecialty": "Orthopedic",
-        "mainEntityOfPage": `https://lincolnshirekneeclinic.co.uk/injections/${injection.slug}`
+        "mainEntityOfPage": `${SITE_URL}/injections/${injection.slug}`
       },
       {
         "@type": "FAQPage",
@@ -515,7 +530,16 @@ export const InjectionPage: React.FC<InjectionPageProps> = ({ slug }) => {
 
           {/* Section 15: Clinical Review */}
           <section className="pt-4">
-            <ClinicalMetadataBlock />
+            <ClinicalMetadataBlock
+              {...(clinicalReview.reviewed
+                ? {
+                    reviewerName: clinicalReview.reviewerName,
+                    reviewerTitle: clinicalReview.reviewerTitle,
+                    lastReviewedDate: clinicalReview.lastReviewedDate,
+                    evidenceSource: clinicalReview.evidenceSource,
+                  }
+                : {})}
+            />
           </section>
 
           {/* Section 16: References */}

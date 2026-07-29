@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Lincolnshire Knee Clinic — Loose Bodies in the Knee Schematic (Anterior View)
+  ================================================================================
+  Educational schematic showing free-floating fragments of bone or cartilage
+  within the knee joint, including one wedged between the joint surfaces.
+
+  CLINICAL REVIEW STATUS: Awaiting clinical review
+  Do NOT use this as a clinical reference until reviewed.
+
+  Attribution: Internal — Lincolnshire Knee Clinic
+  Licence: All rights reserved — Lincolnshire Knee Clinic
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 800 600"
+  role="img"
+  aria-labelledby="lb-title"
+  aria-describedby="lb-desc"
+  focusable="false"
+  style="font-family: sans-serif; background-color: #071324;"
+>
+  <title id="lb-title">Schematic anterior view of a knee joint showing loose bodies</title>
+  <desc id="lb-desc">
+    An educational schematic of the front of the knee joint, showing small free-floating fragments of bone or cartilage within the joint cavity, including one fragment wedged at the joint line causing mechanical locking.
+  </desc>
+
+  <rect width="800" height="600" fill="#071324" rx="16"/>
+
+  <defs>
+    <pattern id="lb-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="600" fill="url(#lb-grid)" rx="16" aria-hidden="true"/>
+
+  <!-- Femur -->
+  <g data-region="femur" aria-label="Femur">
+    <path d="M 320 40 L 480 40 L 480 220 C 460 240, 430 248, 400 248 C 370 248, 340 240, 320 220 Z"
+          fill="rgba(255,255,255,0.10)" stroke="rgba(148,163,184,0.65)" stroke-width="2.5"/>
+  </g>
+
+  <!-- Joint capsule outline (suprapatellar pouch area) -->
+  <g data-region="joint-capsule" aria-label="Joint capsule / synovial cavity">
+    <path d="M 300 230 C 300 300, 320 340, 400 350 C 480 340, 500 300, 500 230 L 500 340 C 500 380, 460 400, 400 400 C 340 400, 300 380, 300 340 Z"
+          fill="rgba(0,175,200,0.08)" stroke="rgba(0,175,200,0.4)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  </g>
+
+  <!-- Tibia -->
+  <g data-region="tibia" aria-label="Tibia">
+    <path d="M 340 395 C 355 388, 445 388, 460 395 L 470 570 L 330 570 Z"
+          fill="rgba(255,255,255,0.10)" stroke="rgba(148,163,184,0.65)" stroke-width="2.5"/>
+  </g>
+
+  <!-- Joint line -->
+  <line x1="310" y1="392" x2="490" y2="392" stroke="rgba(148,163,184,0.5)" stroke-width="2" stroke-dasharray="2,3"/>
+
+  <!-- Floating loose bodies -->
+  <g data-region="loose-body-1" aria-label="Free-floating loose body, upper joint recess">
+    <circle cx="345" cy="270" r="14" fill="rgba(226,232,240,0.5)" stroke="#e2e8f0" stroke-width="2"/>
+  </g>
+  <g data-region="loose-body-2" aria-label="Free-floating loose body, upper joint recess">
+    <circle cx="460" cy="255" r="10" fill="rgba(226,232,240,0.4)" stroke="#e2e8f0" stroke-width="2"/>
+  </g>
+  <g data-region="loose-body-wedged" aria-label="Loose body wedged at the joint line causing mechanical locking">
+    <circle cx="400" cy="392" r="17" fill="rgba(249,115,22,0.35)" stroke="#F97316" stroke-width="3"/>
+  </g>
+
+  <!-- Locking indicator -->
+  <g data-region="locking-indicator" aria-label="Mechanical locking indicator">
+    <path d="M 400 355 L 400 375" stroke="#fdba74" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M 400 409 L 400 429" stroke="#fdba74" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Labels -->
+  <line x1="620" y1="130" x2="475" y2="150" stroke="#00AFC8" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="625" y="133" fill="#a5f3fc" font-size="15" font-weight="bold">Femur (Thigh Bone)</text>
+
+  <line x1="150" y1="250" x2="335" y2="268" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <text x="145" y="253" text-anchor="end" fill="#e2e8f0" font-size="15" font-weight="bold">Free-Floating Loose Bodies</text>
+
+  <line x1="640" y1="430" x2="415" y2="398" stroke="#f97316" stroke-width="1" stroke-dasharray="2,2" opacity="0.8"/>
+  <text x="645" y="433" fill="#fdba74" font-size="15" font-weight="bold">Fragment Wedged at Joint Line</text>
+
+  <line x1="150" y1="500" x2="335" y2="480" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2,2" opacity="0.6"/>
+  <text x="145" y="503" text-anchor="end" fill="#cbd5e1" font-size="15" font-weight="bold">Tibia (Shin Bone)</text>
+
+  <!-- Watermark banner -->
+  <rect x="0" y="555" width="800" height="45" fill="#1e293b" rx="0"/>
+  <rect x="0" y="555" width="6" height="45" fill="#f97316"/>
+  <text x="20" y="575" font-size="14" font-weight="bold" fill="#fdba74">EDUCATIONAL ILLUSTRATION — AWAITING CLINICAL REVIEW</text>
+  <text x="20" y="592" font-size="12" fill="#cbd5e1">Not a clinical reference. Not for diagnosis. All rights reserved — Lincolnshire Knee Clinic.</text>
+</svg>

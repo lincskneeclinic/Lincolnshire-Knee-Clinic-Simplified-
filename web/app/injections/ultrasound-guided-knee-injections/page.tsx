@@ -7,22 +7,27 @@ import { ClinicalMetadataBlock } from "@/components/ClinicalMetadataBlock";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import Link from "next/link";
 import { InjectionStepViewer } from "@/components/visuals/InjectionStepViewer";
+import { getClinicalReviewStatus } from "@/lib/clinicalReview";
+import { SITE_URL } from "@/lib/site";
+
+const PAGE_URL = `${SITE_URL}/injections/ultrasound-guided-knee-injections`;
 
 export const metadata: Metadata = {
   title: "Ultrasound-Guided Knee Injections | Lincolnshire Knee Clinic",
   description: "Learn when ultrasound guidance may be used for knee injections, how the procedure works, and its potential advantages and limitations.",
   alternates: {
-    canonical: "https://lincolnshirekneeclinic.co.uk/injections/ultrasound-guided-knee-injections",
+    canonical: PAGE_URL,
   },
   openGraph: {
     title: "Ultrasound-Guided Knee Injections | Lincolnshire Knee Clinic",
     description: "Learn when ultrasound guidance may be used for knee injections, how the procedure works, and its potential advantages and limitations.",
-    url: "https://lincolnshirekneeclinic.co.uk/injections/ultrasound-guided-knee-injections",
+    url: PAGE_URL,
     type: "website",
   },
 };
 
 export default function UltrasoundGuidedPage() {
+  const clinicalReview = getClinicalReviewStatus("injections/ultrasound-guided-knee-injections");
   const tableOfContents = [
     { label: "Overview", id: "overview" },
     { label: "How It Works", id: "how-it-works" },
@@ -74,8 +79,8 @@ export default function UltrasoundGuidedPage() {
     "@graph": [
       {
         "@type": "MedicalWebPage",
-        "@id": "https://lincolnshirekneeclinic.co.uk/injections/ultrasound-guided-knee-injections#webpage",
-        "url": "https://lincolnshirekneeclinic.co.uk/injections/ultrasound-guided-knee-injections",
+        "@id": `${PAGE_URL}#webpage`,
+        "url": PAGE_URL,
         "name": "Ultrasound-Guided Knee Injections | Lincolnshire Knee Clinic",
         "headline": "Ultrasound-Guided Knee Injections",
         "description": "Learn when ultrasound guidance may be used for knee injections, how the procedure works, and its potential advantages and limitations.",
@@ -89,13 +94,13 @@ export default function UltrasoundGuidedPage() {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://lincolnshirekneeclinic.co.uk/"
+              "item": `${SITE_URL}/`
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Injections",
-              "item": "https://lincolnshirekneeclinic.co.uk/injections"
+              "item": `${SITE_URL}/injections`
             },
             {
               "@type": "ListItem",
@@ -107,7 +112,7 @@ export default function UltrasoundGuidedPage() {
       },
       {
         "@type": "MedicalProcedure",
-        "@id": "https://lincolnshirekneeclinic.co.uk/injections/ultrasound-guided-knee-injections#procedure",
+        "@id": `${PAGE_URL}#procedure`,
         "name": "Ultrasound-Guided Knee Injection Guidance",
         "description": "The use of ultrasound imaging to assist in the delivery of intra-articular and soft-tissue knee injections.",
         "bodyLocation": "Knee joint",
@@ -363,7 +368,16 @@ export default function UltrasoundGuidedPage() {
           </section>
 
           <section className="pt-4">
-            <ClinicalMetadataBlock />
+            <ClinicalMetadataBlock
+              {...(clinicalReview.reviewed
+                ? {
+                    reviewerName: clinicalReview.reviewerName,
+                    reviewerTitle: clinicalReview.reviewerTitle,
+                    lastReviewedDate: clinicalReview.lastReviewedDate,
+                    evidenceSource: clinicalReview.evidenceSource,
+                  }
+                : {})}
+            />
           </section>
 
           <section id="references" className="scroll-mt-8 space-y-3 pt-6 border-t border-border-clinical/30 text-xs text-text-muted leading-relaxed">

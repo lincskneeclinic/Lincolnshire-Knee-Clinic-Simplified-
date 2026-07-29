@@ -7,8 +7,11 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 import { Button } from "@/components/Button";
 import Link from "next/link";
 import { treatmentsData } from "@/data/treatments";
+import { getClinicalReviewStatus } from "@/lib/clinicalReview";
+import { SITE_URL } from "@/lib/site";
 import { conditionsData } from "@/data/conditions";
 import { symptomsData } from "@/data/symptoms";
+import { getVisualAsset } from "@/data/visualsInventory";
 import { ContinueYourKneeJourney } from "@/components/ContinueYourKneeJourney";
 import { MedicalIllustrationBlock } from "@/components/visuals/MedicalIllustrationBlock";
 import { ComparisonDiagramBlock } from "@/components/visuals/ComparisonDiagramBlock";
@@ -26,30 +29,40 @@ export function getTreatmentMetadata(slug: string): Metadata {
       title: "Treatment Details | Lincolnshire Knee Clinic",
     };
   }
+
+  const visualAsset = getVisualAsset(`treatments/${slug}`, "overview");
+  const shareImage = visualAsset.imagePath
+    ? {
+        url: `${SITE_URL}${visualAsset.imagePath}`,
+        width: visualAsset.requiredDimensions?.width || 800,
+        height: visualAsset.requiredDimensions?.height || 600,
+        alt: visualAsset.altText || treatment.name,
+      }
+    : {
+        url: `${SITE_URL}/brand/lkc-logo-k-transparent.png`,
+        width: 800,
+        height: 800,
+        alt: "Lincolnshire Knee Clinic logo",
+      };
+
   return {
     title: `${treatment.name} | Lincolnshire Knee Clinic`,
     description: treatment.metadataDescription,
     alternates: {
-      canonical: `https://lincolnshirekneeclinic.co.uk/treatments/${treatment.slug}`,
+      canonical: `${SITE_URL}/treatments/${treatment.slug}`,
     },
     openGraph: {
       title: `${treatment.name} | Lincolnshire Knee Clinic`,
       description: treatment.metadataDescription,
-      url: `https://lincolnshirekneeclinic.co.uk/treatments/${treatment.slug}`,
+      url: `${SITE_URL}/treatments/${treatment.slug}`,
       type: "article",
-      images: [
-        {
-          url: "https://lincolnshirekneeclinic.co.uk/brand/lkc-logo-k-transparent.png",
-          width: 800,
-          height: 800,
-          alt: "Lincolnshire Knee Clinic logo",
-        },
-      ],
+      images: [shareImage],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: `${treatment.name} | Lincolnshire Knee Clinic`,
       description: treatment.metadataDescription,
+      images: [shareImage.url],
     },
   };
 }
@@ -60,6 +73,7 @@ interface TreatmentPageProps {
 
 export const TreatmentPage: React.FC<TreatmentPageProps> = ({ slug }) => {
   const treatment = treatmentsData[slug];
+  const clinicalReview = getClinicalReviewStatus(`treatments/${slug}`);
 
   if (!treatment) {
     return (
@@ -98,18 +112,21 @@ export const TreatmentPage: React.FC<TreatmentPageProps> = ({ slug }) => {
         { label: "References", id: "references" },
       ];
 
+  const visualAsset = getVisualAsset(`treatments/${slug}`, "overview");
+
   // Dynamic JSON-LD Schema (MedicalWebPage + MedicalProcedure + FAQPage)
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "MedicalWebPage",
-        "@id": `https://lincolnshirekneeclinic.co.uk/treatments/${treatment.slug}#webpage`,
-        "url": `https://lincolnshirekneeclinic.co.uk/treatments/${treatment.slug}`,
+        "@id": `${SITE_URL}/treatments/${treatment.slug}#webpage`,
+        "url": `${SITE_URL}/treatments/${treatment.slug}`,
         "name": `${treatment.name} | Lincolnshire Knee Clinic`,
         "headline": treatment.name,
         "description": treatment.metadataDescription,
         "inLanguage": "en-GB",
+        ...(visualAsset.imagePath ? { "image": `${SITE_URL}${visualAsset.imagePath}` } : {}),
         "medicalAudience": "Patient",
         "specialty": "Orthopedic",
         "breadcrumb": {
@@ -119,13 +136,13 @@ export const TreatmentPage: React.FC<TreatmentPageProps> = ({ slug }) => {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://lincolnshirekneeclinic.co.uk/"
+              "item": `${SITE_URL}/`
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Treatments",
-              "item": "https://lincolnshirekneeclinic.co.uk/treatments"
+              "item": `${SITE_URL}/treatments`
             },
             {
               "@type": "ListItem",
@@ -138,7 +155,7 @@ export const TreatmentPage: React.FC<TreatmentPageProps> = ({ slug }) => {
       ...(treatment.category === "surgical" ? [
         {
           "@type": "MedicalProcedure",
-          "@id": `https://lincolnshirekneeclinic.co.uk/treatments/${treatment.slug}#procedure`,
+          "@id": `${SITE_URL}/treatments/${treatment.slug}#procedure`,
           "name": treatment.name,
           "description": treatment.shortDescription,
           "relevantSpecialty": "Orthopedic",
@@ -880,26 +897,40 @@ export const TreatmentPage: React.FC<TreatmentPageProps> = ({ slug }) => {
           </section>
 
           {/* 18. Clinical Review card */}
-          <ClinicalMetadataBlock 
+          <ClinicalMetadataBlock
             className="w-full bg-pale-clinical-blue/20"
-            evidenceSource="NICE clinical guidance and British Orthopaedic Association (BOA) standards."
-            lastReviewedDate="July 2026"
+            {...(clinicalReview.reviewed
+              ? {
+                  reviewerName: clinicalReview.reviewerName,
+                  reviewerTitle: clinicalReview.reviewerTitle,
+                  lastReviewedDate: clinicalReview.lastReviewedDate,
+                  evidenceSource: clinicalReview.evidenceSource,
+                }
+              : {})}
           />
 
           {/* References */}
-          <section id="references" className="scroll-mt-8 border-t border-border-clinical/30 pt-6">
-            <span className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2.5">
-              References
-            </span>
-            <ul className="list-decimal pl-5 space-y-1.5 text-xs text-text-muted font-medium">
-              <li>[Evidence Source 1]</li>
-              <li>[Evidence Source 2]</li>
-              <li>[Evidence Source 3]</li>
-            </ul>
-            <p className="text-[10px] text-text-muted italic mt-2.5">
-              References will be completed and clinically reviewed before publication.
-            </p>
-          </section>
+          {treatment.references && treatment.references.length > 0 && (
+            <section id="references" className="scroll-mt-8 border-t border-border-clinical/30 pt-6">
+              <span className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2.5">
+                References
+              </span>
+              <ol className="list-decimal pl-5 space-y-1.5 text-xs text-text-muted font-medium">
+                {treatment.references.map((reference, idx) => (
+                  <li key={idx}>
+                    <a
+                      href={reference.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-clinical-teal hover:underline"
+                    >
+                      {reference.text}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
 
         </main>
       </div>

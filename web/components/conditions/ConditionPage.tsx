@@ -7,7 +7,12 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 import { Button } from "@/components/Button";
 import { UrgentAdviceBanner } from "@/components/UrgentAdviceBanner";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { conditionsData } from "@/data/conditions";
+import { symptomsData } from "@/data/symptoms";
+import { getVisualAsset } from "@/data/visualsInventory";
+import { getClinicalReviewStatus } from "@/lib/clinicalReview";
+import { SITE_URL } from "@/lib/site";
 import { ContinueYourKneeJourney } from "@/components/ContinueYourKneeJourney";
 import { MedicalIllustrationBlock } from "@/components/visuals/MedicalIllustrationBlock";
 import { ComparisonDiagramBlock } from "@/components/visuals/ComparisonDiagramBlock";
@@ -74,25 +79,34 @@ export function getConditionMetadata(slug: string): Metadata {
       title: "Condition Details | Lincolnshire Knee Clinic",
     };
   }
+  // Prefer the condition's own overview illustration for the share image; fall back
+  // to the clinic logo if no real asset exists yet for this condition.
+  const visualAsset = getVisualAsset(`conditions/${slug}`, "overview");
+  const shareImage = visualAsset.status === "approved" && visualAsset.imagePath
+    ? {
+        url: `${SITE_URL}${visualAsset.imagePath}`,
+        width: visualAsset.requiredDimensions.width,
+        height: visualAsset.requiredDimensions.height,
+        alt: visualAsset.altText,
+      }
+    : {
+        url: `${SITE_URL}/brand/lkc-logo-k-transparent.png`,
+        width: 800,
+        height: 800,
+        alt: "Lincolnshire Knee Clinic logo",
+      };
   return {
     title: condition.metadataTitle,
     description: condition.metadataDescription,
     alternates: {
-      canonical: `https://lincolnshirekneeclinic.co.uk/conditions/${condition.slug}`,
+      canonical: `${SITE_URL}/conditions/${condition.slug}`,
     },
     openGraph: {
       title: condition.metadataTitle,
       description: condition.metadataDescription,
-      url: `https://lincolnshirekneeclinic.co.uk/conditions/${condition.slug}`,
+      url: `${SITE_URL}/conditions/${condition.slug}`,
       type: "article",
-      images: [
-        {
-          url: "https://lincolnshirekneeclinic.co.uk/brand/lkc-logo-k-transparent.png",
-          width: 800,
-          height: 800,
-          alt: "Lincolnshire Knee Clinic logo",
-        },
-      ],
+      images: [shareImage],
     },
     twitter: {
       card: "summary",
@@ -108,15 +122,10 @@ interface ConditionPageProps {
 
 export const ConditionPage: React.FC<ConditionPageProps> = ({ slug }) => {
   const condition = conditionsData[slug];
+  const clinicalReview = getClinicalReviewStatus(`conditions/${slug}`);
 
   if (!condition) {
-    return (
-      <div className="max-w-7xl mx-auto px-6 py-20 text-center font-sans">
-        <h1 className="text-2xl font-serif font-bold text-deep-navy">Condition Not Found</h1>
-        <p className="text-text-secondary mt-2 mb-6">The requested condition page does not exist.</p>
-        <Button href="/conditions">Back to Conditions Hub</Button>
-      </div>
-    );
+    notFound();
   }
 
   // Anchor navigation index
@@ -132,18 +141,21 @@ export const ConditionPage: React.FC<ConditionPageProps> = ({ slug }) => {
     { label: "References", id: "references" },
   ];
 
+  const visualAsset = getVisualAsset(`conditions/${slug}`, "overview");
+
   // Dynamic JSON-LD Schema - no unpopulated bracket placeholders included
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "MedicalWebPage",
-        "@id": `https://lincolnshirekneeclinic.co.uk/conditions/${condition.slug}#webpage`,
-        "url": `https://lincolnshirekneeclinic.co.uk/conditions/${condition.slug}`,
+        "@id": `${SITE_URL}/conditions/${condition.slug}#webpage`,
+        "url": `${SITE_URL}/conditions/${condition.slug}`,
         "name": condition.metadataTitle,
         "headline": condition.name,
         "description": condition.metadataDescription,
         "inLanguage": "en-GB",
+        ...((visualAsset.status === "approved" && visualAsset.imagePath) ? { "image": `${SITE_URL}${visualAsset.imagePath}` } : {}),
         "medicalAudience": "Patient",
         "specialty": "Orthopedic",
         "breadcrumb": {
@@ -153,13 +165,13 @@ export const ConditionPage: React.FC<ConditionPageProps> = ({ slug }) => {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://lincolnshirekneeclinic.co.uk/"
+              "item": `${SITE_URL}/`
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Conditions",
-              "item": "https://lincolnshirekneeclinic.co.uk/conditions"
+              "item": `${SITE_URL}/conditions`
             },
             {
               "@type": "ListItem",
@@ -169,12 +181,12 @@ export const ConditionPage: React.FC<ConditionPageProps> = ({ slug }) => {
           ]
         },
         "about": {
-          "@id": `https://lincolnshirekneeclinic.co.uk/conditions/${condition.slug}#condition`
+          "@id": `${SITE_URL}/conditions/${condition.slug}#condition`
         }
       },
       {
         "@type": "MedicalCondition",
-        "@id": `https://lincolnshirekneeclinic.co.uk/conditions/${condition.slug}#condition`,
+        "@id": `${SITE_URL}/conditions/${condition.slug}#condition`,
         "name": condition.name,
         ...(condition.alternateName ? { "alternateName": condition.alternateName } : {}),
         "description": condition.shortDescription,
@@ -195,7 +207,7 @@ export const ConditionPage: React.FC<ConditionPageProps> = ({ slug }) => {
           "@type": "MedicalTherapy",
           "name": treatment
         })),
-        "mainEntityOfPage": `https://lincolnshirekneeclinic.co.uk/conditions/${condition.slug}`
+        "mainEntityOfPage": `${SITE_URL}/conditions/${condition.slug}`
       },
       {
         "@type": "FAQPage",
@@ -231,6 +243,26 @@ export const ConditionPage: React.FC<ConditionPageProps> = ({ slug }) => {
     if (cleanName.includes("revision")) return "/treatments/revision-knee-replacement";
     if (cleanName.includes("weight")) return "/treatments/weight-management";
     return "/treatments"; // Default safe hub
+  };
+
+  // Maps a condition's relatedSymptoms display name (free text) to a symptoms/*
+  // slug. Data entries don't always match symptomsData's `name` field exactly
+  // (e.g. "Locking Knee" vs "Locked Knee"), so this checks an exact match, then a
+  // substring match, then a small alias table for known mismatches.
+  const symptomNameAliases: Record<string, string> = {
+    "locking knee": "locked-knee",
+    "front of knee pain": "front-of-knee-pain",
+    "knee pain after injury": "knee-pain-after-injury",
+  };
+  const getSymptomSlug = (name: string): string | null => {
+    const normalized = name.toLowerCase();
+    if (symptomNameAliases[normalized]) return symptomNameAliases[normalized];
+    const exact = Object.values(symptomsData).find((s) => s.name.toLowerCase() === normalized);
+    if (exact) return exact.slug;
+    const partial = Object.values(symptomsData).find(
+      (s) => s.name.toLowerCase().includes(normalized) || normalized.includes(s.name.toLowerCase())
+    );
+    return partial ? partial.slug : null;
   };
 
   return (
@@ -412,11 +444,8 @@ export const ConditionPage: React.FC<ConditionPageProps> = ({ slug }) => {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {condition.symptoms.map((symptom, idx) => (
-                <div key={idx} className="bg-white border border-border-clinical/80 p-4 rounded-xl shadow-sm flex items-center justify-between">
+                <div key={idx} className="bg-white border border-border-clinical/80 p-4 rounded-xl shadow-sm flex items-center">
                   <span className="text-xs md:text-sm font-bold text-deep-navy">{symptom}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-clinical-teal bg-clinical-teal/5 px-2 py-0.5 rounded">
-                    Coming Soon
-                  </span>
                 </div>
               ))}
             </div>
@@ -587,6 +616,31 @@ export const ConditionPage: React.FC<ConditionPageProps> = ({ slug }) => {
               </div>
             </div>
 
+            {/* Related symptoms */}
+            <div className="border-t border-border-clinical/30 pt-6">
+              <h3 className="font-sans text-sm font-bold text-deep-navy uppercase tracking-wider mb-4">
+                Related Symptoms
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {condition.relatedSymptoms.map((symptomName) => {
+                  const slug = getSymptomSlug(symptomName);
+                  const relatedSymptom = slug ? symptomsData[slug] : undefined;
+                  if (!relatedSymptom) return null;
+                  return (
+                    <div key={slug} className="bg-white border border-border-clinical rounded-xl p-4 shadow-sm flex flex-col justify-between">
+                      <div>
+                        <h4 className="font-sans text-xs md:text-sm font-bold text-deep-navy mb-1">{relatedSymptom.name}</h4>
+                        <p className="text-[11px] text-text-secondary leading-normal mb-3 font-medium">{relatedSymptom.shortDescription}</p>
+                      </div>
+                      <Link href={`/symptoms/${slug}`} className="text-xs font-bold text-clinical-teal hover:underline">
+                        View Symptom &gt;
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* 19. Related treatments */}
             <div className="border-t border-border-clinical/30 pt-6">
               <h3 className="font-sans text-sm font-bold text-deep-navy uppercase tracking-wider mb-4">
@@ -611,26 +665,40 @@ export const ConditionPage: React.FC<ConditionPageProps> = ({ slug }) => {
           </section>
 
           {/* 22. Clinical Review */}
-          <ClinicalMetadataBlock 
+          <ClinicalMetadataBlock
             className="w-full bg-pale-clinical-blue/20"
-            evidenceSource="NICE clinical guidelines and British Orthopaedic Association (BOA) clinical standards."
-            lastReviewedDate="July 2026"
+            {...(clinicalReview.reviewed
+              ? {
+                  reviewerName: clinicalReview.reviewerName,
+                  reviewerTitle: clinicalReview.reviewerTitle,
+                  lastReviewedDate: clinicalReview.lastReviewedDate,
+                  evidenceSource: clinicalReview.evidenceSource,
+                }
+              : {})}
           />
 
           {/* 23. References */}
-          <section id="references" className="scroll-mt-8 border-t border-border-clinical/30 pt-6">
-            <span className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2.5">
-              References
-            </span>
-            <ul className="list-decimal pl-5 space-y-1.5 text-xs text-text-muted font-medium">
-              <li>[Evidence Source 1]</li>
-              <li>[Evidence Source 2]</li>
-              <li>[Evidence Source 3]</li>
-            </ul>
-            <p className="text-[10px] text-text-muted italic mt-2.5">
-              References will be completed and clinically reviewed before publication.
-            </p>
-          </section>
+          {condition.references && condition.references.length > 0 && (
+            <section id="references" className="scroll-mt-8 border-t border-border-clinical/30 pt-6">
+              <span className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2.5">
+                References
+              </span>
+              <ol className="list-decimal pl-5 space-y-1.5 text-xs text-text-muted font-medium">
+                {condition.references.map((reference, idx) => (
+                  <li key={idx}>
+                    <a
+                      href={reference.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-clinical-teal hover:underline"
+                    >
+                      {reference.text}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
 
         </main>
       </div>

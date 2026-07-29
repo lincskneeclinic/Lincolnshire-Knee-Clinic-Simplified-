@@ -6,6 +6,7 @@ import { Card } from "@/components/Card";
 import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { Button } from "@/components/Button";
 import { PageHeader } from "@/components/PageHeader";
+import { SITE_URL } from "@/lib/site";
 
 import { blogArticles } from "@/data/articles";
 
@@ -106,9 +107,35 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
+  const pageTitle = `${data.title} | Patient Resources & Articles`;
+  const pageUrl = `${SITE_URL}/education/${category}`;
+
   return {
-    title: `${data.title} | Patient Resources & Articles`,
+    title: pageTitle,
     description: data.description,
+    alternates: {
+      canonical: pageUrl,
+    },
+    openGraph: {
+      title: pageTitle,
+      description: data.description,
+      url: pageUrl,
+      type: "website",
+      images: [
+        {
+          url: `${SITE_URL}/brand/lkc-logo-k-transparent.png`,
+          width: 800,
+          height: 800,
+          alt: "Lincolnshire Knee Clinic logo",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary",
+      title: pageTitle,
+      description: data.description,
+      images: [`${SITE_URL}/brand/lkc-logo-k-transparent.png`],
+    },
   };
 }
 
@@ -120,8 +147,24 @@ export default async function CategoryPage({ params }: PageProps) {
     notFound();
   }
 
+  const pageUrl = `${SITE_URL}/education/${category}`;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": data.title,
+    "description": data.description,
+    "url": pageUrl,
+    "itemListElement": data.articles.map((article, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "url": `${SITE_URL}${article.href}`
+    }))
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-16 font-sans">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Breadcrumbs
         items={[
           { label: "Education & Blog", href: "/education" },

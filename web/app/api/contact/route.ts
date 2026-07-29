@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { sendContactEnquiryNotificationEmail } from "@/lib/graphMail";
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const DYNAMIC_TOPICS_PATH = path.join(process.cwd(), "data", "dynamic-topics.json");
 
@@ -31,10 +34,28 @@ function writeTopics(topics: any[]) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, phone, message, preferredClinic } = body;
+    const { name, email, phone, message, preferredClinic, website } = body;
 
-    if (!email || !message) {
-      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
+    // Honeypot: real visitors never fill this hidden field in. If it's set,
+    // pretend to succeed so bots don't learn they were caught, but skip
+    // the actual write/email.
+    if (typeof website === "string" && website.trim() !== "") {
+      return NextResponse.json({
+        success: true,
+        message: "Thank you for contacting Lincolnshire Knee Clinic. Our medical secretary will respond within 24 hours.",
+      });
+    }
+
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return NextResponse.json({ success: false, error: "Name is required" }, { status: 400 });
+    }
+
+    if (!email || typeof email !== "string" || !EMAIL_PATTERN.test(email.trim())) {
+      return NextResponse.json({ success: false, error: "A valid email address is required" }, { status: 400 });
+    }
+
+    if (!message || typeof message !== "string" || !message.trim()) {
+      return NextResponse.json({ success: false, error: "Message is required" }, { status: 400 });
     }
 
     const lowerMsg = message.toLowerCase();
@@ -95,6 +116,15 @@ export async function POST(request: Request) {
 
     // Write updated topics (with auto-pruning if > 10 topics)
     writeTopics(topics);
+
+    // Notify clinic admin — doesn't block the response on email delivery issues.
+    sendContactEnquiryNotificationEmail({
+      name: name.trim(),
+      email: email.trim(),
+      phone: typeof phone === "string" ? phone.trim() : undefined,
+      message: message.trim(),
+      preferredClinic: typeof preferredClinic === "string" ? preferredClinic.trim() : undefined,
+    }).catch((err) => console.error("Failed to send contact enquiry notification email:", err));
 
     return NextResponse.json({
       success: true,

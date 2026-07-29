@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import { SITE_URL } from "@/lib/site";
 
 type TabId = "register" | "upload" | "patients" | "messages" | "today" | "governance";
 
@@ -1319,7 +1320,7 @@ export default function ClinicianIntakePage() {
                                 <div className="flex flex-col gap-1.5 shrink-0 min-w-[100px] justify-center self-center">
                                   <button
                                     onClick={async () => {
-                                      const text = encodeURIComponent(`Lincolnshire Knee Clinic Reminder: Dear ${p.name}, your ${inv.type} invoice of £${inv.amount} remains outstanding. Pay online securely: https://lincolnshirekneeclinic.co.uk/portal or BACS Ref: ${inv.id}. Thank you.`);
+                                      const text = encodeURIComponent(`Lincolnshire Knee Clinic Reminder: Dear ${p.name}, your ${inv.type} invoice of £${inv.amount} remains outstanding. Pay online securely: ${SITE_URL}/portal or BACS Ref: ${inv.id}. Thank you.`);
                                       window.open(`https://wa.me/447700900123?text=${text}`, "_blank");
 
                                       // Log chaser timestamp to EHR database
@@ -2000,7 +2001,7 @@ export default function ClinicianIntakePage() {
 
                     if (invoiceChannel === "WHATSAPP") {
                       const msgText = encodeURIComponent(
-                        `Lincolnshire Knee Clinic Invoice Notice:\nDear ${invoiceModalPatient.name},\nYour ${invoiceType} statement of £${parseFloat(invoiceAmount).toFixed(2)} is ready for settlement.\n\nPay online securely: https://lincolnshirekneeclinic.co.uk/portal\nOr BACS Transfer to Lincolnshire Knee Clinic Ltd.\n\nThank you,\nMr Ricardo J Pacheco FRCS (Tr & Orth)`
+                        `Lincolnshire Knee Clinic Invoice Notice:\nDear ${invoiceModalPatient.name},\nYour ${invoiceType} statement of £${parseFloat(invoiceAmount).toFixed(2)} is ready for settlement.\n\nPay online securely: ${SITE_URL}/portal\nOr BACS Transfer to Lincolnshire Knee Clinic Ltd.\n\nThank you,\nMr Ricardo J Pacheco FRCS (Tr & Orth)`
                       );
                       window.open(`https://wa.me/447700900123?text=${msgText}`, "_blank");
                     }

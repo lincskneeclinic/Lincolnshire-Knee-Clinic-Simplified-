@@ -1,8 +1,14 @@
 import { MetadataRoute } from "next";
+import { blogArticles } from "@/data/articles";
+import { conditionsData } from "@/data/conditions";
+import { symptomsData } from "@/data/symptoms";
+import { treatmentsData } from "@/data/treatments";
+import { injectionsData } from "@/data/injections";
+import { SITE_URL } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://lincolnshirekneeclinic.co.uk";
-  
+  const baseUrl = SITE_URL;
+
   const staticPages = [
     "",
     "/about",
@@ -15,102 +21,62 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/contact",
     "/book-appointment",
     "/patient-reviews",
-    "/hospital-affiliations",
-    "/professional-registrations",
+    // "/hospital-affiliations" and "/professional-registrations" are intentionally
+    // excluded: both still show a "Draft Content Notice" banner and are noindex'd
+    // (see their page.tsx metadata) pending clinical/legal review.
     "/urgent-advice",
     "/clinical-knowledge-hub",
     "/recovery",
     "/research",
   ];
 
-  const conditionSlugs = [
-    "knee-arthritis",
-    "meniscal-tear",
-    "acl-injury",
-    "patellofemoral-pain",
-    "cartilage-injury",
-    "knee-instability",
-    "bakers-cyst",
-    "knee-tendinopathy",
-    "patellar-instability",
-  ];
+  const conditionSlugs = Object.keys(conditionsData);
+  const symptomSlugs = Object.keys(symptomsData);
+  const treatmentSlugs = Object.keys(treatmentsData);
 
-  const symptomSlugs = [
-    "knee-pain",
-    "swollen-knee",
-    "stiff-knee",
-    "clicking-knee",
-    "locked-knee",
-    "knee-giving-way",
-    "unable-to-straighten-knee",
-    "front-of-knee-pain",
-    "back-of-knee-pain",
-    "inner-knee-pain",
-    "outer-knee-pain",
-    "knee-pain-after-injury",
-  ];
-
-  const treatmentSlugs = [
-    "physiotherapy",
-    "activity-modification",
-    "pain-management",
-    "knee-bracing",
-    "knee-arthroscopy",
-    "meniscal-surgery",
-    "acl-reconstruction",
-    "cartilage-procedures",
-    "patellar-stabilisation",
-    "partial-knee-replacement",
-    "total-knee-replacement",
-    "revision-knee-replacement",
-    "preparing-for-surgery",
-    "enhanced-recovery",
-    "physiotherapy-after-surgery",
-    "returning-to-driving",
-    "returning-to-work",
-    "returning-to-sport",
-    "recovery-faqs",
-    "weight-management",
-  ];
-
+  // injectionsData backs 4 of the 5 injection routes; "ultrasound-guided-knee-injections"
+  // is a standalone route (app/injections/ultrasound-guided-knee-injections/page.tsx)
+  // not driven by injections.ts, so it's added explicitly here.
   const injectionSlugs = [
-    "corticosteroid",
-    "hyaluronic-acid",
-    "prp",
-    "arthrosamid",
+    ...injectionsData.map((injection) => injection.slug),
     "ultrasound-guided-knee-injections",
   ];
 
+  // lastModified is intentionally omitted: none of the content sources below
+  // (data/*.ts) track a real per-page last-edited date, and stamping every
+  // entry with the request-time `new Date()` made every page look freshly
+  // modified on every crawl, which undermines the signal for search engines.
+  // Add real per-page lastModified values once content authoring tracks them.
   const sitemapEntries: MetadataRoute.Sitemap = [
     ...staticPages.map((route) => ({
       url: `${baseUrl}${route}`,
-      lastModified: new Date(),
       changeFrequency: "monthly" as const,
       priority: route === "" ? 1.0 : 0.8,
     })),
     ...conditionSlugs.map((slug) => ({
       url: `${baseUrl}/conditions/${slug}`,
-      lastModified: new Date(),
       changeFrequency: "monthly" as const,
       priority: 0.7,
     })),
     ...symptomSlugs.map((slug) => ({
       url: `${baseUrl}/symptoms/${slug}`,
-      lastModified: new Date(),
       changeFrequency: "monthly" as const,
       priority: 0.7,
     })),
     ...treatmentSlugs.map((slug) => ({
       url: `${baseUrl}/treatments/${slug}`,
-      lastModified: new Date(),
       changeFrequency: "monthly" as const,
       priority: 0.7,
     })),
     ...injectionSlugs.map((slug) => ({
       url: `${baseUrl}/injections/${slug}`,
-      lastModified: new Date(),
       changeFrequency: "monthly" as const,
       priority: 0.7,
+    })),
+    ...Object.values(blogArticles).map((article) => ({
+      url: `${baseUrl}/education/${article.category}/${article.slug}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
     })),
   ];
 

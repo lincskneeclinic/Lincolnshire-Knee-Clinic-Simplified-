@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { clinicLocations, ClinicLocation } from "@/data/clinics";
 import { ClinicInfoMapBlock } from "@/components/visuals/ClinicInfoMapBlock";
 import { Button } from "@/components/Button";
+import { SITE_URL } from "@/lib/site";
 
 export default function Clinics() {
   const [selectedClinic, setSelectedClinic] = useState<ClinicLocation>(clinicLocations[0]);
@@ -19,8 +20,40 @@ export default function Clinics() {
     }
   };
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": clinicLocations.map((clinic) => ({
+      "@type": "MedicalClinic",
+      "@id": `${SITE_URL}/clinics#${clinic.id}`,
+      "name": clinic.name,
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": clinic.address.split(",")[0],
+        "addressLocality": clinic.address.split(",")[1]?.trim() || "",
+        "addressRegion": "Lincolnshire",
+        "postalCode": clinic.address.split(",").pop()?.trim() || "",
+        "addressCountry": "UK"
+      },
+      "telephone": clinic.phone,
+      "url": `${SITE_URL}/clinics`,
+      "image": `${SITE_URL}/brand/lkc-logo-k-transparent.png`,
+      "medicalSpecialty": "Orthopaedic",
+      "availableService": [
+        {
+          "@type": "MedicalTherapy",
+          "name": "Knee Surgery Consultations"
+        },
+        {
+          "@type": "MedicalTherapy",
+          "name": "Joint Injections"
+        }
+      ]
+    }))
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 py-10 md:py-16 font-sans">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Breadcrumbs items={[{ label: "Clinics" }]} />
 
       <PageHeader

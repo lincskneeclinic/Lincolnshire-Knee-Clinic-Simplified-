@@ -53,7 +53,18 @@ export async function POST(request: Request) {
       primaryInterest,
       topics,
       pagesVisited,
+      website,
     } = body;
+
+    // Honeypot: real visitors never fill this hidden field in. If it's set,
+    // pretend to succeed so bots don't learn they were caught, but skip
+    // the actual write.
+    if (typeof website === "string" && website.trim() !== "") {
+      return NextResponse.json({
+        success: true,
+        message: "Thank you for subscribing! You will receive knee health blogs, newsletters, and updates from Lincolnshire Knee Clinic.",
+      });
+    }
 
     const isConsentGiven = Boolean(consentChecked || marketingConsent || gdprConsent);
 

@@ -6,21 +6,25 @@ import { Button } from "@/components/Button";
 import Link from "next/link";
 import { Card } from "@/components/Card";
 import { NewsletterSignup } from "@/components/NewsletterSignup";
+import { conditionsData } from "@/data/conditions";
+import { SITE_URL } from "@/lib/site";
+
+const PAGE_URL = `${SITE_URL}/clinical-knowledge-hub`;
 
 export const metadata: Metadata = {
   title: "Clinical Knowledge Hub | Lincolnshire Knee Clinic",
   description: "Explore common knee symptoms, possible conditions, treatment options, recovery information and ways to arrange a consultation.",
   alternates: {
-    canonical: "https://lincolnshirekneeclinic.co.uk/clinical-knowledge-hub",
+    canonical: PAGE_URL,
   },
   openGraph: {
     title: "Clinical Knowledge Hub | Lincolnshire Knee Clinic",
     description: "Explore common knee symptoms, possible conditions, treatment options, recovery information and ways to arrange a consultation.",
-    url: "https://lincolnshirekneeclinic.co.uk/clinical-knowledge-hub",
+    url: PAGE_URL,
     type: "website",
     images: [
       {
-        url: "https://lincolnshirekneeclinic.co.uk/brand/lkc-logo-k-transparent.png",
+        url: `${SITE_URL}/brand/lkc-logo-k-transparent.png`,
         width: 800,
         height: 800,
         alt: "Lincolnshire Knee Clinic logo",
@@ -79,8 +83,8 @@ export default function ClinicalKnowledgeHub() {
     "@graph": [
       {
         "@type": "MedicalWebPage",
-        "@id": "https://lincolnshirekneeclinic.co.uk/clinical-knowledge-hub#webpage",
-        "url": "https://lincolnshirekneeclinic.co.uk/clinical-knowledge-hub",
+        "@id": `${PAGE_URL}#webpage`,
+        "url": PAGE_URL,
         "name": "Clinical Knowledge Hub | Lincolnshire Knee Clinic",
         "headline": "Understand Your Knee Journey",
         "description": "Explore common knee symptoms, possible conditions, treatment options, recovery information and ways to arrange a consultation.",
@@ -94,7 +98,7 @@ export default function ClinicalKnowledgeHub() {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://lincolnshirekneeclinic.co.uk/"
+              "item": `${SITE_URL}/`
             },
             {
               "@type": "ListItem",
@@ -106,7 +110,7 @@ export default function ClinicalKnowledgeHub() {
       },
       {
         "@type": "ItemList",
-        "@id": "https://lincolnshirekneeclinic.co.uk/clinical-knowledge-hub#itemList",
+        "@id": `${PAGE_URL}#itemList`,
         "name": "Knee Patient Care Journey",
         "description": "Five stages of the patient journey at Lincolnshire Knee Clinic.",
         "numberOfItems": 5,
@@ -278,23 +282,13 @@ export default function ClinicalKnowledgeHub() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { name: "Knee Arthritis", desc: "Degenerative wear of joint cartilage surfaces.", slug: "knee-arthritis" },
-              { name: "Meniscal Tear", desc: "Tear of the knee's shock-absorbing meniscus cartilage.", slug: "meniscal-tear" },
-              { name: "ACL Injury", desc: "Sprain or rupture of the Anterior Cruciate Ligament.", slug: "acl-injury" },
-              { name: "Patellofemoral Pain", desc: "Discomfort or stiffness around the kneecap groove.", slug: "patellofemoral-pain" },
-              { name: "Cartilage Injury", desc: "Localized focal defect or wear in the articular lining.", slug: "cartilage-injury" },
-              { name: "Knee Instability", desc: "Ligament laxity leading to sensations of shifting.", slug: "knee-instability" },
-              { name: "Baker's Cyst", desc: "Fluid collection in the popliteal space behind the knee.", slug: "bakers-cyst" },
-              { name: "Knee Tendinopathy", desc: "Overuse or loading strain on tendons (e.g. patellar tendon).", slug: "knee-tendinopathy" },
-              { name: "Patellar Instability", desc: "Kneecap displacement or dislocation from the trochlear groove.", slug: "patellar-instability" },
-            ].map((item, idx) => (
+            {Object.values(conditionsData).map((condition) => (
               <Card
-                key={idx}
+                key={condition.slug}
                 category="Condition Guide"
-                title={item.name}
-                description={item.desc}
-                href={`/conditions/${item.slug}`}
+                title={condition.name}
+                description={condition.shortDescription}
+                href={`/conditions/${condition.slug}`}
                 linkText="Explore Condition"
               />
             ))}

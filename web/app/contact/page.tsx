@@ -1,15 +1,96 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { Button } from "@/components/Button";
 import { PageHeader } from "@/components/PageHeader";
 import { NewsletterSignup } from "@/components/NewsletterSignup";
+import { SITE_URL } from "@/lib/site";
 
 export default function Contact() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [message, setMessage] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const [website, setWebsite] = useState(""); // honeypot — must stay empty; real users never see or fill this
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage("");
+
+    if (!name.trim() || !email.trim() || !message.trim() || !consent) {
+      setErrorMessage("Please complete all required fields and confirm the consent checkbox.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim() || undefined,
+          message: message.trim(),
+          marketingConsent,
+          website,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSubmitted(true);
+      } else {
+        setErrorMessage(data.error || "Something went wrong. Please try again, or contact us by phone or email.");
+      }
+    } catch (err) {
+      console.error("Contact form submission error:", err);
+      setErrorMessage("Network error. Please try again, or contact us by phone or email.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "ContactPage",
+        "@id": `${SITE_URL}/contact#webpage`,
+        "url": `${SITE_URL}/contact`,
+        "name": "Contact Us | Lincolnshire Knee Clinic",
+        "description": "Get in touch with Lincolnshire Knee Clinic to ask a question, request information, or discuss your knee condition before booking a consultation."
+      },
+      {
+        "@type": "MedicalOrganization",
+        "@id": `${SITE_URL}#organization`,
+        "name": "Lincolnshire Knee Clinic",
+        "url": SITE_URL,
+        "logo": `${SITE_URL}/brand/lkc-logo-k-transparent.png`,
+        "contactPoint": [
+          {
+            "@type": "ContactPoint",
+            "telephone": "+44-7770-473437",
+            "contactType": "customer service",
+            "email": "admin@lincsknee.com",
+            "availableLanguage": "English"
+          }
+        ]
+      }
+    ]
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-16 font-sans">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Breadcrumbs items={[{ label: "Contact" }]} />
 
       <PageHeader
@@ -79,97 +160,140 @@ export default function Contact() {
             Please use this form for non-clinical administrative questions only. Fields marked with * are required.
           </p>
 
-          <form className="space-y-4 text-sm" onSubmit={(e) => e.preventDefault()}>
-            <div>
-              <label htmlFor="name" className="block font-semibold text-text-primary mb-1">
-                Full Name *
-              </label>
-              <input
-                type="text"
-                id="name"
-                required
-                className="w-full border border-border-clinical rounded-lg p-2.5 bg-white focus:bg-white focus:border-clinical-teal focus:outline-none"
-                placeholder="e.g. John Smith"
-              />
+          {submitted ? (
+            <div className="text-center py-8">
+              <div className="text-lg font-bold mb-2 text-deep-navy">✓ Thank you for your enquiry</div>
+              <p className="text-sm leading-relaxed text-text-secondary">
+                Our medical secretary will respond within 24 to 48 business hours. For urgent clinical problems,
+                please do not wait for a reply — call 999 for emergencies or NHS 111 for urgent advice.
+              </p>
             </div>
+          ) : (
+            <form className="space-y-4 text-sm" onSubmit={handleSubmit} noValidate>
+              {errorMessage && (
+                <div className="text-xs p-3 rounded-lg bg-status-error-bg text-status-error border border-status-error/20 font-medium">
+                  {errorMessage}
+                </div>
+              )}
 
-            <div>
-              <label htmlFor="email" className="block font-semibold text-text-primary mb-1">
-                Email Address *
-              </label>
-              <input
-                type="email"
-                id="email"
-                required
-                className="w-full border border-border-clinical rounded-lg p-2.5 bg-white focus:bg-white focus:border-clinical-teal focus:outline-none"
-                placeholder="e.g. john@example.com"
-              />
-            </div>
+              {/* Honeypot — hidden from sighted/keyboard/screen-reader users, bots often fill every field */}
+              <div aria-hidden="true" className="absolute opacity-0 pointer-events-none h-0 w-0 overflow-hidden -z-10">
+                <label htmlFor="website">Leave this field blank</label>
+                <input
+                  type="text"
+                  id="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                />
+              </div>
 
-            <div>
-              <label htmlFor="phone" className="block font-semibold text-text-primary mb-1">
-                Telephone Number
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                className="w-full border border-border-clinical rounded-lg p-2.5 bg-white focus:bg-white focus:border-clinical-teal focus:outline-none"
-                placeholder="e.g. 07123 456789"
-              />
-            </div>
+              <div>
+                <label htmlFor="name" className="block font-semibold text-text-primary mb-1">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full border border-border-clinical rounded-lg p-2.5 bg-white focus:bg-white focus:border-clinical-teal focus:outline-none"
+                  placeholder="e.g. John Smith"
+                />
+              </div>
 
-            <div>
-              <label htmlFor="message" className="block font-semibold text-text-primary mb-1">
-                Your Message *
-              </label>
-              <textarea
-                id="message"
-                rows={4}
-                required
-                className="w-full border border-border-clinical rounded-lg p-2.5 bg-white focus:bg-white focus:border-clinical-teal focus:outline-none"
-                placeholder="Please describe your general enquiry. Do not include sensitive clinical details."
-              ></textarea>
-            </div>
+              <div>
+                <label htmlFor="email" className="block font-semibold text-text-primary mb-1">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full border border-border-clinical rounded-lg p-2.5 bg-white focus:bg-white focus:border-clinical-teal focus:outline-none"
+                  placeholder="e.g. john@example.com"
+                />
+              </div>
 
-            <div className="text-xs text-text-secondary flex gap-2 items-start mt-2">
-              <input type="checkbox" id="consent" required className="mt-0.5" />
-              <label htmlFor="consent" className="cursor-pointer">
-                I understand that this form is for general enquiries only and must not be used to submit urgent clinical problems or sensitive health details. *
-              </label>
-            </div>
+              <div>
+                <label htmlFor="phone" className="block font-semibold text-text-primary mb-1">
+                  Telephone Number
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full border border-border-clinical rounded-lg p-2.5 bg-white focus:bg-white focus:border-clinical-teal focus:outline-none"
+                  placeholder="e.g. 07123 456789"
+                />
+              </div>
 
-            <div className="text-xs text-text-secondary flex gap-2 items-start mt-3 border-t border-border-clinical/30 pt-3">
-              {/*
-                FUTURE SUPABASE MARKETING TABLE (Phase 2):
-                Only add to marketing_consents if this checkbox is ticked.
-                See /lib/futureMarketingSchema.ts for full schema.
-                Never store clinical data for marketing.
-              */}
-              <input
-                type="checkbox"
-                id="marketing-consent"
-                className="mt-0.5"
-                defaultChecked={false}
-              />
-              <label htmlFor="marketing-consent" className="cursor-pointer leading-relaxed">
-                I agree to receive occasional email updates from Lincolnshire Knee Clinic about knee health,
-                clinic services and patient education. I understand I can unsubscribe at any time.{" "}
-                <span className="text-text-muted font-normal">(Optional — not required to contact the clinic)</span>
-              </label>
-            </div>
+              <div>
+                <label htmlFor="message" className="block font-semibold text-text-primary mb-1">
+                  Your Message *
+                </label>
+                <textarea
+                  id="message"
+                  rows={4}
+                  required
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="w-full border border-border-clinical rounded-lg p-2.5 bg-white focus:bg-white focus:border-clinical-teal focus:outline-none"
+                  placeholder="Please describe your general enquiry. Do not include sensitive clinical details."
+                ></textarea>
+              </div>
 
-            <Button type="button" className="w-full mt-4">
-              Send Enquiry
-            </Button>
+              <div className="text-xs text-text-secondary flex gap-2 items-start mt-2">
+                <input
+                  type="checkbox"
+                  id="consent"
+                  required
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <label htmlFor="consent" className="cursor-pointer">
+                  I understand that this form is for general enquiries only and must not be used to submit urgent clinical problems or sensitive health details. *
+                </label>
+              </div>
 
-            <p className="text-[11px] text-text-muted mt-4 leading-relaxed">
-              We will use the information you provide to respond to your enquiry or manage your appointment.
-              If you choose to receive email updates, we will use your email address for that purpose only.
-              You can unsubscribe at any time. See our{" "}
-              <a href="/privacy-policy" className="text-clinical-teal hover:underline font-semibold">Privacy Policy</a>{" "}
-              for details.
-            </p>
-          </form>
+              <div className="text-xs text-text-secondary flex gap-2 items-start mt-3 border-t border-border-clinical/30 pt-3">
+                <input
+                  type="checkbox"
+                  id="marketing-consent"
+                  className="mt-0.5"
+                  checked={marketingConsent}
+                  onChange={(e) => setMarketingConsent(e.target.checked)}
+                />
+                <label htmlFor="marketing-consent" className="cursor-pointer leading-relaxed">
+                  I agree to receive occasional email updates from Lincolnshire Knee Clinic about knee health,
+                  clinic services and patient education. I understand I can unsubscribe at any time.{" "}
+                  <span className="text-text-muted font-normal">(Optional — not required to contact the clinic)</span>
+                </label>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "Sending..." : "Send Enquiry"}
+              </Button>
+
+              <p className="text-[11px] text-text-muted mt-4 leading-relaxed">
+                We will use the information you provide to respond to your enquiry or manage your appointment.
+                If you choose to receive email updates, we will use your email address for that purpose only.
+                You can unsubscribe at any time. See our{" "}
+                <a href="/privacy-policy" className="text-clinical-teal hover:underline font-semibold">Privacy Policy</a>{" "}
+                for details.
+              </p>
+            </form>
+          )}
         </div>
       </div>
 

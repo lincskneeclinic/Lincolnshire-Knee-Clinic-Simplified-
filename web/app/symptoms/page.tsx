@@ -5,17 +5,78 @@ import { Card } from "@/components/Card";
 import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { Button } from "@/components/Button";
 import { symptomsData } from "@/data/symptoms";
+import { getVisualAsset } from "@/data/visualsInventory";
+import { SITE_URL } from "@/lib/site";
+
+const PAGE_TITLE = "Common Knee Symptoms | Lincolnshire Knee Clinic";
+const PAGE_DESCRIPTION =
+  "Learn about common knee symptoms like pain, swelling, stiffness, clicking, and giving way. Understand how they are clinically assessed.";
+const PAGE_URL = `${SITE_URL}/symptoms`;
 
 export const metadata: Metadata = {
-  title: "Common Knee Symptoms | Lincolnshire Knee Clinic",
-  description: "Learn about common knee symptoms like pain, swelling, stiffness, clicking, and giving way. Understand how they are clinically assessed.",
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION,
+  alternates: {
+    canonical: PAGE_URL,
+  },
+  openGraph: {
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    url: PAGE_URL,
+    type: "website",
+    images: [
+      {
+        url: `${SITE_URL}/brand/lkc-logo-k-transparent.png`,
+        width: 800,
+        height: 800,
+        alt: "Lincolnshire Knee Clinic logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    images: [`${SITE_URL}/brand/lkc-logo-k-transparent.png`],
+  },
 };
 
 export default function SymptomsHub() {
   const symptoms = Object.values(symptomsData);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+          { "@type": "ListItem", position: 2, name: "Symptoms", item: PAGE_URL },
+        ],
+      },
+      {
+        "@type": "CollectionPage",
+        "@id": `${PAGE_URL}#webpage`,
+        url: PAGE_URL,
+        name: PAGE_TITLE,
+        description: PAGE_DESCRIPTION,
+        inLanguage: "en-GB",
+      },
+      {
+        "@type": "ItemList",
+        itemListElement: symptoms.map((symptom, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: symptom.name,
+          url: `${PAGE_URL}/${symptom.slug}`,
+        })),
+      },
+    ],
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-16 font-sans">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Breadcrumbs items={[{ label: "Symptoms" }]} />
 
       {/* Hero Header Block */}
@@ -35,21 +96,26 @@ export default function SymptomsHub() {
       </div>
 
       <p className="text-xs text-text-secondary/70 italic border-t border-border-clinical/30 pt-4 mt-6">
-        Content is consultant reviewed and intended for general patient education.
+        Content is intended for general patient education. Each page shows its current clinical review status below.
       </p>
 
       {/* Grid of symptoms */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-8">
-        {symptoms.map((symptom, index) => (
-          <Card
-            key={index}
-            category="Symptom-Led Education"
-            title={symptom.name}
-            description={symptom.shortDescription}
-            href={`/symptoms/${symptom.slug}`}
-            linkText="Explore Symptom"
-          />
-        ))}
+        {symptoms.map((symptom, index) => {
+          const visualAsset = getVisualAsset(`symptoms/${symptom.slug}`, "overview");
+          const isApproved = visualAsset.status === "approved" && !visualAsset.imagePath.includes("placeholder");
+          return (
+            <Card
+              key={index}
+              category="Symptom-Led Education"
+              title={symptom.name}
+              description={symptom.shortDescription}
+              href={`/symptoms/${symptom.slug}`}
+              linkText="Explore Symptom"
+              imageUrl={isApproved ? visualAsset.imagePath : undefined}
+            />
+          );
+        })}
       </div>
 
       {/* Booking Prompt Card */}
