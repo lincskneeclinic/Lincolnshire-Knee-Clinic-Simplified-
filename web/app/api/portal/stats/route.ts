@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { isSupabaseConfigured, fetchContactsFromSupabase } from "@/lib/supabase";
+import { getStoreValue } from "@/lib/dataStore";
 
 const NEWSLETTER_PATH = path.join(process.cwd(), "data", "newsletter-subscribers.json");
-const TOPICS_PATH = path.join(process.cwd(), "data", "dynamic-topics.json");
-const POLL_PATH = path.join(process.cwd(), "data", "newsletter-poll.json");
-const EVENTS_PATH = path.join(process.cwd(), "data", "event-counters.json");
 
 function readJsonFile(filePath: string, fallback: any) {
   try {
@@ -46,21 +44,9 @@ export async function GET() {
     subscribers = readJsonFile(NEWSLETTER_PATH, []);
   }
 
-  const topicsList = readJsonFile(TOPICS_PATH, []);
-  const pollData = readJsonFile(POLL_PATH, {
-    votes: {
-      "Cartilage Repair vs Microfracture": 24,
-      "Post-Op Swelling & Ice Therapy Protocol": 31,
-      "Hydrogel vs Corticosteroid Injection Longevity": 42,
-      "Returning to Golf & Tennis After Knee Replacement": 19,
-    },
-    suggestions: [
-      { text: "Can I get Arthrosamid on both knees in the same session?", date: "2026-07-22" },
-      { text: "What exercises should I do while waiting for partial knee replacement surgery?", date: "2026-07-20" },
-      { text: "How soon can I fly long-haul after ACL reconstruction?", date: "2026-07-18" },
-    ],
-  });
-  const eventCounters = readJsonFile(EVENTS_PATH, {
+  const topicsList = await getStoreValue<any[]>("dynamic-topics", []);
+  const pollData = await getStoreValue("newsletter-poll", { votes: {}, suggestions: [] });
+  const eventCounters = await getStoreValue("event-counters", {
     call_now: 0,
     book_appointment: 0,
     whatsapp_click: 0,

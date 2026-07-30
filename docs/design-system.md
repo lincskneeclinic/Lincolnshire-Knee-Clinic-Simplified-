@@ -62,32 +62,33 @@ The approved colour direction is based on navy, white, soft clinical blue-grey, 
 
 ### 3.1 Core Colours
 
-| Purpose | Colour | HEX |
-|---|---:|---|
-| Primary Navy | Main brand colour, headings, primary buttons | `#003B5C` |
-| Deep Navy | High-emphasis text and dark UI areas | `#002B45` |
-| Clinical Blue | Links, active states, selected navigation | `#0B5E7A` |
-| Soft Blue Background | Clinical sections and sidebar background | `#EEF5FA` |
-| Pale Blue Surface | Highlight panels and information cards | `#F5FAFD` |
-| White | Main page background and cards | `#FFFFFF` |
-| Off White | Page background alternative | `#FAFBFC` |
-| Border Grey | Card and section borders | `#D9DADD` |
-| Text Primary | Main body text | `#102A43` |
-| Text Secondary | Supporting copy | `#486581` |
-| Muted Text | Metadata and captions | `#627D98` |
+| Purpose | Colour | HEX | CSS token |
+|---|---:|---|---|
+| Primary Navy | Main brand colour, headings, primary buttons | `#003B5C` | `--color-primary-navy` |
+| Deep Navy | High-emphasis text and dark UI areas | `#082F49` | `--color-deep-navy` |
+| Dark Overlay Navy | Hero section gradients/overlays | `#0B2D4D` | `--color-dark-overlay-navy` |
+| Clinical Teal | Links, active states, accents (supersedes the originally-planned "Clinical Blue" — teal was adopted consistently in build and is the real accent colour) | `#00AFC8` | `--color-clinical-teal` |
+| Clinical Teal Hover | Hover state for teal accents | `#0891B2` | `--color-clinical-teal-hover` |
+| Soft Blue Background | Clinical sections and card background | `#EAF6FA` | `--color-soft-blue` |
+| Pale Clinical Blue | Highlight panels and information cards | `#F3FAFC` | `--color-pale-clinical-blue` |
+| Warm Off-White | Page background alternative | `#FAF8F5` | `--color-warm-off-white` |
+| Border Clinical | Card and section borders | `#D7E0E5` | `--color-border-clinical` |
+| Text Main | Main body text | `#102A43` | `--color-text-main` |
+| Text Secondary | Supporting copy (darkened from an earlier lighter value for WCAG AA contrast) | `#3D5166` | `--color-text-secondary` |
+| Text Muted | Metadata and captions (darkened from an earlier lighter value for WCAG AA contrast) | `#4A6278` | `--color-text-muted` |
 
 ### 3.2 Status Colours
 
-| Purpose | HEX | Use |
-|---|---:|---|
-| Success | `#1F8A5B` | Confirmations, completed steps |
-| Success Background | `#EAF7F0` | Success alerts |
-| Warning | `#B7791F` | Cautionary information |
-| Warning Background | `#FFF8E6` | Warning panels |
-| Error / Urgent | `#B42318` | Safety-critical alerts |
-| Error Background | `#FDECEC` | Urgent advice blocks |
-| Information | `#0B5E7A` | Informational messages |
-| Information Background | `#EAF4F8` | Information panels |
+| Purpose | HEX | Use | CSS token |
+|---|---:|---|---|
+| Success | `#1F8A5B` | Confirmations, completed steps | `--color-status-success` |
+| Success Background | `#EAF7F0` | Success alerts | `--color-status-success-bg` |
+| Warning | `#B7791F` | Cautionary information | `--color-status-warning` |
+| Warning Background | `#FFF8E6` | Warning panels | `--color-status-warning-bg` |
+| Error / Urgent | `#B42318` | Safety-critical alerts | `--color-status-error` |
+| Error Background | `#FFF5F5` | Urgent advice blocks | `--color-status-error-bg` |
+| Information | `#0B5E7A` | Informational messages | `--color-status-info` |
+| Information Background | `#EAF4F8` | Information panels | `--color-status-info-bg` |
 
 ### 3.3 Colour Usage Rules
 
@@ -241,8 +242,13 @@ Approved utility navigation:
 ```text
 Urgent Advice
 Patient Portal
+Community
 Contact
 ```
+
+`Community` links to the patient discussion area (`/community`) — a separate,
+non-clinical, self-registration feature, distinct from the invite-only future Patient
+Portal (see `docs/sitemap.md` §3.12 and §5).
 
 ### 6.3 Desktop Navigation Rules
 

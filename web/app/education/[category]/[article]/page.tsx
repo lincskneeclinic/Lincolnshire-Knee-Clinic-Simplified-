@@ -189,9 +189,9 @@ export default async function ArticlePage({ params }: PageProps) {
           
           {/* Key Takeaways */}
           <div className="bg-pale-clinical-blue/30 border-l-4 border-clinical-teal p-6 rounded-r-xl my-6">
-            <h4 className="font-sans text-sm font-bold text-deep-navy uppercase tracking-wider mb-3">
+            <h2 className="font-sans text-sm font-bold text-deep-navy uppercase tracking-wider mb-3">
               Key Takeaways
-            </h4>
+            </h2>
             <ul className="space-y-2 list-disc list-inside text-xs md:text-sm font-semibold">
               {data.takeaways.map((item, idx) => (
                 <li key={idx} className="text-text-secondary">
@@ -219,9 +219,9 @@ export default async function ArticlePage({ params }: PageProps) {
               return (
                 <div key={idx} className="my-8">
                   {section.heading && (
-                    <h3 className="font-serif text-xl md:text-2xl font-bold text-deep-navy mt-8 mb-4 border-b border-border-clinical/30 pb-2">
+                    <h2 className="font-serif text-xl md:text-2xl font-bold text-deep-navy mt-8 mb-4 border-b border-border-clinical/30 pb-2">
                       {section.heading}
-                    </h3>
+                    </h2>
                   )}
                   
                   <div className="space-y-4">

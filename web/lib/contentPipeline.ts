@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { getStoreValue } from "./dataStore";
 import { sendContentPipelineNotificationEmail } from "./graphMail";
 import { performResearchProcess } from "./researchAgent";
 import { writeBlogDraft } from "./blogWriterAgent";
@@ -325,13 +326,10 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
 
   if (!selectedTopic) {
     try {
-      const topicsPath = path.join(process.cwd(), "data", "dynamic-topics.json");
-      if (fs.existsSync(topicsPath)) {
-        const topics = JSON.parse(fs.readFileSync(topicsPath, "utf8") || "[]");
-        if (topics.length > 0) {
-          topics.sort((a: any, b: any) => (b.enquiryCount || 0) - (a.enquiryCount || 0));
-          selectedTopic = topics[0].label || topics[0].category;
-        }
+      const topics = await getStoreValue<any[]>("dynamic-topics", []);
+      if (topics.length > 0) {
+        topics.sort((a: any, b: any) => (b.enquiryCount || 0) - (a.enquiryCount || 0));
+        selectedTopic = topics[0].label || topics[0].category;
       }
     } catch {
       // Fallback

@@ -1,6 +1,12 @@
 import React from "react";
+import { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PageHeader } from "@/components/PageHeader";
+
+export const metadata: Metadata = {
+  title: "Accessibility Statement | Lincolnshire Knee Clinic",
+  description: "Our commitment to WCAG 2.1 AA accessibility standards, including readable typography, keyboard navigation and support for assistive technology.",
+};
 
 export default function AccessibilityStatement() {
   return (

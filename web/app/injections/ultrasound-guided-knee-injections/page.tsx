@@ -1,9 +1,11 @@
 import React from "react";
 import { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { TableOfContents } from "@/components/TableOfContents";
 import { Button } from "@/components/Button";
 import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { ClinicalMetadataBlock } from "@/components/ClinicalMetadataBlock";
+import { ReferencesList } from "@/components/ReferencesList";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import Link from "next/link";
 import { InjectionStepViewer } from "@/components/visuals/InjectionStepViewer";
@@ -26,8 +28,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function UltrasoundGuidedPage() {
-  const clinicalReview = getClinicalReviewStatus("injections/ultrasound-guided-knee-injections");
+export default async function UltrasoundGuidedPage() {
+  const clinicalReview = await getClinicalReviewStatus("injections/ultrasound-guided-knee-injections");
   const tableOfContents = [
     { label: "Overview", id: "overview" },
     { label: "How It Works", id: "how-it-works" },
@@ -164,24 +166,7 @@ export default function UltrasoundGuidedPage() {
       </section>
 
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-10 md:py-16 grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-12 items-start font-sans">
-        <aside className="hidden lg:block lg:col-span-3 sticky top-6">
-          <div className="bg-pale-clinical-blue/30 border border-border-clinical/50 p-5 rounded-xl text-left">
-            <h3 className="font-sans text-xs font-bold text-deep-navy uppercase tracking-wider mb-4 border-b border-border-clinical/40 pb-2">
-              On this page
-            </h3>
-            <nav className="flex flex-col gap-3">
-              {tableOfContents.map((toc, idx) => (
-                <Link
-                  key={idx}
-                  href={`#${toc.id}`}
-                  className="text-xs font-semibold text-text-secondary hover:text-clinical-teal transition-colors block py-0.5"
-                >
-                  {toc.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </aside>
+        <TableOfContents items={tableOfContents} />
 
         <main className="lg:col-span-9 space-y-12">
           
@@ -380,14 +365,15 @@ export default function UltrasoundGuidedPage() {
             />
           </section>
 
-          <section id="references" className="scroll-mt-8 space-y-3 pt-6 border-t border-border-clinical/30 text-xs text-text-muted leading-relaxed">
-            <span className="font-bold text-text-secondary block">Evidence &amp; References</span>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>Royal College of Radiologists clinical standards for musculoskeletal ultrasound guided procedures.</li>
-              <li>Societal guidelines on accuracy and efficacy comparison of landmark vs. guided intra-articular injections.</li>
-              <li>Peer-reviewed articles in orthopaedic and rheumatology literature.</li>
-            </ul>
-          </section>
+          <ReferencesList
+            evidenceSource={clinicalReview.evidenceSource}
+            defaultReferences={[
+              "Royal College of Radiologists clinical standards for musculoskeletal ultrasound guided procedures.",
+              "Societal guidelines on accuracy and efficacy comparison of landmark vs. guided intra-articular injections.",
+              "Peer-reviewed articles in orthopaedic and rheumatology literature."
+            ]}
+            title="Evidence & References"
+          />
 
           <section className="pt-4">
             <MedicalDisclaimerBlock />

@@ -1,6 +1,12 @@
 import React from "react";
+import { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PageHeader } from "@/components/PageHeader";
+
+export const metadata: Metadata = {
+  title: "Cookie Policy | Lincolnshire Knee Clinic",
+  description: "How Lincolnshire Knee Clinic uses cookies and similar technologies on this website, and how to manage your cookie preferences.",
+};
 
 export default function CookiePolicy() {
   return (

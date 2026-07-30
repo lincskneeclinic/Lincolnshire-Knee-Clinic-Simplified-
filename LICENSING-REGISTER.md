@@ -89,12 +89,12 @@ Before any imaging asset can be published:
 
 | ID | Modality | View | Educational Finding | Status |
 |---|---|---|---|---|
-| `imaging-knee-arthritis-ap-xray` | X-ray | AP weight-bearing | Medial joint space narrowing | Awaiting consultant supply |
-| `imaging-acl-injury-mri-sagittal` | MRI | Sagittal T2 | ACL disruption | Awaiting consultant supply |
-| `imaging-meniscal-tear-mri-coronal` | MRI | Coronal PD fat-sat | Posterior horn meniscal tear | Awaiting consultant supply |
-| `imaging-cartilage-injury-mri` | MRI | Axial T2 fat-sat | Full-thickness cartilage defect | Awaiting consultant supply |
-| `imaging-ultrasound-injection-concept` | Ultrasound | Longitudinal | Needle visualisation | Awaiting consultant supply |
-| `imaging-tkr-postop-xray` | X-ray | AP + Lateral post-op | TKR component position | Awaiting consultant supply |
+| `imaging-knee-arthritis-ap-xray` | X-ray | AP weight-bearing | Medial joint space narrowing | Published |
+| `imaging-acl-injury-mri-sagittal` | MRI | Sagittal T2 | ACL disruption | Published |
+| `imaging-meniscal-tear-mri-coronal` | MRI | Coronal PD fat-sat | Posterior horn meniscal tear | Published |
+| `imaging-cartilage-injury-mri` | MRI | Axial T2 fat-sat | Full-thickness cartilage defect | Published |
+| `imaging-ultrasound-injection-concept` | Ultrasound | Longitudinal | Needle visualisation | Published |
+| `imaging-tkr-postop-xray` | X-ray | AP + Lateral post-op | TKR component position | Published |
 
 ---
 

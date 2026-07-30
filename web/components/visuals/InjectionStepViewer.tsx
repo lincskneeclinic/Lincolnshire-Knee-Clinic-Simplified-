@@ -2,7 +2,6 @@
 
 import React, { useState, useId } from "react";
 import Image from "next/image";
-import { PlaceholderVisual } from "./PlaceholderVisual";
 
 // Static imports to support automated cache-busting of step visuals
 import step1ConsentImg from "@/public/images/injections/steps/step-1-consent.svg";

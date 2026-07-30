@@ -12,8 +12,8 @@ interface FeaturedReview {
 interface ReviewPlatformCardProps {
   platformName: "Google" | "Doctify";
   description: string;
-  rating?: string; // e.g. "[Overall Rating]"
-  reviewCount?: string; // e.g. "[Total Review Count]"
+  rating?: string;
+  reviewCount?: string;
   featuredReviews?: FeaturedReview[];
   platformUrl?: string | null;
 }
@@ -21,8 +21,8 @@ interface ReviewPlatformCardProps {
 export const ReviewPlatformCard: React.FC<ReviewPlatformCardProps> = ({
   platformName,
   description,
-  rating = "[Overall Rating]",
-  reviewCount = "[Total Review Count]",
+  rating,
+  reviewCount,
   featuredReviews = [],
   platformUrl = null,
 }) => {
@@ -61,36 +61,32 @@ export const ReviewPlatformCard: React.FC<ReviewPlatformCardProps> = ({
           {description}
         </p>
 
-        {/* Ratings & Counts Placeholders */}
-        <div className="bg-pale-clinical-blue border border-border-clinical/30 rounded-lg p-4 mb-6 space-y-2 text-xs text-text-secondary">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold">Overall Rating:</span>
-            <span className="font-mono text-text-muted">{rating}</span>
+        {/* Ratings & Counts — shown only once real, verified figures are available */}
+        {(rating || reviewCount) && (
+          <div className="bg-pale-clinical-blue border border-border-clinical/30 rounded-lg p-4 mb-6 space-y-2 text-xs text-text-secondary">
+            {rating && (
+              <div className="flex items-center justify-between">
+                <span className="font-semibold">Overall Rating:</span>
+                <span className="font-mono text-text-muted">{rating}</span>
+              </div>
+            )}
+            {reviewCount && (
+              <div className="flex items-center justify-between">
+                <span className="font-semibold">Total Reviews:</span>
+                <span className="font-mono text-text-muted">{reviewCount}</span>
+              </div>
+            )}
           </div>
-          <div className="flex items-center justify-between">
-            <span className="font-semibold">Total Reviews:</span>
-            <span className="font-mono text-text-muted">{reviewCount}</span>
-          </div>
-          
-          {/* Small star icons outline placeholder */}
-          <div className="flex gap-1 items-center pt-1 border-t border-border-clinical/20 mt-1">
-            <span className="text-text-muted font-medium mr-1">Rating Status:</span>
-            {[...Array(5)].map((_, i) => (
-              <svg key={i} className="w-3.5 h-3.5 text-text-muted/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.36 1.242.588 1.81l-3.97 2.883a1 1 0 00-.364 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.971-2.883a1 1 0 00-1.178 0l-3.97 2.883c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.364-1.118l-3.97-2.883c-.77-.569-.371-1.81.588-1.81h4.906a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
-            ))}
-          </div>
-        </div>
+        )}
 
-        {/* Featured reviews placeholders list */}
+        {/* Featured reviews list */}
         <div className="space-y-4 mb-6">
           <span className="text-xs font-bold uppercase tracking-wider text-deep-navy block">
             Featured Reviews
           </span>
           {featuredReviews.length === 0 ? (
             <div className="text-xs text-text-muted bg-warm-off-white/40 border border-dashed border-border-clinical/60 p-3 rounded italic text-center">
-              [Featured reviews will be listed here once verified]
+              Featured reviews will be listed here once verified.
             </div>
           ) : (
             <div className="space-y-3">

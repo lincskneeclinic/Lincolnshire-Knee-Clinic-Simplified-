@@ -72,8 +72,9 @@ export const Footer: React.FC = () => {
     { name: "Medical Disclaimer", href: "/medical-disclaimer" },
     { name: "Patient Newsletter", href: "/newsletter" },
     { name: "Terms of Use", href: "/terms-of-use" },
-    { name: "Professional Registrations", href: "/professional-registrations" },
-    { name: "Hospital Affiliations", href: "/hospital-affiliations" },
+    // Professional Registrations and Hospital Affiliations are intentionally
+    // not linked here — both still show a draft content notice pending
+    // clinical/legal review (see their page.tsx noindex metadata).
   ];
 
   return (

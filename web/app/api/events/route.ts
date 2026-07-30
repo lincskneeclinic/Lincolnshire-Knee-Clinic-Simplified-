@@ -1,38 +1,19 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { getStoreValue, setStoreValue } from "@/lib/dataStore";
 
-const EVENTS_DB_PATH = path.join(process.cwd(), "data", "event-counters.json");
+const EVENTS_KEY = "event-counters";
+const DEFAULT_COUNTERS = { call_now: 0, book_appointment: 0, whatsapp_click: 0 };
 
-function readEventCounters(): Record<string, number> {
-  try {
-    if (!fs.existsSync(EVENTS_DB_PATH)) {
-      return { call_now: 0, book_appointment: 0, whatsapp_click: 0 };
-    }
-    const content = fs.readFileSync(EVENTS_DB_PATH, "utf8");
-    return JSON.parse(content || "{}");
-  } catch (error) {
-    console.error("Failed to read event counters:", error);
-    return { call_now: 0, book_appointment: 0, whatsapp_click: 0 };
-  }
+async function readEventCounters(): Promise<Record<string, number>> {
+  return getStoreValue(EVENTS_KEY, DEFAULT_COUNTERS);
 }
 
-function writeEventCounters(counters: Record<string, number>): boolean {
-  try {
-    const dir = path.dirname(EVENTS_DB_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(EVENTS_DB_PATH, JSON.stringify(counters, null, 2), "utf8");
-    return true;
-  } catch (error) {
-    console.error("Failed to write event counters:", error);
-    return false;
-  }
+async function writeEventCounters(counters: Record<string, number>): Promise<boolean> {
+  return setStoreValue(EVENTS_KEY, counters);
 }
 
 export async function GET() {
-  const events = readEventCounters();
+  const events = await readEventCounters();
   return NextResponse.json({ success: true, events });
 }
 
@@ -49,10 +30,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const counters = readEventCounters();
+    const counters = await readEventCounters();
     counters[eventType] = (counters[eventType] || 0) + 1;
 
-    writeEventCounters(counters);
+    await writeEventCounters(counters);
 
     return NextResponse.json({
       success: true,

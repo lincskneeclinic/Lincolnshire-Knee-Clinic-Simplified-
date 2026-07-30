@@ -204,7 +204,10 @@ export default function BookAppointment() {
           <a href="/contact" className="text-clinical-teal hover:underline font-semibold">
             Contact Page
           </a>{" "}
-          or contact us directly at <span className="font-bold text-deep-navy">[Clinic Email Address]</span>.
+          or contact us directly at{" "}
+          <a href="mailto:admin@lincsknee.com" className="font-bold text-deep-navy hover:text-clinical-teal">
+            admin@lincsknee.com
+          </a>.
         </p>
       </div>
 

@@ -153,4 +153,5 @@ vite.config.ts.timestamp-*
 /web/data/content-pipeline-reviews.json
 /web/data/clinical-review-status.json
 
-
+# Scratch directory
+/scratch/

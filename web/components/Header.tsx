@@ -38,6 +38,7 @@ export const Header: React.FC = () => {
 
   const utilityNavigation = [
     { name: "Urgent Advice", href: "/urgent-advice", urgent: true },
+    { name: "Community", href: "/community" },
     { name: "Contact", href: "/contact" },
   ];
 

@@ -117,7 +117,7 @@ export const conditionsData: Record<string, ConditionData> = {
       { text: "NHS — Osteoarthritis", url: "https://www.nhs.uk/conditions/osteoarthritis/" }
     ],
     metadataTitle: "Knee Arthritis: Causes & Care | Lincolnshire Knee Clinic",
-    metadataDescription: "Knee arthritis causes pain, stiffness and swelling that worsen with activity. Explore diagnosis, investigations and treatments, from conservative care to joint replacement.",
+    metadataDescription: "Knee arthritis causes pain, stiffness and swelling that worsen with activity. Explore diagnosis, investigations and treatments from conservative care to replacement.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "meniscal-tear": {
@@ -193,7 +193,7 @@ export const conditionsData: Record<string, ConditionData> = {
       { text: "NICE Clinical Knowledge Summary — Knee pain – assessment", url: "https://cks.nice.org.uk/topics/knee-pain-assessment/" }
     ],
     metadataTitle: "Meniscal Tear: Causes & Care | Lincolnshire Knee Clinic",
-    metadataDescription: "A torn meniscus can cause knee locking, swelling and catching after a twisting injury. Discover how MRI diagnosis guides surgical and non-surgical treatment choices.",
+    metadataDescription: "A torn meniscus can cause knee locking, swelling and catching after a twisting injury. See how MRI diagnosis guides surgical and non-surgical treatment choices.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "acl-injury": {
@@ -270,7 +270,7 @@ export const conditionsData: Record<string, ConditionData> = {
       { text: "Royal Berkshire NHS Foundation Trust — ACL injury: non-operative management", url: "https://www.royalberkshire.nhs.uk/media/ycqhnrh4/anterior-cruciate-ligament-injury-non-operative-management_nov24.pdf" }
     ],
     metadataTitle: "ACL Injury: Symptoms & Treatment | Lincolnshire Knee Clinic",
-    metadataDescription: "An ACL tear often causes a pop, swelling and a feeling the knee gives way. Understand diagnosis, laxity testing, and whether reconstruction or rehabilitation suits you.",
+    metadataDescription: "An ACL tear often causes a pop, swelling and a feeling the knee gives way. Understand diagnosis, laxity testing and whether reconstruction or rehab suits you.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "patellofemoral-pain": {
@@ -347,7 +347,7 @@ export const conditionsData: Record<string, ConditionData> = {
       { text: "Whittington Health NHS Trust — Patellofemoral Pain Syndrome (PFPS)", url: "https://www.whittington.nhs.uk/default.asp?c=47702" }
     ],
     metadataTitle: "Patellofemoral Pain: Causes | Lincolnshire Knee Clinic",
-    metadataDescription: "Pain around or behind the kneecap, worse on stairs and sitting, is often patellofemoral pain (runner's knee). See causes, diagnosis and load management therapy options.",
+    metadataDescription: "Pain around or behind the kneecap, worse on stairs and sitting, is often patellofemoral pain (runner's knee). See causes, diagnosis and treatment options.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "cartilage-injury": {
@@ -423,7 +423,7 @@ export const conditionsData: Record<string, ConditionData> = {
       { text: "NICE guideline NG226 — Osteoarthritis in over 16s: diagnosis and management", url: "https://www.nice.org.uk/guidance/ng226" }
     ],
     metadataTitle: "Cartilage Injury: Symptoms & Care | Lincolnshire Knee Clinic",
-    metadataDescription: "A focal cartilage defect in the knee can cause pain, swelling and catching during movement. Explore MRI diagnosis and joint preservation treatment pathways available.",
+    metadataDescription: "A focal cartilage defect in the knee can cause pain, swelling and catching during movement. Explore MRI diagnosis and joint preservation treatment options.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "knee-instability": {
@@ -576,7 +576,7 @@ export const conditionsData: Record<string, ConditionData> = {
       { text: "NHS — Baker's cyst", url: "https://www.nhs.uk/conditions/bakers-cyst/" }
     ],
     metadataTitle: "Baker's Cyst: Causes & Care | Lincolnshire Knee Clinic",
-    metadataDescription: "A Baker's cyst is a fluid-filled swelling behind the knee that can radiate into the calf. Find out how ultrasound diagnosis identifies and treats the underlying cause.",
+    metadataDescription: "A Baker's cyst is a fluid-filled swelling behind the knee that can radiate into the calf. See how ultrasound diagnosis identifies the underlying cause.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "knee-tendinopathy": {
@@ -653,7 +653,7 @@ export const conditionsData: Record<string, ConditionData> = {
       { text: "Musculoskeletal Matters (Dorset) — Knee pain: Patella tendinopathy", url: "https://www.mskdorset.nhs.uk/knee-pain/knee-pain-patella-tendinopathy/" }
     ],
     metadataTitle: "Knee Tendinopathy: Causes & Care | Lincolnshire Knee Clinic",
-    metadataDescription: "Persistent pain at the front of the knee during jumping or running may be tendinopathy. Discover ultrasound diagnosis and progressive loading rehabilitation programmes.",
+    metadataDescription: "Persistent pain at the front of the knee during jumping or running may be tendinopathy. See ultrasound diagnosis and progressive loading rehabilitation options.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "patellar-instability": {
@@ -758,7 +758,7 @@ export const conditionsData: Record<string, ConditionData> = {
       { text: "Norfolk & Waveney Community MSK — Patella (Kneecap) Dislocation", url: "https://norfolkandwaveneycommunityhealth.nhs.uk/msk/self-help/knee/patella-kneecap-dislocation/" }
     ],
     metadataTitle: "Patellar Instability | Lincolnshire Knee Clinic",
-    metadataDescription: "A kneecap that dislocates or feels loose indicates patellar instability. Review assessment, investigations, rehabilitation, and surgical stabilisation options available.",
+    metadataDescription: "A kneecap that dislocates or feels loose indicates patellar instability. Review assessment, investigations, rehabilitation and surgical stabilisation options.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
   "loose-bodies": {

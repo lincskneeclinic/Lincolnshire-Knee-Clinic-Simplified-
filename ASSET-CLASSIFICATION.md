@@ -23,22 +23,22 @@ This document is the human-readable version of `web/data/assetClassification.ts`
 
 | Page | Section | Asset | Cat | Clinical Review | Status |
 |---|---|---|---|---|---|
-| knee-arthritis | overview | Knee Arthritis Joint Anatomy Diagram | D | Required | Proposed |
+| knee-arthritis | overview | Knee Arthritis Joint Anatomy Diagram | D | Required | Published |
 | knee-arthritis | interactive-anatomy | Interactive SVG Anatomy (InteractiveAnatomyDiagram) | G | Required | Awaiting clinical review |
-| knee-arthritis | imaging | Weight-Bearing AP X-Ray | E | Required | Proposed |
-| knee-arthritis | comparison | Healthy vs Arthritic Knee | D | Required | Proposed |
+| knee-arthritis | imaging | Weight-Bearing AP X-Ray | E | Required | Published |
+| knee-arthritis | comparison | Healthy vs Arthritic Knee | D | Required | Published |
 | knee-arthritis | pathway | Osteoarthritis Treatment Pathway | G | Required | Awaiting clinical review |
-| acl-injury | overview | ACL Anatomy and Tear Diagram | D | Required | Proposed |
-| acl-injury | comparison | Intact vs Torn ACL Before/After | D | Required | Proposed |
-| acl-injury | imaging | Sagittal MRI: ACL Tear | E | Required | Proposed |
-| meniscal-tear | overview | Meniscus Anatomy and Tear Types | D | Required | Proposed |
-| meniscal-tear | imaging | Coronal MRI: Medial Meniscal Tear | E | Required | Proposed |
-| patellofemoral-pain | overview | Patellofemoral Joint Diagram | D | Required | Proposed |
-| cartilage-injury | overview | Articular Cartilage Defect Diagram | D | Required | Proposed |
-| bakers-cyst | overview | Baker's Cyst Location Diagram | D | Required | Proposed |
-| knee-instability | overview | Knee Ligament Stability Diagram | D | Required | Proposed |
-| patellar-instability | overview | Patellar Tracking Diagram | D | Required | Proposed |
-| knee-tendinopathy | overview | Patellar and Quadriceps Tendon Anatomy | D | Required | Proposed |
+| acl-injury | overview | ACL Anatomy and Tear Diagram | D | Required | Published |
+| acl-injury | comparison | Intact vs Torn ACL Before/After | D | Required | Published |
+| acl-injury | imaging | Sagittal MRI: ACL Tear | E | Required | Published |
+| meniscal-tear | overview | Meniscus Anatomy and Tear Types | D | Required | Published |
+| meniscal-tear | imaging | Coronal MRI: Medial Meniscal Tear | E | Required | Published |
+| patellofemoral-pain | overview | Patellofemoral Joint Diagram | D | Required | Published |
+| cartilage-injury | overview | Articular Cartilage Defect Diagram | D | Required | Published |
+| bakers-cyst | overview | Baker's Cyst Location Diagram | D | Required | Published |
+| knee-instability | overview | Knee Ligament Stability Diagram | D | Required | Published |
+| patellar-instability | overview | Patellar Tracking Diagram | D | Required | Published |
+| knee-tendinopathy | overview | Patellar and Quadriceps Tendon Anatomy | D | Required | Published |
 
 ---
 
@@ -100,10 +100,10 @@ This document is the human-readable version of `web/data/assetClassification.ts`
 
 | Status | Count |
 |---|---|
-| Proposed | 22 |
+| Proposed | 4 |
 | Awaiting clinical review | 9 |
 | Approved | 4 |
-| Published | 0 |
+| Published | 18 |
 | Rejected | 0 |
 
 ---
@@ -112,12 +112,12 @@ This document is the human-readable version of `web/data/assetClassification.ts`
 
 The following imaging assets cannot proceed without physical supply from Mr R J Pacheco:
 
-1. Weight-bearing AP X-ray: Knee osteoarthritis
-2. Sagittal MRI: ACL tear
-3. Coronal MRI: Medial meniscal tear
-4. Axial MRI: Cartilage defect
-5. Ultrasound: Needle visualisation concept
-6. Post-operative X-ray: Total knee replacement
+- [x] Weight-bearing AP X-ray: Knee osteoarthritis (Supplied & Published)
+- [x] Sagittal MRI: ACL tear (Supplied & Published)
+- [x] Coronal MRI: Medial meniscal tear (Supplied & Published)
+- [x] Axial MRI: Cartilage defect (Supplied & Published)
+- [x] Ultrasound: Needle visualisation concept (Supplied & Published)
+- [x] Post-operative X-ray: Total knee replacement (Supplied & Published)
 
 All must be anonymised, DICOM-stripped, and explicitly approved for publication before integration.
 

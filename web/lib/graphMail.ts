@@ -85,12 +85,13 @@ async function sendGraphMail(subject: string, htmlBody: string, recipientEmail: 
     }
   }
 
-  // Graceful fallback logging when Graph API credentials are not set in environment
-  console.log(`[Graph Mail - Mock/Fallback Log] Notification email generated:
+  // Graph API credentials are not configured — no email is actually sent.
+  // Logged as a warning (not a success) so a missing config doesn't fail silently.
+  console.warn(`[Graph Mail] NOT SENT — MS_GRAPH_TENANT_ID/CLIENT_ID/CLIENT_SECRET not configured. Would have sent:
     Subject: ${subject}
     To: ${recipientEmail}`);
 
-  return true;
+  return false;
 }
 
 /**

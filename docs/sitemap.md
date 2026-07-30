@@ -43,6 +43,7 @@ The sitemap must support the current public website while allowing future expans
 
 - Patient Portal
 - Urgent Advice
+- Community
 - Contact
 
 ### Footer Navigation
@@ -458,6 +459,45 @@ This page should be linked from:
 - Contact page
 - Symptom pages
 - Post-operative education pages
+
+---
+
+### 3.12 Community
+
+**URL:** `/community`
+
+Purpose:
+
+Provide a patient discussion area, separate from clinical content, where registered
+members can discuss knee conditions, treatments and recovery with each other by topic
+("room").
+
+Approved room pages:
+
+- `/community/introductions`
+- `/community/osteoarthritis-joint-health`
+- `/community/sports-injuries-acl-ligament`
+- `/community/meniscus-cartilage`
+- `/community/knee-replacement-surgery`
+- `/community/injections-non-surgical`
+- `/community/recovery-rehab-exercise`
+- `/community/living-well-knee-pain`
+
+Access:
+
+- `/community/register`, `/community/login`, `/community/forgot-password`,
+  `/community/reset-password`, `/community/account`
+
+Important governance note:
+
+Community is a **separate, non-clinical, opt-in discussion feature** — not the "Future
+Patient Portal" described in §5 below. It holds no clinical records (no appointments,
+documents, PROMs) — only member-generated discussion text under a chosen display name,
+with real name/email visible to clinic admins only. Because of this, **open
+self-registration is acceptable for Community**, unlike the invite-only rule that
+applies to the clinical Patient Portal in §5. Posts and replies are not medical advice
+and are not reviewed by a clinician; a persistent disclaimer and a member-reporting/
+admin-moderation workflow apply instead of clinical content governance.
 
 ---
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { updateCommunitySession } from "./lib/supabase/middleware";
 
 function decodeBase64(str: string): string {
   try {
@@ -35,7 +36,7 @@ function isAuthorized(request: NextRequest): boolean {
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const maintenanceMode = process.env.MAINTENANCE_MODE?.toLowerCase() === "true";
@@ -81,6 +82,19 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Community routes need the Supabase Auth session cookie refreshed on
+  // every server-rendered navigation, or logged-in members get silently
+  // signed out. This only refreshes the cookie — it does not redirect or
+  // enforce login; pages/API routes under /community decide that themselves.
+  const isCommunityRoute =
+    pathname === "/community" ||
+    pathname.startsWith("/community/") ||
+    pathname.startsWith("/api/community/");
+
+  if (isCommunityRoute) {
+    return updateCommunitySession(request);
+  }
+
   const isDashboardRoute =
     pathname === "/portal/business" ||
     pathname.startsWith("/portal/business/") ||
@@ -91,7 +105,10 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/api/portal/content-pipeline") ||
     pathname.startsWith("/api/portal/patients") ||
     pathname.startsWith("/api/portal/injections") ||
-    pathname.startsWith("/api/portal/messages");
+    pathname.startsWith("/api/portal/messages") ||
+    pathname.startsWith("/api/portal/community-reports") ||
+    pathname === "/api/portal/verify-pin" ||
+    pathname === "/api/intake";
 
   if (isDashboardRoute) {
     if (!isAuthorized(request)) {
@@ -104,15 +121,14 @@ export function middleware(request: NextRequest) {
   }
 
   // Everything else under /portal and /api/portal stays fully blocked with 404.
-  // /api/intake is included here too: it's the clinical intake registry endpoint
-  // used by the /portal intake form, which is itself blocked below — so the API
-  // route must be blocked the same way rather than left open to the public.
+  // /api/intake is NOT included here — it's gated via isDashboardRoute above
+  // instead, since it's the submit endpoint for the Basic-Auth-protected
+  // /portal/clinician-intake tool and must actually be reachable by staff.
   if (
     pathname === "/portal" ||
     pathname.startsWith("/portal/") ||
     pathname === "/api/portal" ||
-    pathname.startsWith("/api/portal/") ||
-    pathname === "/api/intake"
+    pathname.startsWith("/api/portal/")
   ) {
     return new NextResponse("Not Found", { status: 404 });
   }

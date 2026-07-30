@@ -1,8 +1,10 @@
 import React from "react";
 import { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { TableOfContents } from "@/components/TableOfContents";
 import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { ClinicalMetadataBlock } from "@/components/ClinicalMetadataBlock";
+import { ReferencesList } from "@/components/ReferencesList";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { Button } from "@/components/Button";
 import { UrgentAdviceBanner } from "@/components/UrgentAdviceBanner";
@@ -69,9 +71,9 @@ interface SymptomPageProps {
   slug: string;
 }
 
-export const SymptomPage: React.FC<SymptomPageProps> = ({ slug }) => {
+export const SymptomPage = async ({ slug }: SymptomPageProps) => {
   const symptom = symptomsData[slug];
-  const clinicalReview = getClinicalReviewStatus(`symptoms/${slug}`);
+  const clinicalReview = await getClinicalReviewStatus(`symptoms/${slug}`);
 
   if (!symptom) {
     return (
@@ -229,25 +231,8 @@ export const SymptomPage: React.FC<SymptomPageProps> = ({ slug }) => {
       {/* Shared Layout Grid */}
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-10 md:py-16 grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-12 items-start font-sans">
         
-        {/* 3. On this page navigation (Desktop Sticky) */}
-        <aside className="hidden lg:block lg:col-span-3 sticky top-6">
-          <div className="bg-pale-clinical-blue/30 border border-border-clinical/50 p-5 rounded-xl text-left">
-            <h3 className="font-sans text-xs font-bold text-deep-navy uppercase tracking-wider mb-4 border-b border-border-clinical/40 pb-2">
-              On this page
-            </h3>
-            <nav className="flex flex-col gap-3">
-              {tableOfContents.map((toc, idx) => (
-                <Link
-                  key={idx}
-                  href={`#${toc.id}`}
-                  className="text-xs font-semibold text-text-secondary hover:text-clinical-teal transition-colors block py-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal focus-visible:outline-offset-1"
-                >
-                  {toc.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </aside>
+        {/* 3. On this page navigation */}
+        <TableOfContents items={tableOfContents} />
 
         {/* Main Content Sections - 9 cols */}
         <main className="lg:col-span-9 space-y-12">
@@ -538,38 +523,11 @@ export const SymptomPage: React.FC<SymptomPageProps> = ({ slug }) => {
           />
 
           {/* 18. References */}
-          <section id="references" className="scroll-mt-8 border-t border-border-clinical/30 pt-6">
-            <span className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2.5">
-              References
-            </span>
-            {symptom.references && symptom.references.length > 0 ? (
-              <ol className="list-decimal pl-5 space-y-1.5 text-xs text-text-muted font-medium">
-                {symptom.references.map((reference, idx) => (
-                  <li key={idx}>
-                    <a
-                      href={reference.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-clinical-teal hover:underline"
-                    >
-                      {reference.text}
-                    </a>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <>
-                <ul className="list-decimal pl-5 space-y-1.5 text-xs text-text-muted font-medium">
-                  <li>[Evidence Source 1]</li>
-                  <li>[Evidence Source 2]</li>
-                  <li>[Evidence Source 3]</li>
-                </ul>
-                <p className="text-[10px] text-text-muted italic mt-2.5">
-                  References will be completed and clinically reviewed before publication.
-                </p>
-              </>
-            )}
-          </section>
+          <ReferencesList
+            staticReferences={symptom.references}
+            evidenceSource={clinicalReview.evidenceSource}
+            defaultReferences={["[Evidence Source 1]", "[Evidence Source 2]", "[Evidence Source 3]"]}
+          />
 
         </main>
       </div>

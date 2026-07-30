@@ -1,6 +1,12 @@
 import React from "react";
+import { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PageHeader } from "@/components/PageHeader";
+
+export const metadata: Metadata = {
+  title: "Terms of Use | Lincolnshire Knee Clinic",
+  description: "The terms and conditions governing use of the Lincolnshire Knee Clinic website.",
+};
 
 export default function TermsOfUse() {
   return (

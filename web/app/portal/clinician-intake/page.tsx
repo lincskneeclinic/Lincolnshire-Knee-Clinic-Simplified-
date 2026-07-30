@@ -415,14 +415,25 @@ export default function ClinicianIntakePage() {
     };
   }, [isAuthenticated]);
 
-  // PIN authentication
-  const handlePinSubmit = (e: React.FormEvent) => {
+  // PIN authentication — verified server-side; the PIN value itself is
+  // never embedded in this client bundle.
+  const handlePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pin === "230670") {
-      setIsAuthenticated(true);
-      setPinError("");
-    } else {
-      setPinError("Invalid PIN credentials. Please try again.");
+    try {
+      const res = await fetch("/api/portal/verify-pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setIsAuthenticated(true);
+        setPinError("");
+      } else {
+        setPinError("Invalid PIN credentials. Please try again.");
+      }
+    } catch {
+      setPinError("Could not verify PIN. Please try again.");
     }
   };
 
@@ -740,7 +751,7 @@ export default function ClinicianIntakePage() {
         <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 border border-slate-200">
           <div className="text-center space-y-3 mb-6">
             <Link href="/" className="inline-block hover:opacity-90 transition-opacity">
-              <img src="/brand/lkc-logo-k-transparent.png" alt="Logo" className="h-16 w-auto mx-auto" />
+              <img src="/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" className="h-16 w-auto mx-auto" />
             </Link>
             <h1 className="text-xl font-bold text-slate-950 font-serif">Clinician Portal</h1>
             <p className="text-xs text-slate-500">Enter Security PIN to unlock terminal (Mr Ricardo J Pacheco)</p>
@@ -818,7 +829,7 @@ export default function ClinicianIntakePage() {
       {/* Header bar */}
       <header className="w-full bg-slate-950 text-white p-3 sm:p-4 flex flex-wrap justify-between items-center shadow-md gap-3 print:hidden">
         <Link href="/" className="flex items-center space-x-3 group hover:opacity-90 transition-opacity">
-          <img src="/brand/lkc-logo-k-transparent.png" alt="Logo" className="h-9 w-auto" />
+          <img src="/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" className="h-9 w-auto" />
           <div className="leading-tight">
             <h1 className="text-sm font-bold tracking-wider font-serif group-hover:text-clinical-teal transition-colors">Lincolnshire Knee Clinic</h1>
             <span className="text-[10px] text-clinical-teal font-semibold">Lead Consultant: Mr Ricardo J Pacheco, FRCS (Tr &amp; Orth)</span>
@@ -1329,7 +1340,7 @@ export default function ClinicianIntakePage() {
                                         headers: { "Content-Type": "application/json" },
                                         body: JSON.stringify({
                                           email: emailKey,
-                                          pin: "230670",
+                                          pin,
                                           logChaser: { id: inv.id, channel: "WHATSAPP" }
                                         })
                                       });
@@ -1348,7 +1359,7 @@ export default function ClinicianIntakePage() {
                                         headers: { "Content-Type": "application/json" },
                                         body: JSON.stringify({
                                           email: emailKey,
-                                          pin: "230670",
+                                          pin,
                                           updateInvoiceStatus: { id: inv.id, status: "PAID" }
                                         })
                                       });
@@ -1984,7 +1995,7 @@ export default function ClinicianIntakePage() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       email: invoiceModalPatient.email,
-                      pin: "230670",
+                      pin,
                       newInvoice: {
                         amount: invoiceAmount,
                         type: invoiceType,

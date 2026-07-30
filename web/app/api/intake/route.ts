@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
@@ -17,39 +16,27 @@ export async function POST(request: Request) {
       signatureType,
     } = data;
 
-    // Build CSV Row
-    // Format: Timestamp,PatientId,PatientName,Surgery,OxfordKneeScore,Medications,Allergies,MedicalHistory,ConsentSigned,SignatureType
-    const timestamp = new Date().toISOString();
-    
-    // Clean text to avoid breaking CSV format
-    const cleanCsvField = (field: any) => {
-      const str = String(field || "").replace(/"/g, '""').trim();
-      return str.includes(",") || str.includes("\n") || str.includes('"') ? `"${str}"` : str;
-    };
+    const admin = createAdminClient();
+    const { error } = await admin.from("intake_registry").insert({
+      patient_id: patientId || null,
+      patient_name: patientName,
+      surgery: surgery || null,
+      oxford_score: oxfordScore || null,
+      medications: medications || null,
+      allergies: allergies || null,
+      medical_history: medicalHistory || null,
+      consent_signed: Boolean(consentSigned),
+      signature_type: signatureType || null,
+    });
 
-    const csvRow = [
-      timestamp,
-      cleanCsvField(patientId),
-      cleanCsvField(patientName),
-      cleanCsvField(surgery),
-      cleanCsvField(oxfordScore),
-      cleanCsvField(medications),
-      cleanCsvField(allergies),
-      cleanCsvField(medicalHistory),
-      cleanCsvField(consentSigned ? "YES" : "NO"),
-      cleanCsvField(signatureType),
-    ].join(",") + "\n";
-
-    // Path to intake-registry.csv
-    // Workspace relative path: web/data/intake-registry.csv
-    const filePath = path.join(process.cwd(), "data", "intake-registry.csv");
-
-    // Append to file
-    fs.appendFileSync(filePath, csvRow, "utf8");
+    if (error) {
+      console.error("Failed to write to intake registry:", error);
+      return NextResponse.json({ success: false, error: "Failed to log intake record." }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true, message: "Data logged to register successfully." });
-  } catch (error: any) {
-    console.error("Failed to write to registry CSV:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error) {
+    console.error("Failed to process intake submission:", error);
+    return NextResponse.json({ success: false, error: "An error occurred while processing your request." }, { status: 500 });
   }
 }

@@ -28,6 +28,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/clinical-knowledge-hub",
     "/recovery",
     "/research",
+    "/diagnostics",
+    "/newsletter",
   ];
 
   const conditionSlugs = Object.keys(conditionsData);

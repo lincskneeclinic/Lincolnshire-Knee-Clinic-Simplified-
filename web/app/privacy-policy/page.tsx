@@ -1,6 +1,12 @@
 import React from "react";
+import { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PageHeader } from "@/components/PageHeader";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy | Lincolnshire Knee Clinic",
+  description: "How Lincolnshire Knee Clinic collects, uses, stores and protects your personal data, and your rights under UK GDPR.",
+};
 
 export default function PrivacyPolicy() {
   return (

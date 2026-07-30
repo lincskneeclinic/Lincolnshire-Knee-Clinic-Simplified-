@@ -1,28 +1,15 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { verifyClinicianPin } from "@/lib/clinicianPin";
+import { getStoreValue, setStoreValue } from "@/lib/dataStore";
 
-const DB_PATH = path.join(process.cwd(), "data", "dynamic-patients.json");
+const PATIENTS_KEY = "dynamic-patients";
 
-function readDb() {
-  try {
-    if (!fs.existsSync(DB_PATH)) return {};
-    const data = fs.readFileSync(DB_PATH, "utf8");
-    return JSON.parse(data || "{}");
-  } catch (error) {
-    console.error("Failed to read dynamic-patients database:", error);
-    return {};
-  }
+async function readDb(): Promise<Record<string, any>> {
+  return getStoreValue(PATIENTS_KEY, {});
 }
 
-function writeDb(data: any) {
-  try {
-    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), "utf8");
-    return true;
-  } catch (error) {
-    console.error("Failed to write dynamic-patients database:", error);
-    return false;
-  }
+async function writeDb(data: Record<string, any>): Promise<boolean> {
+  return setStoreValue(PATIENTS_KEY, data);
 }
 
 // GET /api/portal/messages?email=patient@lincsknee.com
@@ -35,7 +22,7 @@ export async function GET(request: Request) {
   }
 
   const cleanEmail = email.trim().toLowerCase();
-  const db = readDb();
+  const db = await readDb();
   const patient = db[cleanEmail];
 
   if (!patient) {
@@ -60,12 +47,12 @@ export async function POST(request: Request) {
     }
 
     // Clinician authentication check if sender is clinician
-    if (sender === "clinician" && pin !== "230670") {
+    if (sender === "clinician" && !verifyClinicianPin(pin)) {
       return NextResponse.json({ error: "Invalid security PIN" }, { status: 401 });
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const db = readDb();
+    const db = await readDb();
 
     if (!db[cleanEmail]) {
       db[cleanEmail] = {
@@ -92,10 +79,11 @@ export async function POST(request: Request) {
     };
 
     patient.messages.push(newMessage);
-    writeDb(db);
+    await writeDb(db);
 
     return NextResponse.json({ success: true, message: newMessage, messages: patient.messages });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    console.error("Failed to record message:", error);
+    return NextResponse.json({ error: "Failed to send message." }, { status: 500 });
   }
 }

@@ -1,8 +1,10 @@
 import React from "react";
 import { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { TableOfContents } from "@/components/TableOfContents";
 import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { ClinicalMetadataBlock } from "@/components/ClinicalMetadataBlock";
+import { ReferencesList } from "@/components/ReferencesList";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { Button } from "@/components/Button";
 import { UrgentAdviceBanner } from "@/components/UrgentAdviceBanner";
@@ -29,6 +31,13 @@ import kneeArthritisPathological from "@/public/images/conditions/knee-arthritis
 import aclIntact from "@/public/images/conditions/acl-intact.png";
 import aclTorn from "@/public/images/conditions/acl-torn.png";
 import meniscalTearComparison from "@/public/images/conditions/meniscal-tear-comparison.png";
+import patellofemoralPainComparison from "@/public/images/conditions/patellofemoral-pain-comparison.png";
+import cartilageInjuryComparison from "@/public/images/conditions/cartilage-injury-comparison.png";
+import bakersCystComparison from "@/public/images/conditions/bakers-cyst-comparison.png";
+import kneeInstabilityComparison from "@/public/images/conditions/knee-instability-comparison.png";
+import patellarInstabilityComparison from "@/public/images/conditions/patellar-instability-comparison.png";
+import kneeTendinopathyOverview from "@/public/images/conditions/knee-tendinopathy-overview.png";
+import looseBodiesOverview from "@/public/images/conditions/loose-bodies-overview.png";
 
 const conditionComparisonPoints: Record<string, { feature: string; normal: string; abnormal: string }[]> = {
   "knee-arthritis": [
@@ -120,9 +129,9 @@ interface ConditionPageProps {
   slug: string;
 }
 
-export const ConditionPage: React.FC<ConditionPageProps> = ({ slug }) => {
+export const ConditionPage = async ({ slug }: ConditionPageProps) => {
   const condition = conditionsData[slug];
-  const clinicalReview = getClinicalReviewStatus(`conditions/${slug}`);
+  const clinicalReview = await getClinicalReviewStatus(`conditions/${slug}`);
 
   if (!condition) {
     notFound();
@@ -303,24 +312,7 @@ export const ConditionPage: React.FC<ConditionPageProps> = ({ slug }) => {
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-10 md:py-16 grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-12 items-start font-sans">
         
         {/* 7. On This Page Navigation Index */}
-        <aside className="hidden lg:block lg:col-span-3 sticky top-6">
-          <div className="bg-pale-clinical-blue/30 border border-border-clinical/50 p-5 rounded-xl text-left">
-            <h3 className="font-sans text-xs font-bold text-deep-navy uppercase tracking-wider mb-4 border-b border-border-clinical/40 pb-2">
-              On this page
-            </h3>
-            <nav className="flex flex-col gap-3">
-              {tableOfContents.map((toc, idx) => (
-                <Link
-                  key={idx}
-                  href={`#${toc.id}`}
-                  className="text-xs font-semibold text-text-secondary hover:text-clinical-teal transition-colors block py-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal focus-visible:outline-offset-1"
-                >
-                  {toc.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </aside>
+        <TableOfContents items={tableOfContents} />
 
         {/* Main Content Area */}
         <main className="lg:col-span-9 space-y-12">
@@ -376,7 +368,25 @@ export const ConditionPage: React.FC<ConditionPageProps> = ({ slug }) => {
                   ? aclTorn
                   : undefined
               }
-              singleImageSrc={slug === "meniscal-tear" ? meniscalTearComparison : undefined}
+              singleImageSrc={
+                slug === "meniscal-tear"
+                  ? meniscalTearComparison
+                  : slug === "patellofemoral-pain"
+                  ? patellofemoralPainComparison
+                  : slug === "cartilage-injury"
+                  ? cartilageInjuryComparison
+                  : slug === "bakers-cyst"
+                  ? bakersCystComparison
+                  : slug === "knee-instability"
+                  ? kneeInstabilityComparison
+                  : slug === "patellar-instability"
+                  ? patellarInstabilityComparison
+                  : slug === "knee-tendinopathy"
+                  ? kneeTendinopathyOverview
+                  : slug === "loose-bodies"
+                  ? looseBodiesOverview
+                  : undefined
+              }
             />
           </section>
 
@@ -678,27 +688,10 @@ export const ConditionPage: React.FC<ConditionPageProps> = ({ slug }) => {
           />
 
           {/* 23. References */}
-          {condition.references && condition.references.length > 0 && (
-            <section id="references" className="scroll-mt-8 border-t border-border-clinical/30 pt-6">
-              <span className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2.5">
-                References
-              </span>
-              <ol className="list-decimal pl-5 space-y-1.5 text-xs text-text-muted font-medium">
-                {condition.references.map((reference, idx) => (
-                  <li key={idx}>
-                    <a
-                      href={reference.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-clinical-teal hover:underline"
-                    >
-                      {reference.text}
-                    </a>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          )}
+          <ReferencesList
+            staticReferences={condition.references}
+            evidenceSource={clinicalReview.evidenceSource}
+          />
 
         </main>
       </div>

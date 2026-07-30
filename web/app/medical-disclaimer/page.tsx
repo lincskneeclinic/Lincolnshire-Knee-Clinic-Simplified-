@@ -1,6 +1,12 @@
 import React from "react";
+import { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PageHeader } from "@/components/PageHeader";
+
+export const metadata: Metadata = {
+  title: "Medical Disclaimer | Lincolnshire Knee Clinic",
+  description: "This website provides general educational information about knee conditions and treatments. It does not replace individual medical consultation or diagnosis.",
+};
 
 export default function MedicalDisclaimer() {
   return (

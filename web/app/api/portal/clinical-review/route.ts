@@ -2,17 +2,17 @@ import { NextResponse } from "next/server";
 import {
   getAllReviewablePages,
   getReviewRegistry,
-  writeReviewRegistry,
-  getClinicalReviewStatus,
+  upsertReviewEntry,
   ClinicalReviewEntry,
 } from "@/lib/clinicalReview";
 
 export async function GET() {
   const pages = getAllReviewablePages();
+  const registry = await getReviewRegistry();
 
   const results = pages.map((page) => ({
     ...page,
-    review: getClinicalReviewStatus(page.pageId),
+    review: registry[page.pageId] || { reviewed: false },
   }));
 
   return NextResponse.json({ success: true, pages: results });
@@ -32,7 +32,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Unknown pageId" }, { status: 400 });
     }
 
-    const registry = getReviewRegistry();
     const isReviewed = Boolean(reviewed);
     const entry: ClinicalReviewEntry = {
       reviewed: isReviewed,
@@ -46,8 +45,7 @@ export async function POST(request: Request) {
       reviewedContentHash: isReviewed && matchingPage.contentHash ? matchingPage.contentHash : undefined,
     };
 
-    registry[pageId] = entry;
-    const saved = writeReviewRegistry(registry);
+    const saved = await upsertReviewEntry(pageId, entry);
 
     if (!saved) {
       return NextResponse.json({ success: false, error: "Failed to save review status" }, { status: 500 });
@@ -56,7 +54,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, pageId, review: entry });
   } catch (error) {
     console.error("Clinical review save error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Failed to save review status." }, { status: 500 });
   }
 }

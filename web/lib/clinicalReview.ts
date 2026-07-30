@@ -1,6 +1,5 @@
-import fs from "fs";
-import path from "path";
 import crypto from "crypto";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { symptomsData } from "@/data/symptoms";
 import { conditionsData } from "@/data/conditions";
 import { treatmentsData } from "@/data/treatments";
@@ -39,7 +38,28 @@ function hashContent(entry: unknown): string {
   return crypto.createHash("sha256").update(JSON.stringify(entry)).digest("hex");
 }
 
-const REGISTRY_PATH = path.join(process.cwd(), "data", "clinical-review-status.json");
+interface ReviewStatusRow {
+  page_id: string;
+  reviewed: boolean;
+  reviewer_name: string | null;
+  reviewer_title: string | null;
+  last_reviewed_date: string | null;
+  evidence_source: string | null;
+  reviewed_content_hash: string | null;
+  updated_at: string;
+}
+
+function rowToEntry(row: ReviewStatusRow): ClinicalReviewEntry {
+  return {
+    reviewed: row.reviewed,
+    reviewerName: row.reviewer_name ?? undefined,
+    reviewerTitle: row.reviewer_title ?? undefined,
+    lastReviewedDate: row.last_reviewed_date ?? undefined,
+    evidenceSource: row.evidence_source ?? undefined,
+    updatedAt: row.updated_at,
+    reviewedContentHash: row.reviewed_content_hash ?? undefined,
+  };
+}
 
 /**
  * Full manifest of every page that shows a ClinicalMetadataBlock, built from the
@@ -114,26 +134,46 @@ export function getAllReviewablePages(): ReviewablePage[] {
   return pages;
 }
 
-export function getReviewRegistry(): Record<string, ClinicalReviewEntry> {
+export async function getReviewRegistry(): Promise<Record<string, ClinicalReviewEntry>> {
   try {
-    if (!fs.existsSync(REGISTRY_PATH)) return {};
-    return JSON.parse(fs.readFileSync(REGISTRY_PATH, "utf8") || "{}");
+    const admin = createAdminClient();
+    const { data, error } = await admin.from("clinical_review_status").select("*");
+    if (error || !data) {
+      console.error("Failed to read clinical review registry:", error);
+      return {};
+    }
+    const registry: Record<string, ClinicalReviewEntry> = {};
+    for (const row of data as ReviewStatusRow[]) {
+      registry[row.page_id] = rowToEntry(row);
+    }
+    return registry;
   } catch (err) {
     console.error("Failed to read clinical review registry:", err);
     return {};
   }
 }
 
-export function writeReviewRegistry(registry: Record<string, ClinicalReviewEntry>): boolean {
+/** Upserts a single page's review entry — used by the admin dashboard's save action. */
+export async function upsertReviewEntry(pageId: string, entry: ClinicalReviewEntry): Promise<boolean> {
   try {
-    const dir = path.dirname(REGISTRY_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    const admin = createAdminClient();
+    const { error } = await admin.from("clinical_review_status").upsert({
+      page_id: pageId,
+      reviewed: entry.reviewed,
+      reviewer_name: entry.reviewerName || null,
+      reviewer_title: entry.reviewerTitle || null,
+      last_reviewed_date: entry.lastReviewedDate || null,
+      evidence_source: entry.evidenceSource || null,
+      reviewed_content_hash: entry.reviewedContentHash || null,
+      updated_at: entry.updatedAt || new Date().toISOString(),
+    });
+    if (error) {
+      console.error("Failed to write clinical review entry:", error);
+      return false;
     }
-    fs.writeFileSync(REGISTRY_PATH, JSON.stringify(registry, null, 2), "utf8");
     return true;
   } catch (err) {
-    console.error("Failed to write clinical review registry:", err);
+    console.error("Failed to write clinical review entry:", err);
     return false;
   }
 }
@@ -153,9 +193,20 @@ export function getCurrentContentHash(pageId: string): string | null {
  * underlying reviewer/date/evidence fields are left untouched so the
  * dashboard can still show what was last approved.
  */
-export function getClinicalReviewStatus(pageId: string): ClinicalReviewEntry {
-  const registry = getReviewRegistry();
-  const entry = registry[pageId];
+export async function getClinicalReviewStatus(pageId: string): Promise<ClinicalReviewEntry> {
+  let entry: ClinicalReviewEntry | undefined;
+  try {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("clinical_review_status")
+      .select("*")
+      .eq("page_id", pageId)
+      .maybeSingle();
+    if (data) entry = rowToEntry(data as ReviewStatusRow);
+  } catch (err) {
+    console.error(`Failed to read clinical review status for "${pageId}":`, err);
+  }
+
   if (!entry) return { reviewed: false };
 
   if (entry.reviewed) {

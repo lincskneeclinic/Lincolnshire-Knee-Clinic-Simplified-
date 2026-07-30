@@ -54,7 +54,7 @@ export const FaqAccordion: React.FC<FaqAccordionProps> = ({ items, className = "
               aria-labelledby={`faq-btn-${idx}`}
               role="region"
               className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                isOpen ? "max-h-[500px] border-t border-border-clinical/40" : "max-h-0"
+                isOpen ? "max-h-[4000px] border-t border-border-clinical/40" : "max-h-0"
               }`}
             >
               <div className="px-6 py-5 font-sans text-sm md:text-base text-text-secondary leading-relaxed bg-pale-clinical-blue/10">

@@ -1,34 +1,23 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { getStoreValue, setStoreValue } from "@/lib/dataStore";
 import { sendContactEnquiryNotificationEmail } from "@/lib/graphMail";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const DYNAMIC_TOPICS_PATH = path.join(process.cwd(), "data", "dynamic-topics.json");
+const TOPICS_KEY = "dynamic-topics";
 
-function readTopics() {
-  try {
-    if (!fs.existsSync(DYNAMIC_TOPICS_PATH)) return [];
-    return JSON.parse(fs.readFileSync(DYNAMIC_TOPICS_PATH, "utf8") || "[]");
-  } catch (err) {
-    return [];
-  }
+async function readTopics() {
+  return getStoreValue<any[]>(TOPICS_KEY, []);
 }
 
-function writeTopics(topics: any[]) {
-  try {
-    // Enforce 10-topic pruning cap
-    if (topics.length > 10) {
-      // Keep baseline topics (isAiDiscovered === false) and prune least popular AI discovered topic
-      topics.sort((a, b) => b.enquiryCount - a.enquiryCount);
-      topics = topics.slice(0, 10);
-    }
-    fs.writeFileSync(DYNAMIC_TOPICS_PATH, JSON.stringify(topics, null, 2), "utf8");
-    return true;
-  } catch (err) {
-    return false;
+async function writeTopics(topics: any[]) {
+  // Enforce 10-topic pruning cap
+  if (topics.length > 10) {
+    // Keep baseline topics (isAiDiscovered === false) and prune least popular AI discovered topic
+    topics.sort((a, b) => b.enquiryCount - a.enquiryCount);
+    topics = topics.slice(0, 10);
   }
+  return setStoreValue(TOPICS_KEY, topics);
 }
 
 export async function POST(request: Request) {
@@ -59,7 +48,7 @@ export async function POST(request: Request) {
     }
 
     const lowerMsg = message.toLowerCase();
-    const topics = readTopics();
+    const topics = await readTopics();
 
     let matched = false;
 
@@ -115,7 +104,7 @@ export async function POST(request: Request) {
     }
 
     // Write updated topics (with auto-pruning if > 10 topics)
-    writeTopics(topics);
+    await writeTopics(topics);
 
     // Notify clinic admin — doesn't block the response on email delivery issues.
     sendContactEnquiryNotificationEmail({
@@ -130,8 +119,8 @@ export async function POST(request: Request) {
       success: true,
       message: "Thank you for contacting Lincolnshire Knee Clinic. Our medical secretary will respond within 24 hours.",
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Contact form error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: "An error occurred while processing your request." }, { status: 500 });
   }
 }

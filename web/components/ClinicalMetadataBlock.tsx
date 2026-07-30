@@ -63,10 +63,6 @@ export const ClinicalMetadataBlock: React.FC<ClinicalMetadataBlockProps> = ({
                 <span className="font-semibold text-text-primary">Last reviewed: </span>
                 <span className="text-text-muted">{lastReviewedDate}</span>
               </div>
-              <div>
-                <span className="font-semibold text-text-primary">Evidence sources: </span>
-                <span className="text-text-muted">{evidenceSource}</span>
-              </div>
             </div>
           </>
         ) : (

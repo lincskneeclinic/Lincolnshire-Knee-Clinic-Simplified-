@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 export function DiagnosticsClient() {
   const [selectedModality, setSelectedModality] = useState<"mri" | "ultrasound" | "xray" | "ct" | "arthrogram">("mri");
@@ -28,6 +28,20 @@ export function DiagnosticsClient() {
       setAdditionalDetails("");
     }, 4000);
   };
+
+  const enquiryModalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isEnquiryModalOpen) return;
+
+    enquiryModalRef.current?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsEnquiryModalOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isEnquiryModalOpen]);
 
   const vistaLocations = [
     {
@@ -340,9 +354,17 @@ export function DiagnosticsClient() {
       {/* Interactive Enquiry Modal */}
       {isEnquiryModalOpen && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-border-clinical rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative animate-in fade-in zoom-in-95">
+          <div
+            ref={enquiryModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="enquiry-modal-title"
+            tabIndex={-1}
+            className="bg-white border border-border-clinical rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative animate-in fade-in zoom-in-95 focus:outline-none"
+          >
             <button
               onClick={() => setIsEnquiryModalOpen(false)}
+              aria-label="Close"
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold text-lg cursor-pointer"
             >
               ✕
@@ -364,7 +386,7 @@ export function DiagnosticsClient() {
                   <span className="text-xs font-bold uppercase tracking-wider text-clinical-teal block mb-1">
                     Vista Health Diagnostic Partner Referral
                   </span>
-                  <h3 className="font-serif font-bold text-xl text-deep-navy">Enquire About Diagnostic Scan</h3>
+                  <h3 id="enquiry-modal-title" className="font-serif font-bold text-xl text-deep-navy">Enquire About Diagnostic Scan</h3>
                   <p className="text-xs text-text-secondary mt-1">
                     Select your scan type and preferred Vista Health diagnostic location.
                   </p>
@@ -372,32 +394,35 @@ export function DiagnosticsClient() {
 
                 <form onSubmit={handleEnquirySubmit} className="space-y-4 text-xs">
                   <div>
-                    <label className="font-bold block mb-1 text-deep-navy">Full Patient Name</label>
+                    <label htmlFor="enquiry-patient-name" className="font-bold block mb-1 text-deep-navy">Full Patient Name</label>
                     <input
+                      id="enquiry-patient-name"
                       type="text"
                       required
                       value={patientName}
                       onChange={(e) => setPatientName(e.target.value)}
-                      placeholder="e.g. Mr. John Smith"
+                      placeholder="e.g. Jane Smith"
                       className="w-full px-3.5 py-2.5 border border-border-clinical rounded-xl bg-slate-50 focus:outline-none focus:border-clinical-teal"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="font-bold block mb-1 text-deep-navy">Email Address</label>
+                      <label htmlFor="enquiry-email" className="font-bold block mb-1 text-deep-navy">Email Address</label>
                       <input
+                        id="enquiry-email"
                         type="email"
                         required
                         value={patientEmail}
                         onChange={(e) => setPatientEmail(e.target.value)}
-                        placeholder="john.smith@example.com"
+                        placeholder="jane.smith@example.com"
                         className="w-full px-3.5 py-2.5 border border-border-clinical rounded-xl bg-slate-50 focus:outline-none focus:border-clinical-teal"
                       />
                     </div>
                     <div>
-                      <label className="font-bold block mb-1 text-deep-navy">Telephone Number</label>
+                      <label htmlFor="enquiry-phone" className="font-bold block mb-1 text-deep-navy">Telephone Number</label>
                       <input
+                        id="enquiry-phone"
                         type="tel"
                         required
                         value={patientPhone}
@@ -410,8 +435,9 @@ export function DiagnosticsClient() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="font-bold block mb-1 text-deep-navy">Requested Service / Scan</label>
+                      <label htmlFor="enquiry-scan" className="font-bold block mb-1 text-deep-navy">Requested Service / Scan</label>
                       <select
+                        id="enquiry-scan"
                         value={requestedScan}
                         onChange={(e) => setRequestedScan(e.target.value)}
                         className="w-full px-3.5 py-2.5 border border-border-clinical rounded-xl bg-slate-50 focus:outline-none focus:border-clinical-teal"
@@ -426,8 +452,9 @@ export function DiagnosticsClient() {
                       </select>
                     </div>
                     <div>
-                      <label className="font-bold block mb-1 text-deep-navy">Preferred Vista Location</label>
+                      <label htmlFor="enquiry-location" className="font-bold block mb-1 text-deep-navy">Preferred Vista Location</label>
                       <select
+                        id="enquiry-location"
                         value={preferredLocation}
                         onChange={(e) => setPreferredLocation(e.target.value)}
                         className="w-full px-3.5 py-2.5 border border-border-clinical rounded-xl bg-slate-50 focus:outline-none focus:border-clinical-teal"
@@ -440,8 +467,9 @@ export function DiagnosticsClient() {
                   </div>
 
                   <div>
-                    <label className="font-bold block mb-1 text-deep-navy">Knee Symptoms / Clinical Brief</label>
+                    <label htmlFor="enquiry-details" className="font-bold block mb-1 text-deep-navy">Knee Symptoms / Clinical Brief</label>
                     <textarea
+                      id="enquiry-details"
                       rows={2}
                       value={additionalDetails}
                       onChange={(e) => setAdditionalDetails(e.target.value)}

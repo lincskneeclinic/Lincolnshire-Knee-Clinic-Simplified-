@@ -20,6 +20,12 @@
   /* Restrained Warning / Urgent */
   --color-status-error: #B42318;
   --color-status-error-bg: #FFF5F5;
+  --color-status-success: #1F8A5B;
+  --color-status-success-bg: #EAF7F0;
+  --color-status-warning: #B7791F;
+  --color-status-warning-bg: #FFF8E6;
+  --color-status-info: #0B5E7A;
+  --color-status-info-bg: #EAF4F8;
 
   /* Fonts */
   --font-serif: var(--font-serif), Georgia, serif;

@@ -1,9 +1,11 @@
 import React from "react";
 import { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { TableOfContents } from "@/components/TableOfContents";
 import { Button } from "@/components/Button";
 import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { ClinicalMetadataBlock } from "@/components/ClinicalMetadataBlock";
+import { ReferencesList } from "@/components/ReferencesList";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { injectionsData } from "@/data/injections";
 import { getClinicalReviewStatus } from "@/lib/clinicalReview";
@@ -52,12 +54,12 @@ export function getInjectionMetadata(slug: string): Metadata {
   };
 }
 
-export const InjectionPage: React.FC<InjectionPageProps> = ({ slug }) => {
+export const InjectionPage = async ({ slug }: InjectionPageProps) => {
   const injection = injectionsData.find((inj) => inj.slug === slug);
   if (!injection) {
     notFound();
   }
-  const clinicalReview = getClinicalReviewStatus(`injections/${slug}`);
+  const clinicalReview = await getClinicalReviewStatus(`injections/${slug}`);
 
   const tableOfContents = [
     { label: "Overview", id: "overview" },
@@ -175,24 +177,7 @@ export const InjectionPage: React.FC<InjectionPageProps> = ({ slug }) => {
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-10 md:py-16 grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-12 items-start font-sans">
         
         {/* On This Page Navigation Index */}
-        <aside className="hidden lg:block lg:col-span-3 sticky top-6">
-          <div className="bg-pale-clinical-blue/30 border border-border-clinical/50 p-5 rounded-xl text-left">
-            <h3 className="font-sans text-xs font-bold text-deep-navy uppercase tracking-wider mb-4 border-b border-border-clinical/40 pb-2">
-              On this page
-            </h3>
-            <nav className="flex flex-col gap-3">
-              {tableOfContents.map((toc, idx) => (
-                <Link
-                  key={idx}
-                  href={`#${toc.id}`}
-                  className="text-xs font-semibold text-text-secondary hover:text-clinical-teal transition-colors block py-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal focus-visible:outline-offset-1"
-                >
-                  {toc.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </aside>
+        <TableOfContents items={tableOfContents} />
 
         {/* Main Content Area */}
         <main className="lg:col-span-9 space-y-12">
@@ -543,14 +528,11 @@ export const InjectionPage: React.FC<InjectionPageProps> = ({ slug }) => {
           </section>
 
           {/* Section 16: References */}
-          <section id="references" className="scroll-mt-8 space-y-3 pt-6 border-t border-border-clinical/30 text-xs text-text-muted leading-relaxed">
-            <span className="font-bold text-text-secondary block">Evidence &amp; References</span>
-            <ul className="list-disc pl-5 space-y-1">
-              {injection.references.map((ref, idx) => (
-                <li key={idx}>{ref}</li>
-              ))}
-            </ul>
-          </section>
+          <ReferencesList
+            staticReferences={injection.references}
+            evidenceSource={clinicalReview.evidenceSource}
+            title="Evidence & References"
+          />
 
           {/* Section 17: Medical Disclaimer */}
           <section className="pt-4">

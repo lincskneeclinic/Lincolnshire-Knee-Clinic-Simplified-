@@ -6,6 +6,7 @@ import { Card } from "@/components/Card";
 import { PageHeader } from "@/components/PageHeader";
 import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { ClinicalMetadataBlock } from "@/components/ClinicalMetadataBlock";
+import { ReferencesList } from "@/components/ReferencesList";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { injectionsData } from "@/data/injections";
 import { getVisualAsset } from "@/data/visualsInventory";
@@ -46,8 +47,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function InjectionsHub() {
-  const clinicalReview = getClinicalReviewStatus("injections/hub");
+export default async function InjectionsHub() {
+  const clinicalReview = await getClinicalReviewStatus("injections/hub");
   const genericFaqs = [
     {
       question: "Are knee injections a permanent cure for arthritis?",
@@ -262,14 +263,15 @@ export default function InjectionsHub() {
       </section>
 
       {/* References */}
-      <section className="my-8 border-t border-border-clinical/30 pt-6 text-xs text-text-muted leading-relaxed space-y-2">
-        <span className="font-bold text-text-secondary block">Evidence &amp; Reference Guidelines</span>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>National Institute for Health and Care Excellence (NICE) guidelines on osteoarthritis and joint injections.</li>
-          <li>Consensus publications and guidelines from British Orthopaedic Association and Royal College of Radiologists.</li>
-          <li>Peer-reviewed international literature on viscosupplementation, PRP, and polyacrylamide hydrogels.</li>
-        </ul>
-      </section>
+      <ReferencesList
+        evidenceSource={clinicalReview.evidenceSource}
+        defaultReferences={[
+          "National Institute for Health and Care Excellence (NICE) guidelines on osteoarthritis and joint injections.",
+          "Consensus publications and guidelines from British Orthopaedic Association and Royal College of Radiologists.",
+          "Peer-reviewed international literature on viscosupplementation, PRP, and polyacrylamide hydrogels."
+        ]}
+        title="Evidence & Reference Guidelines"
+      />
 
       {/* Medical Disclaimer */}
       <MedicalDisclaimerBlock />

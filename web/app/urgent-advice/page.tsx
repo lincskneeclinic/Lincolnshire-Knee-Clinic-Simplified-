@@ -119,7 +119,6 @@ export default function UrgentAdvice() {
         <div className="mt-8 pt-6 border-t border-border-clinical/30 text-xs text-text-muted space-y-1">
           <p className="font-bold text-text-secondary">Clinical Safety & Triage Guidance</p>
           <p>Reviewed by: Mr Ricardo J Pacheco, FRCS (Tr & Orth)</p>
-          <p>Last reviewed: [Last Reviewed Date]</p>
         </div>
       </div>
     </div>

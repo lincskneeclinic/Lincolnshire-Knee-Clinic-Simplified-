@@ -200,7 +200,7 @@ export default function Contact() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full border border-border-clinical rounded-lg p-2.5 bg-white focus:bg-white focus:border-clinical-teal focus:outline-none"
-                  placeholder="e.g. John Smith"
+                  placeholder="e.g. Jane Smith"
                 />
               </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 
 interface NewsletterSignupProps {
   /** Variant changes background/colour treatment for light vs dark contexts */
@@ -230,6 +231,17 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
           >
             Privacy Policy
           </a>.
+        </p>
+
+        <p className={`text-xs leading-relaxed ${isDark ? "text-[#8BA5B5]" : "text-text-muted"}`}>
+          Prefer to discuss knee health with other patients?{" "}
+          <Link
+            href="/community"
+            className="text-clinical-teal hover:underline font-semibold"
+          >
+            Join our patient Community
+          </Link>{" "}
+          — free to join, newsletter subscription optional.
         </p>
       </form>
     </div>

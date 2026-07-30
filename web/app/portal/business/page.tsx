@@ -11,6 +11,18 @@ import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
 import rehypeRaw from "rehype-raw";
 
 type RunDetailTab = "draft" | "research" | "images" | "social";
+interface CommunityReport {
+  id: string;
+  target_type: "post" | "reply";
+  target_id: string;
+  reason: string;
+  status: "open" | "actioned" | "dismissed";
+  created_at: string;
+  reporterDisplayName: string;
+  authorDisplayName: string;
+  authorEmail: string | null;
+  target: { id: string; title?: string; body: string; status: string } | null;
+}
 type ClinicalReviewListItem = ReviewablePage & { review: ClinicalReviewEntry };
 type SearchReference = { title: string; url: string; source: string; summary: string };
 
@@ -29,7 +41,7 @@ function getRenderableImageUrl(suggestedImages?: any[]): string | null {
 
 export default function BusinessDashboardPage() {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "pipeline" | "clinicalReview">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "pipeline" | "clinicalReview" | "community">("overview");
   const [statsData, setStatsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -82,6 +94,11 @@ export default function BusinessDashboardPage() {
   const [reviewFormReviewerTitle, setReviewFormReviewerTitle] = useState("");
   const [reviewFormLastReviewedDate, setReviewFormLastReviewedDate] = useState("");
   const [reviewFormEvidenceSource, setReviewFormEvidenceSource] = useState("");
+
+  // Community Moderation State
+  const [communityReports, setCommunityReports] = useState<CommunityReport[]>([]);
+  const [communityReportsLoading, setCommunityReportsLoading] = useState(false);
+  const [communityActionError, setCommunityActionError] = useState<string | null>(null);
   const [isSavingReview, setIsSavingReview] = useState(false);
 
   // Suggested Evidence Sources (web search panel) state
@@ -415,6 +432,56 @@ export default function BusinessDashboardPage() {
     }
   }, [activeTab, fetchClinicalReviewPages, clinicalReviewPages.length]);
 
+  // Fetch community moderation reports
+  const fetchCommunityReports = useCallback(async () => {
+    setCommunityReportsLoading(true);
+    try {
+      const res = await fetch("/api/portal/community-reports");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.reports)) {
+        setCommunityReports(data.reports);
+      }
+    } catch (err) {
+      console.error("Failed to fetch community reports:", err);
+    } finally {
+      setCommunityReportsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "community" && communityReports.length === 0) {
+      fetchCommunityReports();
+    }
+  }, [activeTab, fetchCommunityReports, communityReports.length]);
+
+  const handleCommunityReportAction = async (
+    report: { id: string; target_type: string; target_id: string },
+    action: "hide" | "dismiss"
+  ) => {
+    setCommunityActionError(null);
+    try {
+      const res = await fetch("/api/portal/community-reports", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reportId: report.id,
+          action,
+          targetType: report.target_type,
+          targetId: report.target_id,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setCommunityActionError(data.message || "Failed to update report.");
+        return;
+      }
+      fetchCommunityReports();
+    } catch (err) {
+      console.error("Failed to action community report:", err);
+      setCommunityActionError("Network error. Please try again.");
+    }
+  };
+
   const buildReferenceLine = (result: SearchReference) => `${result.title} (${result.source}) — ${result.url}`;
 
   const handleSelectReviewPage = (page: ClinicalReviewListItem) => {
@@ -422,7 +489,15 @@ export default function BusinessDashboardPage() {
     setReviewFormReviewed(page.review.reviewed);
     setReviewFormReviewerName(page.review.reviewerName || "Mr Ricardo J Pacheco (GMC 4145976)");
     setReviewFormReviewerTitle(page.review.reviewerTitle || "Consultant Trauma & Orthopaedic Surgeon");
-    setReviewFormLastReviewedDate(page.review.lastReviewedDate || "");
+    
+    // Pre-populate with today's date in "D MMMM YYYY" format (e.g. "30 July 2026")
+    const today = new Date();
+    const day = today.getDate();
+    const month = today.toLocaleString("en-GB", { month: "long" });
+    const year = today.getFullYear();
+    const todayFormatted = `${day} ${month} ${year}`;
+    
+    setReviewFormLastReviewedDate(page.review.lastReviewedDate || todayFormatted);
     // Evidence Sources starts blank — it's populated only by ticking references
     // from the search panel, not pre-filled from any previously-saved draft text.
     setReviewFormEvidenceSource("");
@@ -761,6 +836,7 @@ export default function BusinessDashboardPage() {
     (r) => r.status !== "awaiting_blog_approval" && r.status !== "awaiting_social_approval"
   );
   const reviewNeededPages = clinicalReviewPages.filter((page) => !page.review.reviewed);
+  const openCommunityReportsCount = communityReports.filter((report) => report.status === "open").length;
   const selectedRunHasSocial =
     !!selectedRun &&
     (selectedRun.status === "awaiting_social_approval" ||
@@ -795,6 +871,12 @@ export default function BusinessDashboardPage() {
       label: "Review",
       icon: "🩺",
       badge: reviewNeededPages.length > 0 ? reviewNeededPages.length : null,
+    },
+    {
+      id: "community",
+      label: "Community",
+      icon: "💬",
+      badge: openCommunityReportsCount > 0 ? openCommunityReportsCount : null,
     },
   ];
   const handleNavTabClick = (tabId: string) => {
@@ -1418,6 +1500,97 @@ export default function BusinessDashboardPage() {
                         </div>
                       );
                     })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB: COMMUNITY MODERATION */}
+            {activeTab === "community" && (
+              <div className="space-y-8">
+                <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg">
+                  <h2 className="text-lg font-bold text-white">Community Reports</h2>
+                  <p className="text-xs text-white/60 mt-1">
+                    Member-flagged posts and replies from the patient Community. Hiding a post
+                    or reply removes it from view for other members immediately; the author
+                    still sees it, labelled as hidden.
+                  </p>
+                </div>
+
+                {communityActionError && (
+                  <div className="bg-status-error/10 border border-status-error/30 text-status-error text-xs p-3 rounded-xl font-medium">
+                    {communityActionError}
+                  </div>
+                )}
+
+                {communityReportsLoading ? (
+                  <div className="text-center text-white/50 text-sm py-12">Loading reports…</div>
+                ) : communityReports.length === 0 ? (
+                  <div className="text-center text-white/50 text-sm py-12">No reports yet.</div>
+                ) : (
+                  <div className="space-y-4">
+                    {communityReports.map((report) => (
+                      <div
+                        key={report.id}
+                        className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg space-y-3"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
+                              report.status === "open"
+                                ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                                : report.status === "actioned"
+                                ? "bg-status-error/10 text-status-error border-status-error/30"
+                                : "bg-white/5 text-white/50 border-white/10"
+                            }`}
+                          >
+                            {report.status}
+                          </span>
+                          <span className="text-[11px] text-white/50">
+                            Reported {new Date(report.created_at).toLocaleString("en-GB")} by{" "}
+                            {report.reporterDisplayName}
+                          </span>
+                        </div>
+
+                        <div className="bg-dark-overlay-navy border border-white/5 rounded-xl p-4 space-y-1">
+                          <p className="text-[11px] text-clinical-teal font-semibold uppercase tracking-wide">
+                            {report.target_type} by {report.authorDisplayName}
+                            {report.authorEmail ? ` (${report.authorEmail})` : ""}
+                          </p>
+                          {report.target?.title && (
+                            <p className="text-sm font-bold text-white">{report.target.title}</p>
+                          )}
+                          <p className="text-xs text-white/70 whitespace-pre-wrap">
+                            {report.target?.body || "(content no longer available)"}
+                          </p>
+                          <p className="text-[11px] text-white/40 mt-2">
+                            Current status: {report.target?.status || "unknown"}
+                          </p>
+                        </div>
+
+                        <div className="text-xs text-white/70">
+                          <span className="font-semibold text-white/90">Reason: </span>
+                          {report.reason}
+                        </div>
+
+                        {report.status === "open" && (
+                          <div className="flex gap-3 pt-2">
+                            <button
+                              onClick={() => handleCommunityReportAction(report, "hide")}
+                              className="bg-status-error/90 hover:bg-status-error text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer transition-colors"
+                            >
+                              Hide Content
+                            </button>
+                            <button
+                              onClick={() => handleCommunityReportAction(report, "dismiss")}
+                              className="bg-dark-overlay-navy hover:bg-white/5 border border-white/20 text-white/80 text-xs font-bold px-4 py-2 rounded-xl cursor-pointer transition-colors"
+                            >
+                              Dismiss Report
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

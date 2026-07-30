@@ -12,9 +12,6 @@ export const metadata: Metadata = {
 };
 
 export default function PatientReviewsPage() {
-  // Placed in page body as everything must remain a placeholder
-  const mockFeaturedReviews = [] as any[]; // Will be populated with genuine reviews later
-
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-16 font-sans">
       <Breadcrumbs items={[{ label: "Patient Reviews" }]} />
@@ -42,17 +39,11 @@ export default function PatientReviewsPage() {
         <ReviewPlatformCard
           platformName="Google"
           description="Read verified patient reviews on Google."
-          rating="[Overall Rating — Google Reviews]"
-          reviewCount="[Total Review Count — Google Reviews]"
-          featuredReviews={mockFeaturedReviews}
           platformUrl="https://g.page/r/CYqSfdXK1SGEEBM/review"
         />
         <ReviewPlatformCard
           platformName="Doctify"
           description="Read verified patient reviews on Doctify."
-          rating="[Overall Rating — Doctify Reviews]"
-          reviewCount="[Total Review Count — Doctify Reviews]"
-          featuredReviews={mockFeaturedReviews}
           platformUrl={null} // Pending setup
         />
       </div>
@@ -64,7 +55,7 @@ export default function PatientReviewsPage() {
           Selected comments from our patient satisfaction reviews will be featured here as genuine feedback is published on independent platforms.
         </p>
         <div className="border border-dashed border-border-clinical/80 p-6 rounded-lg text-center text-xs text-text-muted italic bg-warm-off-white/20">
-          [Featured Patient Comments — Pending publication of verified testimonials]
+          Featured patient comments will appear here once verified testimonials are published on our review platforms.
         </div>
       </div>
 
@@ -115,9 +106,6 @@ export default function PatientReviewsPage() {
           <p className="font-medium text-clinical-teal">
             “Reviews shown on this website will be taken from independent third-party platforms. Lincolnshire Knee Clinic does not edit or alter patient reviews. Only genuine reviews published on the original review platforms will be displayed.”
           </p>
-          <div className="p-3 bg-white border border-border-clinical/40 rounded italic font-semibold text-deep-navy">
-            [Review Verification Policy – placeholder pending legal and clinical governance review prior to publication]
-          </div>
           <p>
             Feedback displayed on this page is synced periodically. We do not cherry-pick, filter, or suppress negative reviews. All feedback is valuable and helps maintain our high standards of clinical excellence.
           </p>

@@ -8,7 +8,15 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/portal", "/api"],
+      disallow: [
+        "/portal",
+        "/api",
+        "/community/login",
+        "/community/register",
+        "/community/account",
+        "/community/forgot-password",
+        "/community/reset-password",
+      ],
     },
     sitemap: `${baseUrl}/sitemap.xml`,
   };

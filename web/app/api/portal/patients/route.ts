@@ -1,36 +1,19 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { verifyClinicianPin } from "@/lib/clinicianPin";
+import { getStoreValue, setStoreValue } from "@/lib/dataStore";
 
-const DB_PATH = path.join(process.cwd(), "data", "dynamic-patients.json");
+const PATIENTS_KEY = "dynamic-patients";
 
-// Helper to read database
-function readDb() {
-  try {
-    if (!fs.existsSync(DB_PATH)) {
-      return {};
-    }
-    const data = fs.readFileSync(DB_PATH, "utf8");
-    return JSON.parse(data || "{}");
-  } catch (error) {
-    console.error("Failed to read dynamic-patients database:", error);
-    return {};
-  }
+async function readDb(): Promise<Record<string, any>> {
+  return getStoreValue(PATIENTS_KEY, {});
 }
 
-// Helper to write database
-function writeDb(data: any) {
-  try {
-    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), "utf8");
-    return true;
-  } catch (error) {
-    console.error("Failed to write to dynamic-patients database:", error);
-    return false;
-  }
+async function writeDb(data: Record<string, any>): Promise<boolean> {
+  return setStoreValue(PATIENTS_KEY, data);
 }
 
 export async function GET() {
-  const patients = readDb();
+  const patients = await readDb();
   return NextResponse.json(patients);
 }
 
@@ -55,7 +38,7 @@ export async function POST(request: Request) {
     } = body;
 
     // Simple security validation
-    if (pin !== "230670") {
+    if (!verifyClinicianPin(pin)) {
       return NextResponse.json({ error: "Invalid clinician credentials" }, { status: 401 });
     }
 
@@ -64,7 +47,7 @@ export async function POST(request: Request) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const db = readDb();
+    const db = await readDb();
 
     // Map default exercises and documents based on pathway
     let exercises: any[] = [];
@@ -147,12 +130,12 @@ export async function POST(request: Request) {
     };
 
     db[cleanEmail] = newPatient;
-    writeDb(db);
+    await writeDb(db);
 
     return NextResponse.json({ success: true, patient: newPatient });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Clinician registration error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to register patient." }, { status: 500 });
   }
 }
 
@@ -161,7 +144,7 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { email, clinicalNote, oksScore, fitForWorkCert, pin } = body;
 
-    if (pin !== "230670") {
+    if (!verifyClinicianPin(pin)) {
       return NextResponse.json({ error: "Invalid clinician credentials" }, { status: 401 });
     }
 
@@ -170,7 +153,7 @@ export async function PATCH(request: Request) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const db = readDb();
+    const db = await readDb();
 
     if (!db[cleanEmail]) {
       // Initialize dynamic record if not exists
@@ -269,10 +252,11 @@ export async function PATCH(request: Request) {
       }
     }
 
-    writeDb(db);
+    await writeDb(db);
     return NextResponse.json({ success: true, patient });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    console.error("Patient record update error:", error);
+    return NextResponse.json({ error: "Failed to update patient record." }, { status: 500 });
   }
 }
 
