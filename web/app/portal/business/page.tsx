@@ -39,6 +39,11 @@ function getRenderableImageUrl(suggestedImages?: any[]): string | null {
   return match || null;
 }
 
+function cleanHeadingBugs(text: string): string {
+  if (!text) return "";
+  return text.replace(/^(\s*)(#+)\s*(#+)\s*/gm, "$1$2 ");
+}
+
 export default function BusinessDashboardPage() {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "pipeline" | "clinicalReview" | "community">("overview");
@@ -209,7 +214,7 @@ export default function BusinessDashboardPage() {
       if (blogDraft) {
         setEditTitle(blogDraft.title || "");
         setEditExcerpt(blogDraft.excerpt || "");
-        setEditBody(blogDraft.body_markdown || blogDraft.body || "");
+        setEditBody(cleanHeadingBugs(blogDraft.body_markdown || blogDraft.body || ""));
         setEditSuggestedImages(blogDraft.suggested_images || []);
       }
       setIsEditMode(false);
@@ -233,36 +238,191 @@ export default function BusinessDashboardPage() {
     } else if (type === "underline") {
       replacement = `<u>${selectedText || "text"}</u>`;
     } else if (type === "h1" || type === "h2" || type === "h3") {
-      const hashes = type === "h1" ? "# " : type === "h2" ? "## " : "### ";
-      const hashLength = hashes.length;
+      const targetPrefix = type === "h1" ? "# " : type === "h2" ? "## " : "### ";
       
       const beforeText = text.substring(0, start);
       const lineStart = beforeText.lastIndexOf("\n") + 1;
-      const afterLineStartText = beforeText.substring(lineStart);
       
-      const newBefore = text.substring(0, lineStart) + hashes + afterLineStartText;
-      const newText = newBefore + text.substring(start);
+      const lineEnd = text.indexOf("\n", lineStart) === -1 ? text.length : text.indexOf("\n", lineStart);
+      const lineText = text.substring(lineStart, lineEnd);
+      
+      // Match existing headers (e.g. "# ", "## ", "### ")
+      const headerMatch = lineText.match(/^(\s*)(#{1,6}\s+)/);
+      
+      let newLineText = "";
+      let newSelectionStart = start;
+      let newSelectionEnd = end;
+      
+      if (headerMatch) {
+        const leadingWhitespace = headerMatch[1];
+        const existingPrefix = headerMatch[2];
+        const existingPrefixLength = existingPrefix.length;
+        
+        if (existingPrefix === targetPrefix) {
+          // Toggle off: Remove the header prefix
+          newLineText = leadingWhitespace + lineText.substring(leadingWhitespace.length + existingPrefixLength);
+          
+          const shift = existingPrefixLength;
+          const prefixEndIndexInLine = leadingWhitespace.length + existingPrefixLength;
+          
+          const relativeStart = start - lineStart;
+          const relativeEnd = end - lineStart;
+          
+          const newRelativeStart = relativeStart >= prefixEndIndexInLine 
+            ? relativeStart - shift 
+            : Math.max(leadingWhitespace.length, relativeStart);
+            
+          const newRelativeEnd = relativeEnd >= prefixEndIndexInLine 
+            ? relativeEnd - shift 
+            : Math.max(leadingWhitespace.length, relativeEnd);
+            
+          newSelectionStart = lineStart + newRelativeStart;
+          newSelectionEnd = lineStart + newRelativeEnd;
+        } else {
+          // Replace: Swap existing prefix with targetPrefix
+          newLineText = leadingWhitespace + targetPrefix + lineText.substring(leadingWhitespace.length + existingPrefixLength);
+          
+          const shift = targetPrefix.length - existingPrefixLength;
+          const prefixEndIndexInLine = leadingWhitespace.length + existingPrefixLength;
+          
+          const relativeStart = start - lineStart;
+          const relativeEnd = end - lineStart;
+          
+          const newRelativeStart = relativeStart >= prefixEndIndexInLine
+            ? relativeStart + shift
+            : Math.max(leadingWhitespace.length + targetPrefix.length, relativeStart);
+            
+          const newRelativeEnd = relativeEnd >= prefixEndIndexInLine
+            ? relativeEnd + shift
+            : Math.max(leadingWhitespace.length + targetPrefix.length, relativeEnd);
+            
+          newSelectionStart = lineStart + newRelativeStart;
+          newSelectionEnd = lineStart + newRelativeEnd;
+        }
+      } else {
+        // Prepend: Insert targetPrefix at start of line
+        const whitespaceMatch = lineText.match(/^(\s*)/);
+        const leadingWhitespace = whitespaceMatch ? whitespaceMatch[1] : "";
+        
+        newLineText = leadingWhitespace + targetPrefix + lineText.substring(leadingWhitespace.length);
+        
+        const shift = targetPrefix.length;
+        const relativeStart = start - lineStart;
+        const relativeEnd = end - lineStart;
+        
+        const newRelativeStart = relativeStart >= leadingWhitespace.length
+          ? relativeStart + shift
+          : relativeStart;
+          
+        const newRelativeEnd = relativeEnd >= leadingWhitespace.length
+          ? relativeEnd + shift
+          : relativeEnd;
+          
+        newSelectionStart = lineStart + newRelativeStart;
+        newSelectionEnd = lineStart + newRelativeEnd;
+      }
+      
+      const newText = text.substring(0, lineStart) + newLineText + text.substring(lineEnd);
       setEditBody(newText);
       pushHistory(newText);
       
       setTimeout(() => {
         textarea.focus();
-        textarea.setSelectionRange(lineStart + hashLength + start - lineStart, lineStart + hashLength + end - lineStart);
+        textarea.setSelectionRange(newSelectionStart, newSelectionEnd);
       }, 0);
       return;
     } else if (type === "bullet") {
       const beforeText = text.substring(0, start);
       const lineStart = beforeText.lastIndexOf("\n") + 1;
-      const afterLineStartText = beforeText.substring(lineStart);
       
-      const newBefore = text.substring(0, lineStart) + "- " + afterLineStartText;
-      const newText = newBefore + text.substring(start);
+      const lineEnd = text.indexOf("\n", lineStart) === -1 ? text.length : text.indexOf("\n", lineStart);
+      const lineText = text.substring(lineStart, lineEnd);
+      
+      const listMatch = lineText.match(/^(\s*)(-\s+|\*\s+)/);
+      const headerMatch = lineText.match(/^(\s*)(#{1,6}\s+)/);
+      
+      let newLineText = "";
+      let newSelectionStart = start;
+      let newSelectionEnd = end;
+      
+      if (listMatch) {
+        // Toggle off: Remove the bullet
+        const leadingWhitespace = listMatch[1];
+        const existingPrefix = listMatch[2];
+        const existingPrefixLength = existingPrefix.length;
+        
+        newLineText = leadingWhitespace + lineText.substring(leadingWhitespace.length + existingPrefixLength);
+        
+        const shift = existingPrefixLength;
+        const prefixEndIndexInLine = leadingWhitespace.length + existingPrefixLength;
+        
+        const relativeStart = start - lineStart;
+        const relativeEnd = end - lineStart;
+        
+        const newRelativeStart = relativeStart >= prefixEndIndexInLine
+          ? relativeStart - shift
+          : Math.max(leadingWhitespace.length, relativeStart);
+          
+        const newRelativeEnd = relativeEnd >= prefixEndIndexInLine
+          ? relativeEnd - shift
+          : Math.max(leadingWhitespace.length, relativeEnd);
+          
+        newSelectionStart = lineStart + newRelativeStart;
+        newSelectionEnd = lineStart + newRelativeEnd;
+      } else if (headerMatch) {
+        // Replace: Swap header prefix for bullet prefix
+        const leadingWhitespace = headerMatch[1];
+        const existingPrefix = headerMatch[2];
+        const existingPrefixLength = existingPrefix.length;
+        
+        newLineText = leadingWhitespace + "- " + lineText.substring(leadingWhitespace.length + existingPrefixLength);
+        
+        const shift = 2 - existingPrefixLength;
+        const prefixEndIndexInLine = leadingWhitespace.length + existingPrefixLength;
+        
+        const relativeStart = start - lineStart;
+        const relativeEnd = end - lineStart;
+        
+        const newRelativeStart = relativeStart >= prefixEndIndexInLine
+          ? relativeStart + shift
+          : Math.max(leadingWhitespace.length + 2, relativeStart);
+          
+        const newRelativeEnd = relativeEnd >= prefixEndIndexInLine
+          ? relativeEnd + shift
+          : Math.max(leadingWhitespace.length + 2, relativeEnd);
+          
+        newSelectionStart = lineStart + newRelativeStart;
+        newSelectionEnd = lineStart + newRelativeEnd;
+      } else {
+        // Prepend: Insert bullet prefix
+        const whitespaceMatch = lineText.match(/^(\s*)/);
+        const leadingWhitespace = whitespaceMatch ? whitespaceMatch[1] : "";
+        
+        newLineText = leadingWhitespace + "- " + lineText.substring(leadingWhitespace.length);
+        
+        const shift = 2;
+        const relativeStart = start - lineStart;
+        const relativeEnd = end - lineStart;
+        
+        const newRelativeStart = relativeStart >= leadingWhitespace.length
+          ? relativeStart + shift
+          : relativeStart;
+          
+        const newRelativeEnd = relativeEnd >= leadingWhitespace.length
+          ? relativeEnd + shift
+          : relativeEnd;
+          
+        newSelectionStart = lineStart + newRelativeStart;
+        newSelectionEnd = lineStart + newRelativeEnd;
+      }
+      
+      const newText = text.substring(0, lineStart) + newLineText + text.substring(lineEnd);
       setEditBody(newText);
       pushHistory(newText);
       
       setTimeout(() => {
         textarea.focus();
-        textarea.setSelectionRange(lineStart + 2 + start - lineStart, lineStart + 2 + end - lineStart);
+        textarea.setSelectionRange(newSelectionStart, newSelectionEnd);
       }, 0);
       return;
     }
@@ -275,7 +435,6 @@ export default function BusinessDashboardPage() {
       setTimeout(() => {
         textarea.focus();
         const startOffset = type === "bold" ? 2 : type === "italic" ? 1 : 3;
-        const endOffset = type === "bold" ? 2 : type === "italic" ? 1 : 4;
         if (selectedText) {
           textarea.setSelectionRange(start + startOffset, start + startOffset + selectedText.length);
         } else {
@@ -368,7 +527,7 @@ export default function BusinessDashboardPage() {
         if (blogDraft) {
           setEditTitle(blogDraft.title || "");
           setEditExcerpt(blogDraft.excerpt || "");
-          setEditBody(blogDraft.body_markdown || blogDraft.body || "");
+          setEditBody(cleanHeadingBugs(blogDraft.body_markdown || blogDraft.body || ""));
           setEditSuggestedImages(blogDraft.suggested_images || []);
         }
         const socialDraft = data.run.social_drafts?.[0];
@@ -675,7 +834,7 @@ export default function BusinessDashboardPage() {
   // Submit review decision (approved | edited | revision_requested | revert_to_blog | revert_to_social)
   const handleReviewSubmission = async (
     stage: "blog" | "social",
-    decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social",
+    decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social" | "save_progress",
     customPayload?: any,
     platform?: "instagram" | "facebook" | "linkedin",
     keepEditMode?: boolean
@@ -690,7 +849,7 @@ export default function BusinessDashboardPage() {
         platform,
       };
 
-      if (decision === "edited") {
+      if (decision === "edited" || decision === "save_progress") {
         if (stage === "blog") {
           bodyData.editedContent = {
             title: editTitle,
@@ -748,7 +907,10 @@ export default function BusinessDashboardPage() {
           setSelectedRun(data.run);
         }
         const targetDesc = platform ? `${platform.toUpperCase()} (${decision.toUpperCase()})` : decision.toUpperCase();
-        setActionFeedback(`✓ Action for ${targetDesc} recorded successfully.`);
+        const feedbackMessage = decision === "save_progress" 
+          ? "✓ Draft progress saved successfully! You can resume editing on any device." 
+          : `✓ Action for ${targetDesc} recorded successfully.`;
+        setActionFeedback(feedbackMessage);
         setTimeout(() => setActionFeedback(null), 4000);
       }
     } catch (err: any) {
@@ -1692,7 +1854,7 @@ export default function BusinessDashboardPage() {
                                       if (latestDraft) {
                                         setEditTitle(latestDraft.title || "");
                                         setEditExcerpt(latestDraft.excerpt || "");
-                                        setEditBody(latestDraft.body_markdown || latestDraft.body || "");
+                                        setEditBody(cleanHeadingBugs(latestDraft.body_markdown || latestDraft.body || ""));
                                       }
                                       setRunDetailTab("draft");
                                       setIsEditMode(true);
@@ -1984,9 +2146,17 @@ export default function BusinessDashboardPage() {
                                       Finish Editing
                                     </button>
                                     <button
+                                      onClick={() => handleReviewSubmission("blog", "save_progress", undefined, undefined, true)}
+                                      disabled={isSubmittingReview}
+                                      className="border border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-60 font-medium"
+                                      title="Save your changes to the database without approving the draft, so you can resume on other devices."
+                                    >
+                                      {isSubmittingReview ? "Saving..." : "Save Progress"}
+                                    </button>
+                                    <button
                                       onClick={handleApproveDraft}
                                       disabled={isSubmittingReview}
-                                      className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-60"
+                                      className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-60 font-medium"
                                     >
                                       {isSubmittingReview ? "Saving..." : "Save & Approve Edited Draft"}
                                     </button>
@@ -2781,7 +2951,7 @@ function FormattedContent({
   suggestedImages?: any[];
   onAttachPlaceholder?: (placeholderId: string, label: string, url: string) => void;
 }) {
-  const content = body_markdown || body || "";
+  const content = cleanHeadingBugs(body_markdown || body || "");
   if (!content) return null;
 
   return (

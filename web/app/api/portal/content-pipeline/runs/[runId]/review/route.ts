@@ -29,9 +29,9 @@ export async function POST(
       );
     }
 
-    if (!decision || !["approved", "edited", "revision_requested", "revert_to_blog", "revert_to_social"].includes(decision)) {
+    if (!decision || !["approved", "edited", "revision_requested", "revert_to_blog", "revert_to_social", "save_progress"].includes(decision)) {
       return NextResponse.json(
-        { success: false, error: "Invalid or missing 'decision'. Must be 'approved', 'edited', 'revision_requested', 'revert_to_blog', or 'revert_to_social'." },
+        { success: false, error: "Invalid or missing 'decision'. Must be 'approved', 'edited', 'revision_requested', 'revert_to_blog', 'revert_to_social', or 'save_progress'." },
         { status: 400 }
       );
     }

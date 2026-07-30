@@ -1,7 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ["192.168.1.35", "192.168.1.35:3000", "10.250.13.78", "localhost:3000"],
+  allowedDevOrigins: [
+    "192.168.1.35",
+    "192.168.1.35:3000",
+    "10.250.13.78",
+    "localhost:3000",
+    "lincsknee.com",
+    "www.lincsknee.com",
+    "lincsknee.com:3000",
+    "www.lincsknee.com:3000",
+    "lincsknee.com:80",
+    "www.lincsknee.com:80"
+  ],
   async redirects() {
     return [
       {

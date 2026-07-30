@@ -83,7 +83,7 @@ export interface ContentPipelineReview {
   stage: "blog" | "social";
   platform?: "instagram" | "facebook" | "linkedin";
   version?: number;
-  decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social";
+  decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social" | "save_progress";
   edited_content?: any;
   revision_notes?: string;
   created_at: string;
@@ -438,7 +438,7 @@ export async function submitPipelineReview(
   payload: {
     stage: "blog" | "social";
     platform?: "instagram" | "facebook" | "linkedin";
-    decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social";
+    decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social" | "save_progress";
     editedContent?: any;
     revisionNotes?: string;
   }
@@ -492,6 +492,33 @@ export async function submitPipelineReview(
       socialDraft.facebook.status = "pending";
       socialDraft.linkedin.status = "pending";
     }
+  } else if (payload.decision === "save_progress") {
+    if (payload.stage === "blog" && payload.editedContent) {
+      if (run.blog_drafts && run.blog_drafts.length > 0) {
+        const latestDraft = run.blog_drafts[0];
+        latestDraft.title = payload.editedContent.title || latestDraft.title;
+        latestDraft.excerpt = payload.editedContent.excerpt || latestDraft.excerpt;
+        latestDraft.body_markdown = payload.editedContent.body_markdown || payload.editedContent.body || latestDraft.body_markdown;
+        latestDraft.body = latestDraft.body_markdown;
+        latestDraft.suggested_images = payload.editedContent.suggestedImages || latestDraft.suggested_images;
+        latestDraft.references = payload.editedContent.references || latestDraft.references;
+        latestDraft.flags = payload.editedContent.flags || latestDraft.flags;
+      }
+    } else if (payload.stage === "social" && payload.editedContent) {
+      if (run.social_drafts && run.social_drafts.length > 0) {
+        const latestSocial = run.social_drafts[0];
+        if (latestSocial.instagram && payload.editedContent.instagram) {
+          latestSocial.instagram.caption = payload.editedContent.instagram.caption || latestSocial.instagram.caption;
+        }
+        if (latestSocial.facebook && payload.editedContent.facebook) {
+          latestSocial.facebook.caption = payload.editedContent.facebook.caption || latestSocial.facebook.caption;
+        }
+        if (latestSocial.linkedin && payload.editedContent.linkedin) {
+          latestSocial.linkedin.caption = payload.editedContent.linkedin.caption || latestSocial.linkedin.caption;
+        }
+      }
+    }
+    run.updated_at = now;
   } else if (payload.stage === "blog") {
     if (payload.decision === "approved" || payload.decision === "edited") {
       if (payload.decision === "edited" && payload.editedContent) {
