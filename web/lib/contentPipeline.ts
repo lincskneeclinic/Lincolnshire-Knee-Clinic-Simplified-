@@ -40,6 +40,7 @@ export interface BlogDraftVersion {
   suggested_images: Array<string | { placeholderId?: string; label: string; url?: string; isFeatured?: boolean }>;
   references: string[];
   flags: string[];
+  category?: string;
   created_at: string;
 }
 
@@ -387,6 +388,7 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
         suggested_images: blogDraftData.suggestedImages,
         references: realReferences,
         flags: blogDraftData.flags,
+        category: undefined,
         created_at: now
       }
     ],
@@ -506,6 +508,7 @@ export async function submitPipelineReview(
         latestDraft.suggested_images = payload.editedContent.suggestedImages || latestDraft.suggested_images;
         latestDraft.references = payload.editedContent.references || latestDraft.references;
         latestDraft.flags = payload.editedContent.flags || latestDraft.flags;
+        latestDraft.category = payload.editedContent.category !== undefined ? payload.editedContent.category : latestDraft.category;
       }
     } else if (payload.stage === "social" && payload.editedContent) {
       if (run.social_drafts && run.social_drafts.length > 0) {
@@ -572,6 +575,7 @@ export async function submitPipelineReview(
           suggested_images: suggestedImages,
           references: payload.editedContent.references || run.blog_drafts[0]?.references || [],
           flags: payload.editedContent.flags || [],
+          category: payload.editedContent.category !== undefined ? payload.editedContent.category : run.blog_drafts[0]?.category,
           created_at: now
         });
       }

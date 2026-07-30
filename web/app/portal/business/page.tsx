@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ContentPipelineRun, ContentPipelineReview } from "@/lib/contentPipeline";
 import { MIN_BLOG_BODY_LENGTH } from "@/lib/contentPipelineConstants";
+import { ARTICLE_CATEGORIES } from "@/lib/articleCategories";
 import { ReviewablePage, ClinicalReviewEntry } from "@/lib/clinicalReview";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -89,8 +90,11 @@ export default function BusinessDashboardPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editExcerpt, setEditExcerpt] = useState("");
+  const [editCategory, setEditCategory] = useState("");
   const [editBody, setEditBody] = useState("");
   const [editSuggestedImages, setEditSuggestedImages] = useState<any[]>([]);
+  const [generatingImagePlaceholderId, setGeneratingImagePlaceholderId] = useState<string | null>(null);
+  const [generatedImagePreview, setGeneratedImagePreview] = useState<{ placeholderId: string; url: string } | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const typingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -234,6 +238,7 @@ export default function BusinessDashboardPage() {
         setEditExcerpt(blogDraft.excerpt || "");
         setEditBody(cleanHeadingBugs(blogDraft.body_markdown || blogDraft.body || ""));
         setEditSuggestedImages(blogDraft.suggested_images || []);
+        setEditCategory(blogDraft.category || "");
       }
       setIsEditMode(false);
     }
@@ -468,21 +473,25 @@ export default function BusinessDashboardPage() {
     // marker in the body with real Markdown image syntax. This makes the image a
     // permanent part of body_markdown — no separate side-channel lookup needed.
     // ReactMarkdown's standard <img> renderer then displays it automatically.
-    const markerPrefix = isFeatured ? "FEATURED IMAGE PLACEHOLDER" : "IMAGE PLACEHOLDER";
-    const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    //
+    // Matching is positional (by placeholderId, e.g. "placeholder-2"), not by label
+    // text — free-text label matching broke whenever the label was re-wrapped,
+    // re-punctuated, or edited slightly between what's stored and what's in the body.
+    // Position is stable regardless of label drift.
     const imageMarkdown = `![${label}](${url})`;
+    let newBody = editBody;
 
-    // Try an exact match first...
-    const exactPattern = new RegExp(`\\[${markerPrefix}:\\s*${escapedLabel}\\s*\\]`, "i");
-    let newBody = editBody.replace(exactPattern, imageMarkdown);
-
-    // ...and if the label's internal whitespace doesn't line up character-for-character
-    // with the raw source (e.g. a soft line break inside the label rendered as a single
-    // space), retry treating any run of whitespace in the label as a wildcard.
-    if (newBody === editBody) {
-      const looseLabel = escapedLabel.replace(/\s+/g, "\\s+");
-      const loosePattern = new RegExp(`\\[${markerPrefix}:\\s*${looseLabel}\\s*\\]`, "i");
-      newBody = editBody.replace(loosePattern, imageMarkdown);
+    if (isFeatured) {
+      const featuredPattern = /\[FEATURED IMAGE PLACEHOLDER:[^\]]*\]/i;
+      newBody = editBody.replace(featuredPattern, imageMarkdown);
+    } else {
+      const targetIndex = parseInt(placeholderId.replace(/[^0-9]/g, ""), 10) || 1;
+      const inlinePattern = /\[IMAGE PLACEHOLDER:[^\]]*\]/gi;
+      let occurrence = 0;
+      newBody = editBody.replace(inlinePattern, (matchText) => {
+        occurrence += 1;
+        return occurrence === targetIndex ? imageMarkdown : matchText;
+      });
     }
 
     if (newBody === editBody) {
@@ -490,7 +499,7 @@ export default function BusinessDashboardPage() {
       // upload. The image itself uploaded fine (it has a real URL); only the
       // automatic placement into the draft text failed.
       alert(
-        `The image uploaded successfully, but couldn't be automatically placed in the draft (the placeholder text may have changed). You can paste this URL manually where you want the image:\n\n${url}`
+        `The image uploaded successfully, but couldn't be automatically placed in the draft (the placeholder marker may have been removed from the text). You can paste this URL manually where you want the image:\n\n${url}`
       );
       return;
     }
@@ -507,6 +516,7 @@ export default function BusinessDashboardPage() {
     );
     const updatedImages = isFeatured ? [url, ...withoutPlaceholder.filter((img: any) => img !== url)] : withoutPlaceholder;
     setEditSuggestedImages(updatedImages);
+    setGeneratedImagePreview((prev) => (prev?.placeholderId === placeholderId ? null : prev));
 
     // If we're NOT in edit mode (read-only view), save the image attachment to the server immediately.
     if (!isEditMode && selectedRun) {
@@ -518,8 +528,38 @@ export default function BusinessDashboardPage() {
         body: newBody,
         suggestedImages: updatedImages,
         references: currentDraft?.references,
+        category: editCategory || currentDraft?.category,
       });
     }
+  };
+
+  // Calls the Gemini image-generation endpoint and stores the result as a pending
+  // preview (not yet inserted into the body) so the user can Regenerate or Discard
+  // before committing — committing reuses handleAttachPlaceholderImage above.
+  const handleGenerateImage = async (placeholderId: string, label: string, isFeatured?: boolean) => {
+    setGeneratingImagePlaceholderId(placeholderId);
+    try {
+      const res = await fetch("/api/portal/content-pipeline/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: label, isFeatured: Boolean(isFeatured) }),
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setGeneratedImagePreview({ placeholderId, url: data.url });
+      } else {
+        alert(`Image generation failed: ${data.error || "Unknown error"}`);
+      }
+    } catch (err) {
+      console.error("AI image generation failed:", err);
+      alert("Image generation failed. Please check your connection and try again.");
+    } finally {
+      setGeneratingImagePlaceholderId(null);
+    }
+  };
+
+  const handleDiscardGeneratedImage = (placeholderId: string) => {
+    setGeneratedImagePreview((prev) => (prev?.placeholderId === placeholderId ? null : prev));
   };
 
   // Fetch telemetry stats
@@ -573,6 +613,7 @@ export default function BusinessDashboardPage() {
           setEditExcerpt(blogDraft.excerpt || "");
           setEditBody(cleanHeadingBugs(blogDraft.body_markdown || blogDraft.body || ""));
           setEditSuggestedImages(blogDraft.suggested_images || []);
+          setEditCategory(blogDraft.category || "");
         }
         const socialDraft = data.run.social_drafts?.[0];
         if (socialDraft) {
@@ -901,6 +942,7 @@ export default function BusinessDashboardPage() {
             body_markdown: editBody,
             body: editBody,
             suggestedImages: editSuggestedImages,
+            category: editCategory,
           };
         } else if (customPayload) {
           bodyData.editedContent = customPayload;
@@ -989,6 +1031,7 @@ export default function BusinessDashboardPage() {
       body: editBody || currentDraft?.body_markdown || currentDraft?.body,
       suggestedImages: updatedImages,
       references: currentDraft?.references,
+      category: editCategory || currentDraft?.category,
     });
   };
 
@@ -1033,6 +1076,21 @@ export default function BusinessDashboardPage() {
   const trendingTopics = statsData?.trendingTopics || [];
   const pollResults = statsData?.pollResults || { votes: {}, suggestions: [] };
   const pollVotesTotal = Object.values(pollResults.votes || {}).reduce((a: any, b: any) => Number(a) + Number(b), 0);
+
+  // A run is "mid manual edit" (Save Progress was used) rather than a fresh, never-touched
+  // draft when the run has been touched (updated_at) more recently than its latest draft
+  // version was created. A fresh run or a freshly AI-rewritten revision always has
+  // run.updated_at === latest draft's created_at (both stamped with the same timestamp at
+  // creation time); only "Save Progress" moves updated_at forward without creating a new
+  // draft version, so this needs no extra persisted field to detect.
+  const isBlogEditInProgress = (run: ContentPipelineRun) => {
+    const latestDraft = run.blog_drafts?.[0];
+    return (
+      run.status === "awaiting_blog_approval" &&
+      !!latestDraft &&
+      run.updated_at !== latestDraft.created_at
+    );
+  };
 
   // Group pipeline runs
   const reviewNeededRuns = pipelineRuns.filter(
@@ -1850,7 +1908,7 @@ export default function BusinessDashboardPage() {
                       <div className="flex items-center justify-between flex-wrap gap-3">
                         <div className="flex items-center gap-3">
                           <span className="text-xs font-mono text-white/60">{selectedRun.run_id}</span>
-                          <StatusBadge status={selectedRun.status} />
+                          <StatusBadge status={selectedRun.status} isContinueEditing={isBlogEditInProgress(selectedRun)} />
                         </div>
                         <span className="text-xs text-white/60 font-mono">
                           Created: {new Date(selectedRun.created_at).toLocaleString()}
@@ -1899,6 +1957,7 @@ export default function BusinessDashboardPage() {
                                         setEditTitle(latestDraft.title || "");
                                         setEditExcerpt(latestDraft.excerpt || "");
                                         setEditBody(cleanHeadingBugs(latestDraft.body_markdown || latestDraft.body || ""));
+                                        setEditCategory(latestDraft.category || "");
                                       }
                                       setRunDetailTab("draft");
                                       setIsEditMode(true);
@@ -2047,6 +2106,21 @@ export default function BusinessDashboardPage() {
                                       />
                                     </div>
                                     <div>
+                                      <label className="block text-xs text-clinical-teal mb-1 font-semibold">Education Hub Category</label>
+                                      <select
+                                        value={editCategory}
+                                        onChange={(e) => setEditCategory(e.target.value)}
+                                        className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                                      >
+                                        <option value="">Select a category…</option>
+                                        {ARTICLE_CATEGORIES.map((cat) => (
+                                          <option key={cat.value} value={cat.value}>
+                                            {cat.label}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <div>
                                       <label className="block text-xs text-clinical-teal mb-1 font-semibold">Formatted Body Content (Markdown supported)</label>
                                       
                                       {/* Markdown Toolbar */}
@@ -2169,6 +2243,10 @@ export default function BusinessDashboardPage() {
                                            suggestedImages={editSuggestedImages}
                                           onAttachPlaceholder={(placeholderId, label, url, isFeatured) => handleAttachPlaceholderImage(placeholderId, label, url, isFeatured)}
                                           references={selectedRun.blog_drafts[0]?.references}
+                                          generatingPlaceholderId={generatingImagePlaceholderId}
+                                          pendingPreview={generatedImagePreview}
+                                          onGenerateImage={(placeholderId, label, isFeatured) => handleGenerateImage(placeholderId, label, isFeatured)}
+                                          onDiscardGeneratedImage={(placeholderId) => handleDiscardGeneratedImage(placeholderId)}
                                         />
                                       </div>
                                     </div>
@@ -2230,6 +2308,15 @@ export default function BusinessDashboardPage() {
                                   <h1 className="font-serif text-xl font-bold text-white tracking-tight">
                                     {editTitle || selectedRun.blog_drafts[0]?.title}
                                   </h1>
+                                  {(() => {
+                                    const categoryValue = editCategory || selectedRun.blog_drafts[0]?.category;
+                                    const categoryLabel = ARTICLE_CATEGORIES.find((c) => c.value === categoryValue)?.label;
+                                    return categoryLabel ? (
+                                      <span className="inline-block text-[9px] font-semibold uppercase tracking-wider text-clinical-teal bg-clinical-teal/10 border border-clinical-teal/30 rounded-full px-2.5 py-1">
+                                        {categoryLabel}
+                                      </span>
+                                    ) : null;
+                                  })()}
                                   {(editExcerpt || selectedRun.blog_drafts[0]?.excerpt) && (
                                     <p className="text-[9px] text-white/70 italic border-l-2 border-clinical-teal pl-3 py-1">
                                       {editExcerpt || selectedRun.blog_drafts[0]?.excerpt}
@@ -2241,6 +2328,10 @@ export default function BusinessDashboardPage() {
                                       suggestedImages={editSuggestedImages.length > 0 ? editSuggestedImages : selectedRun.blog_drafts[0]?.suggested_images}
                                       onAttachPlaceholder={(placeholderId, label, url, isFeatured) => handleAttachPlaceholderImage(placeholderId, label, url, isFeatured)}
                                       references={selectedRun.blog_drafts[0]?.references}
+                                      generatingPlaceholderId={generatingImagePlaceholderId}
+                                      pendingPreview={generatedImagePreview}
+                                      onGenerateImage={(placeholderId, label, isFeatured) => handleGenerateImage(placeholderId, label, isFeatured)}
+                                      onDiscardGeneratedImage={(placeholderId) => handleDiscardGeneratedImage(placeholderId)}
                                     />
                                   </div>
                                 </div>
@@ -2701,7 +2792,7 @@ export default function BusinessDashboardPage() {
                               <div className="flex items-center justify-between flex-wrap gap-2">
                                 <div className="flex items-center gap-2">
                                   <span className="text-xs font-mono text-white/70">{run.run_id}</span>
-                                  <StatusBadge status={run.status} />
+                                  <StatusBadge status={run.status} isContinueEditing={isBlogEditInProgress(run)} />
                                 </div>
                                 <span className="text-[11px] text-white/60 font-mono" title={`Created ${new Date(run.created_at).toLocaleString()}`}>
                                   Last saved: {new Date(run.updated_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
@@ -2746,7 +2837,7 @@ export default function BusinessDashboardPage() {
                           >
                             <div className="flex items-center justify-between text-xs">
                               <span className="font-mono text-white/60">{run.run_id}</span>
-                              <StatusBadge status={run.status} />
+                              <StatusBadge status={run.status} isContinueEditing={isBlogEditInProgress(run)} />
                             </div>
                             <h4 className="text-xs text-white/80 line-clamp-2">{run.topic}</h4>
                             <span className="text-[10px] text-white/40 font-mono block">
@@ -2915,7 +3006,7 @@ export default function BusinessDashboardPage() {
 }
 
 // Subcomponent: Status Badge
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, isContinueEditing }: { status: string; isContinueEditing?: boolean }) {
   const styles: Record<string, string> = {
     awaiting_blog_approval: "bg-dark-overlay-navy border-clinical-teal/40 text-clinical-teal",
     awaiting_social_approval: "bg-dark-overlay-navy border-clinical-teal/40 text-clinical-teal",
@@ -2935,6 +3026,14 @@ function StatusBadge({ status }: { status: string }) {
     writing_social: "Writing Social Captions",
     abandoned: "Archived",
   };
+
+  if (isContinueEditing) {
+    return (
+      <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border bg-dark-overlay-navy border-amber-400/50 text-amber-300">
+        ✎ Continue Editing
+      </span>
+    );
+  }
 
   return (
     <span
@@ -2994,16 +3093,31 @@ function FormattedContent({
   body_markdown,
   suggestedImages,
   onAttachPlaceholder,
-  references
+  references,
+  generatingPlaceholderId,
+  pendingPreview,
+  onGenerateImage,
+  onDiscardGeneratedImage
 }: {
   body?: string;
   body_markdown?: string;
   suggestedImages?: any[];
   onAttachPlaceholder?: (placeholderId: string, label: string, url: string, isFeatured?: boolean) => void;
   references?: string[];
+  generatingPlaceholderId?: string | null;
+  pendingPreview?: { placeholderId: string; url: string } | null;
+  onGenerateImage?: (placeholderId: string, label: string, isFeatured?: boolean) => void;
+  onDiscardGeneratedImage?: (placeholderId: string) => void;
 }) {
   const content = cleanHeadingBugs(body_markdown || body || "");
   if (!content) return null;
+
+  // Assigns a stable, position-based id to each inline placeholder as it's
+  // encountered during this render pass ("placeholder-1", "placeholder-2", ...),
+  // matching the order blogWriterAgent.ts numbers them in. Matching by position
+  // instead of by label text means the image still lands correctly even if the
+  // label wording drifts slightly from what's stored in suggestedImages.
+  let inlinePlaceholderCounter = 0;
 
   return (
     <div className="markdown-content space-y-3">
@@ -3052,11 +3166,9 @@ function FormattedContent({
             if (match) {
               const isFeatured = match[1].toUpperCase() === "FEATURED IMAGE PLACEHOLDER";
               const label = match[2].trim();
+              const placeholderId = isFeatured ? "featured-image" : `placeholder-${++inlinePlaceholderCounter}`;
               const resolvedImage = (suggestedImages || []).find(
-                (item) =>
-                  typeof item === "object" &&
-                  item !== null &&
-                  item.label?.trim().toLowerCase() === label.toLowerCase()
+                (item) => typeof item === "object" && item !== null && item.placeholderId === placeholderId
               );
 
               if (resolvedImage && resolvedImage.url) {
@@ -3074,7 +3186,8 @@ function FormattedContent({
                 );
               }
 
-              const placeholderId = resolvedImage?.placeholderId || (isFeatured ? "featured-image" : `placeholder-${label.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`);
+              const isGeneratingThis = generatingPlaceholderId === placeholderId;
+              const previewForThis = pendingPreview?.placeholderId === placeholderId ? pendingPreview : null;
 
               return (
                 <div className={`border border-dashed p-4 rounded-xl my-4 text-center space-y-3 ${isFeatured ? "border-amber-400/50 bg-amber-950/10" : "border-clinical-teal/40 bg-primary-navy/40"}`}>
@@ -3082,51 +3195,101 @@ function FormattedContent({
                     {isFeatured ? "🖼️ Featured Image — used as this article's Education Hub card" : "📷 Suggested Image Placement"}
                   </div>
                   <p className="text-[11px] text-white/90 italic">"{label}"</p>
-                  {onAttachPlaceholder && (
-                    <div className="flex items-center justify-center gap-2">
-                      <label className={`text-deep-navy text-[10px] px-3 py-1.5 rounded-lg cursor-pointer transition-colors font-medium ${isFeatured ? "bg-amber-400 hover:bg-amber-300" : "bg-clinical-teal hover:bg-clinical-teal-hover"}`}>
-                        Upload Image
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            try {
-                              const formData = new FormData();
-                              formData.append("file", file);
-                              const res = await fetch("/api/portal/content-pipeline/upload", {
-                                method: "POST",
-                                body: formData,
-                              });
-                              const data = await res.json();
-                              if (data.success && data.url) {
-                                onAttachPlaceholder(placeholderId, label, data.url, isFeatured);
-                              } else {
-                                alert(`Image upload failed: ${data.error || "Unknown error"}`);
+
+                  {previewForThis ? (
+                    <div className="space-y-2.5">
+                      <img
+                        src={previewForThis.url}
+                        alt={label}
+                        className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-56 object-cover"
+                      />
+                      {onAttachPlaceholder && (
+                        <div className="flex items-center justify-center gap-2 flex-wrap">
+                          <button
+                            onClick={() => onAttachPlaceholder(placeholderId, label, previewForThis.url, isFeatured)}
+                            className={`text-deep-navy text-[10px] px-3 py-1.5 rounded-lg cursor-pointer transition-colors font-medium ${isFeatured ? "bg-amber-400 hover:bg-amber-300" : "bg-clinical-teal hover:bg-clinical-teal-hover"}`}
+                          >
+                            Use This Image
+                          </button>
+                          <button
+                            onClick={() => onGenerateImage?.(placeholderId, label, isFeatured)}
+                            disabled={isGeneratingThis}
+                            className="border border-white/20 text-white/80 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium disabled:opacity-50"
+                          >
+                            {isGeneratingThis ? "Regenerating…" : "🔄 Regenerate"}
+                          </button>
+                          <button
+                            onClick={() => onDiscardGeneratedImage?.(placeholderId)}
+                            className="border border-white/20 text-white/60 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium"
+                          >
+                            Discard
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    onAttachPlaceholder && (
+                      <div className="flex items-center justify-center gap-2 flex-wrap">
+                        <label className={`text-deep-navy text-[10px] px-3 py-1.5 rounded-lg cursor-pointer transition-colors font-medium ${isFeatured ? "bg-amber-400 hover:bg-amber-300" : "bg-clinical-teal hover:bg-clinical-teal-hover"}`}>
+                          Upload Image
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              try {
+                                const formData = new FormData();
+                                formData.append("file", file);
+                                const res = await fetch("/api/portal/content-pipeline/upload", {
+                                  method: "POST",
+                                  body: formData,
+                                });
+                                const data = await res.json();
+                                if (data.success && data.url) {
+                                  onAttachPlaceholder(placeholderId, label, data.url, isFeatured);
+                                } else {
+                                  alert(`Image upload failed: ${data.error || "Unknown error"}`);
+                                }
+                              } catch (err) {
+                                console.error("Placeholder upload failed:", err);
+                                alert("Image upload failed. Please check your connection and try again.");
+                              } finally {
+                                e.target.value = "";
                               }
-                            } catch (err) {
-                              console.error("Placeholder upload failed:", err);
-                              alert("Image upload failed. Please check your connection and try again.");
-                            } finally {
-                              e.target.value = "";
+                            }}
+                            className="hidden"
+                          />
+                        </label>
+                        <button
+                          onClick={() => {
+                            const url = prompt("Enter the direct image URL:");
+                            if (url) {
+                              onAttachPlaceholder(placeholderId, label, url, isFeatured);
                             }
                           }}
-                          className="hidden"
-                        />
-                      </label>
-                      <button
-                        onClick={() => {
-                          const url = prompt("Enter the direct image URL:");
-                          if (url) {
-                            onAttachPlaceholder(placeholderId, label, url, isFeatured);
-                          }
-                        }}
-                        className="border border-white/20 text-white/80 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium"
-                      >
-                        Paste URL
-                      </button>
-                    </div>
+                          className="border border-white/20 text-white/80 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium"
+                        >
+                          Paste URL
+                        </button>
+                        {onGenerateImage && (
+                          <button
+                            onClick={() => onGenerateImage(placeholderId, label, isFeatured)}
+                            disabled={isGeneratingThis}
+                            className="border border-white/20 text-white/80 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium disabled:opacity-50 flex items-center gap-1"
+                          >
+                            {isGeneratingThis ? (
+                              <>
+                                <span className="inline-block w-2 h-2 rounded-full bg-clinical-teal animate-ping" />
+                                Generating…
+                              </>
+                            ) : (
+                              "✨ Generate Image"
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    )
                   )}
                 </div>
               );
