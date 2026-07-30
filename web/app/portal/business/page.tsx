@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useLayoutEffect } from "react";
 import Link from "next/link";
 import { ContentPipelineRun, ContentPipelineReview } from "@/lib/contentPipeline";
 import { MIN_BLOG_BODY_LENGTH } from "@/lib/contentPipelineConstants";
@@ -99,6 +99,17 @@ export default function BusinessDashboardPage() {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const typingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  // Preserves the Live Preview's scroll position across body edits (e.g. inserting an
+  // image into a placeholder). Without this, replacing a placeholder box with the
+  // resolved <img> reflows the content and the browser resets scroll to the top.
+  const livePreviewRef = React.useRef<HTMLDivElement>(null);
+  const pendingScrollRestoreRef = React.useRef<number | null>(null);
+  useLayoutEffect(() => {
+    if (pendingScrollRestoreRef.current !== null && livePreviewRef.current) {
+      livePreviewRef.current.scrollTop = pendingScrollRestoreRef.current;
+      pendingScrollRestoreRef.current = null;
+    }
+  });
   const [editIgCaption, setEditIgCaption] = useState("");
   const [editFbCaption, setEditFbCaption] = useState("");
   const [editLiCaption, setEditLiCaption] = useState("");
@@ -505,6 +516,9 @@ export default function BusinessDashboardPage() {
       return;
     }
 
+    if (livePreviewRef.current) {
+      pendingScrollRestoreRef.current = livePreviewRef.current.scrollTop;
+    }
     setEditBody(newBody);
     pushHistory(newBody);
 
@@ -519,10 +533,12 @@ export default function BusinessDashboardPage() {
     setEditSuggestedImages(updatedImages);
     setGeneratedImagePreview((prev) => (prev?.placeholderId === placeholderId ? null : prev));
 
-    // If we're NOT in edit mode (read-only view), save the image attachment to the server immediately.
+    // If we're NOT in edit mode (read-only view), save the image attachment to the server
+    // immediately as progress — NOT as "edited", which would prematurely advance the run
+    // past blog review into social-caption stage just because an image was attached.
     if (!isEditMode && selectedRun) {
       const currentDraft = selectedRun.blog_drafts[0];
-      handleReviewSubmission("blog", "edited", {
+      handleReviewSubmission("blog", "save_progress", {
         title: editTitle || currentDraft?.title,
         excerpt: editExcerpt || currentDraft?.excerpt,
         body_markdown: newBody,
@@ -535,8 +551,8 @@ export default function BusinessDashboardPage() {
   };
 
   // Calls the Gemini image-generation endpoint and stores the result as a pending
-  // preview (not yet inserted into the body) so the user can Regenerate or Discard
-  // before committing — committing reuses handleAttachPlaceholderImage above.
+  // preview (not yet inserted into the body) so the user can Accept or Regenerate
+  // before committing — Accept reuses handleAttachPlaceholderImage above.
   const handleGenerateImage = async (placeholderId: string, label: string, isFeatured?: boolean) => {
     setGeneratingImagePlaceholderId(placeholderId);
     try {
@@ -557,10 +573,6 @@ export default function BusinessDashboardPage() {
     } finally {
       setGeneratingImagePlaceholderId(null);
     }
-  };
-
-  const handleDiscardGeneratedImage = (placeholderId: string) => {
-    setGeneratedImagePreview((prev) => (prev?.placeholderId === placeholderId ? null : prev));
   };
 
   // Fetch telemetry stats
@@ -972,7 +984,11 @@ export default function BusinessDashboardPage() {
 
       if (decision === "edited" || decision === "save_progress") {
         if (stage === "blog") {
-          bodyData.editedContent = {
+          // Prefer an explicitly passed payload (e.g. from an image attach that just
+          // computed a fresh body) over component state — state setters like
+          // setEditBody() don't take effect until the next render, so reading
+          // editBody here in the same call would silently submit stale text.
+          bodyData.editedContent = customPayload || {
             title: editTitle,
             excerpt: editExcerpt,
             body_markdown: editBody,
@@ -1058,9 +1074,10 @@ export default function BusinessDashboardPage() {
     // If we are in edit mode, keep editing — save happens on "Save & Approve".
     if (isEditMode) return;
 
-    // Outside edit mode (read-only view), persist to server immediately
+    // Outside edit mode (read-only view), persist to server immediately as progress
+    // (not "edited", which would prematurely advance the run past blog review).
     const currentDraft = selectedRun.blog_drafts[0];
-    await handleReviewSubmission("blog", "edited", {
+    await handleReviewSubmission("blog", "save_progress", {
       title: editTitle || currentDraft?.title,
       excerpt: editExcerpt || currentDraft?.excerpt,
       body_markdown: editBody || currentDraft?.body_markdown || currentDraft?.body,
@@ -2262,6 +2279,7 @@ export default function BusinessDashboardPage() {
                                   <div className="space-y-2 border-t lg:border-t-0 lg:border-l border-white/10 pt-4 lg:pt-0 lg:pl-6 flex flex-col">
                                     <label className="block text-xs text-clinical-teal mb-1 font-semibold">Live Preview</label>
                                     <div
+                                      ref={livePreviewRef}
                                       className="bg-primary-navy/40 p-5 rounded-xl border border-white/10 space-y-4 custom-scrollbar overflow-y-auto text-white/80 leading-relaxed font-sans flex-1"
                                       style={{ maxHeight: "480px" }}
                                     >
@@ -2282,7 +2300,6 @@ export default function BusinessDashboardPage() {
                                           generatingPlaceholderId={generatingImagePlaceholderId}
                                           pendingPreview={generatedImagePreview}
                                           onGenerateImage={(placeholderId, label, isFeatured) => handleGenerateImage(placeholderId, label, isFeatured)}
-                                          onDiscardGeneratedImage={(placeholderId) => handleDiscardGeneratedImage(placeholderId)}
                                         />
                                       </div>
                                     </div>
@@ -2367,7 +2384,6 @@ export default function BusinessDashboardPage() {
                                       generatingPlaceholderId={generatingImagePlaceholderId}
                                       pendingPreview={generatedImagePreview}
                                       onGenerateImage={(placeholderId, label, isFeatured) => handleGenerateImage(placeholderId, label, isFeatured)}
-                                      onDiscardGeneratedImage={(placeholderId) => handleDiscardGeneratedImage(placeholderId)}
                                     />
                                   </div>
                                 </div>
@@ -3131,8 +3147,7 @@ function FormattedContent({
   references,
   generatingPlaceholderId,
   pendingPreview,
-  onGenerateImage,
-  onDiscardGeneratedImage
+  onGenerateImage
 }: {
   body?: string;
   body_markdown?: string;
@@ -3142,7 +3157,6 @@ function FormattedContent({
   generatingPlaceholderId?: string | null;
   pendingPreview?: { placeholderId: string; url: string } | null;
   onGenerateImage?: (placeholderId: string, label: string, isFeatured?: boolean) => void;
-  onDiscardGeneratedImage?: (placeholderId: string) => void;
 }) {
   const content = cleanHeadingBugs(body_markdown || body || "");
   if (!content) return null;
@@ -3212,7 +3226,8 @@ function FormattedContent({
                     <img
                       src={resolvedImage.url}
                       alt={label}
-                      className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-cover"
+                      className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-cover bg-white/5"
+                      style={{ aspectRatio: "16 / 9", width: "100%" }}
                     />
                     <span className="text-[10px] text-white/50 italic block">
                       {isFeatured ? "🖼️ Featured Image (Education Hub card)" : "📷 Inline Image"}: {label}
@@ -3244,7 +3259,7 @@ function FormattedContent({
                             onClick={() => onAttachPlaceholder(placeholderId, label, previewForThis.url, isFeatured)}
                             className={`text-deep-navy text-[10px] px-3 py-1.5 rounded-lg cursor-pointer transition-colors font-medium ${isFeatured ? "bg-amber-400 hover:bg-amber-300" : "bg-clinical-teal hover:bg-clinical-teal-hover"}`}
                           >
-                            Use This Image
+                            ✓ Accept
                           </button>
                           <button
                             onClick={() => onGenerateImage?.(placeholderId, label, isFeatured)}
@@ -3252,12 +3267,6 @@ function FormattedContent({
                             className="border border-white/20 text-white/80 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium disabled:opacity-50"
                           >
                             {isGeneratingThis ? "Regenerating…" : "🔄 Regenerate"}
-                          </button>
-                          <button
-                            onClick={() => onDiscardGeneratedImage?.(placeholderId)}
-                            className="border border-white/20 text-white/60 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium"
-                          >
-                            Discard
                           </button>
                         </div>
                       )}
@@ -3348,7 +3357,8 @@ function FormattedContent({
               <img
                 src={src || ""}
                 alt={alt || ""}
-                className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-cover"
+                className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-cover bg-white/5"
+                style={{ aspectRatio: "16 / 9", width: "100%" }}
               />
               {alt && (
                 <span className="text-[10px] text-white/50 italic block">
