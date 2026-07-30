@@ -353,12 +353,9 @@ export default function Home() {
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-border-clinical text-blue-600 font-bold shrink-0">
                 G
               </div>
-              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-border-clinical text-clinical-teal font-bold shrink-0">
-                D
-              </div>
             </div>
             <p className="text-text-secondary text-sm leading-relaxed mb-6">
-              We are in the process of collecting independent, verified patient reviews via Google and Doctify.
+              We are in the process of collecting independent, verified patient reviews via Google.
               Read our patient feedback and verification policy for full details on how reviews are gathered.
             </p>
             <Button href="/patient-reviews" variant="secondary">

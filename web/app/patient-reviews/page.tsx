@@ -35,16 +35,11 @@ export default function PatientReviewsPage() {
       </div>
 
       {/* Platform Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-10">
+      <div className="max-w-md mx-auto my-10">
         <ReviewPlatformCard
           platformName="Google"
           description="Read verified patient reviews on Google."
           platformUrl="https://g.page/r/CYqSfdXK1SGEEBM/review"
-        />
-        <ReviewPlatformCard
-          platformName="Doctify"
-          description="Read verified patient reviews on Doctify."
-          platformUrl={null} // Pending setup
         />
       </div>
 
@@ -66,7 +61,7 @@ export default function PatientReviewsPage() {
           All reviews displayed or linked on this site are collected by independent, third-party feedback platforms. These platforms verify reviewer identities and check submissions against strict guidelines to ensure they represent genuine clinical interactions.
         </p>
         <ul className="list-disc pl-5 text-xs text-text-secondary space-y-2">
-          <li><strong>Independent Verification:</strong> Reviews are processed externally on Google and Doctify networks.</li>
+          <li><strong>Independent Verification:</strong> Reviews are processed externally on the Google network.</li>
           <li><strong>GMC Compliance:</strong> Feedback collection processes follow General Medical Council (GMC) guidelines on clinical transparency.</li>
           <li><strong>Patient Anonymity:</strong> Patients are free to submit anonymous or pseudonymous reviews as supported by the platforms.</li>
         </ul>
@@ -78,24 +73,16 @@ export default function PatientReviewsPage() {
         <p className="text-sm text-text-secondary leading-relaxed max-w-xl mx-auto mb-6">
           Help other patients by sharing your experience. We welcome constructive feedback to help refine and improve our services.
         </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <div className="flex flex-col items-center">
-            <Button
-              href="https://g.page/r/CYqSfdXK1SGEEBM/review"
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="secondary"
-              className="min-w-[200px]"
-            >
-              Leave a Google Review
-            </Button>
-          </div>
-          <div className="flex flex-col items-center">
-            <Button disabled variant="secondary" className="min-w-[200px]">
-              Leave a Doctify Review
-            </Button>
-            <span className="text-[10px] text-text-muted mt-1 italic">Doctify link pending</span>
-          </div>
+        <div className="flex justify-center">
+          <Button
+            href="https://g.page/r/CYqSfdXK1SGEEBM/review"
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="secondary"
+            className="min-w-[200px]"
+          >
+            Leave a Google Review
+          </Button>
         </div>
       </div>
 
