@@ -85,6 +85,7 @@ export default function BusinessDashboardPage() {
   const [isTriggering, setIsTriggering] = useState(false);
   const [triggerProgress, setTriggerProgress] = useState(0);
   const [triggerStep, setTriggerStep] = useState("");
+  const triggerBackgroundedRef = React.useRef(false);
 
   // Review Actions State
   const [isEditMode, setIsEditMode] = useState(false);
@@ -847,27 +848,18 @@ export default function BusinessDashboardPage() {
   };
 
   // Handle trigger new run submission
+  // Runs the topic through /trigger (which returns almost immediately — see route
+  // comments) then polls the run's own status endpoint until Stage 1 (research) and
+  // Stage 2 (AI drafting) finish server-side. Polling avoids ever holding one HTTP
+  // request open for the full multi-minute pipeline, which is what was triggering the
+  // hosting platform's reverse-proxy timeout (the "Server timeout while synthesizing..."
+  // error) even though the Node process itself kept working past that point.
   const handleTriggerRun = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsTriggering(true);
     setTriggerProgress(5);
     setTriggerStep("Selecting topic & initializing clinical pipeline...");
-
-    const steps = [
-      { progress: 15, time: 1500, text: "Scanning patient enquiries for trending knee conditions..." },
-      { progress: 30, time: 3500, text: "Stage 1: Searching PubMed & orthopaedic literature journals..." },
-      { progress: 50, time: 7000, text: "Stage 1: Synthesizing evidence-based clinical research brief..." },
-      { progress: 65, time: 11000, text: "Stage 2: AI Medical Writer drafting 800+ word article & references..." },
-      { progress: 80, time: 16000, text: "Stage 2: Performing clinical review formatting & imagery suggestions..." },
-      { progress: 92, time: 22000, text: "Finalizing content package & preparing review dashboard..." },
-    ];
-
-    const timers = steps.map((s) =>
-      setTimeout(() => {
-        setTriggerProgress(s.progress);
-        setTriggerStep(s.text);
-      }, s.time)
-    );
+    triggerBackgroundedRef.current = false;
 
     try {
       const res = await fetch("/api/portal/content-pipeline/trigger", {
@@ -883,37 +875,81 @@ export default function BusinessDashboardPage() {
       } else {
         const text = await res.text();
         console.error("Non-JSON response from server:", res.status, text);
-        if (res.status === 504 || res.status === 502 || res.status === 503) {
-          throw new Error("Server timeout while synthesizing AI medical literature. We have increased route duration—please try again.");
-        }
         throw new Error(`Server error (${res.status}): ${text.slice(0, 100)}`);
       }
 
-      timers.forEach((t) => clearTimeout(t));
-
-      if (res.ok && data.success && data.run) {
-        setTriggerProgress(100);
-        setTriggerStep("Run completed successfully! Loading review workspace...");
-        await new Promise((r) => setTimeout(r, 600));
-        setIsTriggerModalOpen(false);
-        setNewRunTopic("");
-        await fetchPipelineRuns();
-        await fetchRunDetail(data.run.run_id);
-        setActionFeedback("🚀 New content automation run initiated successfully!");
-        setTimeout(() => setActionFeedback(null), 4000);
-      } else {
+      if (!res.ok || !data.success || !data.run) {
         throw new Error(data.error || data.message || "Failed to trigger content pipeline run.");
       }
+
+      const runId = data.run.run_id;
+      setTriggerProgress(12);
+      setTriggerStep("Stage 1: Searching PubMed & orthopaedic literature journals...");
+      await fetchPipelineRuns();
+
+      const POLL_INTERVAL_MS = 3000;
+      const MAX_POLLS = 100; // ~5 minutes
+      let finished = false;
+
+      for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+        if (triggerBackgroundedRef.current) return; // user chose to keep it running and close the modal
+
+        const pollRes = await fetch(`/api/portal/content-pipeline/runs/${encodeURIComponent(runId)}`);
+        const pollData = await pollRes.json().catch(() => null);
+        if (!pollData?.success || !pollData.run) continue;
+
+        if (pollData.run.status === "writing_blog") {
+          setTriggerProgress((p) => Math.max(p, 55));
+          setTriggerStep("Stage 2: AI Medical Writer drafting 800+ word article & references...");
+        } else if (pollData.run.status !== "researching") {
+          finished = true;
+          break;
+        } else {
+          setTriggerProgress((p) => Math.min(p + 2, 45));
+        }
+      }
+
+      if (triggerBackgroundedRef.current) return;
+
+      if (!finished) {
+        throw new Error(
+          "This is taking longer than expected. The run is still generating in the background — check back in the run list shortly."
+        );
+      }
+
+      setTriggerProgress(100);
+      setTriggerStep("Run completed! Loading review workspace...");
+      await new Promise((r) => setTimeout(r, 400));
+      setIsTriggerModalOpen(false);
+      setNewRunTopic("");
+      await fetchPipelineRuns();
+      await fetchRunDetail(runId);
+      setActionFeedback("🚀 New content automation run completed successfully!");
+      setTimeout(() => setActionFeedback(null), 4000);
     } catch (err: any) {
-      timers.forEach((t) => clearTimeout(t));
+      if (triggerBackgroundedRef.current) return;
       console.error("Error triggering run:", err);
       alert(err?.message || "An error occurred while triggering the automation run.");
     } finally {
-      timers.forEach((t) => clearTimeout(t));
-      setIsTriggering(false);
-      setTriggerProgress(0);
-      setTriggerStep("");
+      if (!triggerBackgroundedRef.current) {
+        setIsTriggering(false);
+        setTriggerProgress(0);
+        setTriggerStep("");
+      }
     }
+  };
+
+  // Closes the "Start New Run" modal while generation is in progress without
+  // cancelling the actual server-side work (which keeps running regardless) — the run
+  // will simply show as "Researching"/"Writing Blog" in the list until it's ready.
+  const handleBackgroundTriggerRun = () => {
+    triggerBackgroundedRef.current = true;
+    setIsTriggering(false);
+    setTriggerProgress(0);
+    setTriggerStep("");
+    setIsTriggerModalOpen(false);
+    fetchPipelineRuns();
   };
 
   // Submit review decision (approved | edited | revision_requested | revert_to_blog | revert_to_social)
@@ -2864,9 +2900,8 @@ export default function BusinessDashboardPage() {
                   <span>Start New Content Automation Run</span>
                 </h3>
                 <button
-                  onClick={() => !isTriggering && setIsTriggerModalOpen(false)}
-                  disabled={isTriggering}
-                  className="text-white/60 hover:text-white text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => (isTriggering ? handleBackgroundTriggerRun() : setIsTriggerModalOpen(false))}
+                  className="text-white/60 hover:text-white text-sm cursor-pointer"
                 >
                   ✕
                 </button>
@@ -2906,7 +2941,8 @@ export default function BusinessDashboardPage() {
                       />
                     </div>
                     <p className="text-[11px] text-white/60 italic text-center">
-                      Please wait while our AI clinical agents analyze medical literature and synthesize your draft...
+                      Please wait while our AI clinical agents analyze medical literature and synthesize your draft — or close this
+                      window and it'll keep generating in the background; check the run list shortly.
                     </p>
                   </div>
                 )}
@@ -2914,11 +2950,10 @@ export default function BusinessDashboardPage() {
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => !isTriggering && setIsTriggerModalOpen(false)}
-                    disabled={isTriggering}
-                    className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => (isTriggering ? handleBackgroundTriggerRun() : setIsTriggerModalOpen(false))}
+                    className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
                   >
-                    Cancel
+                    {isTriggering ? "Run in Background" : "Cancel"}
                   </button>
                   <button
                     type="submit"

@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
-import { triggerPipelineRun } from "@/lib/contentPipeline";
+import { createPendingPipelineRun, runPipelineGeneration } from "@/lib/contentPipeline";
 
-export const maxDuration = 60; // Allow 60s for PubMed literature fetching and Gemini AI content drafting
-
+// The PubMed research + Gemini drafting steps can take well over a minute — long
+// enough that Hostinger's (and most hosts') reverse-proxy request timeout kills the
+// connection before it finishes, even though the Node process itself is still working.
+// So this route creates the run immediately and returns, then keeps generating it in
+// the background (unawaited) on the same persistent Node process. The dashboard polls
+// /api/portal/content-pipeline/runs/[runId] until the run leaves "researching"/
+// "writing_blog" status.
 export async function POST(request: Request) {
   try {
     let topic: string | undefined = undefined;
@@ -16,12 +21,17 @@ export async function POST(request: Request) {
       // Body optional
     }
 
-    const newRun = await triggerPipelineRun(topic);
+    const pendingRun = await createPendingPipelineRun(topic);
+
+    // Deliberately not awaited — see comment above.
+    runPipelineGeneration(pendingRun).catch((err) => {
+      console.error("Background pipeline generation failed:", err);
+    });
 
     return NextResponse.json({
       success: true,
-      message: "Content automation run successfully started.",
-      run: newRun
+      message: "Content automation run started.",
+      run: pendingRun
     });
   } catch (error: any) {
     console.error("Error in POST /api/portal/content-pipeline/trigger:", error);

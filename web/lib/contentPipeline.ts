@@ -324,7 +324,59 @@ export async function getPipelineRunDetail(runId: string): Promise<{
  * Trigger a new run. Automatically executes Stage 1 Research (PubMed NCBI Entrez API search)
  * to populate genuine clinical literature citations and indications into research_brief.
  */
-export async function triggerPipelineRun(customTopic?: string): Promise<ContentPipelineRun> {
+// Patches an already-persisted run's mutable fields in both Supabase and the local
+// disk cache. Shared by the background generation job and other update paths so a
+// run can be saved mid-flight (e.g. status "researching" -> "writing_blog") without
+// waiting for the whole pipeline to finish.
+async function patchRunInStorage(run: ContentPipelineRun): Promise<void> {
+  const config = getSupabaseConfig();
+  if (config) {
+    try {
+      const endpoint = `${config.url}/rest/v1/content_pipeline_runs?run_id=eq.${encodeURIComponent(run.run_id)}`;
+      const res = await fetch(endpoint, {
+        method: "PATCH",
+        headers: {
+          apikey: config.key,
+          Authorization: `Bearer ${config.key}`,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({
+          status: run.status,
+          research_brief: run.research_brief || null,
+          blog_drafts: run.blog_drafts,
+          social_drafts: run.social_drafts,
+          published_urls: run.published_urls || null,
+          social_media_assets: run.social_media_assets || null,
+          updated_at: run.updated_at,
+        }),
+      });
+      if (!res.ok) {
+        console.error("Supabase PATCH run error:", res.status, await res.text());
+      }
+    } catch (err) {
+      console.error("Error patching run in Supabase:", err);
+    }
+  }
+
+  const runs = readRunsFromDisk();
+  const idx = runs.findIndex((r: any) => r.run_id === run.run_id);
+  if (idx >= 0) {
+    runs[idx] = run;
+  } else {
+    runs.unshift(run);
+  }
+  writeRunsToDisk(runs);
+}
+
+// Creates and persists a run immediately in a lightweight "researching" state, with
+// no research/draft content yet. Deliberately fast (no PubMed or Gemini calls) so the
+// HTTP request that creates it can return right away — the slow work happens in
+// runPipelineGeneration below, which the caller should NOT await, so a multi-minute
+// AI pipeline never gets killed by the hosting platform's reverse-proxy request
+// timeout (Hostinger's Node.js hosting, unlike Vercel, enforces one regardless of
+// any in-app maxDuration config).
+export async function createPendingPipelineRun(customTopic?: string): Promise<ContentPipelineRun> {
   let selectedTopic = customTopic?.trim();
   const topicSource = customTopic?.trim() ? "custom_user_input" : "trending_enquiry";
 
@@ -344,31 +396,8 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
     selectedTopic = "Robotic Total Knee Replacement: Pre-Op Preparation & Recovery Milestones";
   }
 
-  // Execute Stage 1 PubMed Literature & Evidence Scan
-  const researchBrief = await performResearchProcess(selectedTopic);
-
-  const realReferences = researchBrief.sources && researchBrief.sources.length > 0
-    ? researchBrief.sources
-    : ["NICE Clinical Guidelines on Knee Care", "Journal of Bone and Joint Surgery"];
-
   const now = new Date().toISOString();
   const newRunId = `run-${Date.now()}`;
-
-  // Execute Stage 2: AI Blog Writer
-  let blogDraftData;
-  try {
-    blogDraftData = await writeBlogDraft(selectedTopic, researchBrief as any);
-  } catch (err: any) {
-    console.error("Stage 2 Blog Writer failed:", err);
-    const errorMessage = err?.message || String(err);
-    blogDraftData = {
-      title: `[GENERATION ERROR] ${selectedTopic}`,
-      excerpt: `The AI Blog Writer encountered an error: ${errorMessage}`,
-      body: `### ⚠️ Stage 2 AI Generation Failed\n\nThe content pipeline attempted to generate a full-length article using Gemini AI, but encountered a system error:\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\n**Please check:**\n1. Did you completely restart your local development server (\`npm run dev\`) after updates?\n2. Is the \`GEMINI_API_KEY\` valid in your \`.env\` file?\n3. Check terminal logs for detailed stack trace.\n\n[NEEDS CLINICAL REVIEW] This is an error placeholder, do not publish.`,
-      suggestedImages: ["Error icon placeholder"],
-      flags: [`[NEEDS CLINICAL REVIEW] AI generation failed with error: ${errorMessage}`],
-    };
-  }
 
   const newRun: ContentPipelineRun = {
     id: newRunId,
@@ -376,22 +405,9 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
     topic: selectedTopic,
     triggered_by: "manual",
     topic_source: topicSource,
-    status: "awaiting_blog_approval",
-    research_brief: researchBrief as any,
-    blog_drafts: [
-      {
-        version: 1,
-        title: blogDraftData.title,
-        excerpt: blogDraftData.excerpt,
-        body_markdown: blogDraftData.body_markdown || blogDraftData.body,
-        body: blogDraftData.body_markdown || blogDraftData.body,
-        suggested_images: blogDraftData.suggestedImages,
-        references: realReferences,
-        flags: blogDraftData.flags,
-        category: undefined,
-        created_at: now
-      }
-    ],
+    status: "researching",
+    research_brief: null,
+    blog_drafts: [],
     social_drafts: [],
     published_urls: null,
     social_media_assets: null,
@@ -427,10 +443,95 @@ export async function triggerPipelineRun(customTopic?: string): Promise<ContentP
   runs.unshift(newRun);
   writeRunsToDisk(runs);
 
-  // Trigger notification email for new run awaiting blog approval
-  await sendContentPipelineNotificationEmail(newRun, "blog");
-
   return newRun;
+}
+
+// Runs the slow Stage 1 (PubMed research) + Stage 2 (Gemini blog draft) work for a run
+// already created via createPendingPipelineRun, patching progress into storage as it
+// goes. Intended to be started without awaiting so it survives past the HTTP response.
+export async function runPipelineGeneration(run: ContentPipelineRun): Promise<void> {
+  try {
+    // Execute Stage 1 PubMed Literature & Evidence Scan
+    const researchBrief = await performResearchProcess(run.topic);
+    run.research_brief = researchBrief as any;
+    run.status = "writing_blog";
+    run.updated_at = new Date().toISOString();
+    await patchRunInStorage(run);
+
+    const realReferences = researchBrief.sources && researchBrief.sources.length > 0
+      ? researchBrief.sources
+      : ["NICE Clinical Guidelines on Knee Care", "Journal of Bone and Joint Surgery"];
+
+    // Execute Stage 2: AI Blog Writer
+    let blogDraftData;
+    try {
+      blogDraftData = await writeBlogDraft(run.topic, researchBrief as any);
+    } catch (err: any) {
+      console.error("Stage 2 Blog Writer failed:", err);
+      const errorMessage = err?.message || String(err);
+      blogDraftData = {
+        title: `[GENERATION ERROR] ${run.topic}`,
+        excerpt: `The AI Blog Writer encountered an error: ${errorMessage}`,
+        body: `### ⚠️ Stage 2 AI Generation Failed\n\nThe content pipeline attempted to generate a full-length article using Gemini AI, but encountered a system error:\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\n[NEEDS CLINICAL REVIEW] This is an error placeholder, do not publish.`,
+        suggestedImages: ["Error icon placeholder"],
+        flags: [`[NEEDS CLINICAL REVIEW] AI generation failed with error: ${errorMessage}`],
+      };
+    }
+
+    const now = new Date().toISOString();
+    run.blog_drafts = [
+      {
+        version: 1,
+        title: blogDraftData.title,
+        excerpt: blogDraftData.excerpt,
+        body_markdown: blogDraftData.body_markdown || blogDraftData.body,
+        body: blogDraftData.body_markdown || blogDraftData.body,
+        suggested_images: blogDraftData.suggestedImages,
+        references: realReferences,
+        flags: blogDraftData.flags,
+        category: undefined,
+        created_at: now
+      }
+    ];
+    run.status = "awaiting_blog_approval";
+    run.updated_at = now;
+    await patchRunInStorage(run);
+
+    await sendContentPipelineNotificationEmail(run, "blog");
+  } catch (err: any) {
+    // Stage 1 (research) itself failed — surface a reviewable error draft rather than
+    // leaving the run stuck in "researching" forever with no visible explanation.
+    console.error("Pipeline generation failed:", err);
+    const errorMessage = err?.message || String(err);
+    const now = new Date().toISOString();
+    run.blog_drafts = [
+      {
+        version: 1,
+        title: `[GENERATION ERROR] ${run.topic}`,
+        excerpt: `The content pipeline encountered an error during research: ${errorMessage}`,
+        body_markdown: `### ⚠️ Stage 1 Research Failed\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\n[NEEDS CLINICAL REVIEW] This is an error placeholder, do not publish.`,
+        body: `### ⚠️ Stage 1 Research Failed\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\n[NEEDS CLINICAL REVIEW] This is an error placeholder, do not publish.`,
+        suggested_images: [],
+        references: [],
+        flags: [`[NEEDS CLINICAL REVIEW] Pipeline generation failed with error: ${errorMessage}`],
+        created_at: now
+      }
+    ];
+    run.status = "awaiting_blog_approval";
+    run.updated_at = now;
+    await patchRunInStorage(run);
+  }
+}
+
+// Legacy synchronous helper — creates a run and waits for the full pipeline to finish
+// before returning. Kept for the (currently unused-by-the-dashboard) research/route.ts
+// caller; the live "Start New Run" button in the dashboard uses the split
+// createPendingPipelineRun + runPipelineGeneration functions above instead so it isn't
+// subject to the hosting platform's request timeout.
+export async function triggerPipelineRun(customTopic?: string): Promise<ContentPipelineRun> {
+  const run = await createPendingPipelineRun(customTopic);
+  await runPipelineGeneration(run);
+  return run;
 }
 
 /**
