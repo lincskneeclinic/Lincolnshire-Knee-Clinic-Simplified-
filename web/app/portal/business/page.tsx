@@ -553,6 +553,11 @@ export default function BusinessDashboardPage() {
     // past blog review into social-caption stage just because an image was attached.
     if (!isEditMode && selectedRun) {
       const currentDraft = selectedRun.blog_drafts[0];
+      // keepEditMode=true here isn't about edit mode at all — it tells
+      // handleReviewSubmission to update selectedRun in place rather than calling
+      // fetchRunDetail(), which would reset editBody/editSuggestedImages from the
+      // server response and force a second re-render (and a second scroll jump)
+      // immediately after the one we just restored from.
       handleReviewSubmission("blog", "save_progress", {
         title: editTitle || currentDraft?.title,
         excerpt: editExcerpt || currentDraft?.excerpt,
@@ -561,7 +566,7 @@ export default function BusinessDashboardPage() {
         suggestedImages: updatedImages,
         references: currentDraft?.references,
         category: editCategory || currentDraft?.category,
-      });
+      }, undefined, true);
     }
   };
 
@@ -1150,7 +1155,7 @@ export default function BusinessDashboardPage() {
       suggestedImages: updatedImages,
       references: currentDraft?.references,
       category: editCategory || currentDraft?.category,
-    });
+    }, undefined, true);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2529,6 +2534,7 @@ export default function BusinessDashboardPage() {
                                 )}
 
                                 <div
+                                  ref={livePreviewRef}
                                   className="bg-dark-overlay-navy p-6 rounded-xl border border-white/10 space-y-4 custom-scrollbar"
                                   style={{ maxHeight: "620px", overflowY: "auto" }}
                                 >
@@ -2669,11 +2675,11 @@ export default function BusinessDashboardPage() {
                               </div>
 
                               {getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images) ? (
-                                <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-lg max-h-80">
+                                <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-lg bg-white/5" style={{ aspectRatio: "16 / 9" }}>
                                   <img
                                     src={getRenderableImageUrl(selectedRun.blog_drafts[0]?.suggested_images)!}
                                     alt="Attached Blog Visual"
-                                    className="w-full max-h-80 object-cover"
+                                    className="w-full h-full object-contain"
                                   />
                                   <div className="absolute bottom-3 left-3 bg-dark-overlay-navy/90 backdrop-blur text-[11px] text-clinical-teal px-3 py-1 rounded-full border border-white/10">
                                     Attached Featured Image
@@ -3293,16 +3299,20 @@ function ArticleFooterTemplate() {
       </div>
 
       {/* 3. Footer */}
-      <div className="border-t border-white/5 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] text-white/60">
+      {/* Deliberately always column layout (not a viewport-width sm: breakpoint) — this
+          renders inside a narrow, fixed-width preview pane regardless of how wide the
+          browser window is, so a viewport-based breakpoint here caused the two rows to
+          collapse into an overlapping single line. */}
+      <div className="border-t border-white/5 pt-4 flex flex-col items-center gap-3 text-[10px] text-white/60">
         <div className="flex items-center gap-2">
           <img
             src="/brand/lkc-logo-k-transparent.png"
             alt="Lincolnshire Knee Clinic Logo"
-            className="w-6 h-6 object-contain"
+            className="w-6 h-6 object-contain shrink-0"
           />
           <span className="font-serif font-bold text-white">Lincolnshire Knee Clinic</span>
         </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 justify-center sm:justify-end">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 justify-center text-center">
           <span>Lead Consultant: Mr Ricardo J Pacheco (GMC 4145976)</span>
           <span>📞 07770 473437</span>
           <span>✉ info@lincsknee.com</span>
@@ -3400,7 +3410,7 @@ function FormattedContent({
                     <img
                       src={resolvedImage.url}
                       alt={label}
-                      className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-cover bg-white/5"
+                      className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-contain bg-white/5"
                       style={{ aspectRatio: "16 / 9", width: "100%" }}
                     />
                     <span className="text-[10px] text-white/50 italic block">
@@ -3425,7 +3435,8 @@ function FormattedContent({
                       <img
                         src={previewForThis.url}
                         alt={label}
-                        className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-56 object-cover"
+                        className="mx-auto rounded-xl border border-white/10 shadow-lg object-contain bg-white/5"
+                        style={{ aspectRatio: "16 / 9", width: "100%", maxHeight: "14rem" }}
                       />
                       {onAttachPlaceholder && (
                         <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -3531,7 +3542,7 @@ function FormattedContent({
               <img
                 src={src || ""}
                 alt={alt || ""}
-                className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-cover bg-white/5"
+                className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-contain bg-white/5"
                 style={{ aspectRatio: "16 / 9", width: "100%" }}
               />
               {alt && (
