@@ -5,9 +5,13 @@ import { symptomsData } from "@/data/symptoms";
 import { treatmentsData } from "@/data/treatments";
 import { injectionsData } from "@/data/injections";
 import { SITE_URL } from "@/lib/site";
+import { getRemovedArticleSlugs } from "@/lib/educationArticles";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const revalidate = 300;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = SITE_URL;
+  const removedSlugs = await getRemovedArticleSlugs();
 
   const staticPages = [
     "",
@@ -75,11 +79,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.7,
     })),
-    ...Object.values(blogArticles).map((article) => ({
-      url: `${baseUrl}/education/${article.category}/${article.slug}`,
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
-    })),
+    ...Object.values(blogArticles)
+      .filter((article) => !removedSlugs.includes(article.slug))
+      .map((article) => ({
+        url: `${baseUrl}/education/${article.category}/${article.slug}`,
+        changeFrequency: "monthly" as const,
+        priority: 0.6,
+      })),
   ];
 
   return sitemapEntries;

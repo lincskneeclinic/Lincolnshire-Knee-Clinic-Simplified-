@@ -9,6 +9,12 @@ import { PageHeader } from "@/components/PageHeader";
 import { SITE_URL } from "@/lib/site";
 
 import { blogArticles } from "@/data/articles";
+import { getRemovedArticleSlugs } from "@/lib/educationArticles";
+
+// Articles can be removed from the Education Hub via the business dashboard without a
+// redeploy — this page re-checks the removed-article list every `revalidate` seconds
+// (ISR) instead of being purely static forever, so a removal actually takes effect.
+export const revalidate = 300;
 
 // Definition of categories data
 interface Article {
@@ -64,29 +70,35 @@ const categoryMeta: Record<string, { title: string; categoryLabel: string; descr
   }
 };
 
-const categoriesData: Record<string, CategoryData> = {};
+// Built per-request (not at module scope) so a freshly removed article can be
+// excluded without needing the removedSlugs list baked in at build time.
+function buildCategoriesData(removedSlugs: string[]): Record<string, CategoryData> {
+  const categoriesData: Record<string, CategoryData> = {};
 
-Object.entries(categoryMeta).forEach(([catKey, meta]) => {
-  const articlesInCat = Object.values(blogArticles)
-    .filter((a) => a.category === catKey)
-    .map((a) => ({
-      title: a.title,
-      description: a.description,
-      readTime: a.readTime,
-      href: `/education/${a.category}/${a.slug}`,
-      imageUrl: a.image
-    }));
+  Object.entries(categoryMeta).forEach(([catKey, meta]) => {
+    const articlesInCat = Object.values(blogArticles)
+      .filter((a) => a.category === catKey && !removedSlugs.includes(a.slug))
+      .map((a) => ({
+        title: a.title,
+        description: a.description,
+        readTime: a.readTime,
+        href: `/education/${a.category}/${a.slug}`,
+        imageUrl: a.image
+      }));
 
-  categoriesData[catKey] = {
-    title: meta.title,
-    categoryLabel: meta.categoryLabel,
-    description: meta.description,
-    articles: articlesInCat
-  };
-});
+    categoriesData[catKey] = {
+      title: meta.title,
+      categoryLabel: meta.categoryLabel,
+      description: meta.description,
+      articles: articlesInCat
+    };
+  });
+
+  return categoriesData;
+}
 
 export function generateStaticParams() {
-  return Object.keys(categoriesData).map((category) => ({
+  return Object.keys(categoryMeta).map((category) => ({
     category,
   }));
 }
@@ -99,7 +111,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category } = await params;
-  const data = categoriesData[category];
+  const data = categoryMeta[category];
 
   if (!data) {
     return {
@@ -141,6 +153,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function CategoryPage({ params }: PageProps) {
   const { category } = await params;
+  const removedSlugs = await getRemovedArticleSlugs();
+  const categoriesData = buildCategoriesData(removedSlugs);
   const data = categoriesData[category];
 
   if (!data) {

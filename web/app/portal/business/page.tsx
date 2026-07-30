@@ -44,6 +44,15 @@ interface CommunityReport {
 }
 type ClinicalReviewListItem = ReviewablePage & { review: ClinicalReviewEntry };
 type SearchReference = { title: string; url: string; source: string; summary: string };
+interface EducationArticleSummary {
+  slug: string;
+  title: string;
+  category: string;
+  categoryLabel: string;
+  image?: string;
+  datePublished: string;
+  removed: boolean;
+}
 
 function getRenderableImageUrl(suggestedImages?: any[]): string | null {
   if (!suggestedImages || !Array.isArray(suggestedImages) || suggestedImages.length === 0) return null;
@@ -65,7 +74,7 @@ function cleanHeadingBugs(text: string): string {
 
 export default function BusinessDashboardPage() {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "pipeline" | "clinicalReview" | "community">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "pipeline" | "clinicalReview" | "community" | "educationHub">("overview");
   const [statsData, setStatsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -133,6 +142,12 @@ export default function BusinessDashboardPage() {
   const [reviewFormReviewerTitle, setReviewFormReviewerTitle] = useState("");
   const [reviewFormLastReviewedDate, setReviewFormLastReviewedDate] = useState("");
   const [reviewFormEvidenceSource, setReviewFormEvidenceSource] = useState("");
+
+  // Education Hub Article Management State
+  const [educationArticles, setEducationArticles] = useState<EducationArticleSummary[]>([]);
+  const [educationArticlesLoading, setEducationArticlesLoading] = useState(false);
+  const [articlePendingRemoval, setArticlePendingRemoval] = useState<EducationArticleSummary | null>(null);
+  const [isUpdatingArticleVisibility, setIsUpdatingArticleVisibility] = useState(false);
 
   // Community Moderation State
   const [communityReports, setCommunityReports] = useState<CommunityReport[]>([]);
@@ -711,6 +726,56 @@ export default function BusinessDashboardPage() {
     }
   }, [activeTab, fetchCommunityReports, communityReports.length]);
 
+  // Fetch Education Hub articles (for the remove/restore management screen)
+  const fetchEducationArticles = useCallback(async () => {
+    setEducationArticlesLoading(true);
+    try {
+      const res = await fetch("/api/portal/education-articles");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.articles)) {
+        setEducationArticles(data.articles);
+      }
+    } catch (err) {
+      console.error("Failed to fetch Education Hub articles:", err);
+    } finally {
+      setEducationArticlesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "educationHub" && educationArticles.length === 0) {
+      fetchEducationArticles();
+    }
+  }, [activeTab, fetchEducationArticles, educationArticles.length]);
+
+  const handleConfirmArticleVisibility = async (action: "remove" | "restore") => {
+    if (!articlePendingRemoval) return;
+    setIsUpdatingArticleVisibility(true);
+    try {
+      const res = await fetch("/api/portal/education-articles/remove", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: articlePendingRemoval.slug, action }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.error || "Failed to update the article.");
+      }
+      setArticlePendingRemoval(null);
+      await fetchEducationArticles();
+      setActionFeedback(
+        action === "remove"
+          ? `"${articlePendingRemoval.title}" has been removed from the Education Hub.`
+          : `"${articlePendingRemoval.title}" has been restored to the Education Hub.`
+      );
+      setTimeout(() => setActionFeedback(null), 4000);
+    } catch (err: any) {
+      alert(err?.message || "An error occurred while updating the article.");
+    } finally {
+      setIsUpdatingArticleVisibility(false);
+    }
+  };
+
   const handleCommunityReportAction = async (
     report: { id: string; target_type: string; target_id: string },
     action: "hide" | "dismiss"
@@ -1194,6 +1259,12 @@ export default function BusinessDashboardPage() {
       label: "Community",
       icon: "💬",
       badge: openCommunityReportsCount > 0 ? openCommunityReportsCount : null,
+    },
+    {
+      id: "educationHub",
+      label: "Education Hub",
+      icon: "📚",
+      badge: null,
     },
   ];
   const handleNavTabClick = (tabId: string) => {
@@ -1910,6 +1981,109 @@ export default function BusinessDashboardPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* TAB: EDUCATION HUB ARTICLE MANAGEMENT */}
+            {activeTab === "educationHub" && (
+              <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Education Hub Articles</h3>
+                    <p className="text-xs text-white/60 mt-1">
+                      Remove an article if it's outdated or the underlying evidence has changed — it disappears from the
+                      live site within a few minutes, no code deploy needed. Restoring it is just as instant.
+                    </p>
+                  </div>
+                </div>
+
+                {educationArticlesLoading ? (
+                  <div className="py-8 text-center text-white/60 text-xs">Loading articles…</div>
+                ) : educationArticles.length === 0 ? (
+                  <div className="py-8 text-center text-white/60 text-xs">No Education Hub articles found.</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {educationArticles.map((article) => (
+                      <div
+                        key={article.slug}
+                        className={`p-4 rounded-xl border space-y-2 ${
+                          article.removed
+                            ? "bg-dark-overlay-navy border-white/10 opacity-60"
+                            : "bg-dark-overlay-navy border-white/10"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] uppercase tracking-wider text-clinical-teal font-semibold">
+                            {article.categoryLabel}
+                          </span>
+                          {article.removed && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-status-error/40 text-status-error">
+                              Removed
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="text-xs font-bold text-white leading-snug">{article.title}</h4>
+                        <div className="flex justify-end pt-1">
+                          {article.removed ? (
+                            <button
+                              onClick={() => setArticlePendingRemoval(article)}
+                              className="border border-clinical-teal/40 text-clinical-teal hover:bg-clinical-teal/10 text-[11px] px-3 py-1.5 rounded-lg cursor-pointer font-medium"
+                            >
+                              Restore to Education Hub
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setArticlePendingRemoval(article)}
+                              className="border border-status-error/40 text-status-error hover:bg-status-error/10 text-[11px] px-3 py-1.5 rounded-lg cursor-pointer font-medium"
+                            >
+                              Remove from Education Hub
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* CONFIRM REMOVE/RESTORE ARTICLE MODAL */}
+            {articlePendingRemoval && (
+              <div className="fixed inset-0 z-50 bg-deep-navy/80 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="bg-primary-navy border border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+                  <h3 className="text-sm font-bold text-white">
+                    {articlePendingRemoval.removed ? "Restore this article?" : "Remove this article?"}
+                  </h3>
+                  <p className="text-xs text-white/70 leading-relaxed">
+                    {articlePendingRemoval.removed
+                      ? <>Confirm you want to restore <strong className="text-white">&ldquo;{articlePendingRemoval.title}&rdquo;</strong> to the Education Hub. It will become visible on the live site again within a few minutes.</>
+                      : <>Confirm you want to remove <strong className="text-white">&ldquo;{articlePendingRemoval.title}&rdquo;</strong> from the Education Hub. It will disappear from the live site within a few minutes. You can restore it at any time from this screen.</>}
+                  </p>
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button
+                      onClick={() => setArticlePendingRemoval(null)}
+                      disabled={isUpdatingArticleVisibility}
+                      className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => handleConfirmArticleVisibility(articlePendingRemoval.removed ? "restore" : "remove")}
+                      disabled={isUpdatingArticleVisibility}
+                      className={`text-xs px-4 py-2 rounded-xl cursor-pointer font-medium disabled:opacity-50 ${
+                        articlePendingRemoval.removed
+                          ? "bg-clinical-teal hover:bg-clinical-teal-hover text-white"
+                          : "bg-status-error hover:bg-status-error/90 text-white"
+                      }`}
+                    >
+                      {isUpdatingArticleVisibility
+                        ? "Saving…"
+                        : articlePendingRemoval.removed
+                        ? "Restore Article"
+                        : "Remove Article"}
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 

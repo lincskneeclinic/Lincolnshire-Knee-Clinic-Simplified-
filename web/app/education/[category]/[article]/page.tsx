@@ -8,6 +8,12 @@ import { blogArticles } from "@/data/articles";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import Link from "next/link";
 import { SITE_URL } from "@/lib/site";
+import { getRemovedArticleSlugs } from "@/lib/educationArticles";
+
+// Articles can be removed from the Education Hub via the business dashboard without a
+// redeploy — this page re-checks the removed-article list every `revalidate` seconds
+// (ISR) instead of being purely static forever, so a removal actually takes effect.
+export const revalidate = 300;
 
 interface PageProps {
   params: Promise<{
@@ -74,6 +80,11 @@ export default async function ArticlePage({ params }: PageProps) {
 
   // Protect route and ensure it belongs to the correct category
   if (!data || data.category !== category) {
+    notFound();
+  }
+
+  const removedSlugs = await getRemovedArticleSlugs();
+  if (removedSlugs.includes(article)) {
     notFound();
   }
 
