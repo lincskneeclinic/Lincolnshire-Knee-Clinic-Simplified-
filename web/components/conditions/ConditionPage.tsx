@@ -36,8 +36,8 @@ import cartilageInjuryComparison from "@/public/images/conditions/cartilage-inju
 import bakersCystComparison from "@/public/images/conditions/bakers-cyst-comparison.png";
 import kneeInstabilityComparison from "@/public/images/conditions/knee-instability-comparison.png";
 import patellarInstabilityComparison from "@/public/images/conditions/patellar-instability-comparison.png";
-import kneeTendinopathyOverview from "@/public/images/conditions/knee-tendinopathy-overview.png";
-import looseBodiesOverview from "@/public/images/conditions/loose-bodies-overview.png";
+import kneeTendinopathyComparison from "@/public/images/conditions/knee-tendinopathy-comparison.png";
+import looseBodiesComparison from "@/public/images/conditions/loose-bodies-comparison.png";
 
 const conditionComparisonPoints: Record<string, { feature: string; normal: string; abnormal: string }[]> = {
   "knee-arthritis": [
@@ -382,9 +382,9 @@ export const ConditionPage = async ({ slug }: ConditionPageProps) => {
                   : slug === "patellar-instability"
                   ? patellarInstabilityComparison
                   : slug === "knee-tendinopathy"
-                  ? kneeTendinopathyOverview
+                  ? kneeTendinopathyComparison
                   : slug === "loose-bodies"
-                  ? looseBodiesOverview
+                  ? looseBodiesComparison
                   : undefined
               }
             />
