@@ -10,6 +10,24 @@ import remarkGfm from "remark-gfm";
 import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
 import rehypeRaw from "rehype-raw";
 
+/**
+ * Recursively flattens a React children tree back into plain text. Used to
+ * recover the literal source text of a rendered markdown paragraph (e.g. to
+ * detect "[IMAGE PLACEHOLDER: ...]" markers) — a single-level extraction
+ * breaks as soon as the paragraph contains any nested inline formatting
+ * (emphasis, nested spans, etc.), silently truncating or garbling the text.
+ */
+function extractPlainText(node: React.ReactNode): string {
+  if (node === null || node === undefined || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(extractPlainText).join("");
+  if (React.isValidElement(node)) {
+    const props = node.props as { children?: React.ReactNode };
+    return extractPlainText(props?.children);
+  }
+  return "";
+}
+
 type RunDetailTab = "draft" | "research" | "images" | "social";
 interface CommunityReport {
   id: string;
@@ -445,25 +463,50 @@ export default function BusinessDashboardPage() {
   };
 
 
-  const handleAttachPlaceholderImage = (placeholderId: string, label: string, url: string) => {
-    // Replace the [IMAGE PLACEHOLDER: label] marker in the body with real Markdown image syntax.
-    // This makes the image a permanent part of body_markdown — no separate side-channel lookup needed.
+  const handleAttachPlaceholderImage = (placeholderId: string, label: string, url: string, isFeatured?: boolean) => {
+    // Replace the [IMAGE PLACEHOLDER: label] (or [FEATURED IMAGE PLACEHOLDER: label])
+    // marker in the body with real Markdown image syntax. This makes the image a
+    // permanent part of body_markdown — no separate side-channel lookup needed.
     // ReactMarkdown's standard <img> renderer then displays it automatically.
-    const placeholderPattern = new RegExp(
-      `\\[IMAGE PLACEHOLDER:\\s*${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\]`,
-      "gi"
-    );
+    const markerPrefix = isFeatured ? "FEATURED IMAGE PLACEHOLDER" : "IMAGE PLACEHOLDER";
+    const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const imageMarkdown = `![${label}](${url})`;
-    const newBody = editBody.replace(placeholderPattern, imageMarkdown);
+
+    // Try an exact match first...
+    const exactPattern = new RegExp(`\\[${markerPrefix}:\\s*${escapedLabel}\\s*\\]`, "i");
+    let newBody = editBody.replace(exactPattern, imageMarkdown);
+
+    // ...and if the label's internal whitespace doesn't line up character-for-character
+    // with the raw source (e.g. a soft line break inside the label rendered as a single
+    // space), retry treating any run of whitespace in the label as a wildcard.
+    if (newBody === editBody) {
+      const looseLabel = escapedLabel.replace(/\s+/g, "\\s+");
+      const loosePattern = new RegExp(`\\[${markerPrefix}:\\s*${looseLabel}\\s*\\]`, "i");
+      newBody = editBody.replace(loosePattern, imageMarkdown);
+    }
+
+    if (newBody === editBody) {
+      // Nothing matched — surface this clearly rather than silently discarding the
+      // upload. The image itself uploaded fine (it has a real URL); only the
+      // automatic placement into the draft text failed.
+      alert(
+        `The image uploaded successfully, but couldn't be automatically placed in the draft (the placeholder text may have changed). You can paste this URL manually where you want the image:\n\n${url}`
+      );
+      return;
+    }
+
     setEditBody(newBody);
     pushHistory(newBody);
 
-    // Also remove this placeholder from editSuggestedImages so the upload UI disappears
-    setEditSuggestedImages((prev) =>
-      prev.filter(
-        (img) => !(typeof img === "object" && img !== null && (img as any).placeholderId === placeholderId)
-      )
+    // Remove the resolved placeholder entry. If this was the FEATURED image, also
+    // add its URL as a plain string entry — the same shape the "Attached Media
+    // Asset" panel and social media cards use — so uploading the featured image
+    // once here automatically becomes the article's featured/hub-card image too.
+    const withoutPlaceholder = editSuggestedImages.filter(
+      (img: any) => !(typeof img === "object" && img !== null && img.placeholderId === placeholderId)
     );
+    const updatedImages = isFeatured ? [url, ...withoutPlaceholder.filter((img: any) => img !== url)] : withoutPlaceholder;
+    setEditSuggestedImages(updatedImages);
 
     // If we're NOT in edit mode (read-only view), save the image attachment to the server immediately.
     if (!isEditMode && selectedRun) {
@@ -473,6 +516,7 @@ export default function BusinessDashboardPage() {
         excerpt: editExcerpt || currentDraft?.excerpt,
         body_markdown: newBody,
         body: newBody,
+        suggestedImages: updatedImages,
         references: currentDraft?.references,
       });
     }
@@ -2120,10 +2164,11 @@ export default function BusinessDashboardPage() {
                                         </p>
                                       )}
                                       <div className="border-t border-white/10 pt-4">
-                                        <FormattedContent 
-                                           body={editBody} 
+                                        <FormattedContent
+                                           body={editBody}
                                            suggestedImages={editSuggestedImages}
-                                          onAttachPlaceholder={(placeholderId, label, url) => handleAttachPlaceholderImage(placeholderId, label, url)}
+                                          onAttachPlaceholder={(placeholderId, label, url, isFeatured) => handleAttachPlaceholderImage(placeholderId, label, url, isFeatured)}
+                                          references={selectedRun.blog_drafts[0]?.references}
                                         />
                                       </div>
                                     </div>
@@ -2191,10 +2236,11 @@ export default function BusinessDashboardPage() {
                                     </p>
                                   )}
                                   <div className="text-white/80 space-y-4 leading-relaxed font-sans border-t border-white/10 pt-4">
-                                    <FormattedContent 
-                                      body={editBody || selectedRun.blog_drafts[0]?.body_markdown || selectedRun.blog_drafts[0]?.body || ""} 
+                                    <FormattedContent
+                                      body={editBody || selectedRun.blog_drafts[0]?.body_markdown || selectedRun.blog_drafts[0]?.body || ""}
                                       suggestedImages={editSuggestedImages.length > 0 ? editSuggestedImages : selectedRun.blog_drafts[0]?.suggested_images}
-                                      onAttachPlaceholder={(placeholderId, label, url) => handleAttachPlaceholderImage(placeholderId, label, url)}
+                                      onAttachPlaceholder={(placeholderId, label, url, isFeatured) => handleAttachPlaceholderImage(placeholderId, label, url, isFeatured)}
+                                      references={selectedRun.blog_drafts[0]?.references}
                                     />
                                   </div>
                                 </div>
@@ -2657,8 +2703,8 @@ export default function BusinessDashboardPage() {
                                   <span className="text-xs font-mono text-white/70">{run.run_id}</span>
                                   <StatusBadge status={run.status} />
                                 </div>
-                                <span className="text-[11px] text-white/60 font-mono">
-                                  {new Date(run.created_at).toLocaleDateString()}
+                                <span className="text-[11px] text-white/60 font-mono" title={`Created ${new Date(run.created_at).toLocaleString()}`}>
+                                  Last saved: {new Date(run.updated_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                                 </span>
                               </div>
 
@@ -2703,6 +2749,9 @@ export default function BusinessDashboardPage() {
                               <StatusBadge status={run.status} />
                             </div>
                             <h4 className="text-xs text-white/80 line-clamp-2">{run.topic}</h4>
+                            <span className="text-[10px] text-white/40 font-mono block">
+                              Last saved: {new Date(run.updated_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -2932,7 +2981,7 @@ function ArticleFooterTemplate() {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 justify-center sm:justify-end">
           <span>Lead Consultant: Mr Ricardo J Pacheco (GMC 4145976)</span>
           <span>📞 07770 473437</span>
-          <span>✉ admin@lincsknee.com</span>
+          <span>✉ info@lincsknee.com</span>
         </div>
       </div>
     </div>
@@ -2940,16 +2989,18 @@ function ArticleFooterTemplate() {
 }
 
 // Subcomponent: Formatted Content Preview
-function FormattedContent({ 
-  body, 
+function FormattedContent({
+  body,
   body_markdown,
   suggestedImages,
-  onAttachPlaceholder
-}: { 
-  body?: string; 
+  onAttachPlaceholder,
+  references
+}: {
+  body?: string;
   body_markdown?: string;
   suggestedImages?: any[];
-  onAttachPlaceholder?: (placeholderId: string, label: string, url: string) => void;
+  onAttachPlaceholder?: (placeholderId: string, label: string, url: string, isFeatured?: boolean) => void;
+  references?: string[];
 }) {
   const content = cleanHeadingBugs(body_markdown || body || "");
   if (!content) return null;
@@ -2985,17 +3036,7 @@ function FormattedContent({
           h3: ({ children }) => <h3 className="font-serif text-xs font-bold text-white pt-2 border-b border-white/10 pb-1 mb-2">{children}</h3>,
           h4: ({ children }) => <h4 className="font-serif text-[11px] font-bold text-white pt-2 pb-1 mb-1">{children}</h4>,
           p: ({ children }) => {
-            const text = React.Children.toArray(children)
-              .map((child: any) => {
-                if (typeof child === "string" || typeof child === "number") return String(child);
-                if (child?.props?.children) {
-                  return Array.isArray(child.props.children)
-                    ? child.props.children.join("")
-                    : String(child.props.children);
-                }
-                return "";
-              })
-              .join("");
+            const text = extractPlainText(children);
 
             if (text.includes("[NEEDS CLINICAL REVIEW]")) {
               return (
@@ -3006,41 +3047,44 @@ function FormattedContent({
               );
             }
 
-            const placeholderRegex = /^\[IMAGE PLACEHOLDER:\s*(.*?)\]$/i;
+            const placeholderRegex = /^\[(FEATURED IMAGE PLACEHOLDER|IMAGE PLACEHOLDER):\s*(.*?)\]$/i;
             const match = text.trim().match(placeholderRegex);
             if (match) {
-              const label = match[1].trim();
+              const isFeatured = match[1].toUpperCase() === "FEATURED IMAGE PLACEHOLDER";
+              const label = match[2].trim();
               const resolvedImage = (suggestedImages || []).find(
-                (item) => 
-                  typeof item === "object" && 
-                  item !== null && 
+                (item) =>
+                  typeof item === "object" &&
+                  item !== null &&
                   item.label?.trim().toLowerCase() === label.toLowerCase()
               );
 
               if (resolvedImage && resolvedImage.url) {
                 return (
                   <div className="my-4 space-y-1.5 text-center">
-                    <img 
-                      src={resolvedImage.url} 
-                      alt={label} 
-                      className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-cover" 
+                    <img
+                      src={resolvedImage.url}
+                      alt={label}
+                      className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-cover"
                     />
                     <span className="text-[10px] text-white/50 italic block">
-                      📷 Inline Image: {label}
+                      {isFeatured ? "🖼️ Featured Image (Education Hub card)" : "📷 Inline Image"}: {label}
                     </span>
                   </div>
                 );
               }
 
-              const placeholderId = resolvedImage?.placeholderId || `placeholder-${label.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`;
+              const placeholderId = resolvedImage?.placeholderId || (isFeatured ? "featured-image" : `placeholder-${label.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`);
 
               return (
-                <div className="border border-dashed border-clinical-teal/40 bg-primary-navy/40 p-4 rounded-xl my-4 text-center space-y-3">
-                  <div className="text-[10px] uppercase tracking-wider text-clinical-teal font-semibold">📷 Suggested Image Placement</div>
+                <div className={`border border-dashed p-4 rounded-xl my-4 text-center space-y-3 ${isFeatured ? "border-amber-400/50 bg-amber-950/10" : "border-clinical-teal/40 bg-primary-navy/40"}`}>
+                  <div className={`text-[10px] uppercase tracking-wider font-semibold ${isFeatured ? "text-amber-300" : "text-clinical-teal"}`}>
+                    {isFeatured ? "🖼️ Featured Image — used as this article's Education Hub card" : "📷 Suggested Image Placement"}
+                  </div>
                   <p className="text-[11px] text-white/90 italic">"{label}"</p>
                   {onAttachPlaceholder && (
                     <div className="flex items-center justify-center gap-2">
-                      <label className="bg-clinical-teal hover:bg-clinical-teal-hover text-deep-navy text-[10px] px-3 py-1.5 rounded-lg cursor-pointer transition-colors font-medium">
+                      <label className={`text-deep-navy text-[10px] px-3 py-1.5 rounded-lg cursor-pointer transition-colors font-medium ${isFeatured ? "bg-amber-400 hover:bg-amber-300" : "bg-clinical-teal hover:bg-clinical-teal-hover"}`}>
                         Upload Image
                         <input
                           type="file"
@@ -3057,10 +3101,15 @@ function FormattedContent({
                               });
                               const data = await res.json();
                               if (data.success && data.url) {
-                                onAttachPlaceholder(placeholderId, label, data.url);
+                                onAttachPlaceholder(placeholderId, label, data.url, isFeatured);
+                              } else {
+                                alert(`Image upload failed: ${data.error || "Unknown error"}`);
                               }
                             } catch (err) {
                               console.error("Placeholder upload failed:", err);
+                              alert("Image upload failed. Please check your connection and try again.");
+                            } finally {
+                              e.target.value = "";
                             }
                           }}
                           className="hidden"
@@ -3070,7 +3119,7 @@ function FormattedContent({
                         onClick={() => {
                           const url = prompt("Enter the direct image URL:");
                           if (url) {
-                            onAttachPlaceholder(placeholderId, label, url);
+                            onAttachPlaceholder(placeholderId, label, url, isFeatured);
                           }
                         }}
                         className="border border-white/20 text-white/80 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium"
@@ -3114,6 +3163,18 @@ function FormattedContent({
       >
         {content}
       </ReactMarkdown>
+      {references && references.length > 0 && (
+        <div className="mt-6 border-t border-white/10 pt-4">
+          <span className="block text-[10px] font-bold uppercase tracking-wider text-white/50 mb-2">
+            References
+          </span>
+          <ol className="list-decimal pl-5 space-y-1 text-[11px] text-white/70 leading-relaxed">
+            {references.map((ref, idx) => (
+              <li key={idx}>{ref}</li>
+            ))}
+          </ol>
+        </div>
+      )}
       <ArticleFooterTemplate />
     </div>
   );

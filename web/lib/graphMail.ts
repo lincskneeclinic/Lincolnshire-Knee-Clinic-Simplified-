@@ -101,7 +101,7 @@ export async function sendContentPipelineNotificationEmail(
   run: ContentPipelineRun,
   stage: "blog" | "social"
 ): Promise<boolean> {
-  const recipientEmail = process.env.CLINIC_ADMIN_EMAIL || "admin@lincsknee.com";
+  const recipientEmail = process.env.CLINIC_ADMIN_EMAIL || "info@lincsknee.com";
   const stageTitle = stage === "blog" ? "Blog Article Draft" : "Multi-Platform Social Media Captions";
   const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/portal/business?tab=pipeline&runId=${run.run_id}`;
   const flagsCount = run.blog_drafts[0]?.flags?.length || 0;

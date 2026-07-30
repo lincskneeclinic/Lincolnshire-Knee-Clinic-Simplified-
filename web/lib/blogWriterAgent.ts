@@ -32,8 +32,9 @@ Guidelines:
 4. Nuance & Controversy Flags: Where the research brief notes clinical controversies or conflicting findings (e.g., accelerated vs conservative rehab, functional testing vs time-based clearance), you MUST insert a clinical review flag immediately following that paragraph. The flag must be exactly formatted as "[NEEDS CLINICAL REVIEW]" followed by specific instructions to the reviewing consultant.
 5. Formatting: Use standard Markdown. Bold key terms and milestones. Use bullet lists for rehabilitation exercises or functional clearance criteria.
 6. Content Integrity: You must incorporate all provided 'Key Points', 'Conflicting Findings', and 'Clinical Indications' thoroughly without inventing medical claims.
-7. Image Placeholders: Insert 1 to 3 image placeholder markers inline on their own line at natural, logical points in the article body (e.g. after introducing a surgical technique or rehab milestone). The placeholders MUST be written in the exact format: [IMAGE PLACEHOLDER: Description of what the image, diagram, X-Ray, or photo should show]. Do not put them all at the top; place them where they contextually enhance patient comprehension.
-8. Revision Mode: If previous draft details and reviewer feedback are supplied, focus on revising the previous draft to address the requested changes specifically — keep what wasn't flagged as a problem, don't rewrite from scratch. Ensure that you preserve any existing image placeholder markers that were not requested to be changed.`
+7. Featured Image: The article body MUST begin with exactly one featured-image marker on its own line, before the introduction paragraph. This image is later used as the card thumbnail on the Education Hub, so describe a single clear, representative visual for the whole article. It MUST be written in the exact format: [FEATURED IMAGE PLACEHOLDER: Description of a representative hero image for this article].
+8. Inline Image Placeholders: In addition to the featured image, insert 1 to 3 further image placeholder markers inline on their own line at natural, logical points in the rest of the article body (e.g. after introducing a surgical technique or rehab milestone). These MUST be written in the exact format: [IMAGE PLACEHOLDER: Description of what the image, diagram, X-Ray, or photo should show]. Do not put them all at the top; place them where they contextually enhance patient comprehension.
+9. Revision Mode: If previous draft details and reviewer feedback are supplied, focus on revising the previous draft to address the requested changes specifically — keep what wasn't flagged as a problem, don't rewrite from scratch. Ensure that you preserve the existing featured image and inline image placeholder markers that were not requested to be changed.`
   });
 
   let userPrompt = `
@@ -70,7 +71,7 @@ ${previousDraft.body_markdown || previousDraft.body}
 Reviewer Feedback / Requested Changes:
 "${revisionNotes}"
 
-Please revise the previous draft according to the feedback. Keep all parts of the draft that are accurate and not subject to feedback, making targeted updates. Ensure you preserve any inline [IMAGE PLACEHOLDER: ...] tags unless instructed to change them.
+Please revise the previous draft according to the feedback. Keep all parts of the draft that are accurate and not subject to feedback, making targeted updates. Ensure you preserve the leading [FEATURED IMAGE PLACEHOLDER: ...] tag and any inline [IMAGE PLACEHOLDER: ...] tags unless instructed to change them.
 `;
   }
 
@@ -95,28 +96,50 @@ BODY:
 
     const excerpt = excerptMatch ? excerptMatch[1].trim() : `An exhaustive clinical guide on ${topic} for Lincolnshire Knee Clinic patients.`;
     const title = titleMatch ? titleMatch[1].trim() : topic;
-    const body = bodyMatch ? bodyMatch[1].trim() : output.trim();
+    let body = bodyMatch ? bodyMatch[1].trim() : output.trim();
 
     // Extract flags from the body
     const flagRegex = /\[NEEDS CLINICAL REVIEW\].*/gi;
     const flags = body.match(flagRegex) || [];
 
-    // Parse image placeholders
+    // The system prompt asks the model to lead with a [FEATURED IMAGE PLACEHOLDER: ...]
+    // marker, but LLM instruction-following isn't 100% reliable — guarantee it
+    // programmatically rather than leaving the Education Hub card image to chance.
+    const featuredPlaceholderRegex = /\[FEATURED IMAGE PLACEHOLDER:\s*(.*?)\]/i;
+    if (!featuredPlaceholderRegex.test(body)) {
+      body = `[FEATURED IMAGE PLACEHOLDER: A representative hero image for "${title}"]\n\n${body}`;
+    }
+
+    // Parse the featured image placeholder (used as the Education Hub card image)
+    // and the inline body image placeholders.
     const placeholderRegex = /\[IMAGE PLACEHOLDER:\s*(.*?)\]/gi;
     let match;
-    const suggestedImages: Array<string | { placeholderId?: string; label: string; url?: string }> = [
-      "Patient undergoing functional knee rehabilitation and symmetry testing with a physical therapist",
-      "Anatomical diagram illustrating knee joint structures and surgical repair integrity"
-    ];
-    let count = 1;
-    while ((match = placeholderRegex.exec(body)) !== null) {
-      const label = match[1].trim();
-      const previousResolved = previousDraft?.suggested_images?.find(
+    const suggestedImages: Array<string | { placeholderId?: string; label: string; url?: string; isFeatured?: boolean }> = [];
+
+    const findPreviousUrl = (label: string) =>
+      previousDraft?.suggested_images?.find(
         (img: any) =>
           typeof img === "object" &&
           img !== null &&
           img.label?.trim().toLowerCase() === label.toLowerCase()
       );
+
+    const featuredMatch = body.match(featuredPlaceholderRegex);
+    if (featuredMatch) {
+      const label = featuredMatch[1].trim();
+      const previousResolved = findPreviousUrl(label);
+      suggestedImages.push({
+        placeholderId: previousResolved?.placeholderId || "featured-image",
+        label,
+        url: previousResolved?.url || "",
+        isFeatured: true,
+      });
+    }
+
+    let count = 1;
+    while ((match = placeholderRegex.exec(body)) !== null) {
+      const label = match[1].trim();
+      const previousResolved = findPreviousUrl(label);
       suggestedImages.push({
         placeholderId: previousResolved?.placeholderId || `placeholder-${count++}`,
         label,

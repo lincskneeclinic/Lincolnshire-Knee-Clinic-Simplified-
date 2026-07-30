@@ -37,7 +37,7 @@ export interface BlogDraftVersion {
   excerpt: string;
   body_markdown?: string;
   body?: string;
-  suggested_images: Array<string | { placeholderId?: string; label: string; url?: string }>;
+  suggested_images: Array<string | { placeholderId?: string; label: string; url?: string; isFeatured?: boolean }>;
   references: string[];
   flags: string[];
   created_at: string;
@@ -223,9 +223,12 @@ export async function getPipelineRuns(statusFilter?: string): Promise<ContentPip
   const config = getSupabaseConfig();
   if (config) {
     try {
-      let endpoint = `${config.url}/rest/v1/content_pipeline_runs?select=*&order=created_at.desc`;
+      // Ordered by updated_at (not created_at) so a run you just saved progress
+      // on — however old it is — bubbles to the top instead of staying buried
+      // at its original creation position.
+      let endpoint = `${config.url}/rest/v1/content_pipeline_runs?select=*&order=updated_at.desc`;
       if (statusFilter) {
-        endpoint = `${config.url}/rest/v1/content_pipeline_runs?select=*&status=eq.${encodeURIComponent(statusFilter)}&order=created_at.desc`;
+        endpoint = `${config.url}/rest/v1/content_pipeline_runs?select=*&status=eq.${encodeURIComponent(statusFilter)}&order=updated_at.desc`;
       }
       const res = await fetch(endpoint, {
         method: "GET",
@@ -252,7 +255,7 @@ export async function getPipelineRuns(statusFilter?: string): Promise<ContentPip
   if (statusFilter) {
     runs = runs.filter((r) => r.status === statusFilter);
   }
-  runs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  runs.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   return runs;
 }
 
