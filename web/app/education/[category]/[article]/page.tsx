@@ -8,7 +8,9 @@ import { blogArticles } from "@/data/articles";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import Link from "next/link";
 import { SITE_URL } from "@/lib/site";
-import { getRemovedArticleSlugs } from "@/lib/educationArticles";
+import { getRemovedArticleSlugs, getArticleOverride, ArticleOverride } from "@/lib/educationArticles";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 // Articles can be removed from the Education Hub via the business dashboard without a
 // redeploy — this page re-checks the removed-article list every `revalidate` seconds
@@ -39,19 +41,24 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
-  const pageTitle = `${data.title} | Blog & Article`;
+  const override = await getArticleOverride(article);
+  const title = override?.title || data.title;
+  const description = override?.excerpt || data.description;
+  const image = override?.featuredImage || data.image;
+
+  const pageTitle = `${title} | Blog & Article`;
   const pageUrl = `${SITE_URL}/education/${category}/${article}`;
-  const imageUrl = data.image ? `${SITE_URL}${data.image}` : `${SITE_URL}/brand/lkc-logo-k-transparent.png`;
+  const imageUrl = image ? (image.startsWith("http") ? image : `${SITE_URL}${image}`) : `${SITE_URL}/brand/lkc-logo-k-transparent.png`;
 
   return {
     title: pageTitle,
-    description: data.description,
+    description,
     alternates: {
       canonical: pageUrl,
     },
     openGraph: {
       title: pageTitle,
-      description: data.description,
+      description,
       url: pageUrl,
       type: "article",
       publishedTime: data.datePublished,
@@ -61,14 +68,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: data.title,
+          alt: title,
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
       title: pageTitle,
-      description: data.description,
+      description,
       images: [imageUrl],
     },
   };
@@ -88,17 +95,22 @@ export default async function ArticlePage({ params }: PageProps) {
     notFound();
   }
 
+  const override = await getArticleOverride(article);
+  const displayTitle = override?.title || data.title;
+  const displayDescription = override?.excerpt || data.description;
+  const displayImage = override?.featuredImage || data.image;
+
   const pageUrl = `${SITE_URL}/education/${category}/${article}`;
-  
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "Article",
         "@id": `${pageUrl}#article`,
-        "headline": data.title,
-        "description": data.description,
-        "image": data.image ? `${SITE_URL}${data.image}` : undefined,
+        "headline": displayTitle,
+        "description": displayDescription,
+        "image": displayImage ? (displayImage.startsWith("http") ? displayImage : `${SITE_URL}${displayImage}`) : undefined,
         "author": {
           "@type": "Person",
           "name": data.author,
@@ -113,6 +125,7 @@ export default async function ArticlePage({ params }: PageProps) {
           }
         },
         "datePublished": data.datePublished,
+        "dateModified": override?.updatedAt || data.datePublished,
         "mainEntityOfPage": {
           "@type": "WebPage",
           "@id": pageUrl
@@ -121,8 +134,8 @@ export default async function ArticlePage({ params }: PageProps) {
       {
         "@type": "MedicalWebPage",
         "@id": `${pageUrl}#medicalwebpage`,
-        "name": data.title,
-        "description": data.description,
+        "name": displayTitle,
+        "description": displayDescription,
         "about": {
           "@type": "MedicalCondition",
           "name": data.categoryLabel
@@ -132,7 +145,7 @@ export default async function ArticlePage({ params }: PageProps) {
           "name": data.author,
           "jobTitle": data.authorTitle
         },
-        "lastReviewed": data.datePublished
+        "lastReviewed": override?.updatedAt || data.datePublished
       }
     ]
   };
@@ -140,13 +153,13 @@ export default async function ArticlePage({ params }: PageProps) {
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-10 md:py-16 font-sans">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      
+
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
           { label: "Education & Blog", href: "/education" },
           { label: data.categoryLabel, href: `/education/${data.category}` },
-          { label: data.title }
+          { label: displayTitle }
         ]}
       />
 
@@ -156,9 +169,9 @@ export default async function ArticlePage({ params }: PageProps) {
           {data.categoryLabel}
         </span>
         <h1 className="font-serif text-3xl md:text-5xl font-bold text-deep-navy leading-tight mb-6">
-          {data.title}
+          {displayTitle}
         </h1>
-        
+
         {/* Author / Date Meta bar */}
         <div className="flex flex-wrap items-center gap-4 border-y border-border-clinical/40 py-4 text-xs font-semibold text-text-secondary">
           <div className="flex items-center gap-2">
@@ -172,7 +185,7 @@ export default async function ArticlePage({ params }: PageProps) {
           </div>
           <span className="text-border-clinical/80 hidden sm:inline">&bull;</span>
           <div>
-            <span className="text-text-muted">Published:</span> {data.datePublished}
+            <span className="text-text-muted">{override ? "Updated:" : "Published:"}</span> {override?.updatedAt ? new Date(override.updatedAt).toLocaleDateString() : data.datePublished}
           </div>
           <span className="text-border-clinical/80 hidden sm:inline">&bull;</span>
           <div>
@@ -186,18 +199,22 @@ export default async function ArticlePage({ params }: PageProps) {
       </header>
 
       {/* Article Banner Image */}
-      {data.image && (
+      {displayImage && (
         <div className="w-full h-60 sm:h-80 md:h-[400px] relative rounded-2xl overflow-hidden mb-10 border border-border-clinical/30 bg-pale-clinical-blue/10">
-          <img src={data.image} alt={data.title} className="object-contain w-full h-full bg-white" />
+          <img src={displayImage} alt={displayTitle} className="object-contain w-full h-full bg-white" />
         </div>
       )}
 
       {/* Main Layout Grid */}
       <div className="grid grid-cols-1 gap-10">
-        
+
+        {override ? (
+          <UpdatedArticleBody override={override} />
+        ) : (
+        <>
         {/* Article Body */}
         <article className="prose max-w-none text-text-secondary text-sm md:text-base leading-relaxed space-y-6">
-          
+
           {/* Key Takeaways */}
           <div className="bg-pale-clinical-blue/30 border-l-4 border-clinical-teal p-6 rounded-r-xl my-6">
             <h2 className="font-sans text-sm font-bold text-deep-navy uppercase tracking-wider mb-3">
@@ -357,6 +374,8 @@ export default async function ArticlePage({ params }: PageProps) {
               </div>
             </div>
           ))}
+        </>
+        )}
 
         {/* Next Steps / CTAs */}
         <section className="bg-soft-blue border border-border-clinical p-6 md:p-8 rounded-xl text-center my-8">
@@ -381,5 +400,77 @@ export default async function ArticlePage({ params }: PageProps) {
 
       </div>
     </div>
+  );
+}
+
+// Renders an article that's been revised through the dashboard's "Update" workflow
+// (see lib/contentPipeline.createRunFromArticle). Its content is a single markdown
+// blob (the same format the dashboard editor works with) rather than the structured
+// sections/takeaways/faqs shape data/articles.ts uses, so it renders differently —
+// simpler, but reflects the edited content instantly without a redeploy.
+function UpdatedArticleBody({ override }: { override: ArticleOverride }) {
+  // The featured image is already shown separately as the page's banner image above,
+  // so strip a leading markdown image line here to avoid showing it twice — both
+  // createRunFromArticle and the AI writer always place the featured image as the
+  // very first line of the body.
+  const body = override.body_markdown.replace(/^!\[[^\]]*\]\([^)]*\)\s*\n*/, "");
+
+  return (
+    <>
+      <article className="prose max-w-none text-text-secondary text-sm md:text-base leading-relaxed space-y-6">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            h1: ({ children }) => <h2 className="font-serif text-xl md:text-2xl font-bold text-deep-navy mt-8 mb-4 border-b border-border-clinical/30 pb-2">{children}</h2>,
+            h2: ({ children }) => <h2 className="font-serif text-xl md:text-2xl font-bold text-deep-navy mt-8 mb-4 border-b border-border-clinical/30 pb-2">{children}</h2>,
+            h3: ({ children }) => <h3 className="font-serif text-lg md:text-xl font-bold text-deep-navy mt-6 mb-3">{children}</h3>,
+            p: ({ children }) => <p className="font-medium text-text-secondary leading-relaxed text-sm md:text-base my-4">{children}</p>,
+            ul: ({ children }) => <ul className="space-y-2 bg-soft-blue/30 p-5 rounded-xl border border-border-clinical/30 my-4 text-xs md:text-sm list-disc list-inside">{children}</ul>,
+            ol: ({ children }) => <ol className="space-y-2 bg-soft-blue/30 p-5 rounded-xl border border-border-clinical/30 my-4 text-xs md:text-sm list-decimal list-inside">{children}</ol>,
+            li: ({ children }) => <li className="font-medium text-text-secondary">{children}</li>,
+            blockquote: ({ children }) => (
+              <blockquote className="border-l-4 border-clinical-teal pl-6 my-8 italic text-deep-navy font-medium text-base md:text-lg bg-pale-clinical-blue/20 py-5 pr-6 rounded-r-xl shadow-sm">
+                {children}
+              </blockquote>
+            ),
+            a: ({ href, children }) => (
+              <Link href={href || "#"} className="text-clinical-teal hover:underline font-bold">
+                {children}
+              </Link>
+            ),
+            img: ({ src, alt }) => (
+              <figure className="my-8 rounded-2xl overflow-hidden border border-border-clinical/30 shadow-md bg-pale-clinical-blue/10">
+                <img src={src || ""} alt={alt || ""} className="w-full h-auto object-contain max-h-[380px] bg-white" />
+                {alt && (
+                  <figcaption className="text-center text-xs text-text-muted italic p-3 bg-white/90 border-t border-border-clinical/20 font-medium">
+                    {alt}
+                  </figcaption>
+                )}
+              </figure>
+            ),
+          }}
+        >
+          {body}
+        </ReactMarkdown>
+      </article>
+
+      {override.references && override.references.length > 0 && (
+        <section className="border-t border-border-clinical/30 pt-8 mt-2">
+          <h3 className="font-serif text-lg md:text-xl font-bold text-deep-navy mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-clinical-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            References & Medical Literature
+          </h3>
+          <ol className="list-decimal list-inside space-y-2 text-xs text-text-muted font-medium bg-pale-clinical-blue/20 p-5 rounded-xl border border-border-clinical/30">
+            {override.references.map((ref, idx) => (
+              <li key={idx} className="leading-relaxed">
+                {ref}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+    </>
   );
 }

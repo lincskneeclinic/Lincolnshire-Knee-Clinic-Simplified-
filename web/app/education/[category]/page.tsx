@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { SITE_URL } from "@/lib/site";
 
 import { blogArticles } from "@/data/articles";
-import { getRemovedArticleSlugs } from "@/lib/educationArticles";
+import { getRemovedArticleSlugs, getArticleOverrides, ArticleOverride } from "@/lib/educationArticles";
 
 // Articles can be removed from the Education Hub via the business dashboard without a
 // redeploy — this page re-checks the removed-article list every `revalidate` seconds
@@ -70,21 +70,27 @@ const categoryMeta: Record<string, { title: string; categoryLabel: string; descr
   }
 };
 
-// Built per-request (not at module scope) so a freshly removed article can be
-// excluded without needing the removedSlugs list baked in at build time.
-function buildCategoriesData(removedSlugs: string[]): Record<string, CategoryData> {
+// Built per-request (not at module scope) so a freshly removed/updated article can be
+// reflected without needing the data baked in at build time.
+function buildCategoriesData(
+  removedSlugs: string[],
+  overrides: Record<string, ArticleOverride>
+): Record<string, CategoryData> {
   const categoriesData: Record<string, CategoryData> = {};
 
   Object.entries(categoryMeta).forEach(([catKey, meta]) => {
     const articlesInCat = Object.values(blogArticles)
       .filter((a) => a.category === catKey && !removedSlugs.includes(a.slug))
-      .map((a) => ({
-        title: a.title,
-        description: a.description,
-        readTime: a.readTime,
-        href: `/education/${a.category}/${a.slug}`,
-        imageUrl: a.image
-      }));
+      .map((a) => {
+        const override = overrides[a.slug];
+        return {
+          title: override?.title || a.title,
+          description: override?.excerpt || a.description,
+          readTime: a.readTime,
+          href: `/education/${a.category}/${a.slug}`,
+          imageUrl: override?.featuredImage || a.image
+        };
+      });
 
     categoriesData[catKey] = {
       title: meta.title,
@@ -153,8 +159,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function CategoryPage({ params }: PageProps) {
   const { category } = await params;
-  const removedSlugs = await getRemovedArticleSlugs();
-  const categoriesData = buildCategoriesData(removedSlugs);
+  const [removedSlugs, overrides] = await Promise.all([getRemovedArticleSlugs(), getArticleOverrides()]);
+  const categoriesData = buildCategoriesData(removedSlugs, overrides);
   const data = categoriesData[category];
 
   if (!data) {

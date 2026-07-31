@@ -781,6 +781,33 @@ export default function BusinessDashboardPage() {
     }
   };
 
+  // Seeds a new content pipeline run from an already-published article's current
+  // content, then jumps into the normal Pipeline editing workflow for it — same as
+  // opening any other run (Edit Draft, replace/regenerate images, references, etc).
+  // Approving its blog draft writes the changes back as a live article update.
+  const [isStartingArticleUpdate, setIsStartingArticleUpdate] = useState<string | null>(null);
+  const handleStartArticleUpdate = async (article: EducationArticleSummary) => {
+    setIsStartingArticleUpdate(article.slug);
+    try {
+      const res = await fetch("/api/portal/education-articles/update-run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: article.slug }),
+      });
+      const data = await res.json();
+      if (!data.success || !data.run) {
+        throw new Error(data.error || "Failed to start an update run for this article.");
+      }
+      setActiveTab("pipeline");
+      await fetchPipelineRuns();
+      await fetchRunDetail(data.run.run_id);
+    } catch (err: any) {
+      alert(err?.message || "An error occurred while starting the update.");
+    } finally {
+      setIsStartingArticleUpdate(null);
+    }
+  };
+
   const handleCommunityReportAction = async (
     report: { id: string; target_type: string; target_id: string },
     action: "hide" | "dismiss"
@@ -1998,6 +2025,8 @@ export default function BusinessDashboardPage() {
                     <p className="text-xs text-white/60 mt-1">
                       Remove an article if it's outdated or the underlying evidence has changed — it disappears from the
                       live site within a few minutes, no code deploy needed. Restoring it is just as instant.
+                      Use Update to revise an article's content through the normal draft editor (references, images,
+                      wording) — approving it publishes the changes live the same way.
                     </p>
                   </div>
                 </div>
@@ -2028,7 +2057,16 @@ export default function BusinessDashboardPage() {
                           )}
                         </div>
                         <h4 className="text-xs font-bold text-white leading-snug">{article.title}</h4>
-                        <div className="flex justify-end pt-1">
+                        <div className="flex justify-end items-center gap-2 pt-1 flex-wrap">
+                          {!article.removed && (
+                            <button
+                              onClick={() => handleStartArticleUpdate(article)}
+                              disabled={isStartingArticleUpdate === article.slug}
+                              className="border border-white/20 text-white/80 hover:bg-white/5 text-[11px] px-3 py-1.5 rounded-lg cursor-pointer font-medium disabled:opacity-50"
+                            >
+                              {isStartingArticleUpdate === article.slug ? "Starting…" : "✎ Update"}
+                            </button>
+                          )}
                           {article.removed ? (
                             <button
                               onClick={() => setArticlePendingRemoval(article)}

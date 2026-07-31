@@ -1,9 +1,11 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { getStoreValue } from "./dataStore";
 import { sendContentPipelineNotificationEmail } from "./graphMail";
 import { performResearchProcess } from "./researchAgent";
 import { writeBlogDraft } from "./blogWriterAgent";
+import { linkRunToArticle, getArticleSlugForRun, setArticleOverride } from "./educationArticles";
 
 export type RunStatus =
   | "researching"
@@ -151,11 +153,15 @@ function mapRowToReview(row: any): ContentPipelineReview {
 }
 
 function mapReviewToRow(review: ContentPipelineReview): any {
+  // content_pipeline_reviews has no `platform` column (confirmed against the live
+  // schema) — including it made PostgREST reject the insert outright, so every review
+  // this session silently failed to reach Supabase (the table was completely empty).
+  // `platform` is still kept on the local disk copy (ContentPipelineReview / the
+  // JSON fallback file aren't schema-constrained).
   return {
-    review_id: review.review_id || review.id || `rev-${Date.now()}`,
+    review_id: review.review_id || review.id || crypto.randomUUID(),
     run_id: review.run_id,
     stage: review.stage,
-    platform: review.platform || null,
     version: review.version || 1,
     decision: review.decision,
     edited_content: review.edited_content || null,
@@ -397,7 +403,11 @@ export async function createPendingPipelineRun(customTopic?: string): Promise<Co
   }
 
   const now = new Date().toISOString();
-  const newRunId = `run-${Date.now()}`;
+  // content_pipeline_runs.run_id is a Postgres uuid column — a "run-<timestamp>" style
+  // id silently fails every Supabase insert/query for it (logged, not thrown), meaning
+  // the run only ever lived in the local disk fallback. Using a real UUID here fixes
+  // that for real.
+  const newRunId = crypto.randomUUID();
 
   const newRun: ContentPipelineRun = {
     id: newRunId,
@@ -415,6 +425,13 @@ export async function createPendingPipelineRun(customTopic?: string): Promise<Co
     updated_at: now
   };
 
+  await insertNewRunIntoStorage(newRun);
+  return newRun;
+}
+
+// Shared by createPendingPipelineRun and createRunFromArticle — inserts a brand new
+// run into Supabase (if configured) and the local disk cache.
+async function insertNewRunIntoStorage(newRun: ContentPipelineRun): Promise<void> {
   const config = getSupabaseConfig();
   if (config) {
     try {
@@ -438,10 +455,108 @@ export async function createPendingPipelineRun(customTopic?: string): Promise<Co
     }
   }
 
-  // Update local disk cache
   const runs = readRunsFromDisk();
   runs.unshift(newRun);
   writeRunsToDisk(runs);
+}
+
+// Seeds a new content pipeline run from an already-published Education Hub article
+// (data/articles.ts), converting its structured sections/takeaways/faqs into a single
+// markdown body so it can go through the exact same Edit Draft workflow — including
+// replacing/regenerating images — as a freshly AI-generated draft. The run starts
+// straight at "awaiting_blog_approval" (no research/writing stage needed) and is
+// linked back to the source article via lib/educationArticles.linkRunToArticle, so
+// approving its blog draft writes an instant article override instead of just
+// advancing to the social-caption stage.
+export async function createRunFromArticle(article: {
+  slug: string;
+  title: string;
+  description: string;
+  category: string;
+  image?: string;
+  references?: string[];
+  takeaways?: string[];
+  sections: Array<{
+    heading?: string;
+    content: string;
+    isQuote?: boolean;
+    isWarning?: boolean;
+    inlineImage?: string;
+    inlineImageCaption?: string;
+  }>;
+  faqs?: Array<{ question: string; answer: string }>;
+}): Promise<ContentPipelineRun> {
+  const bodyParts: string[] = [];
+  const suggestedImages: Array<{ placeholderId: string; label: string; url: string; isFeatured?: boolean }> = [];
+
+  if (article.image) {
+    const label = `${article.title} — featured image`;
+    suggestedImages.push({ placeholderId: "featured-image", label, url: article.image, isFeatured: true });
+    bodyParts.push(`[FEATURED IMAGE PLACEHOLDER: ${label}]`);
+  }
+
+  let inlineImageCount = 0;
+  article.sections.forEach((section) => {
+    if (section.heading) {
+      bodyParts.push(`### ${section.heading}`);
+    }
+    bodyParts.push(section.isWarning ? `**⚠️ Important:** ${section.content}` : section.isQuote ? `> ${section.content}` : section.content);
+    if (section.inlineImage) {
+      inlineImageCount += 1;
+      const placeholderId = `placeholder-${inlineImageCount}`;
+      const label = section.inlineImageCaption || `${section.heading || article.title} illustration`;
+      suggestedImages.push({ placeholderId, label, url: section.inlineImage });
+      bodyParts.push(`[IMAGE PLACEHOLDER: ${label}]`);
+    }
+  });
+
+  if (article.takeaways && article.takeaways.length > 0) {
+    bodyParts.push("### Key Takeaways");
+    bodyParts.push(article.takeaways.map((t) => `- ${t}`).join("\n"));
+  }
+
+  if (article.faqs && article.faqs.length > 0) {
+    bodyParts.push("### Frequently Asked Questions");
+    article.faqs.forEach((faq) => {
+      bodyParts.push(`**${faq.question}**\n\n${faq.answer}`);
+    });
+  }
+
+  const body = bodyParts.join("\n\n");
+  const now = new Date().toISOString();
+  const newRunId = crypto.randomUUID();
+
+  const newRun: ContentPipelineRun = {
+    id: newRunId,
+    run_id: newRunId,
+    topic: article.title,
+    triggered_by: "manual",
+    topic_source: "education_hub_update",
+    status: "awaiting_blog_approval",
+    research_brief: null,
+    blog_drafts: [
+      {
+        version: 1,
+        title: article.title,
+        excerpt: article.description,
+        body_markdown: body,
+        body,
+        suggested_images: suggestedImages,
+        references: article.references || [],
+        flags: [],
+        category: article.category,
+        created_at: now,
+      },
+    ],
+    social_drafts: [],
+    published_urls: null,
+    social_media_assets: null,
+    created_at: now,
+    updated_at: now,
+  };
+
+  await insertNewRunIntoStorage(newRun);
+  await linkRunToArticle(newRunId, article.slug);
 
   return newRun;
 }
@@ -564,9 +679,14 @@ export async function submitPipelineReview(
   const currentVersion = payload.stage === "blog" ? (run.blog_drafts?.[0]?.version || 1) : (run.social_drafts?.[0]?.version || 1);
 
   // Create review log
+  // content_pipeline_reviews.review_id is also a uuid column — same issue as run_id
+  // above. A "rev-<timestamp>" id here silently failed every insert (the table was
+  // completely empty as a result), so every review this session only ever existed on
+  // disk, never in Supabase.
+  const newReviewId = crypto.randomUUID();
   const newReview: ContentPipelineReview = {
-    id: `rev-${Date.now()}`,
-    review_id: `rev-${Date.now()}`,
+    id: newReviewId,
+    review_id: newReviewId,
     run_id: run.run_id,
     stage: payload.stage,
     platform: payload.platform || undefined,
@@ -678,6 +798,28 @@ export async function submitPipelineReview(
           flags: payload.editedContent.flags || [],
           category: payload.editedContent.category !== undefined ? payload.editedContent.category : run.blog_drafts[0]?.category,
           created_at: now
+        });
+      }
+
+      // If this run was created via createRunFromArticle (an "Update" of an existing
+      // Education Hub article rather than a brand new draft), approving the blog draft
+      // writes the result as an instant article override instead of waiting on the
+      // social-caption stage — the article content update is the point of "Update",
+      // social captions are a separate, optional follow-on.
+      const sourceArticleSlug = await getArticleSlugForRun(run.run_id);
+      if (sourceArticleSlug) {
+        const latestDraft = run.blog_drafts[0];
+        const featuredImage = (latestDraft.suggested_images || []).find(
+          (img: any) => typeof img === "object" && img !== null && img.isFeatured
+        ) as any;
+        await setArticleOverride(sourceArticleSlug, {
+          title: latestDraft.title,
+          excerpt: latestDraft.excerpt,
+          body_markdown: latestDraft.body_markdown || latestDraft.body || "",
+          references: latestDraft.references || [],
+          featuredImage: featuredImage?.url || undefined,
+          category: latestDraft.category,
+          updatedAt: now,
         });
       }
 
