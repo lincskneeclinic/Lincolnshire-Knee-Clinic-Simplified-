@@ -4,7 +4,7 @@ import { rewriteSocialCaption } from "@/lib/socialWriterAgent";
 
 export const maxDuration = 60;
 
-type Platform = "instagram" | "facebook" | "linkedin";
+type Platform = "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel";
 
 export async function GET(
   request: Request,
@@ -32,7 +32,7 @@ export async function PATCH(
     const body = await request.json();
     const platform: Platform | undefined = body.platform;
 
-    if (!platform || !["instagram", "facebook", "linkedin"].includes(platform)) {
+    if (!platform || !["instagram", "facebook", "linkedin", "instagramStory", "instagramCarousel", "instagramReel"].includes(platform)) {
       return NextResponse.json({ success: false, error: "A valid platform is required." }, { status: 400 });
     }
 
@@ -41,17 +41,88 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: "Post not found." }, { status: 404 });
     }
 
+    if (platform === "instagramCarousel") {
+      if (body.action === "regenerate") {
+        const rewritten = await rewriteSocialCaption(
+          existing.topic,
+          platform,
+          existing.instagramCarousel?.caption || "",
+          body.revisionNotes
+        );
+        const updated = await updateSocialOnlyPost(id, (post) => ({
+          ...post,
+          instagramCarousel: {
+            caption: rewritten.caption,
+            imagePromptSuggestion: rewritten.imagePromptSuggestion,
+            slides: post.instagramCarousel?.slides || [],
+            status: "pending",
+          },
+        }));
+        return NextResponse.json({ success: true, post: updated });
+      }
+
+      const updated = await updateSocialOnlyPost(id, (post) => {
+        const next: SocialOnlyPost = { ...post };
+        const existingCarousel = post.instagramCarousel || { caption: "", imagePromptSuggestion: "", slides: [], status: "pending" };
+        next.instagramCarousel = {
+          caption: body.caption !== undefined ? body.caption : existingCarousel.caption,
+          imagePromptSuggestion: body.imagePromptSuggestion !== undefined ? body.imagePromptSuggestion : existingCarousel.imagePromptSuggestion,
+          slides: body.slides !== undefined ? body.slides : existingCarousel.slides,
+          status: body.status !== undefined ? body.status : existingCarousel.status,
+        };
+        return next;
+      });
+      return NextResponse.json({ success: true, post: updated });
+    }
+
+    if (platform === "instagramReel") {
+      if (body.action === "regenerate") {
+        const rewritten = await rewriteSocialCaption(
+          existing.topic,
+          platform,
+          existing.instagramReel?.script || "",
+          body.revisionNotes
+        );
+        const updated = await updateSocialOnlyPost(id, (post) => ({
+          ...post,
+          instagramReel: {
+            caption: rewritten.caption,
+            imagePromptSuggestion: rewritten.imagePromptSuggestion,
+            script: rewritten.caption,
+            status: "pending",
+          },
+        }));
+        return NextResponse.json({ success: true, post: updated });
+      }
+
+      const updated = await updateSocialOnlyPost(id, (post) => {
+        const next: SocialOnlyPost = { ...post };
+        const existingReel = post.instagramReel || { caption: "", imagePromptSuggestion: "", script: "", status: "pending" };
+        next.instagramReel = {
+          caption: body.caption !== undefined ? body.caption : existingReel.caption,
+          imagePromptSuggestion: body.imagePromptSuggestion !== undefined ? body.imagePromptSuggestion : existingReel.imagePromptSuggestion,
+          script: body.script !== undefined ? body.script : existingReel.script,
+          status: body.status !== undefined ? body.status : existingReel.status,
+        };
+        return next;
+      });
+      return NextResponse.json({ success: true, post: updated });
+    }
+
+    // instagram, facebook, linkedin, instagramStory
+    const p = platform as "instagram" | "facebook" | "linkedin" | "instagramStory";
+
     if (body.action === "regenerate") {
       const rewritten = await rewriteSocialCaption(
         existing.topic,
-        platform,
-        existing[platform].caption,
+        p,
+        existing[p]?.caption || "",
         body.revisionNotes
       );
       const updated = await updateSocialOnlyPost(id, (post) => ({
         ...post,
-        [platform]: {
-          ...post[platform],
+        [p]: {
+          ...post[p],
           caption: rewritten.caption,
           imagePromptSuggestion: rewritten.imagePromptSuggestion,
           status: "pending",
@@ -62,11 +133,11 @@ export async function PATCH(
 
     const updated = await updateSocialOnlyPost(id, (post) => {
       const next: SocialOnlyPost = { ...post };
-      next[platform] = {
-        ...post[platform],
-        caption: body.caption !== undefined ? body.caption : post[platform].caption,
-        imageUrl: body.imageUrl !== undefined ? body.imageUrl : post[platform].imageUrl,
-        status: body.status !== undefined ? body.status : post[platform].status,
+      next[p] = {
+        ...post[p],
+        caption: body.caption !== undefined ? body.caption : post[p]?.caption || "",
+        imageUrl: body.imageUrl !== undefined ? body.imageUrl : post[p]?.imageUrl,
+        status: body.status !== undefined ? body.status : post[p]?.status || "pending",
       };
       return next;
     });

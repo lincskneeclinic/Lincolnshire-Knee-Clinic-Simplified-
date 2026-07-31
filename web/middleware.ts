@@ -109,6 +109,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/portal/community-reports") ||
     pathname.startsWith("/api/portal/education-articles") ||
     pathname.startsWith("/api/portal/social-only") ||
+    pathname.startsWith("/api/portal/newsletter") ||
     pathname === "/api/portal/verify-pin" ||
     pathname === "/api/intake";
 

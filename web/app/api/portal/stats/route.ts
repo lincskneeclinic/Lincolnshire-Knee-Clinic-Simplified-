@@ -57,7 +57,7 @@ export async function GET() {
     "Injections & Preservation": 0,
     "Knee Replacement & Surgery": 0,
     "Sports Injuries & ACL": 0,
-    "General Joint Health": 0,
+    "General Knee Health": 0,
   };
 
   // 2. Signup Source Breakdown
@@ -71,7 +71,7 @@ export async function GET() {
 
   subscribers.forEach((sub: any) => {
     // Interest
-    const interest = sub.primaryInterest || "General Joint Health";
+    const interest = sub.primaryInterest || "General Knee Health";
     interestSegmentation[interest] = (interestSegmentation[interest] || 0) + 1;
 
     // Source

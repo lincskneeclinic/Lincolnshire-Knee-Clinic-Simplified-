@@ -50,6 +50,8 @@ export interface SocialCaptionPlatform {
   caption: string;
   status: "pending" | "approved";
   imageUrl?: string;
+  script?: string;
+  imagePromptSuggestion?: string;
 }
 
 export interface SocialDraftVersion {
@@ -57,6 +59,19 @@ export interface SocialDraftVersion {
   instagram: SocialCaptionPlatform;
   facebook: SocialCaptionPlatform;
   linkedin: SocialCaptionPlatform;
+  instagramStory?: SocialCaptionPlatform;
+  instagramCarousel?: {
+    caption: string;
+    imagePromptSuggestion: string;
+    slides: Array<{ slideNumber: number; text: string; imagePromptSuggestion: string; imageUrl?: string }>;
+    status: "pending" | "approved";
+  };
+  instagramReel?: {
+    caption: string;
+    imagePromptSuggestion: string;
+    script: string;
+    status: "pending" | "approved";
+  };
   created_at: string;
 }
 
@@ -84,7 +99,7 @@ export interface ContentPipelineReview {
   review_id?: string;
   run_id: string;
   stage: "blog" | "social";
-  platform?: "instagram" | "facebook" | "linkedin";
+  platform?: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel";
   version?: number;
   decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social" | "save_progress";
   edited_content?: any;
@@ -684,7 +699,7 @@ export async function submitPipelineReview(
   runId: string,
   payload: {
     stage: "blog" | "social";
-    platform?: "instagram" | "facebook" | "linkedin";
+    platform?: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel";
     decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social" | "save_progress";
     editedContent?: any;
     revisionNotes?: string;
@@ -865,6 +880,24 @@ export async function submitPipelineReview(
               caption: `Read our latest clinical update for patients and general practitioners: "${run.blog_drafts[0]?.title || run.topic}". Highlighting evidence-based treatment pathways and rehabilitation protocols.`,
               status: "pending"
             },
+            instagramStory: {
+              caption: `✨ New Article: ${run.blog_drafts[0]?.title || run.topic}! Tap to read the full guide.`,
+              status: "pending"
+            },
+            instagramCarousel: {
+              caption: `Swipe through to learn about "${run.topic}"!`,
+              imagePromptSuggestion: `Carousel slides summarizing ${run.topic}`,
+              slides: [
+                { slideNumber: 1, text: run.blog_drafts[0]?.title || run.topic, imagePromptSuggestion: `Cover slide for "${run.topic}"` }
+              ],
+              status: "pending"
+            },
+            instagramReel: {
+              caption: `Watch our quick guide on "${run.topic}"!`,
+              imagePromptSuggestion: `Reel visual thumbnail for "${run.topic}"`,
+              script: `Hook: Let's talk about ${run.topic}!\n\nVoiceover: Here is what you need to know...`,
+              status: "pending"
+            },
             created_at: now
           }
         ];
@@ -915,27 +948,57 @@ export async function submitPipelineReview(
       const currentDraft = run.social_drafts[0];
       const platform = payload.platform;
 
-      if (platform && ["instagram", "facebook", "linkedin"].includes(platform)) {
+      if (platform && ["instagram", "facebook", "linkedin", "instagramStory", "instagramCarousel", "instagramReel"].includes(platform)) {
         // Independent per-platform decision
-        if (payload.decision === "approved") {
-          currentDraft[platform].status = "approved";
-        } else if (payload.decision === "edited") {
-          if (payload.editedContent) {
-            const newCaption = typeof payload.editedContent === "string"
-              ? payload.editedContent
-              : (payload.editedContent.caption || payload.editedContent[platform]?.caption || currentDraft[platform].caption);
-            const newImageUrl = typeof payload.editedContent === "object" && payload.editedContent !== null
-              ? (payload.editedContent.imageUrl || payload.editedContent[platform]?.imageUrl || currentDraft[platform].imageUrl)
-              : currentDraft[platform].imageUrl;
-
-            currentDraft[platform].caption = newCaption;
-            if (newImageUrl !== undefined) {
-              currentDraft[platform].imageUrl = newImageUrl;
-            }
+        if (platform === "instagramCarousel") {
+          const draft = currentDraft.instagramCarousel || { caption: "", imagePromptSuggestion: "", slides: [], status: "pending" };
+          if (payload.decision === "approved") {
+            draft.status = "approved";
+          } else if (payload.decision === "edited" && payload.editedContent) {
+            draft.caption = payload.editedContent.caption || draft.caption;
+            draft.slides = payload.editedContent.slides || draft.slides;
+            draft.status = "approved";
+          } else if (payload.decision === "revision_requested") {
+            draft.status = "pending";
           }
-          currentDraft[platform].status = "approved";
-        } else if (payload.decision === "revision_requested") {
-          currentDraft[platform].status = "pending";
+          currentDraft.instagramCarousel = draft;
+        } else if (platform === "instagramReel") {
+          const draft = currentDraft.instagramReel || { caption: "", imagePromptSuggestion: "", script: "", status: "pending" };
+          if (payload.decision === "approved") {
+            draft.status = "approved";
+          } else if (payload.decision === "edited" && payload.editedContent) {
+            draft.caption = payload.editedContent.caption || draft.caption;
+            draft.script = payload.editedContent.script || draft.script;
+            draft.status = "approved";
+          } else if (payload.decision === "revision_requested") {
+            draft.status = "pending";
+          }
+          currentDraft.instagramReel = draft;
+        } else {
+          const p = platform as "instagram" | "facebook" | "linkedin" | "instagramStory";
+          if (!currentDraft[p]) {
+            currentDraft[p] = { caption: "", status: "pending" };
+          }
+          if (payload.decision === "approved") {
+            currentDraft[p]!.status = "approved";
+          } else if (payload.decision === "edited") {
+            if (payload.editedContent) {
+              const newCaption = typeof payload.editedContent === "string"
+                ? payload.editedContent
+                : (payload.editedContent.caption || payload.editedContent[p]?.caption || currentDraft[p]!.caption);
+              const newImageUrl = typeof payload.editedContent === "object" && payload.editedContent !== null
+                ? (payload.editedContent.imageUrl || payload.editedContent[p]?.imageUrl || currentDraft[p]!.imageUrl)
+                : currentDraft[p]!.imageUrl;
+
+              currentDraft[p]!.caption = newCaption;
+              if (newImageUrl !== undefined) {
+                currentDraft[p]!.imageUrl = newImageUrl;
+              }
+            }
+            currentDraft[p]!.status = "approved";
+          } else if (payload.decision === "revision_requested") {
+            currentDraft[p]!.status = "pending";
+          }
         }
       } else {
         // Bulk / all platforms fallback
@@ -952,21 +1015,30 @@ export async function submitPipelineReview(
           currentDraft.instagram.status = "approved";
           currentDraft.facebook.status = "approved";
           currentDraft.linkedin.status = "approved";
+          if (currentDraft.instagramStory) currentDraft.instagramStory.status = "approved";
+          if (currentDraft.instagramCarousel) currentDraft.instagramCarousel.status = "approved";
+          if (currentDraft.instagramReel) currentDraft.instagramReel.status = "approved";
         } else if (payload.decision === "revision_requested") {
           currentDraft.instagram.status = "pending";
           currentDraft.facebook.status = "pending";
           currentDraft.linkedin.status = "pending";
+          if (currentDraft.instagramStory) currentDraft.instagramStory.status = "pending";
+          if (currentDraft.instagramCarousel) currentDraft.instagramCarousel.status = "pending";
+          if (currentDraft.instagramReel) currentDraft.instagramReel.status = "pending";
         }
       }
     }
 
-    // Check if ALL THREE platforms are approved
+    // Check if ALL platforms are approved
     const latestSocial = run.social_drafts[0];
     const allApproved =
       latestSocial &&
       latestSocial.instagram.status === "approved" &&
       latestSocial.facebook.status === "approved" &&
-      latestSocial.linkedin.status === "approved";
+      latestSocial.linkedin.status === "approved" &&
+      (!latestSocial.instagramStory || latestSocial.instagramStory.status === "approved") &&
+      (!latestSocial.instagramCarousel || latestSocial.instagramCarousel.status === "approved") &&
+      (!latestSocial.instagramReel || latestSocial.instagramReel.status === "approved");
 
     if (allApproved) {
       run.status = "published";

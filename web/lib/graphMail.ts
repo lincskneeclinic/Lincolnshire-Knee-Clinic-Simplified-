@@ -21,7 +21,7 @@ export interface GraphMailPayload {
  * when Graph credentials are not configured, so callers still get a visible record
  * of the notification in local/dev environments.
  */
-async function sendGraphMail(subject: string, htmlBody: string, recipientEmail: string): Promise<boolean> {
+export async function sendGraphMail(subject: string, htmlBody: string, recipientEmail: string): Promise<boolean> {
   const tenantId = process.env.MS_GRAPH_TENANT_ID;
   const clientId = process.env.MS_GRAPH_CLIENT_ID;
   const clientSecret = process.env.MS_GRAPH_CLIENT_SECRET;

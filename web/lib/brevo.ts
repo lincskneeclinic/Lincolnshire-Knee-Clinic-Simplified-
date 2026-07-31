@@ -46,7 +46,7 @@ export async function syncContactToBrevo(contact: BrevoContactInput): Promise<bo
         attributes: {
           FIRSTNAME: contact.name || "",
           SMS: toE164UK(contact.mobileNumber),
-          PRIMARY_INTEREST: contact.primaryInterest || "General Joint Health",
+          PRIMARY_INTEREST: contact.primaryInterest || "General Knee Health",
         },
         listIds: [Number(listId)],
         updateEnabled: true, // upsert — if the email already exists, update rather than error
@@ -64,3 +64,75 @@ export async function syncContactToBrevo(contact: BrevoContactInput): Promise<bo
     return false;
   }
 }
+
+export async function unsubscribeContactInBrevo(email: string): Promise<boolean> {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return false;
+
+  try {
+    const res = await fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(email.trim().toLowerCase())}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": apiKey,
+      },
+      body: JSON.stringify({
+        emailBlacklisted: true,
+      }),
+    });
+
+    if (!res.ok) {
+      const errorBody = await res.text();
+      console.error("Brevo unsubscribe error:", res.status, errorBody);
+    }
+
+    return res.ok;
+  } catch (error) {
+    console.error("Error unsubscribing contact in Brevo:", error);
+    return false;
+  }
+}
+
+export async function sendBrevoMail(
+  subject: string,
+  htmlContent: string,
+  toEmail: string,
+  toName?: string
+): Promise<boolean> {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) {
+    console.warn("[Brevo Smtp Mail] NOT SENT — BREVO_API_KEY not configured.");
+    return false;
+  }
+
+  try {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "api-key": apiKey,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        sender: { name: "Lincolnshire Knee Clinic", email: "info@lincolnshirekneeclinic.co.uk" },
+        to: [{ email: toEmail, name: toName || "" }],
+        subject,
+        htmlContent,
+      }),
+    });
+
+    if (res.ok) {
+      console.log(`[Brevo Smtp Mail] Email campaign sent successfully to ${toEmail}`);
+      return true;
+    } else {
+      const errorBody = await res.text();
+      console.error("[Brevo Smtp Mail] HTTP error:", res.status, errorBody);
+      return false;
+    }
+  } catch (error) {
+    console.error("[Brevo Smtp Mail] Unexpected exception:", error);
+    return false;
+  }
+}
+
+

@@ -100,7 +100,7 @@ export async function POST(request: Request) {
           marketing_consent: true,
           consent_given_at: new Date().toISOString(),
           consent_source: "community-registration",
-          primary_interest: "General Joint Health",
+          primary_interest: "General Knee Health",
           topics: ["Knee Health Updates"],
           pages_visited: ["/community/register"],
         });

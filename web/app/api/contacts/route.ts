@@ -99,7 +99,7 @@ export async function POST(request: Request) {
       marketingConsent: true,
       consentGivenAt: new Date().toISOString(),
       consentSource: consentSource ? String(consentSource).trim() : "newsletter-signup-component",
-      primaryInterest: primaryInterest ? String(primaryInterest).trim() : "General Joint Health",
+      primaryInterest: primaryInterest ? String(primaryInterest).trim() : "General Knee Health",
       topics: Array.isArray(topics) && topics.length > 0 ? topics : ["Knee Health Updates"],
       pagesVisited: Array.isArray(pagesVisited) && pagesVisited.length > 0 ? pagesVisited : ["/"],
     };

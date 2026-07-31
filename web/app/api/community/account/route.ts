@@ -83,7 +83,7 @@ export async function PATCH(request: Request) {
             marketing_consent: true,
             consent_given_at: new Date().toISOString(),
             consent_source: "community-account-settings",
-            primary_interest: "General Joint Health",
+            primary_interest: "General Knee Health",
             topics: ["Knee Health Updates"],
             pages_visited: ["/community/account"],
           });

@@ -2,22 +2,40 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const apiKey = process.env.GEMINI_API_KEY;
 
+export interface CarouselSlide {
+  slideNumber: number;
+  text: string;
+  imagePromptSuggestion: string;
+  imageUrl?: string;
+}
+
 export interface SocialCaptionResult {
   caption: string;
   imagePromptSuggestion: string;
+  slides?: CarouselSlide[];
+  script?: string;
 }
 
 export interface SocialCaptionsBundle {
   instagram: SocialCaptionResult;
   facebook: SocialCaptionResult;
   linkedin: SocialCaptionResult;
+  instagramStory: SocialCaptionResult;
+  instagramCarousel: SocialCaptionResult;
+  instagramReel: SocialCaptionResult;
 }
 
-const SYSTEM_INSTRUCTION = `You are a specialized social media copywriter for Lincolnshire Knee Clinic, an orthopaedic consultant clinic. You write short, patient-friendly, algorithm-aware captions for Instagram, Facebook, and LinkedIn from a single topic — NOT full blog articles.
+const SYSTEM_INSTRUCTION = `You are a specialized social media copywriter for Lincolnshire Knee Clinic, an orthopaedic consultant clinic. You write short, patient-friendly, algorithm-aware content for Instagram (Standard Posts, Stories, Carousels, and Reels), Facebook, and LinkedIn from a single topic — NOT full blog articles.
 
 Platform-specific rules you MUST follow:
 
 INSTAGRAM: Open with a scroll-stopping, high-impact hook in the very first line (this is crucial because Instagram truncates the caption in the user feed after the first two lines, so the hook must immediately capture attention). Use short line breaks for scannability and tasteful emoji (not excessive). End with a block of 8 to 15 relevant hashtags mixing broad terms (#KneeHealth, #JointCare) with niche/specific ones related to the topic. Include a clear call-to-action (e.g. "Book a consultation — link in bio"). Keep it under roughly 150 words before the hashtags.
+
+INSTAGRAM_STORY: Generate a very short, high-impact text overlay script (maximum 15 words) suitable to be put directly on a vertical 9:16 story background image. Keep it punchy and call-to-action driven. Suggest a vertical 9:16 image prompt description.
+
+INSTAGRAM_CAROUSEL: Design a step-by-step educational slideshow of 3 to 5 slides. For each slide, define: Slide Number, Slide Text Overlay (under 15 words, big bold text), and a specific Slide Image Description that represents that slide visually.
+
+INSTAGRAM_REEL: Design a short, 30-second conversational video script. Include: (1) A scroll-stopping video intro hook, (2) 3 short, punchy talking points, (3) Visual B-roll action cues for the camera, and (4) Voiceover narration text.
 
 FACEBOOK: Conversational tone. Front-load the key point in the first ~150 characters since Facebook truncates the feed preview early. Use very light hashtag use (1 to 3 maximum — heavy tagging hurts reach on this platform). End with a clear call-to-action.
 
@@ -32,18 +50,41 @@ Important: Do NOT write "Call 07770473437" or ask patients to call. Instead, spe
 
 Do not invent medical claims. Do not use fake statistics. Keep the clinic's tone empathetic and professional throughout.
 
-For EACH platform, also suggest a short, concrete description of a single representative image suitable for that specific post (for an AI image generator or manual photo selection) — describe it visually and specifically, not just "a knee". Ensure descriptions are highly relevant to a premium UK knee clinic (Lincolnshire Knee Clinic), such as depicting professional consultant consultations, clinical rooms with navy/teal branding, anatomical model knee joints, patients performing rehabilitation exercises under physiotherapist supervision, or clean surgical diagram illustrations.`;
+For EACH standard post and story, suggest a short, concrete description of a single representative image suitable for that specific post (for an AI image generator or manual photo selection) — describe it visually and specifically. Ensure descriptions are highly relevant to a premium UK knee clinic (Lincolnshire Knee Clinic), such as depicting professional consultant consultations, clinical rooms with navy/teal branding, anatomical model knee joints, patients performing rehabilitation exercises under physiotherapist supervision, or clean surgical diagram illustrations.`;
 
 function buildGenerationPrompt(topic: string): string {
   return `Topic: "${topic}"
 
-Write all three platform posts now, in EXACTLY this format (including the literal markers on their own lines):
+Write all six social formats now, in EXACTLY this format (including the literal markers on their own lines):
 
 INSTAGRAM_CAPTION:
-<the Instagram caption including hashtags>
+<the Instagram post caption including hashtags>
 
 INSTAGRAM_IMAGE:
 <one-sentence image description for Instagram>
+
+INSTAGRAM_STORY_CAPTION:
+<the Story text overlay script, max 15 words>
+
+INSTAGRAM_STORY_IMAGE:
+<one-sentence vertical 9:16 image description for Story>
+
+INSTAGRAM_CAROUSEL_SLIDES:
+Slide 1 Visual: <visual description for slide 1>
+Slide 1 Text: <text overlay for slide 1>
+Slide 2 Visual: <visual description for slide 2>
+Slide 2 Text: <text overlay for slide 2>
+Slide 3 Visual: <visual description for slide 3>
+Slide 3 Text: <text overlay for slide 3>
+Slide 4 Visual: <visual description for slide 4>
+Slide 4 Text: <text overlay for slide 4>
+Slide 5 Visual: <visual description for slide 5>
+Slide 5 Text: <text overlay for slide 5>
+
+INSTAGRAM_REEL_SCRIPT:
+Hook: <video intro hook>
+Visual Cues: <camera angles and visual directions>
+Voiceover Script: <narration text to speak>
 
 FACEBOOK_CAPTION:
 <the Facebook caption>
@@ -67,6 +108,44 @@ function extractSection(output: string, startMarker: string, endMarker: string |
   return raw.trim();
 }
 
+function parseCarouselSlides(rawText: string): CarouselSlide[] {
+  const slides: CarouselSlide[] = [];
+  const lines = rawText.split("\n");
+  let currentVisual = "";
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const visualMatch = trimmed.match(/^Slide\s*(\d+)\s*Visual:\s*(.*)$/i);
+    const textMatch = trimmed.match(/^Slide\s*(\d+)\s*Text:\s*(.*)$/i);
+
+    if (visualMatch) {
+      currentVisual = visualMatch[2].trim();
+    } else if (textMatch) {
+      const num = parseInt(textMatch[1], 10);
+      const text = textMatch[2].trim();
+      slides.push({
+        slideNumber: num,
+        text,
+        imagePromptSuggestion: currentVisual || `Visual slide guide for Slide ${num}`,
+      });
+      currentVisual = "";
+    }
+  }
+
+  // Fallback if formatting was slightly off
+  if (slides.length === 0 && rawText.length > 10) {
+    slides.push({
+      slideNumber: 1,
+      text: rawText,
+      imagePromptSuggestion: "Visual slide guide",
+    });
+  }
+
+  return slides;
+}
+
 function getModel() {
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is missing from environment variables.");
@@ -84,48 +163,89 @@ export async function writeSocialCaptions(topic: string): Promise<SocialCaptions
   const output = result.response.text() || "";
 
   const instagramCaption = extractSection(output, "INSTAGRAM_CAPTION:", "INSTAGRAM_IMAGE:");
-  const instagramImage = extractSection(output, "INSTAGRAM_IMAGE:", "FACEBOOK_CAPTION:");
+  const instagramImage = extractSection(output, "INSTAGRAM_IMAGE:", "INSTAGRAM_STORY_CAPTION:");
+  const instagramStoryCaption = extractSection(output, "INSTAGRAM_STORY_CAPTION:", "INSTAGRAM_STORY_IMAGE:");
+  const instagramStoryImage = extractSection(output, "INSTAGRAM_STORY_IMAGE:", "INSTAGRAM_CAROUSEL_SLIDES:");
+  const instagramCarouselRaw = extractSection(output, "INSTAGRAM_CAROUSEL_SLIDES:", "INSTAGRAM_REEL_SCRIPT:");
+  const instagramReelRaw = extractSection(output, "INSTAGRAM_REEL_SCRIPT:", "FACEBOOK_CAPTION:");
   const facebookCaption = extractSection(output, "FACEBOOK_CAPTION:", "FACEBOOK_IMAGE:");
   const facebookImage = extractSection(output, "FACEBOOK_IMAGE:", "LINKEDIN_CAPTION:");
   const linkedinCaption = extractSection(output, "LINKEDIN_CAPTION:", "LINKEDIN_IMAGE:");
   const linkedinImage = extractSection(output, "LINKEDIN_IMAGE:", null);
 
   if (!instagramCaption || !facebookCaption || !linkedinCaption) {
-    throw new Error("The AI response could not be parsed into three platform captions. Please try again.");
+    throw new Error("The AI response could not be parsed into all platform formats. Please try again.");
   }
 
+  const slides = parseCarouselSlides(instagramCarouselRaw);
+
   return {
-    instagram: { caption: instagramCaption, imagePromptSuggestion: instagramImage || `A representative image for "${topic}"` },
-    facebook: { caption: facebookCaption, imagePromptSuggestion: facebookImage || `A representative image for "${topic}"` },
-    linkedin: { caption: linkedinCaption, imagePromptSuggestion: linkedinImage || `A representative image for "${topic}"` },
+    instagram: {
+      caption: instagramCaption,
+      imagePromptSuggestion: instagramImage || `A representative image for "${topic}"`
+    },
+    facebook: {
+      caption: facebookCaption,
+      imagePromptSuggestion: facebookImage || `A representative image for "${topic}"`
+    },
+    linkedin: {
+      caption: linkedinCaption,
+      imagePromptSuggestion: linkedinImage || `A representative image for "${topic}"`
+    },
+    instagramStory: {
+      caption: instagramStoryCaption || `New update on "${topic}"!`,
+      imagePromptSuggestion: instagramStoryImage || `A vertical image for "${topic}"`
+    },
+    instagramCarousel: {
+      caption: `Swipe through to learn about "${topic}"!`,
+      imagePromptSuggestion: `Carousel deck about "${topic}"`,
+      slides: slides.length > 0 ? slides : [
+        { slideNumber: 1, text: topic, imagePromptSuggestion: `Cover slide for "${topic}"` }
+      ]
+    },
+    instagramReel: {
+      caption: `Watch our quick guide on "${topic}"!`,
+      imagePromptSuggestion: `Reel visual thumbnail for "${topic}"`,
+      script: instagramReelRaw || `Hook: Let's talk about ${topic}!\n\nVoiceover: Here is what you need to know...`
+    }
   };
 }
 
 export async function rewriteSocialCaption(
   topic: string,
-  platform: "instagram" | "facebook" | "linkedin",
+  platform: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel",
   previousCaption: string,
   revisionNotes?: string
 ): Promise<SocialCaptionResult> {
   const model = getModel();
-  const platformLabel = platform === "instagram" ? "Instagram" : platform === "facebook" ? "Facebook" : "LinkedIn";
+  const platformLabel = platform === "instagram"
+    ? "Instagram"
+    : platform === "facebook"
+      ? "Facebook"
+      : platform === "linkedin"
+        ? "LinkedIn"
+        : platform === "instagramStory"
+          ? "Instagram Story"
+          : platform === "instagramCarousel"
+            ? "Instagram Carousel"
+            : "Instagram Reel";
 
   const prompt = `Topic: "${topic}"
 
-You previously wrote this ${platformLabel} caption:
+You previously wrote this ${platformLabel} content:
 """
 ${previousCaption}
 """
 
-${revisionNotes ? `The reviewer's feedback for the rewrite: "${revisionNotes}"` : "The reviewer didn't like it and wants a fresh alternative — write a genuinely different take (different hook/angle), not a minor tweak."}
+${revisionNotes ? `The reviewer's feedback for the rewrite: "${revisionNotes}"` : "The reviewer wants a fresh alternative — write a genuinely different take, not a minor tweak."}
 
-Write a revised ${platformLabel} caption now, following the same platform-specific rules from your system instructions, in EXACTLY this format:
+Write a revised ${platformLabel} content now, following the platform-specific rules from your system instructions, in EXACTLY this format:
 
 CAPTION:
-<the revised caption>
+<the revised caption/text/script>
 
 IMAGE:
-<one-sentence image description>`;
+<one-sentence image/visual description>`;
 
   const result = await model.generateContent(prompt);
   const output = result.response.text() || "";
@@ -137,5 +257,8 @@ IMAGE:
     throw new Error("The AI response could not be parsed. Please try again.");
   }
 
-  return { caption, imagePromptSuggestion: image || `A representative image for "${topic}"` };
+  return {
+    caption,
+    imagePromptSuggestion: image || `A representative visual description for "${topic}"`
+  };
 }

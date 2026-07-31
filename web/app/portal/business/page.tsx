@@ -6,6 +6,7 @@ import { ContentPipelineRun, ContentPipelineReview } from "@/lib/contentPipeline
 import { MIN_BLOG_BODY_LENGTH } from "@/lib/contentPipelineConstants";
 import { ARTICLE_CATEGORIES } from "@/lib/articleCategories";
 import { SocialOnlyPost } from "@/lib/socialOnlyPosts";
+import { markdownToEmailHtml } from "@/lib/newsletterMarkdown";
 import { ReviewablePage, ClinicalReviewEntry } from "@/lib/clinicalReview";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -85,9 +86,25 @@ function cleanHeadingBugs(text: string): string {
 
 export default function BusinessDashboardPage() {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "pipeline" | "clinicalReview" | "community" | "educationHub" | "socialOnly">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "newsletterCreator" | "pipeline" | "clinicalReview" | "community" | "educationHub" | "socialOnly">("overview");
   const [statsData, setStatsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Newsletter Creator & Distribution States
+  const [newsletterEditions, setNewsletterEditions] = useState<any[]>([]);
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [activeSubscribersCount, setActiveSubscribersCount] = useState(0);
+  const [newNewsletterTopic, setNewNewsletterTopic] = useState("");
+  const [newsletterIncludeResearch, setNewsletterIncludeResearch] = useState(true);
+  const [isGeneratingNewsletter, setIsGeneratingNewsletter] = useState(false);
+  const [selectedNewsletter, setSelectedNewsletter] = useState<any | null>(null);
+  const [isSendingNewsletter, setIsSendingNewsletter] = useState(false);
+  const [isDiscardingNewsletter, setIsDiscardingNewsletter] = useState(false);
+  const [showNewsletterSendConfirm, setShowNewsletterSendConfirm] = useState(false);
+  const [newsletterEditSubject, setNewsletterEditSubject] = useState("");
+  const [newsletterEditMarkdown, setNewsletterEditMarkdown] = useState("");
+  const [newsletterHtmlPreview, setNewsletterHtmlPreview] = useState("");
+
 
   // Content Pipeline State
   const [pipelineRuns, setPipelineRuns] = useState<ContentPipelineRun[]>([]);
@@ -133,11 +150,14 @@ export default function BusinessDashboardPage() {
   const [editIgCaption, setEditIgCaption] = useState("");
   const [editFbCaption, setEditFbCaption] = useState("");
   const [editLiCaption, setEditLiCaption] = useState("");
-  const [editingPlatform, setEditingPlatform] = useState<"instagram" | "facebook" | "linkedin" | null>(null);
+  const [editingPlatform, setEditingPlatform] = useState<"instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel" | null>(null);
 
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
   const [revisionStage, setRevisionStage] = useState<"blog" | "social">("blog");
-  const [revisionPlatform, setRevisionPlatform] = useState<"instagram" | "facebook" | "linkedin" | undefined>(undefined);
+  const [revisionPlatform, setRevisionPlatform] = useState<"instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel" | undefined>(undefined);
+
+  const [activeSocialSubTab, setActiveSocialSubTab] = useState<"feed" | "story" | "carousel" | "reel" | "brandkit">("feed");
+  const [activeSocialOnlySubTab, setActiveSocialOnlySubTab] = useState<"feed" | "story" | "carousel" | "reel" | "brandkit">("feed");
   const [revisionNotes, setRevisionNotes] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
@@ -682,6 +702,86 @@ export default function BusinessDashboardPage() {
     }
   };
 
+  const handleRemovePlaceholder = (placeholderId: string, label: string, isFeatured?: boolean) => {
+    if (!confirm("Are you sure you want to permanently delete this image placeholder from the article?")) return;
+    
+    const target = isFeatured
+      ? `[FEATURED IMAGE PLACEHOLDER: ${label}]`
+      : `[IMAGE PLACEHOLDER: ${label}]`;
+    
+    const escapedTarget = target.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(`\\s*${escapedTarget}\\s*`, "i");
+    
+    const newBody = editBody.replace(regex, "\n\n").trim();
+    
+    if (livePreviewRef.current) {
+      pendingScrollRestoreRef.current = livePreviewRef.current.scrollTop;
+    }
+    setEditBody(newBody);
+    pushHistory(newBody);
+    
+    const updatedImages = editSuggestedImages.filter(
+      (img: any) => !(typeof img === "object" && img !== null && img.placeholderId === placeholderId)
+    );
+    setEditSuggestedImages(updatedImages);
+    setGeneratedImagePreview((prev) => (prev?.placeholderId === placeholderId ? null : prev));
+    
+    if (!isEditMode && selectedRun) {
+      const currentDraft = selectedRun.blog_drafts[0];
+      handleReviewSubmission("blog", "save_progress", {
+        title: editTitle || currentDraft?.title,
+        excerpt: editExcerpt || currentDraft?.excerpt,
+        body_markdown: newBody,
+        body: newBody,
+        suggestedImages: updatedImages,
+        references: currentDraft?.references,
+        category: editCategory || currentDraft?.category,
+      }, undefined, true);
+    }
+  };
+
+  const handleRemoveResolvedImage = (altText: string, srcUrl: string) => {
+    if (!confirm("Are you sure you want to permanently delete this image from the article?")) return;
+
+    const escapedSrc = srcUrl.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const escapedAlt = altText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const pattern = new RegExp(`\\s*!\\[${escapedAlt}\\]\\(${escapedSrc}\\)\\s*`, "i");
+    
+    let newBody = editBody.replace(pattern, "\n\n").trim();
+    
+    if (newBody === editBody) {
+      const fallbackRegex = new RegExp(`\\s*!\\[(.*?)\\]\\(${escapedSrc}\\)\\s*`, "i");
+      newBody = editBody.replace(fallbackRegex, "\n\n").trim();
+    }
+    
+    if (livePreviewRef.current) {
+      pendingScrollRestoreRef.current = livePreviewRef.current.scrollTop;
+    }
+    setEditBody(newBody);
+    pushHistory(newBody);
+    
+    const updatedImages = editSuggestedImages.filter(
+      (img: any) => {
+        if (typeof img === "string") return img !== srcUrl;
+        return img.url !== srcUrl;
+      }
+    );
+    setEditSuggestedImages(updatedImages);
+    
+    if (!isEditMode && selectedRun) {
+      const currentDraft = selectedRun.blog_drafts[0];
+      handleReviewSubmission("blog", "save_progress", {
+        title: editTitle || currentDraft?.title,
+        excerpt: editExcerpt || currentDraft?.excerpt,
+        body_markdown: newBody,
+        body: newBody,
+        suggestedImages: updatedImages,
+        references: currentDraft?.references,
+        category: editCategory || currentDraft?.category,
+      }, undefined, true);
+    }
+  };
+
   // Calls the Gemini image-generation endpoint and stores the result as a pending
   // preview (not yet inserted into the body) so the user can Accept or Regenerate
   // before committing — Accept reuses handleAttachPlaceholderImage above.
@@ -891,6 +991,177 @@ export default function BusinessDashboardPage() {
     }
   }, [activeTab, fetchEducationArticles, educationArticles.length]);
 
+  // Newsletter Creator & Distribution Handlers
+  const fetchNewsletterEditions = useCallback(async () => {
+    setNewsletterLoading(true);
+    try {
+      const res = await fetch("/api/portal/newsletter/list");
+      const data = await res.json();
+      if (data.success) {
+        setNewsletterEditions(data.editions || []);
+        setActiveSubscribersCount(data.activeSubscribersCount || 0);
+      }
+    } catch (err) {
+      console.error("Failed to fetch newsletters:", err);
+    } finally {
+      setNewsletterLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "newsletterCreator") {
+      fetchNewsletterEditions();
+    }
+  }, [activeTab, fetchNewsletterEditions]);
+
+  const clientConvertMarkdownToHtml = (subject: string, markdown: string): string => {
+    if (!markdown) return "";
+    const html = markdownToEmailHtml(markdown);
+
+    return `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 24px 12px; margin: 0; color: #334155;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+          <tr>
+            <td style="background-color: #0c4a6e; padding: 24px; text-align: center;">
+              <h1 style="color: #ffffff; font-family: Georgia, serif; font-size: 20px; margin: 0; font-weight: normal; letter-spacing: 0.5px;">Lincolnshire Knee Clinic</h1>
+              <p style="color: #38bdf8; font-size: 11px; font-weight: bold; text-transform: uppercase; margin: 4px 0 0 0; letter-spacing: 1px;">Patient Education Update</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px;">
+              <h2 style="font-family: Georgia, serif; color: #0f172a; font-size: 18px; font-weight: bold; margin-top: 0; margin-bottom: 12px;">${subject}</h2>
+              ${html}
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #f1f5f9; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 11px; color: #64748b;">
+              <p style="margin: 0 0 4px 0; font-weight: bold; color: #475569;">Lincolnshire Knee Clinic</p>
+              <p style="margin: 0 0 12px 0;">Consultant-led orthopaedic care and joint preservation pathways across Lincolnshire.</p>
+              <a href="https://lincolnshirekneeclinic.co.uk/book-appointment" target="_blank" style="background-color: #14b8a6; color: #ffffff; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block;">Book a Consultation</a>
+              <p style="margin: 16px 0 0 0; color: #94a3b8;">
+                You received this email because you opted into updates from Lincolnshire Knee Clinic.
+                <br />
+                <a href="https://lincolnshirekneeclinic.co.uk/newsletter?unsubscribe=true&email=patient@example.com" target="_blank" style="color: #14b8a6; text-decoration: underline; font-weight: bold;">Unsubscribe Instantly</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </div>
+    `;
+  };
+
+  const handleGenerateNewsletter = async () => {
+    if (!newNewsletterTopic.trim()) return;
+    setIsGeneratingNewsletter(true);
+    try {
+      const res = await fetch("/api/portal/newsletter/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: newNewsletterTopic,
+          includeResearch: newsletterIncludeResearch,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.edition) {
+        setNewsletterEditions(prev => [data.edition, ...prev]);
+        setSelectedNewsletter(data.edition);
+        setNewsletterEditSubject(data.edition.subject);
+        setNewsletterEditMarkdown(data.edition.bodyMarkdown);
+        setNewsletterHtmlPreview(data.edition.bodyHtml);
+        setNewNewsletterTopic("");
+      } else {
+        alert(data.error || "Failed to generate newsletter draft.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error generating newsletter.");
+    } finally {
+      setIsGeneratingNewsletter(false);
+    }
+  };
+
+  const handleSendNewsletter = async () => {
+    if (!selectedNewsletter) return;
+    setIsSendingNewsletter(true);
+    try {
+      const res = await fetch("/api/portal/newsletter/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ editionId: selectedNewsletter.id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`Newsletter successfully distributed to ${data.sentCount} subscribed patients via ${data.mode}!`);
+        setShowNewsletterSendConfirm(false);
+        fetchNewsletterEditions();
+      } else {
+        alert(data.error || "Failed to send newsletter.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error sending newsletter.");
+    } finally {
+      setIsSendingNewsletter(false);
+    }
+  };
+
+  const handleDeleteNewsletter = async (editionId: string) => {
+    if (!confirm("Are you sure you want to permanently discard this newsletter draft?")) return;
+    setIsDiscardingNewsletter(true);
+    try {
+      const res = await fetch("/api/portal/newsletter/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ editionId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNewsletterEditions(prev => prev.filter(e => e.id !== editionId));
+        if (selectedNewsletter?.id === editionId) {
+          setSelectedNewsletter(null);
+          setNewsletterEditSubject("");
+          setNewsletterEditMarkdown("");
+          setNewsletterHtmlPreview("");
+        }
+      } else {
+        alert(data.error || "Failed to discard draft.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error discarding draft.");
+    } finally {
+      setIsDiscardingNewsletter(false);
+    }
+  };
+
+  const selectNewsletterForEdit = (edition: any) => {
+    setSelectedNewsletter(edition);
+    setNewsletterEditSubject(edition.subject);
+    setNewsletterEditMarkdown(edition.bodyMarkdown);
+    setNewsletterHtmlPreview(edition.bodyHtml);
+  };
+
+  const handleUpdateNewsletterContent = (subject: string, markdown: string) => {
+    setNewsletterEditSubject(subject);
+    setNewsletterEditMarkdown(markdown);
+    
+    const compiledHtml = clientConvertMarkdownToHtml(subject, markdown);
+    setNewsletterHtmlPreview(compiledHtml);
+
+    setNewsletterEditions(prev => prev.map(e => {
+      if (e.id === selectedNewsletter?.id) {
+        return {
+          ...e,
+          subject,
+          bodyMarkdown: markdown,
+          bodyHtml: compiledHtml
+        };
+      }
+      return e;
+    }));
+  };
+
   // Standalone Social-Only Post handlers
   const fetchSocialOnlyPosts = useCallback(async () => {
     setSocialOnlyPostsLoading(true);
@@ -953,15 +1224,32 @@ export default function BusinessDashboardPage() {
     return data.post;
   };
 
-  const handleSaveSocialCaption = async (postId: string, platform: "instagram" | "facebook" | "linkedin", caption: string) => {
+  const handleSaveSocialCaption = async (
+    postId: string,
+    platform: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel",
+    caption: any
+  ) => {
     try {
-      await patchSocialOnlyPost(postId, { platform, caption, status: "approved" });
+      const payload: any = { platform, status: "approved" };
+      if (platform === "instagramCarousel" && typeof caption === "object") {
+        payload.slides = caption.slides;
+        payload.caption = caption.caption;
+      } else if (platform === "instagramReel" && typeof caption === "object") {
+        payload.script = caption.script;
+        payload.caption = caption.caption;
+      } else {
+        payload.caption = caption;
+      }
+      await patchSocialOnlyPost(postId, payload);
     } catch (err: any) {
       alert(err?.message || "Failed to save the caption.");
     }
   };
 
-  const handleApproveSocialCaption = async (postId: string, platform: "instagram" | "facebook" | "linkedin") => {
+  const handleApproveSocialCaption = async (
+    postId: string,
+    platform: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel"
+  ) => {
     try {
       await patchSocialOnlyPost(postId, { platform, status: "approved" });
     } catch (err: any) {
@@ -969,7 +1257,10 @@ export default function BusinessDashboardPage() {
     }
   };
 
-  const handleRequestSocialRevision = async (postId: string, platform: "instagram" | "facebook" | "linkedin") => {
+  const handleRequestSocialRevision = async (
+    postId: string,
+    platform: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel"
+  ) => {
     const notes = prompt("Any specific feedback for the rewrite? (Leave blank for a fresh alternative take.)") || undefined;
     try {
       await patchSocialOnlyPost(postId, { platform, action: "regenerate", revisionNotes: notes });
@@ -978,26 +1269,47 @@ export default function BusinessDashboardPage() {
     }
   };
 
-  const handleAttachSocialImage = async (postId: string, platform: "instagram" | "facebook" | "linkedin", url: string) => {
+  const handleAttachSocialImage = async (
+    postId: string,
+    platform: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel",
+    url: string,
+    slideIndex?: number
+  ) => {
     try {
-      await patchSocialOnlyPost(postId, { platform, imageUrl: url });
+      if (platform === "instagramCarousel" && slideIndex !== undefined) {
+        const slides = [...(selectedSocialOnlyPost?.instagramCarousel?.slides || [])];
+        if (slides[slideIndex]) {
+          slides[slideIndex] = { ...slides[slideIndex], imageUrl: url };
+        }
+        await patchSocialOnlyPost(postId, { platform, slides });
+      } else {
+        await patchSocialOnlyPost(postId, { platform, imageUrl: url });
+      }
     } catch (err: any) {
       alert(err?.message || "Failed to attach the image.");
     }
   };
 
-  const handleGenerateSocialImage = async (postId: string, platform: "instagram" | "facebook" | "linkedin", promptText: string) => {
+  const handleGenerateSocialImage = async (
+    postId: string,
+    platform: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel",
+    promptText: string,
+    slideIndex?: number
+  ) => {
     const key = `${postId}-${platform}`;
     setGeneratingSocialImageKey(key);
     try {
       const res = await fetch("/api/portal/content-pipeline/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: promptText }),
+        body: JSON.stringify({
+          prompt: promptText,
+          aspectRatio: platform === "instagramStory" ? "9:16" : undefined
+        }),
       });
       const data = await res.json();
       if (data.success && data.url) {
-        await handleAttachSocialImage(postId, platform, data.url);
+        await handleAttachSocialImage(postId, platform, data.url, slideIndex);
       } else {
         alert(`Image generation failed: ${data.error || "Unknown error"}`);
       }
@@ -1341,7 +1653,7 @@ export default function BusinessDashboardPage() {
     stage: "blog" | "social",
     decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social" | "save_progress",
     customPayload?: any,
-    platform?: "instagram" | "facebook" | "linkedin",
+    platform?: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel",
     keepEditMode?: boolean
   ) => {
     if (!selectedRun) return;
@@ -1549,6 +1861,7 @@ export default function BusinessDashboardPage() {
     { id: "topics", label: "Topics", icon: "💡" },
     { id: "events", label: "Clicks", icon: "👆" },
     { id: "newsletter", label: "Subscribers", icon: "📧" },
+    { id: "newsletterCreator", label: "Newsletters", icon: "✉️" },
     {
       id: "pipeline",
       label: "Pipeline",
@@ -1945,6 +2258,278 @@ export default function BusinessDashboardPage() {
                   <h2 className="text-base font-bold text-white">Verified Subscriber Directory</h2>
                   <p className="text-xs text-white/60">Total signups: {totalSignups}</p>
                 </div>
+              </div>
+            )}
+
+            {/* TAB: NEWSLETTER CREATOR */}
+            {activeTab === "newsletterCreator" && (
+              <div className="space-y-6">
+                <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-serif font-bold text-white">Clinical Newsletter Creator</h2>
+                    <p className="text-xs text-white/60 mt-1">
+                      Draft evidence-based patient newsletters using PubMed research and distribute directly to your subscribed audience.
+                    </p>
+                  </div>
+                  <div className="bg-dark-overlay-navy border border-white/10 px-4 py-2 rounded-xl text-center">
+                    <span className="text-[10px] uppercase font-bold text-clinical-teal tracking-wider block">Audience Size</span>
+                    <span className="text-lg font-mono font-bold text-white">{activeSubscribersCount} active subscribers</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Topic Planner and List column */}
+                  <div className="lg:col-span-4 space-y-6">
+                    {/* Draft Generator Form */}
+                    <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg space-y-4">
+                      <h3 className="text-sm font-bold text-white">Generate Newsletter Draft</h3>
+                      
+                      <div className="space-y-3">
+                        <label className="block text-xs font-semibold text-white/80">Newsletter Topic / Clinical Question</label>
+                        <textarea
+                          rows={3}
+                          value={newNewsletterTopic}
+                          onChange={(e) => setNewNewsletterTopic(e.target.value)}
+                          placeholder="e.g., Viscosupplementation vs Steroids for Knee OA, or recovery tips after Meniscus rehab"
+                          className="w-full bg-dark-overlay-navy border border-white/15 text-white placeholder-white/40 text-xs rounded-xl p-3 focus:outline-none focus:border-clinical-teal resize-none"
+                        />
+                      </div>
+
+                      <label className="flex items-center gap-2.5 cursor-pointer py-1 select-none">
+                        <input
+                          type="checkbox"
+                          checked={newsletterIncludeResearch}
+                          onChange={(e) => setNewsletterIncludeResearch(e.target.checked)}
+                          className="w-4 h-4 accent-clinical-teal cursor-pointer"
+                        />
+                        <span className="text-xs text-white/90">Perform PubMed Research & Cite Studies</span>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={handleGenerateNewsletter}
+                        disabled={isGeneratingNewsletter || !newNewsletterTopic.trim()}
+                        className={`w-full font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow transition-all ${
+                          isGeneratingNewsletter || !newNewsletterTopic.trim()
+                            ? "bg-white/10 text-white/40 cursor-not-allowed"
+                            : "bg-clinical-teal hover:bg-clinical-teal-hover text-white cursor-pointer"
+                        }`}
+                      >
+                        {isGeneratingNewsletter ? (
+                          <>
+                            <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                            Analyzing PubMed & Writing...
+                          </>
+                        ) : (
+                          "✨ Generate Newsletter Draft"
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Suggested Patient Topics */}
+                    <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg space-y-3">
+                      <h3 className="text-xs uppercase font-bold text-clinical-teal tracking-wider">Suggested Clinic Topics</h3>
+                      <div className="space-y-2">
+                        {[
+                          "PRP Injections vs Cortisone for Knee Osteoarthritis",
+                          "Arthrosamid for Knee Joint Preservation",
+                          "Timeline and Exercises for ACL Post-Op Recovery",
+                          "How to Manage Baker's Cyst Pain at Home",
+                          "Understanding Meniscus Tears: Surgery vs Rehab",
+                          "General Knee Health & Preservation Tips"
+                        ].map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setNewNewsletterTopic(t)}
+                            className="w-full text-left bg-dark-overlay-navy hover:bg-white/5 border border-white/5 hover:border-white/10 text-white/90 text-xs p-2.5 rounded-xl transition-all block cursor-pointer"
+                          >
+                            💡 {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* History & Drafts List */}
+                    <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg space-y-3">
+                      <h3 className="text-xs uppercase font-bold text-clinical-teal tracking-wider">Newsletter History & Drafts</h3>
+                      {newsletterLoading ? (
+                        <div className="text-center text-white/40 text-xs py-8">Loading history...</div>
+                      ) : newsletterEditions.length === 0 ? (
+                        <div className="text-center text-white/40 text-xs py-8 border border-dashed border-white/10 rounded-xl">
+                          No drafts or sent editions.
+                        </div>
+                      ) : (
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                          {newsletterEditions.map((item) => (
+                            <div
+                              key={item.id}
+                              onClick={() => selectNewsletterForEdit(item)}
+                              className={`p-3 border rounded-xl transition-all cursor-pointer text-left ${
+                                selectedNewsletter?.id === item.id
+                                  ? "bg-clinical-teal/10 border-clinical-teal"
+                                  : "bg-dark-overlay-navy border-white/5 hover:border-white/10"
+                              }`}
+                            >
+                              <div className="flex justify-between items-center text-[9px] text-white/50 mb-1.5">
+                                <span className={`font-bold px-1.5 py-0.5 rounded uppercase ${
+                                  item.status === "sent" ? "bg-emerald-500/10 text-emerald-400" : "bg-orange-500/10 text-orange-400"
+                                }`}>
+                                  {item.status}
+                                </span>
+                                <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                              </div>
+                              <h4 className="font-bold text-white text-xs truncate">{item.subject}</h4>
+                              <p className="text-[10px] text-white/60 truncate mt-1">Topic: {item.topic}</p>
+                              {item.status === "sent" && (
+                                <p className="text-[9px] text-emerald-400 font-mono mt-1">✓ Sent to {item.recipientsCount} patients</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Side-by-Side Live Editor & Preview */}
+                  <div className="lg:col-span-8">
+                    {selectedNewsletter ? (
+                      <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg space-y-6">
+                        <div className="flex justify-between items-center pb-3 border-b border-white/10">
+                          <div>
+                            <span className="text-[10px] font-bold text-clinical-teal uppercase tracking-wider block">Editing Newsletter Draft</span>
+                            <span className="text-white text-xs font-mono font-bold">{selectedNewsletter.id}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteNewsletter(selectedNewsletter.id)}
+                              className="text-white/60 hover:text-rose-400 text-xs px-3 py-1.5 rounded-lg border border-white/10 hover:border-rose-500/30 transition-all cursor-pointer"
+                            >
+                              Discard Draft
+                            </button>
+                            {selectedNewsletter.status === "draft" && (
+                              <button
+                                type="button"
+                                onClick={() => setShowNewsletterSendConfirm(true)}
+                                className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-md transition-all cursor-pointer"
+                              >
+                                🚀 Send Newsletter
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Subject Editor */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-semibold text-white/80">Email Subject Line</label>
+                          <input
+                            type="text"
+                            value={newsletterEditSubject}
+                            onChange={(e) => handleUpdateNewsletterContent(e.target.value, newsletterEditMarkdown)}
+                            disabled={selectedNewsletter.status === "sent"}
+                            className="w-full bg-dark-overlay-navy border border-white/15 text-white text-xs rounded-xl p-3 focus:outline-none focus:border-clinical-teal"
+                          />
+                        </div>
+
+                        {/* Markdown / Live HTML Preview Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                          {/* Markdown Text Area */}
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-white/80">Newsletter Body (Markdown)</label>
+                            <textarea
+                              rows={16}
+                              value={newsletterEditMarkdown}
+                              onChange={(e) => handleUpdateNewsletterContent(newsletterEditSubject, e.target.value)}
+                              disabled={selectedNewsletter.status === "sent"}
+                              placeholder="Draft your newsletter text here..."
+                              className="w-full h-[400px] bg-dark-overlay-navy border border-white/15 text-white placeholder-white/30 text-xs font-mono rounded-xl p-4 focus:outline-none focus:border-clinical-teal"
+                            />
+                          </div>
+
+                          {/* Live HTML Inbox Preview */}
+                          <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-white/80">Inbox Preview (HTML Rendering)</label>
+                            <div className="w-full h-[400px] bg-[#f8fafc] border border-white/10 rounded-xl overflow-y-auto">
+                              {newsletterHtmlPreview ? (
+                                <div dangerouslySetInnerHTML={{ __html: newsletterHtmlPreview }} />
+                              ) : (
+                                <div className="text-center text-slate-400 text-xs py-20">Preview renders dynamically as you type.</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="h-full min-h-[400px] bg-primary-navy border border-white/10 rounded-2xl p-8 shadow-lg flex flex-col items-center justify-center text-center space-y-3">
+                        <span className="text-4xl">✉️</span>
+                        <h3 className="font-bold text-white text-sm">No Newsletter Selected</h3>
+                        <p className="text-xs text-white/60 max-w-sm">
+                          Select a newsletter draft from the history list or generate a new one from the generator panel.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Newsletter Campaign Distribution Confirmation Modal */}
+                {showNewsletterSendConfirm && selectedNewsletter && (
+                  <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+                    <div className="bg-primary-navy border border-white/10 max-w-md w-full rounded-2xl p-6 shadow-2xl space-y-6">
+                      <div className="text-center space-y-2">
+                        <span className="text-4xl block">📣</span>
+                        <h3 className="font-serif text-lg font-bold text-white">Confirm Campaign Distribution</h3>
+                        <p className="text-xs text-white/70">
+                          You are about to distribute the newsletter **"{selectedNewsletter.subject}"** to all subscribed patients.
+                        </p>
+                      </div>
+
+                      <div className="bg-dark-overlay-navy border border-white/5 rounded-xl p-4 space-y-3">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-white/60">Campaign Topic:</span>
+                          <span className="text-white font-bold">{selectedNewsletter.topic}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-white/60">Recipient Count:</span>
+                          <span className="text-clinical-teal font-mono font-bold">{activeSubscribersCount} active subscribers</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-white/60">Includes PubMed citations:</span>
+                          <span className="text-white font-semibold">{selectedNewsletter.includeResearch ? "Yes (Stage 1 scan)" : "No (Lay update)"}</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-teal-500/10 border border-teal-500/25 text-teal-400 text-[10px] leading-relaxed p-3.5 rounded-xl">
+                        🔒 **Clinical Guidelines Enforcement**: The newsletter contents utilize layman's terms with jargon-control filters and direct consultation booking links for patient safety.
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setShowNewsletterSendConfirm(false)}
+                          className="flex-1 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold py-3 px-4 rounded-xl transition-all cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSendNewsletter}
+                          disabled={isSendingNewsletter}
+                          className="flex-1 bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs font-bold py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          {isSendingNewsletter ? (
+                            <>
+                              <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                              Distributing...
+                            </>
+                          ) : (
+                            "Confirm Send"
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -2413,70 +2998,221 @@ export default function BusinessDashboardPage() {
                       </button>
                       <h4 className="font-serif text-sm font-bold text-white">{selectedSocialOnlyPost.topic}</h4>
                     </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                      <PlatformCard
-                        platformKey="instagram"
-                        platformLabel="Instagram"
-                        icon={<FaInstagram className="w-4 h-4 text-[#E1306C]" />}
-                        color=""
-                        borderColor=""
-                        caption={selectedSocialOnlyPost.instagram.caption}
-                        status={selectedSocialOnlyPost.instagram.status}
-                        isPublished={false}
-                        attachedImageUrl={selectedSocialOnlyPost.instagram.imageUrl}
-                        onApprove={() => handleApproveSocialCaption(selectedSocialOnlyPost.id, "instagram")}
-                        onSaveEdit={(newCaption) => handleSaveSocialCaption(selectedSocialOnlyPost.id, "instagram", newCaption)}
-                        onRequestRevision={() => handleRequestSocialRevision(selectedSocialOnlyPost.id, "instagram")}
-                        onCopy={() => handleCopySocialOnly(selectedSocialOnlyPost.instagram.caption, "social-only-ig")}
-                        isCopied={socialOnlyCopiedKey === "social-only-ig"}
-                        onAttachImage={(url) => handleAttachSocialImage(selectedSocialOnlyPost.id, "instagram", url)}
-                        imagePromptSuggestion={selectedSocialOnlyPost.instagram.imagePromptSuggestion}
-                        onGenerateImage={(prompt) => handleGenerateSocialImage(selectedSocialOnlyPost.id, "instagram", prompt)}
-                        isGeneratingImage={generatingSocialImageKey === `${selectedSocialOnlyPost.id}-instagram`}
-                        showManualUploadGuide
-                      />
-                      <PlatformCard
-                        platformKey="facebook"
-                        platformLabel="Facebook"
-                        icon={<FaFacebook className="w-4 h-4 text-[#1877F2]" />}
-                        color=""
-                        borderColor=""
-                        caption={selectedSocialOnlyPost.facebook.caption}
-                        status={selectedSocialOnlyPost.facebook.status}
-                        isPublished={false}
-                        attachedImageUrl={selectedSocialOnlyPost.facebook.imageUrl}
-                        onApprove={() => handleApproveSocialCaption(selectedSocialOnlyPost.id, "facebook")}
-                        onSaveEdit={(newCaption) => handleSaveSocialCaption(selectedSocialOnlyPost.id, "facebook", newCaption)}
-                        onRequestRevision={() => handleRequestSocialRevision(selectedSocialOnlyPost.id, "facebook")}
-                        onCopy={() => handleCopySocialOnly(selectedSocialOnlyPost.facebook.caption, "social-only-fb")}
-                        isCopied={socialOnlyCopiedKey === "social-only-fb"}
-                        onAttachImage={(url) => handleAttachSocialImage(selectedSocialOnlyPost.id, "facebook", url)}
-                        imagePromptSuggestion={selectedSocialOnlyPost.facebook.imagePromptSuggestion}
-                        onGenerateImage={(prompt) => handleGenerateSocialImage(selectedSocialOnlyPost.id, "facebook", prompt)}
-                        isGeneratingImage={generatingSocialImageKey === `${selectedSocialOnlyPost.id}-facebook`}
-                        showManualUploadGuide
-                      />
-                      <PlatformCard
-                        platformKey="linkedin"
-                        platformLabel="LinkedIn"
-                        icon={<FaLinkedin className="w-4 h-4 text-[#0A66C2]" />}
-                        color=""
-                        borderColor=""
-                        caption={selectedSocialOnlyPost.linkedin.caption}
-                        status={selectedSocialOnlyPost.linkedin.status}
-                        isPublished={false}
-                        attachedImageUrl={selectedSocialOnlyPost.linkedin.imageUrl}
-                        onApprove={() => handleApproveSocialCaption(selectedSocialOnlyPost.id, "linkedin")}
-                        onSaveEdit={(newCaption) => handleSaveSocialCaption(selectedSocialOnlyPost.id, "linkedin", newCaption)}
-                        onRequestRevision={() => handleRequestSocialRevision(selectedSocialOnlyPost.id, "linkedin")}
-                        onCopy={() => handleCopySocialOnly(selectedSocialOnlyPost.linkedin.caption, "social-only-li")}
-                        isCopied={socialOnlyCopiedKey === "social-only-li"}
-                        onAttachImage={(url) => handleAttachSocialImage(selectedSocialOnlyPost.id, "linkedin", url)}
-                        imagePromptSuggestion={selectedSocialOnlyPost.linkedin.imagePromptSuggestion}
-                        onGenerateImage={(prompt) => handleGenerateSocialImage(selectedSocialOnlyPost.id, "linkedin", prompt)}
-                        isGeneratingImage={generatingSocialImageKey === `${selectedSocialOnlyPost.id}-linkedin`}
-                        showManualUploadGuide
-                      />
+                    <div className="space-y-4">
+                      {/* Sub-Tab Navigation for Standalone Social Posts */}
+                      <div className="flex border-b border-white/10 gap-2 overflow-x-auto pb-px">
+                        {(["feed", "story", "carousel", "reel", "brandkit"] as const).map((tab) => (
+                          <button
+                            key={tab}
+                            onClick={() => setActiveSocialOnlySubTab(tab)}
+                            className={`text-xs font-semibold px-4 py-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                              activeSocialOnlySubTab === tab
+                                ? "border-clinical-teal text-clinical-teal font-bold"
+                                : "border-transparent text-white/60 hover:text-white hover:border-white/20"
+                            }`}
+                          >
+                            {tab === "feed" && "Feed Posts"}
+                            {tab === "story" && "Instagram Story"}
+                            {tab === "carousel" && "Instagram Carousel"}
+                            {tab === "reel" && "Instagram Reel Script"}
+                            {tab === "brandkit" && "Brand Kit Templates"}
+                          </button>
+                        ))}
+                      </div>
+
+                      {activeSocialOnlySubTab === "feed" && (
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-fadeIn">
+                          <PlatformCard
+                            platformKey="instagram"
+                            platformLabel="Instagram Post"
+                            icon={<FaInstagram className="w-4 h-4 text-[#E1306C]" />}
+                            color=""
+                            borderColor=""
+                            caption={selectedSocialOnlyPost.instagram.caption}
+                            status={selectedSocialOnlyPost.instagram.status}
+                            isPublished={false}
+                            attachedImageUrl={selectedSocialOnlyPost.instagram.imageUrl}
+                            onApprove={() => handleApproveSocialCaption(selectedSocialOnlyPost.id, "instagram")}
+                            onSaveEdit={(newCaption) => handleSaveSocialCaption(selectedSocialOnlyPost.id, "instagram", newCaption)}
+                            onRequestRevision={() => handleRequestSocialRevision(selectedSocialOnlyPost.id, "instagram")}
+                            onCopy={() => handleCopySocialOnly(selectedSocialOnlyPost.instagram.caption, "social-only-ig")}
+                            isCopied={socialOnlyCopiedKey === "social-only-ig"}
+                            onAttachImage={(url) => handleAttachSocialImage(selectedSocialOnlyPost.id, "instagram", url)}
+                            imagePromptSuggestion={selectedSocialOnlyPost.instagram.imagePromptSuggestion}
+                            onGenerateImage={(prompt) => handleGenerateSocialImage(selectedSocialOnlyPost.id, "instagram", prompt)}
+                            isGeneratingImage={generatingSocialImageKey === `${selectedSocialOnlyPost.id}-instagram`}
+                            showManualUploadGuide
+                          />
+                          <PlatformCard
+                            platformKey="facebook"
+                            platformLabel="Facebook Post"
+                            icon={<FaFacebook className="w-4 h-4 text-[#1877F2]" />}
+                            color=""
+                            borderColor=""
+                            caption={selectedSocialOnlyPost.facebook.caption}
+                            status={selectedSocialOnlyPost.facebook.status}
+                            isPublished={false}
+                            attachedImageUrl={selectedSocialOnlyPost.facebook.imageUrl}
+                            onApprove={() => handleApproveSocialCaption(selectedSocialOnlyPost.id, "facebook")}
+                            onSaveEdit={(newCaption) => handleSaveSocialCaption(selectedSocialOnlyPost.id, "facebook", newCaption)}
+                            onRequestRevision={() => handleRequestSocialRevision(selectedSocialOnlyPost.id, "facebook")}
+                            onCopy={() => handleCopySocialOnly(selectedSocialOnlyPost.facebook.caption, "social-only-fb")}
+                            isCopied={socialOnlyCopiedKey === "social-only-fb"}
+                            onAttachImage={(url) => handleAttachSocialImage(selectedSocialOnlyPost.id, "facebook", url)}
+                            imagePromptSuggestion={selectedSocialOnlyPost.facebook.imagePromptSuggestion}
+                            onGenerateImage={(prompt) => handleGenerateSocialImage(selectedSocialOnlyPost.id, "facebook", prompt)}
+                            isGeneratingImage={generatingSocialImageKey === `${selectedSocialOnlyPost.id}-facebook`}
+                            showManualUploadGuide
+                          />
+                          <PlatformCard
+                            platformKey="linkedin"
+                            platformLabel="LinkedIn Post"
+                            icon={<FaLinkedin className="w-4 h-4 text-[#0A66C2]" />}
+                            color=""
+                            borderColor=""
+                            caption={selectedSocialOnlyPost.linkedin.caption}
+                            status={selectedSocialOnlyPost.linkedin.status}
+                            isPublished={false}
+                            attachedImageUrl={selectedSocialOnlyPost.linkedin.imageUrl}
+                            onApprove={() => handleApproveSocialCaption(selectedSocialOnlyPost.id, "linkedin")}
+                            onSaveEdit={(newCaption) => handleSaveSocialCaption(selectedSocialOnlyPost.id, "linkedin", newCaption)}
+                            onRequestRevision={() => handleRequestSocialRevision(selectedSocialOnlyPost.id, "linkedin")}
+                            onCopy={() => handleCopySocialOnly(selectedSocialOnlyPost.linkedin.caption, "social-only-li")}
+                            isCopied={socialOnlyCopiedKey === "social-only-li"}
+                            onAttachImage={(url) => handleAttachSocialImage(selectedSocialOnlyPost.id, "linkedin", url)}
+                            imagePromptSuggestion={selectedSocialOnlyPost.linkedin.imagePromptSuggestion}
+                            onGenerateImage={(prompt) => handleGenerateSocialImage(selectedSocialOnlyPost.id, "linkedin", prompt)}
+                            isGeneratingImage={generatingSocialImageKey === `${selectedSocialOnlyPost.id}-linkedin`}
+                            showManualUploadGuide
+                          />
+                        </div>
+                      )}
+
+                      {activeSocialOnlySubTab === "story" && (
+                        <div className="max-w-md mx-auto animate-fadeIn">
+                          <PlatformCard
+                            platformKey="instagramStory"
+                            platformLabel="Instagram Story"
+                            icon={<FaInstagram className="w-4 h-4 text-[#E1306C]" />}
+                            color=""
+                            borderColor=""
+                            caption={selectedSocialOnlyPost.instagramStory?.caption || `Check out our latest update about "${selectedSocialOnlyPost.topic}"!`}
+                            status={selectedSocialOnlyPost.instagramStory?.status || "pending"}
+                            isPublished={false}
+                            attachedImageUrl={selectedSocialOnlyPost.instagramStory?.imageUrl}
+                            onApprove={() => handleApproveSocialCaption(selectedSocialOnlyPost.id, "instagramStory")}
+                            onSaveEdit={(newCaption) => handleSaveSocialCaption(selectedSocialOnlyPost.id, "instagramStory", newCaption)}
+                            onRequestRevision={() => handleRequestSocialRevision(selectedSocialOnlyPost.id, "instagramStory")}
+                            onCopy={() => handleCopySocialOnly(selectedSocialOnlyPost.instagramStory?.caption || "", "social-only-story")}
+                            isCopied={socialOnlyCopiedKey === "social-only-story"}
+                            onAttachImage={(url) => handleAttachSocialImage(selectedSocialOnlyPost.id, "instagramStory", url)}
+                            imagePromptSuggestion={selectedSocialOnlyPost.instagramStory?.imagePromptSuggestion || `A premium vertical 9:16 background image for "${selectedSocialOnlyPost.topic}"`}
+                            onGenerateImage={(prompt) => handleGenerateSocialImage(selectedSocialOnlyPost.id, "instagramStory", prompt)}
+                            isGeneratingImage={generatingSocialImageKey === `${selectedSocialOnlyPost.id}-instagramStory`}
+                            showManualUploadGuide
+                          />
+                        </div>
+                      )}
+
+                      {activeSocialOnlySubTab === "carousel" && (
+                        <div className="max-w-xl mx-auto animate-fadeIn">
+                          <PlatformCard
+                            platformKey="instagramCarousel"
+                            platformLabel="Instagram Carousel"
+                            icon={<FaInstagram className="w-4 h-4 text-[#E1306C]" />}
+                            color=""
+                            borderColor=""
+                            caption={selectedSocialOnlyPost.instagramCarousel?.caption || ""}
+                            status={selectedSocialOnlyPost.instagramCarousel?.status || "pending"}
+                            isPublished={false}
+                            onApprove={() => handleApproveSocialCaption(selectedSocialOnlyPost.id, "instagramCarousel")}
+                            onSaveEdit={(newCaption) => handleSaveSocialCaption(selectedSocialOnlyPost.id, "instagramCarousel", newCaption)}
+                            onRequestRevision={() => handleRequestSocialRevision(selectedSocialOnlyPost.id, "instagramCarousel")}
+                            onCopy={() => {
+                              const carousel = selectedSocialOnlyPost.instagramCarousel;
+                              const textToCopy = carousel?.slides
+                                ? carousel.slides.map(s => `Slide ${s.slideNumber}: ${s.text}`).join("\n\n")
+                                : carousel?.caption || "";
+                              handleCopySocialOnly(textToCopy, "social-only-carousel");
+                            }}
+                            isCopied={socialOnlyCopiedKey === "social-only-carousel"}
+                            slides={selectedSocialOnlyPost.instagramCarousel?.slides}
+                            onAttachImage={(url, slideIndex) => {
+                              const slides = [...(selectedSocialOnlyPost.instagramCarousel?.slides || [])];
+                              if (slideIndex !== undefined && slides[slideIndex]) {
+                                slides[slideIndex] = { ...slides[slideIndex], imageUrl: url };
+                              }
+                              handleSaveSocialCaption(selectedSocialOnlyPost.id, "instagramCarousel", {
+                                slides: slides,
+                                caption: selectedSocialOnlyPost.instagramCarousel?.caption || ""
+                              });
+                            }}
+                            onGenerateImage={(prompt, slideIndex) => handleGenerateSocialImage(selectedSocialOnlyPost.id, "instagramCarousel", prompt, slideIndex)}
+                            isGeneratingImage={generatingSocialImageKey === `${selectedSocialOnlyPost.id}-instagramCarousel`}
+                            showManualUploadGuide
+                          />
+                        </div>
+                      )}
+
+                      {activeSocialOnlySubTab === "reel" && (
+                        <div className="max-w-xl mx-auto animate-fadeIn">
+                          <PlatformCard
+                            platformKey="instagramReel"
+                            platformLabel="Instagram Reel Script"
+                            icon={<FaInstagram className="w-4 h-4 text-[#E1306C]" />}
+                            color=""
+                            borderColor=""
+                            caption={selectedSocialOnlyPost.instagramReel?.caption || ""}
+                            status={selectedSocialOnlyPost.instagramReel?.status || "pending"}
+                            isPublished={false}
+                            onApprove={() => handleApproveSocialCaption(selectedSocialOnlyPost.id, "instagramReel")}
+                            onSaveEdit={(newScript) => handleSaveSocialCaption(selectedSocialOnlyPost.id, "instagramReel", { script: newScript } as any)}
+                            onRequestRevision={() => handleRequestSocialRevision(selectedSocialOnlyPost.id, "instagramReel")}
+                            onCopy={() => handleCopySocialOnly(selectedSocialOnlyPost.instagramReel?.script || "", "social-only-reel")}
+                            isCopied={socialOnlyCopiedKey === "social-only-reel"}
+                            script={selectedSocialOnlyPost.instagramReel?.script}
+                            showManualUploadGuide
+                          />
+                        </div>
+                      )}
+
+                      {activeSocialOnlySubTab === "brandkit" && (
+                        <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-6 shadow-lg animate-fadeIn space-y-6 text-left">
+                          <div>
+                            <h4 className="font-serif text-sm font-bold text-white mb-2">LKC Branded Template Backgrounds</h4>
+                            <p className="text-xs text-white/70 leading-relaxed">
+                              Download these premium, pre-styled background templates with clinic margins and watermarks. Use them as background layers in Canva or directly in social media apps to overlay the generated caption text.
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="border border-white/10 bg-primary-navy/50 p-4 rounded-xl flex flex-col justify-between items-center space-y-4">
+                              <span className="text-xs font-semibold text-clinical-teal font-sans">Square Template (1:1 Posts / Carousels)</span>
+                              <div className="w-32 h-32 relative border border-white/20 rounded shadow-md overflow-hidden bg-slate-900 flex items-center justify-center">
+                                <img src="/images/templates/square-post-template.png" className="object-cover w-full h-full" alt="Square Post Template" />
+                              </div>
+                              <button
+                                onClick={() => downloadImageFile("/images/templates/square-post-template.png", "lkc-square-post-template")}
+                                className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-lg font-medium cursor-pointer transition-colors"
+                              >
+                                ⬇ Download Square PNG
+                              </button>
+                            </div>
+                            
+                            <div className="border border-white/10 bg-primary-navy/50 p-4 rounded-xl flex flex-col justify-between items-center space-y-4">
+                              <span className="text-xs font-semibold text-clinical-teal font-sans">Vertical Template (9:16 Stories / Reels)</span>
+                              <div className="w-20 h-32 relative border border-white/20 rounded shadow-md overflow-hidden bg-slate-900 flex items-center justify-center">
+                                <img src="/images/templates/vertical-story-template.png" className="object-cover w-full h-full" alt="Vertical Story Template" />
+                              </div>
+                              <button
+                                onClick={() => downloadImageFile("/images/templates/vertical-story-template.png", "lkc-vertical-story-template")}
+                                className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-lg font-medium cursor-pointer transition-colors"
+                              >
+                                ⬇ Download Vertical PNG
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : socialOnlyPostsLoading ? (
@@ -3020,6 +3756,8 @@ export default function BusinessDashboardPage() {
                                           pendingPreview={generatedImagePreview}
                                           onGenerateImage={(placeholderId, label, isFeatured) => handleGenerateImage(placeholderId, label, isFeatured)}
                                           onResetPlaceholder={handleResetPlaceholderImage}
+                                          onRemovePlaceholder={handleRemovePlaceholder}
+                                          onRemoveResolvedImage={handleRemoveResolvedImage}
                                         />
                                       </div>
                                     </div>
@@ -3106,6 +3844,8 @@ export default function BusinessDashboardPage() {
                                       pendingPreview={generatedImagePreview}
                                       onGenerateImage={(placeholderId, label, isFeatured) => handleGenerateImage(placeholderId, label, isFeatured)}
                                       onResetPlaceholder={handleResetPlaceholderImage}
+                                      onRemovePlaceholder={handleRemovePlaceholder}
+                                      onRemoveResolvedImage={handleRemoveResolvedImage}
                                     />
                                   </div>
                                 </div>
@@ -3295,138 +4035,494 @@ export default function BusinessDashboardPage() {
                         )}
 
                         {activeRunDetailTab === "social" && (
-                          <>
+                          <div className="space-y-6">
                             {selectedRunHasSocial ? (
-                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <PlatformCard
-                                  platformKey="instagram"
-                                  platformLabel="Instagram"
-                                  icon={<FaInstagram className="w-4 h-4 text-[#E1306C]" />}
-                                  color=""
-                                  borderColor=""
-                                  caption={selectedRun.social_drafts[0]?.instagram?.caption || ""}
-                                  status={selectedRun.social_drafts[0]?.instagram?.status || "pending"}
-                                  isPublished={selectedRun.status === "published"}
-                                  attachedImageUrl={selectedRun.social_drafts[0]?.instagram?.imageUrl}
-                                  isExternalEditing={editingPlatform === "instagram"}
-                                  onCancelExternalEdit={() => setEditingPlatform(null)}
-                                  onApprove={() => handleReviewSubmission("social", "approved", undefined, "instagram")}
-                                  onSaveEdit={(newCaption) =>
-                                    handleReviewSubmission("social", "edited", { caption: newCaption }, "instagram")
-                                  }
-                                  onRequestRevision={() => {
-                                    setRevisionStage("social");
-                                    setRevisionPlatform("instagram");
-                                    setIsRevisionModalOpen(true);
-                                  }}
-                                  onCopy={() =>
-                                    handleCopyToClipboard(
-                                      selectedRun.social_drafts[0]?.instagram?.caption || "",
-                                      "ig"
-                                    )
-                                  }
-                                  isCopied={copiedKey === "ig"}
-                                  onAttachImage={(url) => {
-                                    const latestSocial = selectedRun.social_drafts[0];
-                                    const customPayload = {
-                                      ...latestSocial,
-                                      instagram: {
-                                        ...latestSocial.instagram,
-                                        imageUrl: url
-                                      }
-                                    };
-                                    handleReviewSubmission("social", "edited", customPayload, "instagram");
-                                  }}
-                                />
+                              <>
+                                {/* Social Formats Sub-Tab Navigation */}
+                                <div className="flex border-b border-white/10 gap-2 overflow-x-auto pb-px">
+                                  {(["feed", "story", "carousel", "reel", "brandkit"] as const).map((tab) => (
+                                    <button
+                                      key={tab}
+                                      onClick={() => setActiveSocialSubTab(tab)}
+                                      className={`text-xs font-semibold px-4 py-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                                        activeSocialSubTab === tab
+                                          ? "border-clinical-teal text-clinical-teal font-bold"
+                                          : "border-transparent text-white/60 hover:text-white hover:border-white/20"
+                                      }`}
+                                    >
+                                      {tab === "feed" && "Feed Posts"}
+                                      {tab === "story" && "Instagram Story"}
+                                      {tab === "carousel" && "Instagram Carousel"}
+                                      {tab === "reel" && "Instagram Reel Script"}
+                                      {tab === "brandkit" && "Brand Kit Templates"}
+                                    </button>
+                                  ))}
+                                </div>
 
-                                <PlatformCard
-                                  platformKey="facebook"
-                                  platformLabel="Facebook"
-                                  icon={<FaFacebook className="w-4 h-4 text-[#1877F2]" />}
-                                  color=""
-                                  borderColor=""
-                                  caption={selectedRun.social_drafts[0]?.facebook?.caption || ""}
-                                  status={selectedRun.social_drafts[0]?.facebook?.status || "pending"}
-                                  isPublished={selectedRun.status === "published"}
-                                  attachedImageUrl={selectedRun.social_drafts[0]?.facebook?.imageUrl}
-                                  isExternalEditing={editingPlatform === "facebook"}
-                                  onCancelExternalEdit={() => setEditingPlatform(null)}
-                                  onApprove={() => handleReviewSubmission("social", "approved", undefined, "facebook")}
-                                  onSaveEdit={(newCaption) =>
-                                    handleReviewSubmission("social", "edited", { caption: newCaption }, "facebook")
-                                  }
-                                  onRequestRevision={() => {
-                                    setRevisionStage("social");
-                                    setRevisionPlatform("facebook");
-                                    setIsRevisionModalOpen(true);
-                                  }}
-                                  onCopy={() =>
-                                    handleCopyToClipboard(
-                                      selectedRun.social_drafts[0]?.facebook?.caption || "",
-                                      "fb"
-                                    )
-                                  }
-                                  isCopied={copiedKey === "fb"}
-                                  onAttachImage={(url) => {
-                                    const latestSocial = selectedRun.social_drafts[0];
-                                    const customPayload = {
-                                      ...latestSocial,
-                                      facebook: {
-                                        ...latestSocial.facebook,
-                                        imageUrl: url
+                                {/* Render Active Format Container */}
+                                {activeSocialSubTab === "feed" && (
+                                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
+                                    <PlatformCard
+                                      platformKey="instagram"
+                                      platformLabel="Instagram Post"
+                                      icon={<FaInstagram className="w-4 h-4 text-[#E1306C]" />}
+                                      color=""
+                                      borderColor=""
+                                      caption={selectedRun.social_drafts[0]?.instagram?.caption || ""}
+                                      status={selectedRun.social_drafts[0]?.instagram?.status || "pending"}
+                                      isPublished={selectedRun.status === "published"}
+                                      attachedImageUrl={selectedRun.social_drafts[0]?.instagram?.imageUrl}
+                                      isExternalEditing={editingPlatform === "instagram"}
+                                      onCancelExternalEdit={() => setEditingPlatform(null)}
+                                      onApprove={() => handleReviewSubmission("social", "approved", undefined, "instagram")}
+                                      onSaveEdit={(newCaption) =>
+                                        handleReviewSubmission("social", "edited", { caption: newCaption }, "instagram")
                                       }
-                                    };
-                                    handleReviewSubmission("social", "edited", customPayload, "facebook");
-                                  }}
-                                />
+                                      onRequestRevision={() => {
+                                        setRevisionStage("social");
+                                        setRevisionPlatform("instagram");
+                                        setIsRevisionModalOpen(true);
+                                      }}
+                                      onCopy={() =>
+                                        handleCopyToClipboard(
+                                          selectedRun.social_drafts[0]?.instagram?.caption || "",
+                                          "ig"
+                                        )
+                                      }
+                                      isCopied={copiedKey === "ig"}
+                                      onAttachImage={(url) => {
+                                        const latestSocial = selectedRun.social_drafts[0];
+                                        const customPayload = {
+                                          ...latestSocial,
+                                          instagram: {
+                                            ...latestSocial.instagram,
+                                            imageUrl: url
+                                          }
+                                        };
+                                        handleReviewSubmission("social", "edited", customPayload, "instagram");
+                                      }}
+                                      imagePromptSuggestion={selectedRun.social_drafts[0]?.instagram?.imagePromptSuggestion}
+                                      onGenerateImage={async (prompt) => {
+                                        setGeneratingSocialImageKey(`${selectedRun.id}-instagram`);
+                                        try {
+                                          const res = await fetch("/api/portal/content-pipeline/generate-image", {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ prompt, runId: selectedRun.run_id }),
+                                          });
+                                          const data = await res.json();
+                                          if (data.success && data.url) {
+                                            const latestSocial = selectedRun.social_drafts[0];
+                                            const customPayload = {
+                                              ...latestSocial,
+                                              instagram: {
+                                                ...latestSocial.instagram,
+                                                imageUrl: data.url
+                                              }
+                                            };
+                                            await handleReviewSubmission("social", "edited", customPayload, "instagram");
+                                          }
+                                        } catch (err) {
+                                          console.error(err);
+                                        } finally {
+                                          setGeneratingSocialImageKey("");
+                                        }
+                                      }}
+                                      isGeneratingImage={generatingSocialImageKey === `${selectedRun.id}-instagram`}
+                                      showManualUploadGuide
+                                    />
 
-                                <PlatformCard
-                                  platformKey="linkedin"
-                                  platformLabel="LinkedIn"
-                                  icon={<FaLinkedin className="w-4 h-4 text-[#0A66C2]" />}
-                                  color=""
-                                  borderColor=""
-                                  caption={selectedRun.social_drafts[0]?.linkedin?.caption || ""}
-                                  status={selectedRun.social_drafts[0]?.linkedin?.status || "pending"}
-                                  isPublished={selectedRun.status === "published"}
-                                  attachedImageUrl={selectedRun.social_drafts[0]?.linkedin?.imageUrl}
-                                  isExternalEditing={editingPlatform === "linkedin"}
-                                  onCancelExternalEdit={() => setEditingPlatform(null)}
-                                  onApprove={() => handleReviewSubmission("social", "approved", undefined, "linkedin")}
-                                  onSaveEdit={(newCaption) =>
-                                    handleReviewSubmission("social", "edited", { caption: newCaption }, "linkedin")
-                                  }
-                                  onRequestRevision={() => {
-                                    setRevisionStage("social");
-                                    setRevisionPlatform("linkedin");
-                                    setIsRevisionModalOpen(true);
-                                  }}
-                                  onCopy={() =>
-                                    handleCopyToClipboard(
-                                      selectedRun.social_drafts[0]?.linkedin?.caption || "",
-                                      "li"
-                                    )
-                                  }
-                                  isCopied={copiedKey === "li"}
-                                  onAttachImage={(url) => {
-                                    const latestSocial = selectedRun.social_drafts[0];
-                                    const customPayload = {
-                                      ...latestSocial,
-                                      linkedin: {
-                                        ...latestSocial.linkedin,
-                                        imageUrl: url
+                                    <PlatformCard
+                                      platformKey="facebook"
+                                      platformLabel="Facebook Post"
+                                      icon={<FaFacebook className="w-4 h-4 text-[#1877F2]" />}
+                                      color=""
+                                      borderColor=""
+                                      caption={selectedRun.social_drafts[0]?.facebook?.caption || ""}
+                                      status={selectedRun.social_drafts[0]?.facebook?.status || "pending"}
+                                      isPublished={selectedRun.status === "published"}
+                                      attachedImageUrl={selectedRun.social_drafts[0]?.facebook?.imageUrl}
+                                      isExternalEditing={editingPlatform === "facebook"}
+                                      onCancelExternalEdit={() => setEditingPlatform(null)}
+                                      onApprove={() => handleReviewSubmission("social", "approved", undefined, "facebook")}
+                                      onSaveEdit={(newCaption) =>
+                                        handleReviewSubmission("social", "edited", { caption: newCaption }, "facebook")
                                       }
-                                    };
-                                    handleReviewSubmission("social", "edited", customPayload, "linkedin");
-                                  }}
-                                />
-                              </div>
+                                      onRequestRevision={() => {
+                                        setRevisionStage("social");
+                                        setRevisionPlatform("facebook");
+                                        setIsRevisionModalOpen(true);
+                                      }}
+                                      onCopy={() =>
+                                        handleCopyToClipboard(
+                                          selectedRun.social_drafts[0]?.facebook?.caption || "",
+                                          "fb"
+                                        )
+                                      }
+                                      isCopied={copiedKey === "fb"}
+                                      onAttachImage={(url) => {
+                                        const latestSocial = selectedRun.social_drafts[0];
+                                        const customPayload = {
+                                          ...latestSocial,
+                                          facebook: {
+                                            ...latestSocial.facebook,
+                                            imageUrl: url
+                                          }
+                                        };
+                                        handleReviewSubmission("social", "edited", customPayload, "facebook");
+                                      }}
+                                      imagePromptSuggestion={selectedRun.social_drafts[0]?.facebook?.imagePromptSuggestion}
+                                      onGenerateImage={async (prompt) => {
+                                        setGeneratingSocialImageKey(`${selectedRun.id}-facebook`);
+                                        try {
+                                          const res = await fetch("/api/portal/content-pipeline/generate-image", {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ prompt, runId: selectedRun.run_id }),
+                                          });
+                                          const data = await res.json();
+                                          if (data.success && data.url) {
+                                            const latestSocial = selectedRun.social_drafts[0];
+                                            const customPayload = {
+                                              ...latestSocial,
+                                              facebook: {
+                                                ...latestSocial.facebook,
+                                                imageUrl: data.url
+                                              }
+                                            };
+                                            await handleReviewSubmission("social", "edited", customPayload, "facebook");
+                                          }
+                                        } catch (err) {
+                                          console.error(err);
+                                        } finally {
+                                          setGeneratingSocialImageKey("");
+                                        }
+                                      }}
+                                      isGeneratingImage={generatingSocialImageKey === `${selectedRun.id}-facebook`}
+                                      showManualUploadGuide
+                                    />
+
+                                    <PlatformCard
+                                      platformKey="linkedin"
+                                      platformLabel="LinkedIn Post"
+                                      icon={<FaLinkedin className="w-4 h-4 text-[#0A66C2]" />}
+                                      color=""
+                                      borderColor=""
+                                      caption={selectedRun.social_drafts[0]?.linkedin?.caption || ""}
+                                      status={selectedRun.social_drafts[0]?.linkedin?.status || "pending"}
+                                      isPublished={selectedRun.status === "published"}
+                                      attachedImageUrl={selectedRun.social_drafts[0]?.linkedin?.imageUrl}
+                                      isExternalEditing={editingPlatform === "linkedin"}
+                                      onCancelExternalEdit={() => setEditingPlatform(null)}
+                                      onApprove={() => handleReviewSubmission("social", "approved", undefined, "linkedin")}
+                                      onSaveEdit={(newCaption) =>
+                                        handleReviewSubmission("social", "edited", { caption: newCaption }, "linkedin")
+                                      }
+                                      onRequestRevision={() => {
+                                        setRevisionStage("social");
+                                        setRevisionPlatform("linkedin");
+                                        setIsRevisionModalOpen(true);
+                                      }}
+                                      onCopy={() =>
+                                        handleCopyToClipboard(
+                                          selectedRun.social_drafts[0]?.linkedin?.caption || "",
+                                          "li"
+                                        )
+                                      }
+                                      isCopied={copiedKey === "li"}
+                                      onAttachImage={(url) => {
+                                        const latestSocial = selectedRun.social_drafts[0];
+                                        const customPayload = {
+                                          ...latestSocial,
+                                          linkedin: {
+                                            ...latestSocial.linkedin,
+                                            imageUrl: url
+                                          }
+                                        };
+                                        handleReviewSubmission("social", "edited", customPayload, "linkedin");
+                                      }}
+                                      imagePromptSuggestion={selectedRun.social_drafts[0]?.linkedin?.imagePromptSuggestion}
+                                      onGenerateImage={async (prompt) => {
+                                        setGeneratingSocialImageKey(`${selectedRun.id}-linkedin`);
+                                        try {
+                                          const res = await fetch("/api/portal/content-pipeline/generate-image", {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ prompt, runId: selectedRun.run_id }),
+                                          });
+                                          const data = await res.json();
+                                          if (data.success && data.url) {
+                                            const latestSocial = selectedRun.social_drafts[0];
+                                            const customPayload = {
+                                              ...latestSocial,
+                                              linkedin: {
+                                                ...latestSocial.linkedin,
+                                                imageUrl: data.url
+                                              }
+                                            };
+                                            await handleReviewSubmission("social", "edited", customPayload, "linkedin");
+                                          }
+                                        } catch (err) {
+                                          console.error(err);
+                                        } finally {
+                                          setGeneratingSocialImageKey("");
+                                        }
+                                      }}
+                                      isGeneratingImage={generatingSocialImageKey === `${selectedRun.id}-linkedin`}
+                                      showManualUploadGuide
+                                    />
+                                  </div>
+                                )}
+
+                                {activeSocialSubTab === "story" && (
+                                  <div className="max-w-md mx-auto animate-fadeIn">
+                                    <PlatformCard
+                                      platformKey="instagramStory"
+                                      platformLabel="Instagram Story"
+                                      icon={<FaInstagram className="w-4 h-4 text-[#E1306C]" />}
+                                      color=""
+                                      borderColor=""
+                                      caption={selectedRun.social_drafts[0]?.instagramStory?.caption || `New guide: ${selectedRun.blog_drafts[0]?.title || selectedRun.topic}!`}
+                                      status={selectedRun.social_drafts[0]?.instagramStory?.status || "pending"}
+                                      isPublished={selectedRun.status === "published"}
+                                      attachedImageUrl={selectedRun.social_drafts[0]?.instagramStory?.imageUrl}
+                                      isExternalEditing={editingPlatform === "instagramStory"}
+                                      onCancelExternalEdit={() => setEditingPlatform(null)}
+                                      onApprove={() => handleReviewSubmission("social", "approved", undefined, "instagramStory")}
+                                      onSaveEdit={(newCaption) =>
+                                        handleReviewSubmission("social", "edited", { caption: newCaption }, "instagramStory")
+                                      }
+                                      onRequestRevision={() => {
+                                        setRevisionStage("social");
+                                        setRevisionPlatform("instagramStory");
+                                        setIsRevisionModalOpen(true);
+                                      }}
+                                      onCopy={() =>
+                                        handleCopyToClipboard(
+                                          selectedRun.social_drafts[0]?.instagramStory?.caption || "",
+                                          "story"
+                                        )
+                                      }
+                                      isCopied={copiedKey === "story"}
+                                      onAttachImage={(url) => {
+                                        const latestSocial = selectedRun.social_drafts[0];
+                                        const customPayload = {
+                                          ...latestSocial,
+                                          instagramStory: {
+                                            ...(latestSocial.instagramStory || { caption: "", status: "pending" }),
+                                            imageUrl: url
+                                          }
+                                        };
+                                        handleReviewSubmission("social", "edited", customPayload, "instagramStory");
+                                      }}
+                                      imagePromptSuggestion={selectedRun.social_drafts[0]?.instagramStory?.imagePromptSuggestion || `A premium vertical 9:16 background image for "${selectedRun.topic}"`}
+                                      onGenerateImage={async (prompt) => {
+                                        setGeneratingSocialImageKey(`${selectedRun.id}-instagramStory`);
+                                        try {
+                                          const res = await fetch("/api/portal/content-pipeline/generate-image", {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ prompt, runId: selectedRun.run_id, aspectRatio: "9:16" }),
+                                          });
+                                          const data = await res.json();
+                                          if (data.success && data.url) {
+                                            const latestSocial = selectedRun.social_drafts[0];
+                                            const customPayload = {
+                                              ...latestSocial,
+                                              instagramStory: {
+                                                ...(latestSocial.instagramStory || { caption: "", status: "pending" }),
+                                                imageUrl: data.url
+                                              }
+                                            };
+                                            await handleReviewSubmission("social", "edited", customPayload, "instagramStory");
+                                          }
+                                        } catch (err) {
+                                          console.error(err);
+                                        } finally {
+                                          setGeneratingSocialImageKey("");
+                                        }
+                                      }}
+                                      isGeneratingImage={generatingSocialImageKey === `${selectedRun.id}-instagramStory`}
+                                      showManualUploadGuide
+                                    />
+                                  </div>
+                                )}
+
+                                {activeSocialSubTab === "carousel" && (
+                                  <div className="max-w-xl mx-auto animate-fadeIn">
+                                    <PlatformCard
+                                      platformKey="instagramCarousel"
+                                      platformLabel="Instagram Carousel"
+                                      icon={<FaInstagram className="w-4 h-4 text-[#E1306C]" />}
+                                      color=""
+                                      borderColor=""
+                                      caption={selectedRun.social_drafts[0]?.instagramCarousel?.caption || ""}
+                                      status={selectedRun.social_drafts[0]?.instagramCarousel?.status || "pending"}
+                                      isPublished={selectedRun.status === "published"}
+                                      isExternalEditing={editingPlatform === "instagramCarousel"}
+                                      onCancelExternalEdit={() => setEditingPlatform(null)}
+                                      onApprove={() => handleReviewSubmission("social", "approved", undefined, "instagramCarousel")}
+                                      onSaveEdit={(newCaption) =>
+                                        handleReviewSubmission("social", "edited", { caption: newCaption }, "instagramCarousel")
+                                      }
+                                      onRequestRevision={() => {
+                                        setRevisionStage("social");
+                                        setRevisionPlatform("instagramCarousel");
+                                        setIsRevisionModalOpen(true);
+                                      }}
+                                      onCopy={() => {
+                                        const carousel = selectedRun.social_drafts[0]?.instagramCarousel;
+                                        const textToCopy = carousel?.slides
+                                          ? carousel.slides.map(s => `Slide ${s.slideNumber}: ${s.text}`).join("\n\n")
+                                          : carousel?.caption || "";
+                                        handleCopyToClipboard(textToCopy, "carousel");
+                                      }}
+                                      isCopied={copiedKey === "carousel"}
+                                      slides={selectedRun.social_drafts[0]?.instagramCarousel?.slides}
+                                      onAttachImage={(url, slideIndex) => {
+                                        const latestSocial = selectedRun.social_drafts[0];
+                                        const slides = [...(latestSocial.instagramCarousel?.slides || [])];
+                                        if (slideIndex !== undefined && slides[slideIndex]) {
+                                          slides[slideIndex] = { ...slides[slideIndex], imageUrl: url };
+                                        }
+                                        const customPayload = {
+                                          ...latestSocial,
+                                          instagramCarousel: {
+                                            ...(latestSocial.instagramCarousel || { caption: "", imagePromptSuggestion: "", slides: [], status: "pending" }),
+                                            slides
+                                          }
+                                        };
+                                        handleReviewSubmission("social", "edited", customPayload, "instagramCarousel");
+                                      }}
+                                      onGenerateImage={async (prompt, slideIndex) => {
+                                        setGeneratingSocialImageKey(`${selectedRun.id}-instagramCarousel`);
+                                        try {
+                                          const res = await fetch("/api/portal/content-pipeline/generate-image", {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ prompt, runId: selectedRun.run_id }),
+                                          });
+                                          const data = await res.json();
+                                          if (data.success && data.url) {
+                                            const latestSocial = selectedRun.social_drafts[0];
+                                            const slides = [...(latestSocial.instagramCarousel?.slides || [])];
+                                            if (slideIndex !== undefined && slides[slideIndex]) {
+                                              slides[slideIndex] = { ...slides[slideIndex], imageUrl: data.url };
+                                            }
+                                            const customPayload = {
+                                              ...latestSocial,
+                                              instagramCarousel: {
+                                                ...(latestSocial.instagramCarousel || { caption: "", imagePromptSuggestion: "", slides: [], status: "pending" }),
+                                                slides
+                                              }
+                                            };
+                                            await handleReviewSubmission("social", "edited", customPayload, "instagramCarousel");
+                                          }
+                                        } catch (err) {
+                                          console.error(err);
+                                        } finally {
+                                          setGeneratingSocialImageKey("");
+                                        }
+                                      }}
+                                      isGeneratingImage={generatingSocialImageKey === `${selectedRun.id}-instagramCarousel`}
+                                      showManualUploadGuide
+                                    />
+                                  </div>
+                                )}
+
+                                {activeSocialSubTab === "reel" && (
+                                  <div className="max-w-xl mx-auto animate-fadeIn">
+                                    <PlatformCard
+                                      platformKey="instagramReel"
+                                      platformLabel="Instagram Reel Script"
+                                      icon={<FaInstagram className="w-4 h-4 text-[#E1306C]" />}
+                                      color=""
+                                      borderColor=""
+                                      caption={selectedRun.social_drafts[0]?.instagramReel?.caption || ""}
+                                      status={selectedRun.social_drafts[0]?.instagramReel?.status || "pending"}
+                                      isPublished={selectedRun.status === "published"}
+                                      isExternalEditing={editingPlatform === "instagramReel"}
+                                      onCancelExternalEdit={() => setEditingPlatform(null)}
+                                      onApprove={() => handleReviewSubmission("social", "approved", undefined, "instagramReel")}
+                                      onSaveEdit={(newScript) =>
+                                        handleReviewSubmission("social", "edited", { script: newScript }, "instagramReel")
+                                      }
+                                      onRequestRevision={() => {
+                                        setRevisionStage("social");
+                                        setRevisionPlatform("instagramReel");
+                                        setIsRevisionModalOpen(true);
+                                      }}
+                                      onCopy={() =>
+                                        handleCopyToClipboard(
+                                          selectedRun.social_drafts[0]?.instagramReel?.script || "",
+                                          "reel"
+                                        )
+                                      }
+                                      isCopied={copiedKey === "reel"}
+                                      script={selectedRun.social_drafts[0]?.instagramReel?.script}
+                                      showManualUploadGuide
+                                    />
+                                  </div>
+                                )}
+
+                                {activeSocialSubTab === "brandkit" && (
+                                  <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-6 shadow-lg animate-fadeIn space-y-6 text-left">
+                                    <div>
+                                      <h4 className="font-serif text-sm font-bold text-white mb-2">LKC Branded Template Backgrounds</h4>
+                                      <p className="text-xs text-white/70 leading-relaxed">
+                                        Download these premium, pre-styled background templates with clinic margins and watermarks. Use them as background layers in Canva or directly in social media apps to overlay the generated caption text.
+                                      </p>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                      <div className="border border-white/10 bg-primary-navy/50 p-4 rounded-xl flex flex-col justify-between items-center space-y-4">
+                                        <span className="text-xs font-semibold text-clinical-teal font-sans">Square Template (1:1 Posts / Carousels)</span>
+                                        <div className="w-32 h-32 relative border border-white/20 rounded shadow-md overflow-hidden bg-slate-900 flex items-center justify-center">
+                                          <img src="/images/templates/square-post-template.png" className="object-cover w-full h-full" alt="Square Post Template" />
+                                        </div>
+                                        <button
+                                          onClick={() => downloadImageFile("/images/templates/square-post-template.png", "lkc-square-post-template")}
+                                          className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-lg font-medium cursor-pointer transition-colors"
+                                        >
+                                          ⬇ Download Square PNG
+                                        </button>
+                                      </div>
+                                      
+                                      <div className="border border-white/10 bg-primary-navy/50 p-4 rounded-xl flex flex-col justify-between items-center space-y-4">
+                                        <span className="text-xs font-semibold text-clinical-teal font-sans">Vertical Template (9:16 Stories / Reels)</span>
+                                        <div className="w-20 h-32 relative border border-white/20 rounded shadow-md overflow-hidden bg-slate-900 flex items-center justify-center">
+                                          <img src="/images/templates/vertical-story-template.png" className="object-cover w-full h-full" alt="Vertical Story Template" />
+                                        </div>
+                                        <button
+                                          onClick={() => downloadImageFile("/images/templates/vertical-story-template.png", "lkc-vertical-story-template")}
+                                          className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-lg font-medium cursor-pointer transition-colors"
+                                        >
+                                          ⬇ Download Vertical PNG
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    {/* Highlights Strategy */}
+                                    <div className="bg-primary-navy/40 p-4 rounded-xl border border-white/5 space-y-3">
+                                      <span className="text-clinical-teal uppercase tracking-wider text-[10px] font-bold block">✨ Instagram Highlights Guide</span>
+                                      <p className="text-[11px] text-white/80 leading-relaxed">
+                                        Organise your stories into permanent, categorised profiles on your Instagram profile page:
+                                      </p>
+                                      <ul className="list-disc pl-4 text-[11px] text-white/70 space-y-2">
+                                        <li><strong>🏥 The Clinic:</strong> Clinical credentials, GMC Specialists registers, consulting locations, and photos of consulting rooms.</li>
+                                        <li><strong>🦵 Knee Joint Care:</strong> Educational guides explaining knee arthritis, meniscus tears, ACL injuries, and loose bodies.</li>
+                                        <li><strong>💉 Injections:</strong> Explanatory guides on Corticosteroid, Hyaluronic Acid, PRP, and Arthrosamid treatments.</li>
+                                        <li><strong>⭐ Testimonials:</strong> Patient review snippets (Google and iWantGreatCare testimonials).</li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                )}
+                              </>
                             ) : (
                               <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-6 text-xs text-white/60">
                                 Social captions are not available for this run yet.
                               </div>
                             )}
-                          </>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -3896,7 +4992,9 @@ function FormattedContent({
   generatingPlaceholderId,
   pendingPreview,
   onGenerateImage,
-  onResetPlaceholder
+  onResetPlaceholder,
+  onRemovePlaceholder,
+  onRemoveResolvedImage
 }: {
   body?: string;
   body_markdown?: string;
@@ -3907,6 +5005,8 @@ function FormattedContent({
   pendingPreview?: { placeholderId: string; url: string } | null;
   onGenerateImage?: (placeholderId: string, label: string, isFeatured?: boolean) => void;
   onResetPlaceholder?: (altText: string, srcUrl: string) => void;
+  onRemovePlaceholder?: (placeholderId: string, label: string, isFeatured?: boolean) => void;
+  onRemoveResolvedImage?: (altText: string, srcUrl: string) => void;
 }) {
   const content = cleanHeadingBugs(body_markdown || body || "");
   if (!content) return null;
@@ -4019,6 +5119,14 @@ function FormattedContent({
                           >
                             {isGeneratingThis ? "Regenerating…" : "🔄 Regenerate"}
                           </button>
+                          {onRemovePlaceholder && (
+                            <button
+                              onClick={() => onRemovePlaceholder(placeholderId, label, isFeatured)}
+                              className="border border-rose-500/40 hover:border-rose-500 text-rose-400 hover:bg-rose-500/10 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium cursor-pointer"
+                            >
+                              🗑️ Delete Placeholder
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -4083,6 +5191,14 @@ function FormattedContent({
                             )}
                           </button>
                         )}
+                        {onRemovePlaceholder && (
+                          <button
+                            onClick={() => onRemovePlaceholder(placeholderId, label, isFeatured)}
+                            className="border border-rose-500/40 hover:border-rose-500 text-rose-400 hover:bg-rose-500/10 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium cursor-pointer"
+                          >
+                            🗑️ Delete Placeholder
+                          </button>
+                        )}
                       </div>
                     )
                   )}
@@ -4119,13 +5235,21 @@ function FormattedContent({
                   </span>
                 )}
                 {hasChangePermission && onResetPlaceholder && src && typeof src === "string" && (
-                  <div className="mt-2 flex justify-center">
+                  <div className="mt-2 flex justify-center gap-2">
                     <button
                       onClick={() => onResetPlaceholder(alt || "", src as string)}
                       className="bg-amber-500 hover:bg-amber-600 text-deep-navy text-[9px] font-semibold px-2.5 py-1 rounded transition-colors shadow-md flex items-center gap-1 cursor-pointer"
                     >
                       🔄 Change Image
                     </button>
+                    {onRemoveResolvedImage && (
+                      <button
+                        onClick={() => onRemoveResolvedImage(alt || "", src as string)}
+                        className="bg-rose-600 hover:bg-rose-700 text-white text-[9px] font-semibold px-2.5 py-1 rounded transition-colors shadow-md flex items-center gap-1 cursor-pointer"
+                      >
+                        🗑️ Delete Image
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -4197,8 +5321,10 @@ function PlatformCard({
   onGenerateImage,
   isGeneratingImage,
   showManualUploadGuide,
+  slides,
+  script,
 }: {
-  platformKey: "instagram" | "facebook" | "linkedin";
+  platformKey: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel";
   platformLabel: string;
   icon: React.ReactNode;
   color: string;
@@ -4214,15 +5340,24 @@ function PlatformCard({
   onRequestRevision: () => void;
   onCopy: () => void;
   isCopied: boolean;
-  onAttachImage?: (url: string) => void;
+  onAttachImage?: (url: string, slideIndex?: number) => void;
   imagePromptSuggestion?: string;
-  onGenerateImage?: (prompt: string) => void;
+  onGenerateImage?: (prompt: string, slideIndex?: number) => void;
   isGeneratingImage?: boolean;
   showManualUploadGuide?: boolean;
+  slides?: Array<{ slideNumber: number; text: string; imagePromptSuggestion: string; imageUrl?: string }>;
+  script?: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(caption);
   const isCardEditing = isEditing || isExternalEditing;
+
+  const isStory = platformKey === "instagramStory";
+  const isCarousel = platformKey === "instagramCarousel";
+  const isReel = platformKey === "instagramReel";
+
+  const [activeSlide, setActiveSlide] = useState(0);
+  const currentSlide = slides && slides.length > 0 ? slides[activeSlide] : null;
 
   useEffect(() => {
     setEditedText(caption);
@@ -4253,23 +5388,51 @@ function PlatformCard({
           </span>
         </div>
 
-        {/* Attached Image or Placeholder Banner */}
-        {attachedImageUrl ? (
-          <div className="space-y-2">
-            <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md group">
-              <img
-                src={attachedImageUrl}
-                alt={`${platformLabel} Visual Asset`}
-                className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300 animate-fadeIn"
-              />
-              <div className="absolute bottom-2 right-2 bg-primary-navy/90 backdrop-blur text-[10px] text-clinical-teal font-mono px-2 py-0.5 rounded border border-white/10">
-                📷 Attached Media Asset
-              </div>
+        {/* Custom Formats Renders */}
+        {isStory && (
+          <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md bg-gradient-to-b from-slate-900 to-slate-950 w-full aspect-[9/16] max-w-[210px] mx-auto group">
+            <img
+              src={attachedImageUrl || "/images/templates/vertical-story-template.png"}
+              alt="Story Preview Background"
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+            <div className="absolute inset-0 bg-black/40" />
+            <div className="absolute bottom-6 left-2 right-2 bg-black/70 backdrop-blur-md border border-white/10 p-2.5 rounded-lg text-center shadow-lg">
+              <p className="text-[10px] font-sans text-white/90 font-medium leading-relaxed">
+                {caption || "New update from Lincolnshire Knee Clinic"}
+              </p>
             </div>
+            <div className="absolute top-2 left-2 bg-primary-navy/95 backdrop-blur text-[9px] text-clinical-teal font-mono px-2 py-0.5 rounded border border-white/10">
+              📱 Story Preview
+            </div>
+          </div>
+        )}
+
+        {isCarousel && currentSlide && (
+          <div className="space-y-3 bg-primary-navy/50 p-4 rounded-xl border border-white/5 animate-fadeIn">
+            <div className="flex justify-between items-center text-[10px] text-[#A8C0CC]">
+              <span className="font-semibold text-clinical-teal">Slide {activeSlide + 1} of {slides!.length}</span>
+              <span className="text-white/40 font-mono">Interactive Draft</span>
+            </div>
+            
+            {currentSlide.imageUrl ? (
+              <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md group">
+                <img
+                  src={currentSlide.imageUrl}
+                  alt={`Slide ${activeSlide + 1} Visual`}
+                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+            ) : (
+              <div className="bg-primary-navy/70 border border-dashed border-white/20 rounded-lg p-3 text-center text-[10px] text-white/40 italic">
+                No image attached for Slide {activeSlide + 1}
+              </div>
+            )}
+            
             {!isPublished && (
               <div className="flex justify-end gap-1.5">
                 <label className="bg-white/10 hover:bg-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors cursor-pointer font-medium border border-white/10">
-                  Change Image
+                  Upload Slide
                   <input
                     type="file"
                     accept="image/*"
@@ -4285,29 +5448,18 @@ function PlatformCard({
                         });
                         const data = await res.json();
                         if (data.success && data.url) {
-                          onAttachImage?.(data.url);
+                          onAttachImage?.(data.url, activeSlide);
                         }
                       } catch (err) {
-                        console.error("Platform image upload failed:", err);
+                        console.error("Slide image upload failed:", err);
                       }
                     }}
                     className="hidden"
                   />
                 </label>
-                <button
-                  onClick={() => {
-                    const url = prompt(`Enter direct image URL for ${platformLabel}:`);
-                    if (url) {
-                      onAttachImage?.(url);
-                    }
-                  }}
-                  className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer"
-                >
-                  Paste URL
-                </button>
                 {onGenerateImage && (
                   <button
-                    onClick={() => onGenerateImage(imagePromptSuggestion || `A representative image for a ${platformLabel} post`)}
+                    onClick={() => onGenerateImage(currentSlide.imagePromptSuggestion || `Visual card for slide ${activeSlide + 1}`, activeSlide)}
                     disabled={isGeneratingImage}
                     className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
                   >
@@ -4316,71 +5468,182 @@ function PlatformCard({
                 )}
               </div>
             )}
-            {showManualUploadGuide && (
-              <div className="flex justify-end">
-                <button
-                  onClick={() => downloadImageFile(attachedImageUrl, `${platformKey}-post-image`)}
-                  className="text-[9px] text-clinical-teal hover:underline cursor-pointer font-medium"
-                >
-                  ⬇ Download Image
-                </button>
+
+            <div className="text-[10px] text-white/60 italic bg-primary-navy/80 p-2 rounded border border-white/5 leading-relaxed">
+              <strong>Visual Concept:</strong> {currentSlide.imagePromptSuggestion}
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-clinical-teal">Slide Text Overlay:</span>
+              <div className="bg-primary-navy border border-white/10 p-2.5 rounded-lg text-xs text-white font-sans leading-normal font-semibold text-center select-all cursor-pointer" title="Click to select all">
+                "{currentSlide.text}"
               </div>
-            )}
+            </div>
+
+            <div className="flex justify-between items-center pt-2">
+              <button
+                disabled={activeSlide === 0}
+                onClick={() => setActiveSlide(prev => Math.max(0, prev - 1))}
+                className="bg-white/5 hover:bg-white/10 text-white text-[10px] px-3 py-1 rounded disabled:opacity-30 cursor-pointer"
+              >
+                ◀ Prev
+              </button>
+              <button
+                disabled={activeSlide === slides!.length - 1}
+                onClick={() => setActiveSlide(prev => Math.min(slides!.length - 1, prev + 1))}
+                className="bg-white/5 hover:bg-white/10 text-white text-[10px] px-3 py-1 rounded disabled:opacity-30 cursor-pointer"
+              >
+                Next ▶
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="bg-primary-navy/70 border border-dashed border-white/20 rounded-lg p-4 text-center space-y-2">
-            <div className="text-[10px] text-white/50">No platform-specific image attached</div>
-            {!isPublished && (
-              <div className="flex items-center justify-center gap-1.5">
-                <label className="bg-clinical-teal hover:bg-clinical-teal-hover text-deep-navy text-[9px] px-2.5 py-1 rounded-lg cursor-pointer transition-colors font-medium">
-                  Upload Image
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      try {
-                        const formData = new FormData();
-                        formData.append("file", file);
-                        const res = await fetch("/api/portal/content-pipeline/upload", {
-                          method: "POST",
-                          body: formData,
-                        });
-                        const data = await res.json();
-                        if (data.success && data.url) {
-                          onAttachImage?.(data.url);
-                        }
-                      } catch (err) {
-                        console.error("Platform image upload failed:", err);
-                      }
-                    }}
-                    className="hidden"
+        )}
+
+        {isReel && (
+          <div className="space-y-3 bg-primary-navy/50 p-4 rounded-xl border border-white/5 text-xs animate-fadeIn">
+            <div className="flex items-center gap-1.5 text-clinical-teal uppercase tracking-wider text-[10px] font-bold">
+              <span>🎬</span>
+              <span>Reel script outline</span>
+            </div>
+            
+            <div className="bg-primary-navy p-3 rounded-lg border border-white/10 text-[11px] text-white/80 leading-relaxed font-sans whitespace-pre-wrap max-h-60 overflow-y-auto font-mono">
+              {script || caption || "No script outline available."}
+            </div>
+          </div>
+        )}
+
+        {/* Standard media attachments for standard platforms and stories */}
+        {!isCarousel && !isReel && (
+          <>
+            {attachedImageUrl ? (
+              <div className="space-y-2">
+                <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md group">
+                  <img
+                    src={attachedImageUrl}
+                    alt={`${platformLabel} Visual Asset`}
+                    className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300 animate-fadeIn"
                   />
-                </label>
-                <button
-                  onClick={() => {
-                    const url = prompt(`Enter direct image URL for ${platformLabel}:`);
-                    if (url) {
-                      onAttachImage?.(url);
-                    }
-                  }}
-                  className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1 rounded-lg transition-colors font-medium cursor-pointer"
-                >
-                  Paste URL
-                </button>
-                {onGenerateImage && (
-                  <button
-                    onClick={() => onGenerateImage(imagePromptSuggestion || `A representative image for a ${platformLabel} post`)}
-                    disabled={isGeneratingImage}
-                    className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1 rounded-lg transition-colors font-medium cursor-pointer disabled:opacity-50"
-                  >
-                    {isGeneratingImage ? "Generating…" : "✨ Generate"}
-                  </button>
+                  <div className="absolute bottom-2 right-2 bg-primary-navy/90 backdrop-blur text-[10px] text-clinical-teal font-mono px-2 py-0.5 rounded border border-white/10">
+                    📷 Attached Media Asset
+                  </div>
+                </div>
+                {!isPublished && (
+                  <div className="flex justify-end gap-1.5">
+                    <label className="bg-white/10 hover:bg-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors cursor-pointer font-medium border border-white/10">
+                      Change Image
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            const formData = new FormData();
+                            formData.append("file", file);
+                            const res = await fetch("/api/portal/content-pipeline/upload", {
+                              method: "POST",
+                              body: formData,
+                            });
+                            const data = await res.json();
+                            if (data.success && data.url) {
+                              onAttachImage?.(data.url);
+                            }
+                          } catch (err) {
+                            console.error("Platform image upload failed:", err);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                    <button
+                      onClick={() => {
+                        const url = prompt(`Enter direct image URL for ${platformLabel}:`);
+                        if (url) {
+                          onAttachImage?.(url);
+                        }
+                      }}
+                      className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer"
+                    >
+                      Paste URL
+                    </button>
+                    {onGenerateImage && (
+                      <button
+                        onClick={() => onGenerateImage(imagePromptSuggestion || `A representative image for a ${platformLabel} post`)}
+                        disabled={isGeneratingImage}
+                        className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
+                      >
+                        {isGeneratingImage ? "Generating…" : "✨ Generate"}
+                      </button>
+                    )}
+                  </div>
+                )}
+                {showManualUploadGuide && (
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => downloadImageFile(attachedImageUrl, `${platformKey}-post-image`)}
+                      className="text-[9px] text-clinical-teal hover:underline cursor-pointer font-medium"
+                    >
+                      ⬇ Download Image
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-primary-navy/70 border border-dashed border-white/20 rounded-lg p-4 text-center space-y-2">
+                <div className="text-[10px] text-white/50">No platform-specific image attached</div>
+                {!isPublished && (
+                  <div className="flex items-center justify-center gap-1.5">
+                    <label className="bg-clinical-teal hover:bg-clinical-teal-hover text-deep-navy text-[9px] px-2.5 py-1 rounded-lg cursor-pointer transition-colors font-medium">
+                      Upload Image
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            const formData = new FormData();
+                            formData.append("file", file);
+                            const res = await fetch("/api/portal/content-pipeline/upload", {
+                              method: "POST",
+                              body: formData,
+                            });
+                            const data = await res.json();
+                            if (data.success && data.url) {
+                              onAttachImage?.(data.url);
+                            }
+                          } catch (err) {
+                            console.error("Platform image upload failed:", err);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                    <button
+                      onClick={() => {
+                        const url = prompt(`Enter direct image URL for ${platformLabel}:`);
+                        if (url) {
+                          onAttachImage?.(url);
+                        }
+                      }}
+                      className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1 rounded-lg transition-colors font-medium cursor-pointer"
+                    >
+                      Paste URL
+                    </button>
+                    {onGenerateImage && (
+                      <button
+                        onClick={() => onGenerateImage(imagePromptSuggestion || `A representative image for a ${platformLabel} post`)}
+                        disabled={isGeneratingImage}
+                        className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1 rounded-lg transition-colors font-medium cursor-pointer disabled:opacity-50"
+                      >
+                        {isGeneratingImage ? "Generating…" : "✨ Generate"}
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             )}
-          </div>
+          </>
         )}
 
         {isCardEditing ? (
@@ -4388,7 +5651,7 @@ function PlatformCard({
             <textarea
               value={editedText}
               onChange={(e) => setEditedText(e.target.value)}
-              rows={6}
+              rows={isStory ? 3 : 6}
               className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-3 text-xs focus:border-clinical-teal focus:outline-none leading-relaxed font-sans"
             />
             <div className="flex justify-end gap-2">
@@ -4401,6 +5664,18 @@ function PlatformCard({
               >
                 Cancel
               </button>
+              {!isPublished && (
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                    onCancelExternalEdit?.();
+                    onRequestRevision();
+                  }}
+                  className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[11px] px-3 py-1 rounded-lg transition-colors cursor-pointer"
+                >
+                  🔄 Revision
+                </button>
+              )}
               <button
                 onClick={() => {
                   onSaveEdit(editedText);
@@ -4414,9 +5689,11 @@ function PlatformCard({
             </div>
           </div>
         ) : (
-          <div className="bg-primary-navy/80 p-3.5 rounded-lg border border-white/10 text-xs text-white/80 font-sans leading-relaxed whitespace-pre-wrap">
-            {caption || "No caption generated yet."}
-          </div>
+          !isCarousel && !isReel && (
+            <div className="bg-primary-navy/80 p-3.5 rounded-lg border border-white/10 text-xs text-white/80 font-sans leading-relaxed whitespace-pre-wrap">
+              {caption || "No content generated yet."}
+            </div>
+          )
         )}
       </div>
 
@@ -4425,7 +5702,7 @@ function PlatformCard({
           onClick={onCopy}
           className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
         >
-          <span>{isCopied ? "✓ Copied!" : "📋 Copy"}</span>
+          <span>{isCopied ? "✓ Copied!" : "📋 Copy Template Text"}</span>
         </button>
 
         {status !== "approved" && !isPublished && !isCardEditing && (
@@ -4453,16 +5730,38 @@ function PlatformCard({
       </div>
 
       {showManualUploadGuide && status === "approved" && (
-        <div className="bg-primary-navy/60 border border-clinical-teal/20 rounded-lg p-3 space-y-1.5">
+        <div className="bg-primary-navy/60 border border-clinical-teal/20 rounded-lg p-3 space-y-1.5 text-left">
           <span className="text-[10px] font-bold uppercase tracking-wider text-clinical-teal">
             Ready to post — do it manually in {platformLabel}
           </span>
           <ol className="text-[10px] text-white/70 leading-relaxed list-decimal list-inside space-y-0.5">
-            <li>Click "⬇ Download Image" above to save the picture to your device.</li>
-            <li>Click "📋 Copy" above to copy the caption text.</li>
-            <li>Open the {platformLabel} app (or website).</li>
-            <li>Start a new post, add the downloaded image, then paste the caption.</li>
-            <li>Review it looks right, then publish.</li>
+            {isCarousel ? (
+              <>
+                <li>Click slide navigation buttons to copy and compile your slides.</li>
+                <li>Ensure you download and save each slide image assets to your device.</li>
+                <li>Create a Carousel (multiple photos) post in Instagram.</li>
+              </>
+            ) : isStory ? (
+              <>
+                <li>Download the vertical Story background image to your phone/device.</li>
+                <li>Copy the overlay caption text to your clipboard.</li>
+                <li>Add a new Story in Instagram, select the background image, and overlay the text.</li>
+              </>
+            ) : isReel ? (
+              <>
+                <li>Copy the Reel voiceover and visual outline script.</li>
+                <li>Record your video using the talking points and visual action directions.</li>
+                <li>Upload the video clip to Instagram Reels with the recommended cover thumbnail.</li>
+              </>
+            ) : (
+              <>
+                <li>Click "⬇ Download Image" above to save the picture to your device.</li>
+                <li>Click "📋 Copy" above to copy the caption text.</li>
+                <li>Open the {platformLabel} app (or website).</li>
+                <li>Start a new post, add the downloaded image, then paste the caption.</li>
+                <li>Review it looks right, then publish.</li>
+              </>
+            )}
           </ol>
         </div>
       )}

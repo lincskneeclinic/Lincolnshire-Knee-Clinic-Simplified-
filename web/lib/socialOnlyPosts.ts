@@ -10,6 +10,7 @@ export interface SocialOnlyPlatformPost {
   imagePromptSuggestion?: string;
   imageUrl?: string;
   status: "pending" | "approved";
+  script?: string;
 }
 
 export interface SocialOnlyPost {
@@ -18,6 +19,19 @@ export interface SocialOnlyPost {
   instagram: SocialOnlyPlatformPost;
   facebook: SocialOnlyPlatformPost;
   linkedin: SocialOnlyPlatformPost;
+  instagramStory?: SocialOnlyPlatformPost;
+  instagramCarousel?: {
+    caption: string;
+    imagePromptSuggestion: string;
+    slides: Array<{ slideNumber: number; text: string; imagePromptSuggestion: string; imageUrl?: string }>;
+    status: "pending" | "approved";
+  };
+  instagramReel?: {
+    caption: string;
+    imagePromptSuggestion: string;
+    script: string;
+    status: "pending" | "approved";
+  };
   created_at: string;
   updated_at: string;
 }
@@ -36,7 +50,14 @@ export async function getSocialOnlyPost(id: string): Promise<SocialOnlyPost | nu
 
 export async function createSocialOnlyPost(
   topic: string,
-  captions: { instagram: { caption: string; imagePromptSuggestion?: string }; facebook: { caption: string; imagePromptSuggestion?: string }; linkedin: { caption: string; imagePromptSuggestion?: string } }
+  captions: {
+    instagram: { caption: string; imagePromptSuggestion?: string };
+    facebook: { caption: string; imagePromptSuggestion?: string };
+    linkedin: { caption: string; imagePromptSuggestion?: string };
+    instagramStory?: { caption: string; imagePromptSuggestion?: string };
+    instagramCarousel?: { caption: string; imagePromptSuggestion: string; slides?: any[] };
+    instagramReel?: { caption: string; imagePromptSuggestion: string; script?: string };
+  }
 ): Promise<SocialOnlyPost> {
   const posts = await getStoreValue<Record<string, SocialOnlyPost>>(SOCIAL_ONLY_POSTS_KEY, {});
   const now = new Date().toISOString();
@@ -46,6 +67,19 @@ export async function createSocialOnlyPost(
     instagram: { ...captions.instagram, status: "pending" },
     facebook: { ...captions.facebook, status: "pending" },
     linkedin: { ...captions.linkedin, status: "pending" },
+    instagramStory: captions.instagramStory ? { ...captions.instagramStory, status: "pending" } : undefined,
+    instagramCarousel: captions.instagramCarousel ? {
+      caption: captions.instagramCarousel.caption,
+      imagePromptSuggestion: captions.instagramCarousel.imagePromptSuggestion,
+      slides: captions.instagramCarousel.slides || [],
+      status: "pending"
+    } : undefined,
+    instagramReel: captions.instagramReel ? {
+      caption: captions.instagramReel.caption,
+      imagePromptSuggestion: captions.instagramReel.imagePromptSuggestion,
+      script: captions.instagramReel.script || "",
+      status: "pending"
+    } : undefined,
     created_at: now,
     updated_at: now,
   };
