@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { blogArticles } from "@/data/articles";
-import { getRemovedArticleSlugs } from "@/lib/educationArticles";
+import { getRemovedArticles, getArticleOverrides, getArticleViewCounts } from "@/lib/educationArticles";
 
 export async function GET() {
   try {
-    const removedSlugs = await getRemovedArticleSlugs();
+    const [removedArticles, overrides, viewCounts] = await Promise.all([
+      getRemovedArticles(),
+      getArticleOverrides(),
+      getArticleViewCounts(),
+    ]);
 
     const articles = Object.values(blogArticles)
       .map((a) => ({
@@ -14,7 +18,10 @@ export async function GET() {
         categoryLabel: a.categoryLabel,
         image: a.image,
         datePublished: a.datePublished,
-        removed: removedSlugs.includes(a.slug),
+        removed: Boolean(removedArticles[a.slug]),
+        removedAt: removedArticles[a.slug] || null,
+        updatedAt: overrides[a.slug]?.updatedAt || null,
+        views: viewCounts[a.slug] || 0,
       }))
       .sort((a, b) => (a.removed === b.removed ? a.title.localeCompare(b.title) : a.removed ? 1 : -1));
 

@@ -8,9 +8,17 @@ import { blogArticles } from "@/data/articles";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import Link from "next/link";
 import { SITE_URL } from "@/lib/site";
-import { getRemovedArticleSlugs, getArticleOverride, ArticleOverride } from "@/lib/educationArticles";
+import { getRemovedArticleSlugs, getArticleOverride, getArticleViewCounts, ArticleOverride } from "@/lib/educationArticles";
+import { ArticleViewCounter } from "@/components/ArticleViewCounter";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+
+// Guards against rendering "Invalid Date" if an older article's datePublished string
+// isn't in a format Date can parse — falls back to showing the raw string instead.
+function formatDateSafe(value: string): string {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString();
+}
 
 // Articles can be removed from the Education Hub via the business dashboard without a
 // redeploy — this page re-checks the removed-article list every `revalidate` seconds
@@ -100,6 +108,9 @@ export default async function ArticlePage({ params }: PageProps) {
   const displayDescription = override?.excerpt || data.description;
   const displayImage = override?.featuredImage || data.image;
 
+  const viewCounts = await getArticleViewCounts();
+  const initialViews = viewCounts[article] || 0;
+
   const pageUrl = `${SITE_URL}/education/${category}/${article}`;
 
   const jsonLd = {
@@ -185,11 +196,15 @@ export default async function ArticlePage({ params }: PageProps) {
           </div>
           <span className="text-border-clinical/80 hidden sm:inline">&bull;</span>
           <div>
-            <span className="text-text-muted">{override ? "Updated:" : "Published:"}</span> {override?.updatedAt ? new Date(override.updatedAt).toLocaleDateString() : data.datePublished}
+            <span className="text-text-muted">{override ? "Updated:" : "Published:"}</span> {override?.updatedAt ? formatDateSafe(override.updatedAt) : formatDateSafe(data.datePublished)}
           </div>
           <span className="text-border-clinical/80 hidden sm:inline">&bull;</span>
           <div>
             <span className="text-text-muted">Read Time:</span> {data.readTime}
+          </div>
+          <span className="text-border-clinical/80 hidden sm:inline">&bull;</span>
+          <div>
+            <span className="text-text-muted">Views:</span> <ArticleViewCounter slug={article} initialViews={initialViews} />
           </div>
           <span className="text-border-clinical/80 hidden sm:inline">&bull;</span>
           <div className="text-status-success uppercase tracking-wider text-[10px] bg-status-success/5 px-2 py-0.5 rounded-full font-bold">

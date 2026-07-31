@@ -52,6 +52,16 @@ interface EducationArticleSummary {
   image?: string;
   datePublished: string;
   removed: boolean;
+  removedAt: string | null;
+  updatedAt: string | null;
+  views: number;
+}
+
+// Guards against rendering "Invalid Date" if an article's stored date string isn't in
+// a format Date can parse — falls back to showing the raw string instead.
+function formatDateSafe(value: string): string {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString();
 }
 
 function getRenderableImageUrl(suggestedImages?: any[]): string | null {
@@ -574,6 +584,9 @@ export default function BusinessDashboardPage() {
   // preview (not yet inserted into the body) so the user can Accept or Regenerate
   // before committing — Accept reuses handleAttachPlaceholderImage above.
   const handleGenerateImage = async (placeholderId: string, label: string, isFeatured?: boolean) => {
+    if (livePreviewRef.current) {
+      pendingScrollRestoreRef.current = livePreviewRef.current.scrollTop;
+    }
     setGeneratingImagePlaceholderId(placeholderId);
     try {
       const res = await fetch("/api/portal/content-pipeline/generate-image", {
@@ -583,6 +596,9 @@ export default function BusinessDashboardPage() {
       });
       const data = await res.json();
       if (data.success && data.url) {
+        if (livePreviewRef.current) {
+          pendingScrollRestoreRef.current = livePreviewRef.current.scrollTop;
+        }
         setGeneratedImagePreview({ placeholderId, url: data.url });
       } else {
         alert(`Image generation failed: ${data.error || "Unknown error"}`);
@@ -591,6 +607,9 @@ export default function BusinessDashboardPage() {
       console.error("AI image generation failed:", err);
       alert("Image generation failed. Please check your connection and try again.");
     } finally {
+      if (livePreviewRef.current) {
+        pendingScrollRestoreRef.current = livePreviewRef.current.scrollTop;
+      }
       setGeneratingImagePlaceholderId(null);
     }
   };
@@ -2057,6 +2076,14 @@ export default function BusinessDashboardPage() {
                           )}
                         </div>
                         <h4 className="text-xs font-bold text-white leading-snug">{article.title}</h4>
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-white/50 font-medium">
+                          <span>Created: {formatDateSafe(article.datePublished)}</span>
+                          {article.updatedAt && <span>Last Updated: {formatDateSafe(article.updatedAt)}</span>}
+                          {article.removedAt && (
+                            <span className="text-status-error/80">Removed: {formatDateSafe(article.removedAt)}</span>
+                          )}
+                          <span>{article.views.toLocaleString()} views</span>
+                        </div>
                         <div className="flex justify-end items-center gap-2 pt-1 flex-wrap">
                           {!article.removed && (
                             <button
