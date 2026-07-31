@@ -22,9 +22,10 @@ export async function POST(
       );
     }
 
-    if (platform && !["instagram", "facebook", "linkedin"].includes(platform)) {
+    const validPlatforms = ["instagram", "facebook", "linkedin", "instagramStory", "instagramCarousel", "instagramReel"];
+    if (platform && !validPlatforms.includes(platform)) {
       return NextResponse.json(
-        { success: false, error: "Invalid 'platform'. Must be 'instagram', 'facebook', or 'linkedin'." },
+        { success: false, error: `Invalid 'platform'. Must be one of: ${validPlatforms.join(", ")}.` },
         { status: 400 }
       );
     }

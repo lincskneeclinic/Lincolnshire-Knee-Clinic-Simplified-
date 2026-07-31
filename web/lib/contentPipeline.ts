@@ -6,6 +6,7 @@ import { sendContentPipelineNotificationEmail } from "./graphMail";
 import { performResearchProcess } from "./researchAgent";
 import { writeBlogDraft } from "./blogWriterAgent";
 import { linkRunToArticle, getArticleSlugForRun, setArticleOverride } from "./educationArticles";
+import { writeSocialCaptions } from "./socialWriterAgent";
 
 export type RunStatus =
   | "researching"
@@ -865,6 +866,34 @@ export async function submitPipelineReview(
       }
 
       if (!run.social_drafts || run.social_drafts.length === 0) {
+        // Instagram/Facebook/LinkedIn stay as quick editable templates (matches existing
+        // reviewed behavior). Story/Carousel/Reel need real AI-generated content — they
+        // used to be a single hardcoded placeholder slide/script, which made those tabs
+        // look broken (one repeated generic slide instead of an actual multi-slide
+        // carousel or script). Reuse the same writer the standalone Social Posts feature
+        // already calls for these three formats.
+        let aiFormats: Pick<SocialDraftVersion, "instagramStory" | "instagramCarousel" | "instagramReel"> | null = null;
+        try {
+          const generated = await writeSocialCaptions(run.topic);
+          aiFormats = {
+            instagramStory: { caption: generated.instagramStory.caption, status: "pending" },
+            instagramCarousel: {
+              caption: generated.instagramCarousel.caption,
+              imagePromptSuggestion: generated.instagramCarousel.imagePromptSuggestion,
+              slides: generated.instagramCarousel.slides || [],
+              status: "pending"
+            },
+            instagramReel: {
+              caption: generated.instagramReel.caption,
+              imagePromptSuggestion: generated.instagramReel.imagePromptSuggestion,
+              script: generated.instagramReel.script || "",
+              status: "pending"
+            },
+          };
+        } catch (err) {
+          console.error("Failed to AI-generate Story/Carousel/Reel content, falling back to a single placeholder slide:", err);
+        }
+
         run.social_drafts = [
           {
             version: 1,
@@ -880,11 +909,11 @@ export async function submitPipelineReview(
               caption: `Read our latest clinical update for patients and general practitioners: "${run.blog_drafts[0]?.title || run.topic}". Highlighting evidence-based treatment pathways and rehabilitation protocols.`,
               status: "pending"
             },
-            instagramStory: {
+            instagramStory: aiFormats?.instagramStory || {
               caption: `✨ New Article: ${run.blog_drafts[0]?.title || run.topic}! Tap to read the full guide.`,
               status: "pending"
             },
-            instagramCarousel: {
+            instagramCarousel: aiFormats?.instagramCarousel || {
               caption: `Swipe through to learn about "${run.topic}"!`,
               imagePromptSuggestion: `Carousel slides summarizing ${run.topic}`,
               slides: [
@@ -892,7 +921,7 @@ export async function submitPipelineReview(
               ],
               status: "pending"
             },
-            instagramReel: {
+            instagramReel: aiFormats?.instagramReel || {
               caption: `Watch our quick guide on "${run.topic}"!`,
               imagePromptSuggestion: `Reel visual thumbnail for "${run.topic}"`,
               script: `Hook: Let's talk about ${run.topic}!\n\nVoiceover: Here is what you need to know...`,
@@ -1121,4 +1150,87 @@ export async function submitPipelineReview(
   writeReviewsToDisk(reviews);
 
   return { success: true, run, review: newReview };
+}
+
+// Runs created before Story/Carousel/Reel support existed have social_drafts
+// with those three fields entirely missing (not just empty), which renders as a
+// blank card in the UI with no way to fix it. Generate just the missing formats
+// on demand, without touching the already-reviewed instagram/facebook/linkedin
+// captions or approval statuses.
+export async function backfillMissingSocialFormats(runId: string): Promise<ContentPipelineRun> {
+  const { run: existingRun } = await getPipelineRunDetail(runId);
+  const runs = readRunsFromDisk();
+  const runIndex = runs.findIndex((r) => r.run_id === runId || r.id === runId);
+  const run = existingRun || (runIndex >= 0 ? runs[runIndex] : null);
+
+  if (!run) {
+    throw new Error(`Run ${runId} not found`);
+  }
+  if (!run.social_drafts || run.social_drafts.length === 0) {
+    throw new Error("This run hasn't reached social review yet, so there's nothing to backfill.");
+  }
+
+  const draft = run.social_drafts[0];
+  // Treat present-but-empty the same as missing — an occasional malformed AI response
+  // (empty slides array, blank script) otherwise gets "stuck" permanently once it's no
+  // longer technically undefined, with no way to regenerate it from the UI.
+  const missing = {
+    instagramStory: !draft.instagramStory,
+    instagramCarousel: !draft.instagramCarousel || (draft.instagramCarousel.slides || []).length === 0,
+    instagramReel: !draft.instagramReel || !draft.instagramReel.script?.trim(),
+  };
+  if (!missing.instagramStory && !missing.instagramCarousel && !missing.instagramReel) {
+    return run;
+  }
+
+  const generated = await writeSocialCaptions(run.topic);
+  if (missing.instagramStory) {
+    draft.instagramStory = { caption: generated.instagramStory.caption, status: "pending" };
+  }
+  if (missing.instagramCarousel) {
+    draft.instagramCarousel = {
+      caption: generated.instagramCarousel.caption,
+      imagePromptSuggestion: generated.instagramCarousel.imagePromptSuggestion,
+      slides: generated.instagramCarousel.slides || [],
+      status: "pending"
+    };
+  }
+  if (missing.instagramReel) {
+    draft.instagramReel = {
+      caption: generated.instagramReel.caption,
+      imagePromptSuggestion: generated.instagramReel.imagePromptSuggestion,
+      script: generated.instagramReel.script || "",
+      status: "pending"
+    };
+  }
+
+  run.updated_at = new Date().toISOString();
+
+  const config = getSupabaseConfig();
+  if (config) {
+    try {
+      const runEndpoint = `${config.url}/rest/v1/content_pipeline_runs?run_id=eq.${encodeURIComponent(run.run_id)}`;
+      await fetch(runEndpoint, {
+        method: "PATCH",
+        headers: {
+          apikey: config.key,
+          Authorization: `Bearer ${config.key}`,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({ social_drafts: run.social_drafts, updated_at: run.updated_at }),
+      });
+    } catch (err) {
+      console.error("Error patching Supabase run after backfilling social formats:", err);
+    }
+  }
+
+  if (runIndex >= 0) {
+    runs[runIndex] = run;
+  } else {
+    runs.unshift(run);
+  }
+  writeRunsToDisk(runs);
+
+  return run;
 }

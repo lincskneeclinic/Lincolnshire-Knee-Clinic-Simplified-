@@ -189,6 +189,7 @@ export default function BusinessDashboardPage() {
   const [newSocialOnlyTopic, setNewSocialOnlyTopic] = useState("");
   const [isGeneratingSocialOnly, setIsGeneratingSocialOnly] = useState(false);
   const [generatingSocialImageKey, setGeneratingSocialImageKey] = useState<string | null>(null);
+  const [isBackfillingFormats, setIsBackfillingFormats] = useState(false);
   const [socialOnlyCopiedKey, setSocialOnlyCopiedKey] = useState<string | null>(null);
 
   // Community Moderation State
@@ -1767,6 +1768,46 @@ export default function BusinessDashboardPage() {
       setIsSubmittingReview(false);
     }
   };
+
+  // Backfills Instagram Story/Carousel/Reel content for runs created before those
+  // formats existed, whose social_drafts have those fields missing entirely.
+  const handleGenerateMissingFormats = async () => {
+    if (!selectedRun) return;
+    setIsBackfillingFormats(true);
+    try {
+      const res = await fetch(`/api/portal/content-pipeline/runs/${selectedRun.run_id}/generate-formats`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (data.success && data.run) {
+        setSelectedRun(data.run);
+        await fetchPipelineRuns();
+      } else {
+        alert(data.error || "Failed to generate the missing format.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error generating the missing format.");
+    } finally {
+      setIsBackfillingFormats(false);
+    }
+  };
+
+  const renderMissingFormatCta = (label: string) => (
+    <div className="max-w-md mx-auto bg-dark-overlay-navy border border-dashed border-white/20 rounded-xl p-6 text-center space-y-3 animate-fadeIn">
+      <p className="text-xs text-white/60">
+        This run was created before {label} content existed. Generate it now to review and approve it.
+      </p>
+      <button
+        type="button"
+        onClick={handleGenerateMissingFormats}
+        disabled={isBackfillingFormats}
+        className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs font-bold px-4 py-2 rounded-lg shadow transition-all disabled:opacity-60 cursor-pointer"
+      >
+        {isBackfillingFormats ? "Generating…" : `✨ Generate ${label}`}
+      </button>
+    </div>
+  );
 
   // Image attachment helpers
   // Note: handleAttachImage handles the featured/main image (uploaded via the Images tab or the
@@ -4402,7 +4443,11 @@ export default function BusinessDashboardPage() {
                                   </div>
                                 )}
 
-                                {activeSocialSubTab === "carousel" && (
+                                {activeSocialSubTab === "carousel" && (selectedRun.social_drafts[0]?.instagramCarousel?.slides?.length || 0) === 0 && (
+                                  renderMissingFormatCta("Instagram Carousel")
+                                )}
+
+                                {activeSocialSubTab === "carousel" && (selectedRun.social_drafts[0]?.instagramCarousel?.slides?.length || 0) > 0 && (
                                   <div className="max-w-xl mx-auto animate-fadeIn">
                                     <PlatformCard
                                       platformKey="instagramCarousel"
@@ -4484,7 +4529,11 @@ export default function BusinessDashboardPage() {
                                   </div>
                                 )}
 
-                                {activeSocialSubTab === "reel" && (
+                                {activeSocialSubTab === "reel" && !selectedRun.social_drafts[0]?.instagramReel?.script?.trim() && (
+                                  renderMissingFormatCta("Instagram Reel Script")
+                                )}
+
+                                {activeSocialSubTab === "reel" && selectedRun.social_drafts[0]?.instagramReel?.script?.trim() && (
                                   <div className="max-w-xl mx-auto animate-fadeIn">
                                     <PlatformCard
                                       platformKey="instagramReel"

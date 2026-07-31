@@ -5,7 +5,7 @@ const apiKey = process.env.GEMINI_API_KEY;
 
 export async function writeBlogDraft(
   topic: string,
-  research: ResearchBrief,
+  research: ResearchBrief | null | undefined,
   previousDraft?: any,
   revisionNotes?: string
 ) {
@@ -37,7 +37,8 @@ Guidelines:
 9. Revision Mode: If previous draft details and reviewer feedback are supplied, focus on revising the previous draft to address the requested changes specifically — keep what wasn't flagged as a problem, don't rewrite from scratch. Ensure that you preserve the existing featured image and inline image placeholder markers that were not requested to be changed.`
   });
 
-  let userPrompt = `
+  let userPrompt = research
+    ? `
 Topic / Clinical Question: "${topic}"
 
 Research Brief Summary:
@@ -54,6 +55,11 @@ ${(research.clinical_indications || []).map((p) => "- " + p).join("\n")}
 
 Literature & Guidelines Sources:
 ${(research.sources || []).map((p) => "- " + p).join("\n")}
+`
+    : `
+Topic / Clinical Question: "${topic}"
+
+Note: No research brief was supplied for this article. Draw on your pre-trained clinical knowledge of standard orthopaedic guidelines (such as NICE guidelines and leading knee/sports medicine journals) to write an accurate, evidence-informed article. Still insert [NEEDS CLINICAL REVIEW] flags around any genuinely debated or nuanced clinical points.
 `;
 
   if (previousDraft && revisionNotes) {
