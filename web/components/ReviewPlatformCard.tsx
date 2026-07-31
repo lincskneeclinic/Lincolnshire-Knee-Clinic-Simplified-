@@ -10,7 +10,7 @@ interface FeaturedReview {
 }
 
 interface ReviewPlatformCardProps {
-  platformName: "Google" | "Doctify";
+  platformName: "Google" | "iWantGreatCare" | "Doctify";
   description: string;
   rating?: string;
   reviewCount?: string;
@@ -27,15 +27,18 @@ export const ReviewPlatformCard: React.FC<ReviewPlatformCardProps> = ({
   platformUrl = null,
 }) => {
   const isGoogle = platformName === "Google";
+  const isIWG = platformName === "iWantGreatCare";
 
   const isPlaceholder = (url: string | null) => {
     return !url || url.includes("[") || url === "#";
   };
 
+  const accentColor = isGoogle ? "bg-[#4285F4]" : isIWG ? "bg-[#00AFC8]" : "bg-clinical-teal";
+
   return (
     <div className="bg-white border border-border-clinical rounded-xl p-6 md:p-8 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
       {/* Subtle branding accent */}
-      <div className={`absolute top-0 left-0 right-0 h-1.5 ${isGoogle ? "bg-[#4285F4]" : "bg-clinical-teal"}`} />
+      <div className={`absolute top-0 left-0 right-0 h-1.5 ${accentColor}`} />
 
       <div>
         <div className="flex items-center gap-4 mb-4 mt-2">
@@ -43,13 +46,15 @@ export const ReviewPlatformCard: React.FC<ReviewPlatformCardProps> = ({
           <div className="w-12 h-12 rounded-full bg-pale-clinical-blue border border-border-clinical/40 flex items-center justify-center text-deep-navy font-bold shrink-0">
             {isGoogle ? (
               <span className="text-xl text-[#4285F4] font-serif">G</span>
+            ) : isIWG ? (
+              <span className="text-xl text-[#00AFC8] font-serif">i</span>
             ) : (
               <span className="text-xl text-clinical-teal font-serif">D</span>
             )}
           </div>
           <div>
             <h3 className="font-serif text-lg font-bold text-deep-navy">
-              {platformName} Reviews
+              {platformName === "iWantGreatCare" ? "iWantGreatCare" : `${platformName} Reviews`}
             </h3>
             <p className="text-xs text-text-muted italic">
               Verified third-party platform
