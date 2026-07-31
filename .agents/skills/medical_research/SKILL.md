@@ -24,3 +24,53 @@ Example:
 2. **Searching Patient Forums:** Run targeted web searches to locate real-world patient feedback, using queries like `"site:reddit.com/r/running knee pain"` or `"knee replacement recovery experiences forum"`.
 3. **PICO Framework:** Structure search terms using Patient, Intervention, Comparison, and Outcome where possible.
 4. **Synthesis:** Blend clinical, evidence-based data from PubMed with practical patient experiences from forums to compile comprehensive, patient-friendly articles.
+
+## Knee medical imagery
+
+Whenever the user requests a knee image, medical illustration, diagram, annotated scan, diagnostic visual, injection image, surgical illustration, rehabilitation graphic, or patient-education visual:
+
+1. Read and follow:
+   - `/docs/medical-imagery-guidelines.md`
+   - `/docs/image-prompt-library.md`
+
+2. Use `/docs/medical-imagery-guidelines.md` for:
+   - licensing and attribution
+   - clinical and visual standards
+   - accessibility and alt text
+   - responsive desktop, tablet, and mobile behaviour
+   - file naming and storage
+   - clinical review requirements
+
+3. Use `/docs/image-prompt-library.md` for:
+   - the Lincolnshire Knee Clinic house style
+   - subject-specific knee prompts
+   - negative prompts
+   - output format requirements
+   - the clinical review checklist
+
+4. The imagery must be exclusively related to the knee.
+
+5. Prefer anatomically accurate, realistic 2D patient-education illustrations with:
+   - restrained natural colours
+   - a clean white or pale neutral background
+   - a calm, non-graphic presentation
+   - no embedded text or labels
+   - no logo or watermark
+   - no blood or gore
+
+6. Do not use images found through a general web search unless their commercial reuse licence has been verified and documented.
+
+7. Treat AI-generated images as drafts. Check anatomical and clinical plausibility before adding them to the website.
+
+8. Generate a clean master image first. Add labels later in the website, SVG, Figma, or another design tool.
+
+9. For website use, provide or request:
+   - desktop version
+   - tablet version
+   - mobile version
+   - descriptive alt text
+   - an appropriate filename and destination path
+
+10. Before completing the task, apply the clinical review checklist in `/docs/image-prompt-library.md`.
+
+If either reference file is missing or cannot be read, stop and report which file is unavailable rather than inventing replacement rules.
