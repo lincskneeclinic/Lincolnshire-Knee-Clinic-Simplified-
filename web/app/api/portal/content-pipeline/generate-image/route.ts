@@ -27,11 +27,11 @@ export async function POST(request: Request) {
     let imageBase64: string | null = null;
     let mimeType = "image/png";
 
-    const cleanBriefPrompt = `Create a professional, clinical, editorial-style medical illustration or photograph suitable for a premium UK orthopaedic knee clinic's patient blog and social media platforms (Lincolnshire Knee Clinic). 
-Style: Clean, reassuring, modern healthcare website style. 
-Color palette: Incorporate clean deep navy blue (#082F49), primary navy (#003B5C), and clinical teal (#00AFC8) accents. 
-Visual theme: Reassuring, professional, and directly relevant to orthopaedic knee care, patient recovery, joint anatomy, or physical rehabilitation. Do not depict any real, identifiable person.
-Adhere strictly to the requested brief: do not add generic body parts or irrelevant clinical gear. If an anatomical knee diagram is requested, focus on the knee joint (femur, tibia, patella, cartilage) with high technical accuracy in a clean, modern vector/clinical style.
+    const cleanBriefPrompt = `Create a realistic, photographic image suitable for a premium UK orthopaedic knee clinic's patient blog and social media platforms (Lincolnshire Knee Clinic).
+Style: Real-world photography — natural lighting, true-to-life colours and textures, like a professional healthcare stock photo. Flat 2D photographic image only.
+Strictly avoid: 3D renders, glowing/neon/holographic effects, abstract vector diagrams, CGI, digital-art or illustration styles. This must look like an actual photograph, not an illustration or render.
+Visual theme: Reassuring, professional, and directly relevant to orthopaedic knee care, patient recovery, joint anatomy, or physical rehabilitation. Do not depict any real, identifiable person's face.
+Adhere strictly to the requested brief below — depict exactly the scene described, as a real photograph would.
 
 Subject to depict: ${prompt.trim()}`;
 

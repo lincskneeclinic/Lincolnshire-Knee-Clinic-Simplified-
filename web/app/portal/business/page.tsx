@@ -867,7 +867,7 @@ export default function BusinessDashboardPage() {
   };
 
   // Fetch single run detail
-  const fetchRunDetail = useCallback(async (runId: string) => {
+  const fetchRunDetail = useCallback(async (runId: string, preserveTab: boolean = false) => {
     setPipelineLoading(true);
     try {
       const res = await fetch(`/api/portal/content-pipeline/runs/${encodeURIComponent(runId)}`);
@@ -875,7 +875,9 @@ export default function BusinessDashboardPage() {
       if (data.success && data.run) {
         setSelectedRun(data.run);
         setSelectedRunReviews(data.reviews || []);
-        setRunDetailTab("draft");
+        if (!preserveTab) {
+          setRunDetailTab("draft");
+        }
         setEditingPlatform(null);
         // Pre-fill edit states
         const blogDraft = data.run.blog_drafts?.[0];
@@ -1723,7 +1725,7 @@ export default function BusinessDashboardPage() {
         await fetchPipelineRuns();
         // Only re-fetch run detail (which resets local edit state) if we are not in edit mode
         if (!keepEditMode) {
-          await fetchRunDetail(data.run.run_id);
+          await fetchRunDetail(data.run.run_id, true);
         } else {
           // Just refresh the run list without blowing away our local edits
           setSelectedRun(data.run);
@@ -5698,13 +5700,6 @@ function PlatformCard({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10">
-        <button
-          onClick={onCopy}
-          className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
-        >
-          <span>{isCopied ? "✓ Copied!" : "📋 Copy Template Text"}</span>
-        </button>
-
         {status !== "approved" && !isPublished && !isCardEditing && (
           <div className="flex items-center gap-1.5">
             <button
@@ -5727,6 +5722,13 @@ function PlatformCard({
             </button>
           </div>
         )}
+
+        <button
+          onClick={onCopy}
+          className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+        >
+          <span>{isCopied ? "✓ Copied!" : "📋 Copy Template Text"}</span>
+        </button>
       </div>
 
       {showManualUploadGuide && status === "approved" && (
