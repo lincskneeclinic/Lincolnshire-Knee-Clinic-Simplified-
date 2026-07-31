@@ -26,9 +26,10 @@ export async function POST(request: Request) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
 
-    const fullPrompt = `Create a professional, clinical, editorial-style medical illustration/photo suitable for a UK orthopaedic knee clinic's patient blog article${
-      isFeatured ? " (this will be used as the article's featured hero/card image)" : ""
-    }. Do not depict any real, identifiable person. Style: clean, calm, reassuring, high quality, suitable for a healthcare website.
+    const fullPrompt = `Create a professional, clinical, editorial-style medical illustration or photograph suitable for a premium UK orthopaedic knee clinic's patient blog and social media platforms (Lincolnshire Knee Clinic). 
+Style: Clean, reassuring, modern healthcare website style. 
+Color palette: Incorporate clean deep navy blue (#082F49), primary navy (#003B5C), and clinical teal (#00AFC8) accents. 
+Visual theme: Reassuring, professional, and directly relevant to orthopaedic knee care, patient recovery, joint anatomy, or physical rehabilitation. Do not depict any real, identifiable person.
 
 Subject to depict: ${prompt.trim()}`;
 

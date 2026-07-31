@@ -25,7 +25,7 @@ LINKEDIN: Professional, clinical-educator tone aimed at both patients and referr
 
 Do not invent medical claims. Do not use fake statistics. Keep the clinic's tone empathetic and professional throughout.
 
-For EACH platform, also suggest a short, concrete description of a single representative image suitable for that specific post (for an AI image generator or manual photo selection) — describe it visually and specifically, not just "a knee".`;
+For EACH platform, also suggest a short, concrete description of a single representative image suitable for that specific post (for an AI image generator or manual photo selection) — describe it visually and specifically, not just "a knee". Ensure descriptions are highly relevant to a premium UK knee clinic (Lincolnshire Knee Clinic), such as depicting professional consultant consultations, clinical rooms with navy/teal branding, anatomical model knee joints, patients performing rehabilitation exercises under physiotherapist supervision, or clean surgical diagram illustrations.`;
 
 function buildGenerationPrompt(topic: string): string {
   return `Topic: "${topic}"
