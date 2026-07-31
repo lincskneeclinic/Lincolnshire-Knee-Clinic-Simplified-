@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getPipelineRunDetail } from "@/lib/contentPipeline";
+import { getPipelineRunDetail, deletePipelineRun } from "@/lib/contentPipeline";
 
 export async function GET(
   request: Request,
@@ -27,6 +27,23 @@ export async function GET(
     console.error("Error in GET /api/portal/content-pipeline/runs/:runId:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Failed to fetch run details" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ runId: string }> }
+) {
+  try {
+    const { runId } = await params;
+    await deletePipelineRun(runId);
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("Error in DELETE /api/portal/content-pipeline/runs/:runId:", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to delete run" },
       { status: 500 }
     );
   }

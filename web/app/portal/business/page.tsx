@@ -658,6 +658,23 @@ export default function BusinessDashboardPage() {
     }
   }, []);
 
+  // Permanently deletes a draft that isn't worth continuing — e.g. from the "Needs
+  // Your Attention" list when you decide not to pursue it further.
+  const handleDeletePipelineRun = async (runId: string, topic: string) => {
+    if (!confirm(`Delete this draft ("${topic}")? This can't be undone.`)) return;
+    try {
+      const res = await fetch(`/api/portal/content-pipeline/runs/${encodeURIComponent(runId)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Failed to delete the draft.");
+      setPipelineRuns((prev) => prev.filter((r) => r.run_id !== runId));
+      if (selectedRun?.run_id === runId) setSelectedRun(null);
+    } catch (err: any) {
+      alert(err?.message || "Failed to delete the draft.");
+    }
+  };
+
   // Fetch single run detail
   const fetchRunDetail = useCallback(async (runId: string) => {
     setPipelineLoading(true);
@@ -3474,9 +3491,20 @@ export default function BusinessDashboardPage() {
                                 </div>
                               )}
 
-                              <div className="flex justify-end text-xs text-clinical-teal items-center gap-1">
-                                <span>Open Review Workspace</span>
-                                <span>→</span>
+                              <div className="flex justify-between items-center">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeletePipelineRun(run.run_id, run.topic);
+                                  }}
+                                  className="text-[11px] text-status-error/80 hover:text-status-error cursor-pointer"
+                                >
+                                  Delete
+                                </button>
+                                <div className="flex text-xs text-clinical-teal items-center gap-1">
+                                  <span>Open Review Workspace</span>
+                                  <span>→</span>
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -3504,9 +3532,20 @@ export default function BusinessDashboardPage() {
                               <StatusBadge status={run.status} isContinueEditing={isBlogEditInProgress(run)} />
                             </div>
                             <h4 className="text-xs text-white/80 line-clamp-2">{run.topic}</h4>
-                            <span className="text-[10px] text-white/40 font-mono block">
-                              Last saved: {new Date(run.updated_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-                            </span>
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] text-white/40 font-mono">
+                                Last saved: {new Date(run.updated_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeletePipelineRun(run.run_id, run.topic);
+                                }}
+                                className="text-[10px] text-status-error/80 hover:text-status-error cursor-pointer"
+                              >
+                                Delete
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>

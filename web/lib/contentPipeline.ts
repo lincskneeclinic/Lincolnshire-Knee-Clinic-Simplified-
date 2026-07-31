@@ -326,6 +326,32 @@ export async function getPipelineRunDetail(runId: string): Promise<{
   return { run, reviews };
 }
 
+// Permanently removes a run (and its review history) — used when a draft isn't worth
+// continuing. Deletes from Supabase (if configured) and the local disk fallback.
+export async function deletePipelineRun(runId: string): Promise<void> {
+  const config = getSupabaseConfig();
+  if (config) {
+    try {
+      await fetch(`${config.url}/rest/v1/content_pipeline_reviews?run_id=eq.${encodeURIComponent(runId)}`, {
+        method: "DELETE",
+        headers: { apikey: config.key, Authorization: `Bearer ${config.key}` },
+      });
+      await fetch(`${config.url}/rest/v1/content_pipeline_runs?run_id=eq.${encodeURIComponent(runId)}`, {
+        method: "DELETE",
+        headers: { apikey: config.key, Authorization: `Bearer ${config.key}` },
+      });
+    } catch (err) {
+      console.error("Error deleting run from Supabase:", err);
+    }
+  }
+
+  const runs = readRunsFromDisk().filter((r) => r.run_id !== runId && r.id !== runId);
+  writeRunsToDisk(runs);
+
+  const reviews = readReviewsFromDisk().filter((rev) => rev.run_id !== runId);
+  writeReviewsToDisk(reviews);
+}
+
 /**
  * Trigger a new run. Automatically executes Stage 1 Research (PubMed NCBI Entrez API search)
  * to populate genuine clinical literature citations and indications into research_brief.

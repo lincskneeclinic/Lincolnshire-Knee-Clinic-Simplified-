@@ -1,4 +1,5 @@
 import { getStoreValue, setStoreValue } from "./dataStore";
+import { createAdminClient } from "./supabase/admin";
 
 // Articles live as static entries in data/articles.ts (title, body, images, etc. are
 // authored/edited via code changes and a redeploy, same as the rest of the site).
@@ -89,20 +90,45 @@ export async function getArticleSlugForRun(runId: string): Promise<string | null
 // load (see components/ArticleViewCounter.tsx + app/api/education-views/[slug]/route.ts)
 // rather than during server render, or it would drastically undercount real traffic.
 //
-// This is an unlocked read-modify-write against a JSON blob, so two near-simultaneous
-// increments to the same article could rarely clobber each other — the same tradeoff
-// app/api/newsletter/poll/route.ts already accepts for its vote counts. A truly atomic
-// counter would need a dedicated Postgres column/RPC, which isn't available without a
-// schema migration this app can't run itself via the Supabase REST API. For a single
-// clinic's realistic traffic this is a cosmetic under-count, not a functional bug.
+// Prefers a real atomic Postgres counter (the article_view_counts table +
+// increment_article_view() function — see docs/sql/article-view-counts.sql) so
+// concurrent views can't clobber each other. Until that one-time SQL snippet has been
+// run in the Supabase SQL Editor, both functions silently fall back to the original
+// unlocked read-modify-write against a KV blob (same tradeoff
+// app/api/newsletter/poll/route.ts already accepts for its vote counts) — so the
+// feature works today either way, and upgrades itself automatically once the table
+// exists, with no code change needed at that point.
 const ARTICLE_VIEWS_KEY = "education-article-views";
 
 export async function getArticleViewCounts(): Promise<Record<string, number>> {
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin.from("article_view_counts").select("slug, views");
+    if (!error && Array.isArray(data)) {
+      const result: Record<string, number> = {};
+      data.forEach((row: { slug: string; views: number }) => {
+        result[row.slug] = row.views;
+      });
+      return result;
+    }
+  } catch {
+    // article_view_counts probably doesn't exist yet — fall through to the KV store.
+  }
   return getStoreValue<Record<string, number>>(ARTICLE_VIEWS_KEY, {});
 }
 
 export async function incrementArticleView(slug: string): Promise<number> {
-  const counts = await getArticleViewCounts();
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin.rpc("increment_article_view", { p_slug: slug });
+    if (!error && typeof data === "number") {
+      return data;
+    }
+  } catch {
+    // increment_article_view() probably doesn't exist yet — fall through to the KV store.
+  }
+
+  const counts = await getStoreValue<Record<string, number>>(ARTICLE_VIEWS_KEY, {});
   const next = (counts[slug] || 0) + 1;
   counts[slug] = next;
   await setStoreValue(ARTICLE_VIEWS_KEY, counts);
