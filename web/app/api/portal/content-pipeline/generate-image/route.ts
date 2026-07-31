@@ -27,11 +27,13 @@ export async function POST(request: Request) {
     let imageBase64: string | null = null;
     let mimeType = "image/png";
 
-    const cleanBriefPrompt = `Create a realistic, photographic image suitable for a premium UK orthopaedic knee clinic's patient blog and social media platforms (Lincolnshire Knee Clinic).
-Style: Real-world photography — natural lighting, true-to-life colours and textures, like a professional healthcare stock photo. Flat 2D photographic image only.
-Strictly avoid: 3D renders, glowing/neon/holographic effects, abstract vector diagrams, CGI, digital-art or illustration styles. This must look like an actual photograph, not an illustration or render.
+    const cleanBriefPrompt = `Create a realistic image suitable for a premium UK orthopaedic knee clinic's patient blog and social media platforms (Lincolnshire Knee Clinic).
+Style: Real-world, true-to-life colours and textures — like a professional healthcare stock photo or a clean, flat 2D medical illustration. Flat 2D image only.
+Strictly avoid: 3D renders, glowing/neon/holographic effects, CGI, digital-art or sci-fi styles. This must look like an actual photograph or a plain patient-education-handout-style diagram, never a stylised render.
+Text and labels: Do NOT render any text, words, letters, numbers, labels, captions, arrows-with-text, or annotations anywhere in the image — this includes anatomical labels, incidental background text on wall signs, posters, clothing, or screens. Leave any wall signs, posters, or screens blank or angled away rather than adding text to them. AI image generation cannot reliably render accurate text, and an incorrect or misspelled word anywhere in the image is worse than no text at all. If the subject is anatomical, depict the structures clearly and accurately through shape, position, and colour alone, completely unlabeled — the caption elsewhere on the page will explain what's shown.
+The one exception: if it fits naturally into the scene (e.g. a small wall sign, logo, or corner watermark), you may render the short clinic name "Lincolnshire Knee Clinic" — and only that exact phrase, nothing else. Keep it small, simple, and unobtrusive; do not force it in if there's no natural place for it.
 Visual theme: Reassuring, professional, and directly relevant to orthopaedic knee care, patient recovery, joint anatomy, or physical rehabilitation. Do not depict any real, identifiable person's face.
-Adhere strictly to the requested brief below — depict exactly the scene described, as a real photograph would.
+Adhere strictly to the requested brief below — depict exactly the scene described.
 
 Subject to depict: ${prompt.trim()}`;
 
