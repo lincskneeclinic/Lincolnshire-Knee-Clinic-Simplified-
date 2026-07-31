@@ -1,6 +1,19 @@
 import type { NextConfig } from "next";
+import { execSync } from "child_process";
+
+function getBuildCommit(): string {
+  try {
+    return execSync("git rev-parse --short HEAD").toString().trim();
+  } catch {
+    return "unknown";
+  }
+}
 
 const nextConfig: NextConfig = {
+  env: {
+    BUILD_COMMIT: getBuildCommit(),
+    BUILD_TIME: new Date().toISOString(),
+  },
   allowedDevOrigins: [
     "192.168.1.35",
     "192.168.1.35:3000",
