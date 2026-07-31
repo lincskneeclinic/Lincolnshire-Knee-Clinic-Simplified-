@@ -591,6 +591,97 @@ export default function BusinessDashboardPage() {
     }
   };
 
+  const handleResetPlaceholderImage = (altText: string, srcUrl: string) => {
+    const targetPattern = `![${altText}](${srcUrl})`;
+    const targetIndex = editBody.indexOf(targetPattern);
+    
+    if (targetIndex === -1) {
+      const fallbackRegex = new RegExp(`!\\[(.*?)\\]\\(${srcUrl.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\)`, "i");
+      const match = editBody.match(fallbackRegex);
+      if (match) {
+        const matchedAlt = match[1];
+        const isFeatured = editBody.indexOf(match[0]) === editBody.indexOf("![");
+        const replacementPlaceholder = isFeatured
+          ? `[FEATURED IMAGE PLACEHOLDER: ${matchedAlt}]`
+          : `[IMAGE PLACEHOLDER: ${matchedAlt}]`;
+        
+        const newBody = editBody.replace(match[0], replacementPlaceholder);
+        if (livePreviewRef.current) {
+          pendingScrollRestoreRef.current = livePreviewRef.current.scrollTop;
+        }
+        setEditBody(newBody);
+        pushHistory(newBody);
+        
+        if (isFeatured) {
+          const updatedImages = editSuggestedImages.filter((img: any) => img !== srcUrl);
+          setEditSuggestedImages(updatedImages);
+          if (!isEditMode && selectedRun) {
+            const currentDraft = selectedRun.blog_drafts[0];
+            handleReviewSubmission("blog", "save_progress", {
+              title: editTitle || currentDraft?.title,
+              excerpt: editExcerpt || currentDraft?.excerpt,
+              body_markdown: newBody,
+              body: newBody,
+              suggestedImages: updatedImages,
+              references: currentDraft?.references,
+              category: editCategory || currentDraft?.category,
+            }, undefined, true);
+          }
+        } else if (!isEditMode && selectedRun) {
+          const currentDraft = selectedRun.blog_drafts[0];
+          handleReviewSubmission("blog", "save_progress", {
+            title: editTitle || currentDraft?.title,
+            excerpt: editExcerpt || currentDraft?.excerpt,
+            body_markdown: newBody,
+            body: newBody,
+            suggestedImages: editSuggestedImages,
+            references: currentDraft?.references,
+            category: editCategory || currentDraft?.category,
+          }, undefined, true);
+        }
+        return;
+      }
+      alert("Could not locate the image in the editor text. You can manually delete it from the editor tab.");
+      return;
+    }
+
+    const firstImageIndex = editBody.indexOf("![");
+    const isFeatured = (firstImageIndex !== -1 && targetIndex === firstImageIndex);
+    const replacementPlaceholder = isFeatured
+      ? `[FEATURED IMAGE PLACEHOLDER: ${altText}]`
+      : `[IMAGE PLACEHOLDER: ${altText}]`;
+
+    const newBody = editBody.replace(targetPattern, replacementPlaceholder);
+    
+    if (livePreviewRef.current) {
+      pendingScrollRestoreRef.current = livePreviewRef.current.scrollTop;
+    }
+    
+    setEditBody(newBody);
+    pushHistory(newBody);
+
+    const updatedImages = isFeatured
+      ? editSuggestedImages.filter((img: any) => img !== srcUrl)
+      : editSuggestedImages;
+
+    if (isFeatured) {
+      setEditSuggestedImages(updatedImages);
+    }
+
+    if (!isEditMode && selectedRun) {
+      const currentDraft = selectedRun.blog_drafts[0];
+      handleReviewSubmission("blog", "save_progress", {
+        title: editTitle || currentDraft?.title,
+        excerpt: editExcerpt || currentDraft?.excerpt,
+        body_markdown: newBody,
+        body: newBody,
+        suggestedImages: updatedImages,
+        references: currentDraft?.references,
+        category: editCategory || currentDraft?.category,
+      }, undefined, true);
+    }
+  };
+
   // Calls the Gemini image-generation endpoint and stores the result as a pending
   // preview (not yet inserted into the body) so the user can Accept or Regenerate
   // before committing — Accept reuses handleAttachPlaceholderImage above.
@@ -2928,6 +3019,7 @@ export default function BusinessDashboardPage() {
                                           generatingPlaceholderId={generatingImagePlaceholderId}
                                           pendingPreview={generatedImagePreview}
                                           onGenerateImage={(placeholderId, label, isFeatured) => handleGenerateImage(placeholderId, label, isFeatured)}
+                                          onResetPlaceholder={handleResetPlaceholderImage}
                                         />
                                       </div>
                                     </div>
@@ -3013,6 +3105,7 @@ export default function BusinessDashboardPage() {
                                       generatingPlaceholderId={generatingImagePlaceholderId}
                                       pendingPreview={generatedImagePreview}
                                       onGenerateImage={(placeholderId, label, isFeatured) => handleGenerateImage(placeholderId, label, isFeatured)}
+                                      onResetPlaceholder={handleResetPlaceholderImage}
                                     />
                                   </div>
                                 </div>
@@ -3802,7 +3895,8 @@ function FormattedContent({
   references,
   generatingPlaceholderId,
   pendingPreview,
-  onGenerateImage
+  onGenerateImage,
+  onResetPlaceholder
 }: {
   body?: string;
   body_markdown?: string;
@@ -3812,6 +3906,7 @@ function FormattedContent({
   generatingPlaceholderId?: string | null;
   pendingPreview?: { placeholderId: string; url: string } | null;
   onGenerateImage?: (placeholderId: string, label: string, isFeatured?: boolean) => void;
+  onResetPlaceholder?: (altText: string, srcUrl: string) => void;
 }) {
   const content = cleanHeadingBugs(body_markdown || body || "");
   if (!content) return null;
@@ -4008,21 +4103,34 @@ function FormattedContent({
               {children}
             </blockquote>
           ),
-          img: ({ src, alt }) => (
-            <div className="my-4 space-y-1.5 text-center">
-              <img
-                src={src || ""}
-                alt={alt || ""}
-                className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-contain bg-white/5"
-                style={{ aspectRatio: "16 / 9", width: "100%" }}
-              />
-              {alt && (
-                <span className="text-[10px] text-white/50 italic block">
-                  {alt}
-                </span>
-              )}
-            </div>
-          ),
+          img: ({ src, alt }) => {
+            const hasChangePermission = Boolean(onAttachPlaceholder);
+            return (
+              <div className="my-4 space-y-1.5 text-center relative group">
+                <img
+                  src={src || ""}
+                  alt={alt || ""}
+                  className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-contain bg-white/5"
+                  style={{ aspectRatio: "16 / 9", width: "100%" }}
+                />
+                {alt && (
+                  <span className="text-[10px] text-white/50 italic block">
+                    {alt}
+                  </span>
+                )}
+                {hasChangePermission && onResetPlaceholder && src && typeof src === "string" && (
+                  <div className="mt-2 flex justify-center">
+                    <button
+                      onClick={() => onResetPlaceholder(alt || "", src as string)}
+                      className="bg-amber-500 hover:bg-amber-600 text-deep-navy text-[9px] font-semibold px-2.5 py-1 rounded transition-colors shadow-md flex items-center gap-1 cursor-pointer"
+                    >
+                      🔄 Change Image
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          },
         }}
       >
         {content}
