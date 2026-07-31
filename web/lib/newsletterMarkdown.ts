@@ -2,9 +2,12 @@ const P_STYLE = "margin-top: 12px; margin-bottom: 12px; font-size: 15px; line-he
 const H3_STYLE = "color: #0c4a6e; font-family: Georgia, serif; font-size: 18px; font-weight: bold; margin-top: 24px; margin-bottom: 12px;";
 const LI_STYLE = "margin-bottom: 6px; font-size: 14px; color: #475569;";
 const UL_STYLE = "margin-top: 8px; margin-bottom: 8px; padding-left: 20px;";
+const A_STYLE = "color: #0d9488; font-weight: bold; text-decoration: underline;";
 
 function formatInline(text: string): string {
-  return text.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #0f172a;">$1</strong>');
+  return text
+    .replace(/\[(.*?)\]\((.*?)\)/g, `<a href="$2" style="${A_STYLE}">$1</a>`)
+    .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #0f172a;">$1</strong>');
 }
 
 /**

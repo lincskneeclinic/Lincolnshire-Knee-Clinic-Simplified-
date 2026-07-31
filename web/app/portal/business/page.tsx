@@ -97,6 +97,7 @@ export default function BusinessDashboardPage() {
   const [newNewsletterTopic, setNewNewsletterTopic] = useState("");
   const [newsletterIncludeResearch, setNewsletterIncludeResearch] = useState(true);
   const [isGeneratingNewsletter, setIsGeneratingNewsletter] = useState(false);
+  const [isGeneratingDigest, setIsGeneratingDigest] = useState(false);
   const [selectedNewsletter, setSelectedNewsletter] = useState<any | null>(null);
   const [isSendingNewsletter, setIsSendingNewsletter] = useState(false);
   const [isDiscardingNewsletter, setIsDiscardingNewsletter] = useState(false);
@@ -1080,6 +1081,28 @@ export default function BusinessDashboardPage() {
       alert("Network error generating newsletter.");
     } finally {
       setIsGeneratingNewsletter(false);
+    }
+  };
+
+  const handleGenerateDigestNewsletter = async () => {
+    setIsGeneratingDigest(true);
+    try {
+      const res = await fetch("/api/portal/newsletter/generate-digest", { method: "POST" });
+      const data = await res.json();
+      if (data.success && data.edition) {
+        setNewsletterEditions(prev => [data.edition, ...prev]);
+        setSelectedNewsletter(data.edition);
+        setNewsletterEditSubject(data.edition.subject);
+        setNewsletterEditMarkdown(data.edition.bodyMarkdown);
+        setNewsletterHtmlPreview(data.edition.bodyHtml);
+      } else {
+        alert(data.error || "Failed to generate monthly digest draft.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error generating monthly digest.");
+    } finally {
+      setIsGeneratingDigest(false);
     }
   };
 
@@ -2282,10 +2305,39 @@ export default function BusinessDashboardPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                   {/* Topic Planner and List column */}
                   <div className="lg:col-span-4 space-y-6">
+                    {/* Monthly Digest Generator */}
+                    <div className="bg-primary-navy border border-clinical-teal/30 rounded-2xl p-5 shadow-lg space-y-3">
+                      <div>
+                        <h3 className="text-sm font-bold text-white">Monthly Digest</h3>
+                        <p className="text-[11px] text-white/60 mt-1">
+                          Auto-composed from this month's blog posts, top patient questions, and the newsletter poll — plus one rotating educational tip.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleGenerateDigestNewsletter}
+                        disabled={isGeneratingDigest}
+                        className={`w-full font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow transition-all ${
+                          isGeneratingDigest
+                            ? "bg-white/10 text-white/40 cursor-not-allowed"
+                            : "bg-clinical-teal hover:bg-clinical-teal-hover text-white cursor-pointer"
+                        }`}
+                      >
+                        {isGeneratingDigest ? (
+                          <>
+                            <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                            Composing Digest...
+                          </>
+                        ) : (
+                          "✨ Generate Monthly Digest"
+                        )}
+                      </button>
+                    </div>
+
                     {/* Draft Generator Form */}
                     <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg space-y-4">
-                      <h3 className="text-sm font-bold text-white">Generate Newsletter Draft</h3>
-                      
+                      <h3 className="text-sm font-bold text-white">Generate Single-Topic Draft</h3>
+
                       <div className="space-y-3">
                         <label className="block text-xs font-semibold text-white/80">Newsletter Topic / Clinical Question</label>
                         <textarea
