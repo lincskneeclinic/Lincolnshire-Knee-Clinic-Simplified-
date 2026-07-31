@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ContentPipelineRun, ContentPipelineReview } from "@/lib/contentPipeline";
 import { MIN_BLOG_BODY_LENGTH } from "@/lib/contentPipelineConstants";
 import { ARTICLE_CATEGORIES } from "@/lib/articleCategories";
+import { SocialOnlyPost } from "@/lib/socialOnlyPosts";
 import { ReviewablePage, ClinicalReviewEntry } from "@/lib/clinicalReview";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -84,7 +85,7 @@ function cleanHeadingBugs(text: string): string {
 
 export default function BusinessDashboardPage() {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "pipeline" | "clinicalReview" | "community" | "educationHub">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "pipeline" | "clinicalReview" | "community" | "educationHub" | "socialOnly">("overview");
   const [statsData, setStatsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -158,6 +159,16 @@ export default function BusinessDashboardPage() {
   const [educationArticlesLoading, setEducationArticlesLoading] = useState(false);
   const [articlePendingRemoval, setArticlePendingRemoval] = useState<EducationArticleSummary | null>(null);
   const [isUpdatingArticleVisibility, setIsUpdatingArticleVisibility] = useState(false);
+
+  // Standalone Social-Only Post State (Instagram/Facebook/LinkedIn without a blog)
+  const [socialOnlyPosts, setSocialOnlyPosts] = useState<SocialOnlyPost[]>([]);
+  const [socialOnlyPostsLoading, setSocialOnlyPostsLoading] = useState(false);
+  const [selectedSocialOnlyPost, setSelectedSocialOnlyPost] = useState<SocialOnlyPost | null>(null);
+  const [isSocialOnlyModalOpen, setIsSocialOnlyModalOpen] = useState(false);
+  const [newSocialOnlyTopic, setNewSocialOnlyTopic] = useState("");
+  const [isGeneratingSocialOnly, setIsGeneratingSocialOnly] = useState(false);
+  const [generatingSocialImageKey, setGeneratingSocialImageKey] = useState<string | null>(null);
+  const [socialOnlyCopiedKey, setSocialOnlyCopiedKey] = useState<string | null>(null);
 
   // Community Moderation State
   const [communityReports, setCommunityReports] = useState<CommunityReport[]>([]);
@@ -772,6 +783,143 @@ export default function BusinessDashboardPage() {
     }
   }, [activeTab, fetchEducationArticles, educationArticles.length]);
 
+  // Standalone Social-Only Post handlers
+  const fetchSocialOnlyPosts = useCallback(async () => {
+    setSocialOnlyPostsLoading(true);
+    try {
+      const res = await fetch("/api/portal/social-only");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.posts)) {
+        setSocialOnlyPosts(data.posts);
+      }
+    } catch (err) {
+      console.error("Failed to fetch social-only posts:", err);
+    } finally {
+      setSocialOnlyPostsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "socialOnly" && socialOnlyPosts.length === 0) {
+      fetchSocialOnlyPosts();
+    }
+  }, [activeTab, fetchSocialOnlyPosts, socialOnlyPosts.length]);
+
+  const handleGenerateSocialOnly = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSocialOnlyTopic.trim()) return;
+    setIsGeneratingSocialOnly(true);
+    try {
+      const res = await fetch("/api/portal/social-only/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: newSocialOnlyTopic.trim() }),
+      });
+      const data = await res.json();
+      if (!data.success || !data.post) {
+        throw new Error(data.error || "Failed to generate social posts.");
+      }
+      setSocialOnlyPosts((prev) => [data.post, ...prev]);
+      setSelectedSocialOnlyPost(data.post);
+      setIsSocialOnlyModalOpen(false);
+      setNewSocialOnlyTopic("");
+    } catch (err: any) {
+      alert(err?.message || "An error occurred while generating the social posts.");
+    } finally {
+      setIsGeneratingSocialOnly(false);
+    }
+  };
+
+  const patchSocialOnlyPost = async (postId: string, body: any) => {
+    const res = await fetch(`/api/portal/social-only/${postId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!data.success || !data.post) {
+      throw new Error(data.error || "Failed to update the post.");
+    }
+    setSocialOnlyPosts((prev) => prev.map((p) => (p.id === postId ? data.post : p)));
+    setSelectedSocialOnlyPost(data.post);
+    return data.post;
+  };
+
+  const handleSaveSocialCaption = async (postId: string, platform: "instagram" | "facebook" | "linkedin", caption: string) => {
+    try {
+      await patchSocialOnlyPost(postId, { platform, caption, status: "approved" });
+    } catch (err: any) {
+      alert(err?.message || "Failed to save the caption.");
+    }
+  };
+
+  const handleApproveSocialCaption = async (postId: string, platform: "instagram" | "facebook" | "linkedin") => {
+    try {
+      await patchSocialOnlyPost(postId, { platform, status: "approved" });
+    } catch (err: any) {
+      alert(err?.message || "Failed to approve the post.");
+    }
+  };
+
+  const handleRequestSocialRevision = async (postId: string, platform: "instagram" | "facebook" | "linkedin") => {
+    const notes = prompt("Any specific feedback for the rewrite? (Leave blank for a fresh alternative take.)") || undefined;
+    try {
+      await patchSocialOnlyPost(postId, { platform, action: "regenerate", revisionNotes: notes });
+    } catch (err: any) {
+      alert(err?.message || "Failed to regenerate the caption.");
+    }
+  };
+
+  const handleAttachSocialImage = async (postId: string, platform: "instagram" | "facebook" | "linkedin", url: string) => {
+    try {
+      await patchSocialOnlyPost(postId, { platform, imageUrl: url });
+    } catch (err: any) {
+      alert(err?.message || "Failed to attach the image.");
+    }
+  };
+
+  const handleGenerateSocialImage = async (postId: string, platform: "instagram" | "facebook" | "linkedin", promptText: string) => {
+    const key = `${postId}-${platform}`;
+    setGeneratingSocialImageKey(key);
+    try {
+      const res = await fetch("/api/portal/content-pipeline/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: promptText }),
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        await handleAttachSocialImage(postId, platform, data.url);
+      } else {
+        alert(`Image generation failed: ${data.error || "Unknown error"}`);
+      }
+    } catch (err) {
+      console.error("Social image generation failed:", err);
+      alert("Image generation failed. Please check your connection and try again.");
+    } finally {
+      setGeneratingSocialImageKey(null);
+    }
+  };
+
+  const handleCopySocialOnly = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setSocialOnlyCopiedKey(key);
+    setTimeout(() => setSocialOnlyCopiedKey(null), 2500);
+  };
+
+  const handleDeleteSocialOnlyPost = async (postId: string) => {
+    if (!confirm("Delete this social post draft? This can't be undone.")) return;
+    try {
+      const res = await fetch(`/api/portal/social-only/${postId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Failed to delete the post.");
+      setSocialOnlyPosts((prev) => prev.filter((p) => p.id !== postId));
+      if (selectedSocialOnlyPost?.id === postId) setSelectedSocialOnlyPost(null);
+    } catch (err: any) {
+      alert(err?.message || "Failed to delete the post.");
+    }
+  };
+
   const handleConfirmArticleVisibility = async (action: "remove" | "restore") => {
     if (!articlePendingRemoval) return;
     setIsUpdatingArticleVisibility(true);
@@ -1315,6 +1463,12 @@ export default function BusinessDashboardPage() {
       id: "educationHub",
       label: "Education Hub",
       icon: "📚",
+      badge: null,
+    },
+    {
+      id: "socialOnly",
+      label: "Social Posts",
+      icon: "📱",
       badge: null,
     },
   ];
@@ -2114,6 +2268,219 @@ export default function BusinessDashboardPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* TAB: STANDALONE SOCIAL MEDIA POSTS */}
+            {activeTab === "socialOnly" && (
+              <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3 flex-wrap gap-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Social Media Posts</h3>
+                    <p className="text-xs text-white/60 mt-1">
+                      Generate Instagram, Facebook &amp; LinkedIn posts from a topic — no blog article needed. Edit,
+                      regenerate, attach or generate an image, then approve and post manually using the download +
+                      copy steps on each card.
+                    </p>
+                  </div>
+                  {!selectedSocialOnlyPost && (
+                    <button
+                      onClick={() => setIsSocialOnlyModalOpen(true)}
+                      className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                    >
+                      <span>✨</span>
+                      <span>New Social Post</span>
+                    </button>
+                  )}
+                </div>
+
+                {selectedSocialOnlyPost ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <button
+                        onClick={() => setSelectedSocialOnlyPost(null)}
+                        className="bg-dark-overlay-navy hover:bg-white/5 text-white/80 border border-white/20 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+                      >
+                        ← Back to List
+                      </button>
+                      <h4 className="font-serif text-sm font-bold text-white">{selectedSocialOnlyPost.topic}</h4>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      <PlatformCard
+                        platformKey="instagram"
+                        platformLabel="Instagram"
+                        icon={<FaInstagram className="w-4 h-4 text-[#E1306C]" />}
+                        color=""
+                        borderColor=""
+                        caption={selectedSocialOnlyPost.instagram.caption}
+                        status={selectedSocialOnlyPost.instagram.status}
+                        isPublished={false}
+                        attachedImageUrl={selectedSocialOnlyPost.instagram.imageUrl}
+                        onApprove={() => handleApproveSocialCaption(selectedSocialOnlyPost.id, "instagram")}
+                        onSaveEdit={(newCaption) => handleSaveSocialCaption(selectedSocialOnlyPost.id, "instagram", newCaption)}
+                        onRequestRevision={() => handleRequestSocialRevision(selectedSocialOnlyPost.id, "instagram")}
+                        onCopy={() => handleCopySocialOnly(selectedSocialOnlyPost.instagram.caption, "social-only-ig")}
+                        isCopied={socialOnlyCopiedKey === "social-only-ig"}
+                        onAttachImage={(url) => handleAttachSocialImage(selectedSocialOnlyPost.id, "instagram", url)}
+                        imagePromptSuggestion={selectedSocialOnlyPost.instagram.imagePromptSuggestion}
+                        onGenerateImage={(prompt) => handleGenerateSocialImage(selectedSocialOnlyPost.id, "instagram", prompt)}
+                        isGeneratingImage={generatingSocialImageKey === `${selectedSocialOnlyPost.id}-instagram`}
+                        showManualUploadGuide
+                      />
+                      <PlatformCard
+                        platformKey="facebook"
+                        platformLabel="Facebook"
+                        icon={<FaFacebook className="w-4 h-4 text-[#1877F2]" />}
+                        color=""
+                        borderColor=""
+                        caption={selectedSocialOnlyPost.facebook.caption}
+                        status={selectedSocialOnlyPost.facebook.status}
+                        isPublished={false}
+                        attachedImageUrl={selectedSocialOnlyPost.facebook.imageUrl}
+                        onApprove={() => handleApproveSocialCaption(selectedSocialOnlyPost.id, "facebook")}
+                        onSaveEdit={(newCaption) => handleSaveSocialCaption(selectedSocialOnlyPost.id, "facebook", newCaption)}
+                        onRequestRevision={() => handleRequestSocialRevision(selectedSocialOnlyPost.id, "facebook")}
+                        onCopy={() => handleCopySocialOnly(selectedSocialOnlyPost.facebook.caption, "social-only-fb")}
+                        isCopied={socialOnlyCopiedKey === "social-only-fb"}
+                        onAttachImage={(url) => handleAttachSocialImage(selectedSocialOnlyPost.id, "facebook", url)}
+                        imagePromptSuggestion={selectedSocialOnlyPost.facebook.imagePromptSuggestion}
+                        onGenerateImage={(prompt) => handleGenerateSocialImage(selectedSocialOnlyPost.id, "facebook", prompt)}
+                        isGeneratingImage={generatingSocialImageKey === `${selectedSocialOnlyPost.id}-facebook`}
+                        showManualUploadGuide
+                      />
+                      <PlatformCard
+                        platformKey="linkedin"
+                        platformLabel="LinkedIn"
+                        icon={<FaLinkedin className="w-4 h-4 text-[#0A66C2]" />}
+                        color=""
+                        borderColor=""
+                        caption={selectedSocialOnlyPost.linkedin.caption}
+                        status={selectedSocialOnlyPost.linkedin.status}
+                        isPublished={false}
+                        attachedImageUrl={selectedSocialOnlyPost.linkedin.imageUrl}
+                        onApprove={() => handleApproveSocialCaption(selectedSocialOnlyPost.id, "linkedin")}
+                        onSaveEdit={(newCaption) => handleSaveSocialCaption(selectedSocialOnlyPost.id, "linkedin", newCaption)}
+                        onRequestRevision={() => handleRequestSocialRevision(selectedSocialOnlyPost.id, "linkedin")}
+                        onCopy={() => handleCopySocialOnly(selectedSocialOnlyPost.linkedin.caption, "social-only-li")}
+                        isCopied={socialOnlyCopiedKey === "social-only-li"}
+                        onAttachImage={(url) => handleAttachSocialImage(selectedSocialOnlyPost.id, "linkedin", url)}
+                        imagePromptSuggestion={selectedSocialOnlyPost.linkedin.imagePromptSuggestion}
+                        onGenerateImage={(prompt) => handleGenerateSocialImage(selectedSocialOnlyPost.id, "linkedin", prompt)}
+                        isGeneratingImage={generatingSocialImageKey === `${selectedSocialOnlyPost.id}-linkedin`}
+                        showManualUploadGuide
+                      />
+                    </div>
+                  </div>
+                ) : socialOnlyPostsLoading ? (
+                  <div className="py-8 text-center text-white/60 text-xs">Loading social posts…</div>
+                ) : socialOnlyPosts.length === 0 ? (
+                  <div className="py-8 text-center text-white/60 text-xs">
+                    No social posts yet — click "New Social Post" to create one.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {socialOnlyPosts.map((post) => {
+                      const allApproved =
+                        post.instagram.status === "approved" &&
+                        post.facebook.status === "approved" &&
+                        post.linkedin.status === "approved";
+                      return (
+                        <div
+                          key={post.id}
+                          className="p-4 bg-dark-overlay-navy border border-white/10 hover:border-clinical-teal/40 rounded-xl transition-all space-y-2 cursor-pointer"
+                          onClick={() => setSelectedSocialOnlyPost(post)}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span
+                              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                                allApproved
+                                  ? "border-clinical-teal/40 text-clinical-teal"
+                                  : "border-white/20 text-white/60"
+                              }`}
+                            >
+                              {allApproved ? "✓ All Approved" : "Needs Review"}
+                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteSocialOnlyPost(post.id);
+                              }}
+                              className="text-[10px] text-status-error/80 hover:text-status-error cursor-pointer"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                          <h4 className="text-xs font-bold text-white leading-snug">{post.topic}</h4>
+                          <span className="text-[10px] text-white/40 font-mono block">
+                            {formatDateSafe(post.updated_at)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* NEW SOCIAL POST MODAL */}
+            {isSocialOnlyModalOpen && (
+              <div className="fixed inset-0 z-50 bg-deep-navy/80 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="bg-primary-navy border border-white/10 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+                  <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <span>✨</span>
+                      <span>New Social Media Post</span>
+                    </h3>
+                    <button
+                      onClick={() => !isGeneratingSocialOnly && setIsSocialOnlyModalOpen(false)}
+                      disabled={isGeneratingSocialOnly}
+                      className="text-white/60 hover:text-white text-sm cursor-pointer disabled:opacity-50"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <form onSubmit={handleGenerateSocialOnly} className="space-y-4">
+                    <div>
+                      <label className="block text-xs text-white/80 mb-1">Topic / Patient Question</label>
+                      <input
+                        type="text"
+                        value={newSocialOnlyTopic}
+                        onChange={(e) => setNewSocialOnlyTopic(e.target.value)}
+                        disabled={isGeneratingSocialOnly}
+                        placeholder="e.g. 5 signs your knee pain needs a specialist"
+                        className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none disabled:opacity-50"
+                        autoFocus
+                      />
+                      <p className="text-[11px] text-white/60 mt-1.5">
+                        Generates an Instagram, Facebook, and LinkedIn post — each written for that platform's tone,
+                        length, and hashtag conventions.
+                      </p>
+                    </div>
+                    <div className="flex justify-end gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsSocialOnlyModalOpen(false)}
+                        disabled={isGeneratingSocialOnly}
+                        className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isGeneratingSocialOnly || !newSocialOnlyTopic.trim()}
+                        className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-5 py-2 rounded-xl cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {isGeneratingSocialOnly && (
+                          <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        )}
+                        {isGeneratingSocialOnly ? "Generating…" : "Generate Posts"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             )}
 
@@ -3377,7 +3744,7 @@ function ArticleFooterTemplate() {
           />
           <span className="font-serif font-bold text-white">Lincolnshire Knee Clinic</span>
         </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 justify-center text-center">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 justify-center text-center text-[5px]">
           <span>Lead Consultant: Mr Ricardo J Pacheco (GMC 4145976)</span>
           <span>📞 07770 473437</span>
           <span>✉ info@lincsknee.com</span>
@@ -3639,6 +4006,28 @@ function FormattedContent({
 }
 
 // Subcomponent: Social Platform Card
+// Fetches an image (even cross-origin, e.g. Supabase Storage) as a blob and triggers
+// a real download — a plain <a download> is silently ignored by browsers for
+// cross-origin URLs, so this is needed for the "Download Image" manual-upload step.
+async function downloadImageFile(url: string, filenameHint: string) {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    const extension = blob.type.split("/")[1] || "png";
+    link.download = `${filenameHint}.${extension}`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(objectUrl);
+  } catch (err) {
+    console.error("Image download failed:", err);
+    alert("Couldn't download the image automatically — right-click the image above and choose \"Save image as...\" instead.");
+  }
+}
+
 function PlatformCard({
   platformKey,
   platformLabel,
@@ -3657,6 +4046,10 @@ function PlatformCard({
   onCopy,
   isCopied,
   onAttachImage,
+  imagePromptSuggestion,
+  onGenerateImage,
+  isGeneratingImage,
+  showManualUploadGuide,
 }: {
   platformKey: "instagram" | "facebook" | "linkedin";
   platformLabel: string;
@@ -3675,6 +4068,10 @@ function PlatformCard({
   onCopy: () => void;
   isCopied: boolean;
   onAttachImage?: (url: string) => void;
+  imagePromptSuggestion?: string;
+  onGenerateImage?: (prompt: string) => void;
+  isGeneratingImage?: boolean;
+  showManualUploadGuide?: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(caption);
@@ -3761,6 +4158,25 @@ function PlatformCard({
                 >
                   Paste URL
                 </button>
+                {onGenerateImage && (
+                  <button
+                    onClick={() => onGenerateImage(imagePromptSuggestion || `A representative image for a ${platformLabel} post`)}
+                    disabled={isGeneratingImage}
+                    className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
+                  >
+                    {isGeneratingImage ? "Generating…" : "✨ Generate"}
+                  </button>
+                )}
+              </div>
+            )}
+            {showManualUploadGuide && (
+              <div className="flex justify-end">
+                <button
+                  onClick={() => downloadImageFile(attachedImageUrl, `${platformKey}-post-image`)}
+                  className="text-[9px] text-clinical-teal hover:underline cursor-pointer font-medium"
+                >
+                  ⬇ Download Image
+                </button>
               </div>
             )}
           </div>
@@ -3806,6 +4222,15 @@ function PlatformCard({
                 >
                   Paste URL
                 </button>
+                {onGenerateImage && (
+                  <button
+                    onClick={() => onGenerateImage(imagePromptSuggestion || `A representative image for a ${platformLabel} post`)}
+                    disabled={isGeneratingImage}
+                    className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1 rounded-lg transition-colors font-medium cursor-pointer disabled:opacity-50"
+                  >
+                    {isGeneratingImage ? "Generating…" : "✨ Generate"}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -3879,6 +4304,21 @@ function PlatformCard({
           </div>
         )}
       </div>
+
+      {showManualUploadGuide && status === "approved" && (
+        <div className="bg-primary-navy/60 border border-clinical-teal/20 rounded-lg p-3 space-y-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-clinical-teal">
+            Ready to post — do it manually in {platformLabel}
+          </span>
+          <ol className="text-[10px] text-white/70 leading-relaxed list-decimal list-inside space-y-0.5">
+            <li>Click "⬇ Download Image" above to save the picture to your device.</li>
+            <li>Click "📋 Copy" above to copy the caption text.</li>
+            <li>Open the {platformLabel} app (or website).</li>
+            <li>Start a new post, add the downloaded image, then paste the caption.</li>
+            <li>Review it looks right, then publish.</li>
+          </ol>
+        </div>
+      )}
     </div>
   );
 }
