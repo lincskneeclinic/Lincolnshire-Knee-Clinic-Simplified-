@@ -75,7 +75,7 @@ export async function POST(request: Request) {
           "Content-Type": contentType,
           "x-upsert": "true",
         },
-        body: buffer,
+        body: new Uint8Array(buffer),
       });
 
       if (uploadRes.ok) {

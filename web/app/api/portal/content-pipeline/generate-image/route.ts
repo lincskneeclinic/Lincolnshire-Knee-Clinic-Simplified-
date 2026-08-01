@@ -173,7 +173,7 @@ export async function POST(request: Request) {
         "Content-Type": "image/webp",
         "x-upsert": "true",
       },
-      body: webpBuffer,
+      body: new Uint8Array(webpBuffer),
     });
 
     if (!uploadRes.ok) {
