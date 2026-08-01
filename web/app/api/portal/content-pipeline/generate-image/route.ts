@@ -18,7 +18,7 @@ export const maxDuration = 60;
 // separate from "content-pipeline-images" (ad-hoc per-run blog/social images)
 // since these are long-lived assets meant to be reused across pages. Objects
 // are stored at "[category]/[filename].webp", mirroring the folder/naming
-// convention in docs/medical-imagery-guidelines.md even though the physical
+// convention in web/docs/medical-imagery-guidelines.md even though the physical
 // backend is Supabase Storage rather than /public/images (writing to /public
 // at runtime doesn't persist on this Hostinger deployment — see
 // content-pipeline/upload/route.ts's fallback path, which exists for the same

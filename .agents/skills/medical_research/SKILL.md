@@ -30,10 +30,10 @@ Example:
 Whenever the user requests a knee image, medical illustration, diagram, annotated scan, diagnostic visual, injection image, surgical illustration, rehabilitation graphic, or patient-education visual:
 
 1. Read and follow:
-   - `/docs/medical-imagery-guidelines.md`
-   - `/docs/image-prompt-library.md`
+   - `/web/docs/medical-imagery-guidelines.md`
+   - `/web/docs/image-prompt-library.md`
 
-2. Use `/docs/medical-imagery-guidelines.md` for:
+2. Use `/web/docs/medical-imagery-guidelines.md` for:
    - licensing and attribution
    - clinical and visual standards
    - accessibility and alt text
@@ -41,7 +41,7 @@ Whenever the user requests a knee image, medical illustration, diagram, annotate
    - file naming and storage
    - clinical review requirements
 
-3. Use `/docs/image-prompt-library.md` for:
+3. Use `/web/docs/image-prompt-library.md` for:
    - the Lincolnshire Knee Clinic house style
    - subject-specific knee prompts
    - negative prompts
@@ -71,6 +71,6 @@ Whenever the user requests a knee image, medical illustration, diagram, annotate
    - descriptive alt text
    - an appropriate filename and destination path
 
-10. Before completing the task, apply the clinical review checklist in `/docs/image-prompt-library.md`.
+10. Before completing the task, apply the clinical review checklist in `/web/docs/image-prompt-library.md`.
 
 If either reference file is missing or cannot be read, stop and report which file is unavailable rather than inventing replacement rules.

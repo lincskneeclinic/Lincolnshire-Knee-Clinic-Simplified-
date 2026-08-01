@@ -5,8 +5,14 @@ import path from "path";
 // than re-authoring clinical/editorial policy in code. Both files are the
 // single source of truth — edit them, not this parser's output, to change
 // house style, subject prompts, or the negative prompt.
-const GUIDELINES_PATH = path.join(process.cwd(), "..", "docs", "medical-imagery-guidelines.md");
-const LIBRARY_PATH = path.join(process.cwd(), "..", "docs", "image-prompt-library.md");
+//
+// These live under web/docs/ (not a repo-root-relative "../docs/") because
+// Hostinger's deployment only includes the web/ directory itself — anything
+// outside it (like a sibling repo-root docs/ folder) never reaches
+// production, which is why this used to throw MissingReferenceDocError there
+// despite working fine in local dev.
+const GUIDELINES_PATH = path.join(process.cwd(), "docs", "medical-imagery-guidelines.md");
+const LIBRARY_PATH = path.join(process.cwd(), "docs", "image-prompt-library.md");
 
 export type ImageCategory =
   | "anatomy"
