@@ -1,3 +1,15 @@
+// Shared between the /newsletter page's interactive poll widget and the
+// clickable poll embedded in the sent email, so votes from either source
+// land on the same option keys in the newsletter-poll KV store.
+export const NEWSLETTER_POLL_TOPICS = [
+  "Hydrogel vs Corticosteroid Injection Longevity",
+  "Post-Op Swelling & Ice Therapy Protocol",
+  "Cartilage Repair vs Microfracture Surgery",
+  "Returning to Golf & Tennis After Knee Replacement",
+];
+
+const SITE_URL = "https://lincolnshirekneeclinic.co.uk";
+
 const P_STYLE = "margin-top: 12px; margin-bottom: 12px; font-size: 15px; line-height: 1.6; color: #334155;";
 const H3_STYLE = "color: #0c4a6e; font-family: Georgia, serif; font-size: 18px; font-weight: bold; margin-top: 24px; margin-bottom: 12px;";
 const LI_STYLE = "margin-bottom: 6px; font-size: 14px; color: #475569;";
@@ -74,6 +86,50 @@ export function markdownToEmailHtml(markdown: string): string {
   return blocks.join("");
 }
 
+// Email clients strip <form>/JS, so votes are plain GET links to a route that
+// records the vote and redirects back to the site — the same pattern used for
+// the unsubscribe link below. The "something else" option can't collect free
+// text via a link click, so it deep-links to the poll widget on the site
+// instead, where the existing text box already posts custom suggestions.
+function buildNewsletterPollHtml(recipientEmailPlaceholder: string): string {
+  const voteButtons = NEWSLETTER_POLL_TOPICS.map((topic) => {
+    const voteUrl = `${SITE_URL}/api/newsletter/poll/vote?option=${encodeURIComponent(topic)}&email=${recipientEmailPlaceholder}`;
+    return `
+      <tr>
+        <td style="padding-bottom: 10px;">
+          <a href="${voteUrl}" style="display: block; padding: 12px 16px; background-color: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; color: #0f172a; font-size: 13px; font-weight: 600; text-decoration: none;">
+            ${topic}
+          </a>
+        </td>
+      </tr>`;
+  }).join("");
+
+  return `
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 28px; border-top: 1px solid #e2e8f0; padding-top: 24px;">
+      <tr>
+        <td>
+          <h3 style="${H3_STYLE}">📋 What Should We Cover Next?</h3>
+          <p style="${P_STYLE}">Tap a topic to vote for what our specialists should explain in an upcoming newsletter:</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <table border="0" cellpadding="0" cellspacing="0" width="100%">
+            ${voteButtons}
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top: 4px;">
+          <a href="${SITE_URL}/newsletter#poll" style="color: #0d9488; font-weight: bold; font-size: 13px; text-decoration: underline;">
+            💬 Got a different question? Tell us →
+          </a>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
 export function wrapNewsletterEmailTemplate(subject: string, contentHtml: string): string {
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 32px 16px; margin: 0; color: #334155;">
@@ -88,6 +144,7 @@ export function wrapNewsletterEmailTemplate(subject: string, contentHtml: string
           <td style="padding: 32px 24px;">
             <h2 style="font-family: Georgia, serif; color: #0f172a; font-size: 20px; font-weight: bold; margin-top: 0; margin-bottom: 16px; line-height: 1.4;">${subject}</h2>
             ${contentHtml}
+            ${buildNewsletterPollHtml("{{RECIPIENT_EMAIL}}")}
           </td>
         </tr>
         <tr>

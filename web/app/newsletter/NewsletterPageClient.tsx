@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PageHeader } from "@/components/PageHeader";
+import { NEWSLETTER_POLL_TOPICS } from "@/lib/newsletterMarkdown";
 
 export default function NewsletterPageClient() {
   const [activeMode, setActiveMode] = useState<"subscribe" | "archive" | "unsubscribe">("subscribe");
@@ -578,7 +579,9 @@ export default function NewsletterPageClient() {
           </div>
 
           {/* Interactive Patient Topic Poll Widget */}
-          <NewsletterPollWidget />
+          <div id="poll">
+            <NewsletterPollWidget />
+          </div>
 
           {/* Community cross-link */}
           <div className="bg-white border border-border-clinical rounded-2xl p-6 space-y-3 shadow-xs">
@@ -607,6 +610,18 @@ function NewsletterPollWidget() {
   const [votedOption, setVotedOption] = useState("");
   const [customSuggestion, setCustomSuggestion] = useState("");
   const [isSubmittingPoll, setIsSubmittingPoll] = useState(false);
+
+  // Handles landing here from the clickable poll link inside the sent email —
+  // /api/newsletter/poll/vote already recorded the vote server-side and
+  // redirected here with the result, so just reflect that in the UI.
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const votedParam = urlParams.get("voted");
+    if (votedParam) {
+      setVotedOption(votedParam);
+      setPollVoted(true);
+    }
+  }, []);
 
   const handleVote = async (optText: string) => {
     setIsSubmittingPoll(true);
@@ -663,12 +678,7 @@ function NewsletterPollWidget() {
         </div>
       ) : (
         <div className="space-y-3">
-          {[
-            "Hydrogel vs Corticosteroid Injection Longevity",
-            "Post-Op Swelling & Ice Therapy Protocol",
-            "Cartilage Repair vs Microfracture Surgery",
-            "Returning to Golf & Tennis After Knee Replacement",
-          ].map((opt, idx) => (
+          {NEWSLETTER_POLL_TOPICS.map((opt, idx) => (
             <button
               key={idx}
               onClick={() => handleVote(opt)}
