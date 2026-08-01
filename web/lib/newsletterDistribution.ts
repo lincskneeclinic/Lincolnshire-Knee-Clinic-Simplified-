@@ -109,14 +109,21 @@ export async function sendNewsletterCampaign(id: string): Promise<{ success: boo
 
   let sentCount = 0;
   let mode = "simulation";
+  const failures: string[] = [];
+  let lastError = "";
 
   if (hasBrevo) {
     mode = "brevo";
     for (const sub of subscribers) {
       const recipientEmail = sub.email;
       const htmlBody = edition.bodyHtml.replace(/\{\{RECIPIENT_EMAIL\}\}/g, encodeURIComponent(recipientEmail));
-      const success = await sendBrevoMail(edition.subject, htmlBody, recipientEmail, sub.name);
-      if (success) sentCount++;
+      const result = await sendBrevoMail(edition.subject, htmlBody, recipientEmail, sub.name);
+      if (result.success) {
+        sentCount++;
+      } else {
+        failures.push(recipientEmail);
+        lastError = result.error || lastError;
+      }
     }
   } else if (hasMSGraph) {
     mode = "ms-graph";
@@ -124,7 +131,11 @@ export async function sendNewsletterCampaign(id: string): Promise<{ success: boo
       const recipientEmail = sub.email;
       const htmlBody = edition.bodyHtml.replace(/\{\{RECIPIENT_EMAIL\}\}/g, encodeURIComponent(recipientEmail));
       const success = await sendGraphMail(edition.subject, htmlBody, recipientEmail);
-      if (success) sentCount++;
+      if (success) {
+        sentCount++;
+      } else {
+        failures.push(recipientEmail);
+      }
     }
   } else {
     mode = "simulation";
@@ -133,6 +144,18 @@ export async function sendNewsletterCampaign(id: string): Promise<{ success: boo
       console.log(`[Simulation] #${i + 1} Recipient: ${sub.name} <${sub.email}>`);
     });
     sentCount = subscribers.length;
+  }
+
+  // Only mark as sent if at least one recipient actually received it — a
+  // total failure (e.g. bad sender config) should stay "draft" so it can be
+  // retried, instead of silently looking like a successful send.
+  if (sentCount === 0) {
+    return {
+      success: false,
+      sentCount: 0,
+      mode,
+      error: lastError || `All ${subscribers.length} send attempts failed via ${mode}.`,
+    };
   }
 
   editions[index] = {
@@ -144,5 +167,10 @@ export async function sendNewsletterCampaign(id: string): Promise<{ success: boo
 
   await saveNewsletterEditions(editions);
 
-  return { success: true, sentCount, mode };
+  return {
+    success: true,
+    sentCount,
+    mode,
+    ...(failures.length > 0 ? { error: `${failures.length} of ${subscribers.length} recipients failed: ${failures.join(", ")}` } : {}),
+  };
 }

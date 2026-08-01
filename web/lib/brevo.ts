@@ -93,16 +93,21 @@ export async function unsubscribeContactInBrevo(email: string): Promise<boolean>
   }
 }
 
+export interface SendBrevoMailResult {
+  success: boolean;
+  error?: string;
+}
+
 export async function sendBrevoMail(
   subject: string,
   htmlContent: string,
   toEmail: string,
   toName?: string
-): Promise<boolean> {
+): Promise<SendBrevoMailResult> {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) {
     console.warn("[Brevo Smtp Mail] NOT SENT — BREVO_API_KEY not configured.");
-    return false;
+    return { success: false, error: "BREVO_API_KEY is not configured." };
   }
 
   try {
@@ -126,15 +131,22 @@ export async function sendBrevoMail(
 
     if (res.ok) {
       console.log(`[Brevo Smtp Mail] Email campaign sent successfully to ${toEmail}`);
-      return true;
+      return { success: true };
     } else {
       const errorBody = await res.text();
       console.error("[Brevo Smtp Mail] HTTP error:", res.status, errorBody);
-      return false;
+      let parsedMessage = errorBody;
+      try {
+        const parsed = JSON.parse(errorBody);
+        parsedMessage = parsed.message || errorBody;
+      } catch {
+        // errorBody wasn't JSON — use it as-is
+      }
+      return { success: false, error: `Brevo API error (${res.status}): ${parsedMessage}` };
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("[Brevo Smtp Mail] Unexpected exception:", error);
-    return false;
+    return { success: false, error: error?.message || "Unexpected network error contacting Brevo." };
   }
 }
 
