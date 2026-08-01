@@ -9,7 +9,7 @@ interface ReportedContent {
   title?: string;
 }
 
-// Gated by Basic Auth in middleware.ts (isDashboardRoute includes this path).
+// Gated by Supabase admin auth in middleware.ts (isDashboardRoute includes this path).
 // Uses the service-role client throughout — this route runs entirely with
 // admin privileges, bypassing the member-scoped RLS policies.
 

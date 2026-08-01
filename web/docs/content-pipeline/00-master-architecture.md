@@ -128,5 +128,5 @@ When a run transitions into `awaiting_blog_approval` or `awaiting_social_approva
 
 ## 5. Security & Access Control
 
-- All API routes under `/api/portal/content-pipeline/*` are protected by HTTP Basic Auth enforced via Next.js `middleware.ts`.
+- All API routes under `/api/portal/content-pipeline/*` are protected by Supabase admin auth enforced via Next.js `middleware.ts`.
 - No patient identifiable health data (PHI) is processed or stored in content pipeline tables.

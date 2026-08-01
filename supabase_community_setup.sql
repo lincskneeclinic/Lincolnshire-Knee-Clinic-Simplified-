@@ -212,3 +212,44 @@ CREATE POLICY "Service role full access to reports"
   ON community_reports FOR ALL
   TO service_role
   USING (true);
+
+-- ============================================================
+-- 6. Business dashboard admin access
+-- ============================================================
+-- The /portal/business dashboard is protected by Supabase Auth. After creating
+-- the dashboard admin user in Supabase Auth, run the block below with the real
+-- admin email address. This creates/updates the matching community_profiles row
+-- and grants dashboard access via is_admin = true.
+--
+-- DO $$
+-- DECLARE
+--   admin_user_id UUID;
+-- BEGIN
+--   SELECT id INTO admin_user_id
+--   FROM auth.users
+--   WHERE email = 'admin@example.com';
+--
+--   IF admin_user_id IS NULL THEN
+--     RAISE EXCEPTION 'No Supabase Auth user found for the dashboard admin email';
+--   END IF;
+--
+--   INSERT INTO community_profiles (
+--     user_id,
+--     display_name,
+--     newsletter_opt_in,
+--     disclaimer_accepted_at,
+--     is_admin,
+--     status
+--   )
+--   VALUES (
+--     admin_user_id,
+--     'Clinic Admin',
+--     false,
+--     now(),
+--     true,
+--     'active'
+--   )
+--   ON CONFLICT (user_id) DO UPDATE
+--   SET is_admin = true,
+--       status = 'active';
+-- END $$;

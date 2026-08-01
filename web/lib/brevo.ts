@@ -114,7 +114,10 @@ export async function sendBrevoMail(
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        sender: { name: "Lincolnshire Knee Clinic", email: "info@lincolnshirekneeclinic.co.uk" },
+        sender: {
+          name: process.env.BREVO_SENDER_NAME || "Lincolnshire Knee Clinic",
+          email: process.env.BREVO_SENDER_EMAIL || "info@lincolnshirekneeclinic.co.uk",
+        },
         to: [{ email: toEmail, name: toName || "" }],
         subject,
         htmlContent,

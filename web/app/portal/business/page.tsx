@@ -10,6 +10,7 @@ import { markdownToEmailHtml } from "@/lib/newsletterMarkdown";
 import { ReviewablePage, ClinicalReviewEntry } from "@/lib/clinicalReview";
 import GenerateImageModal from "@/components/portal/GenerateImageModal";
 import { DashboardFeedbackProvider, useToast, useConfirm, usePrompt } from "@/components/portal/DashboardFeedback";
+import { createClient } from "@/lib/supabase/client";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
@@ -105,6 +106,12 @@ function BusinessDashboardPageInner() {
   const [subscriberSearch, setSubscriberSearch] = useState("");
   const [pipelineSearch, setPipelineSearch] = useState("");
   const [educationSearch, setEducationSearch] = useState("");
+  const [isAdminPasswordOpen, setIsAdminPasswordOpen] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminPasswordConfirm, setAdminPasswordConfirm] = useState("");
+  const [adminPasswordSaving, setAdminPasswordSaving] = useState(false);
+  const [adminPasswordMessage, setAdminPasswordMessage] = useState("");
+  const [adminPasswordError, setAdminPasswordError] = useState("");
 
   // Newsletter Creator & Distribution States
   const [newsletterEditions, setNewsletterEditions] = useState<any[]>([]);
@@ -2090,6 +2097,48 @@ function BusinessDashboardPageInner() {
     }
   };
 
+  const handleAdminLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = "/portal/business/login";
+  };
+
+  const handleAdminPasswordChange = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setAdminPasswordError("");
+    setAdminPasswordMessage("");
+
+    if (adminPassword.length < 8) {
+      setAdminPasswordError("Password must be at least 8 characters.");
+      return;
+    }
+
+    if (adminPassword !== adminPasswordConfirm) {
+      setAdminPasswordError("Passwords do not match.");
+      return;
+    }
+
+    setAdminPasswordSaving(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({ password: adminPassword });
+
+      if (error) {
+        setAdminPasswordError(error.message);
+        return;
+      }
+
+      setAdminPassword("");
+      setAdminPasswordConfirm("");
+      setAdminPasswordMessage("Dashboard password updated.");
+    } catch (err) {
+      console.error(err);
+      setAdminPasswordError("Network error. Please try again.");
+    } finally {
+      setAdminPasswordSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-deep-navy text-white/80 font-sans flex flex-col">
       {/* Top Header Navigation */}
@@ -2123,9 +2172,20 @@ function BusinessDashboardPageInner() {
               >
                 ← Return to Website
               </Link>
-              <span className="bg-dark-overlay-navy border border-white/10 text-white/70 text-[11px] py-1.5 px-2 rounded-lg inline-flex items-center justify-center gap-1">
-                🔒 Basic Auth Protected
-              </span>
+              <button
+                type="button"
+                onClick={() => setIsAdminPasswordOpen((value) => !value)}
+                className="bg-dark-overlay-navy hover:bg-white/5 border border-white/10 text-white/70 text-[11px] py-1.5 px-2 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer"
+              >
+                Change Password
+              </button>
+              <button
+                type="button"
+                onClick={handleAdminLogout}
+                className="col-span-2 bg-dark-overlay-navy hover:bg-white/5 border border-white/10 text-white/70 text-[11px] py-1.5 px-2 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer"
+              >
+                Sign Out
+              </button>
             </div>
           </div>
 
@@ -2157,11 +2217,60 @@ function BusinessDashboardPageInner() {
               >
                 ← Return to Website
               </Link>
-              <span className="bg-dark-overlay-navy border border-white/10 text-white/70 text-xs py-1.5 px-3 rounded-xl inline-flex items-center gap-1">
-                🔒 Basic Auth Protected
-              </span>
+              <button
+                type="button"
+                onClick={() => setIsAdminPasswordOpen((value) => !value)}
+                className="bg-dark-overlay-navy hover:bg-white/5 border border-white/10 text-white/70 text-xs py-1.5 px-3 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+              >
+                Change Password
+              </button>
+              <button
+                type="button"
+                onClick={handleAdminLogout}
+                className="bg-dark-overlay-navy hover:bg-white/5 border border-white/10 text-white/70 text-xs py-1.5 px-3 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+              >
+                Sign Out
+              </button>
             </div>
           </div>
+
+          {isAdminPasswordOpen && (
+            <form
+              onSubmit={handleAdminPasswordChange}
+              className="mt-3 grid gap-2 rounded-xl border border-white/10 bg-deep-navy/70 p-3 md:grid-cols-[1fr_1fr_auto]"
+            >
+              <input
+                type="password"
+                minLength={8}
+                required
+                placeholder="New password"
+                value={adminPassword}
+                onChange={(event) => setAdminPassword(event.target.value)}
+                className="rounded-lg border border-white/10 bg-primary-navy px-3 py-2 text-xs text-white placeholder:text-white/40 focus:border-clinical-teal focus:outline-none"
+              />
+              <input
+                type="password"
+                minLength={8}
+                required
+                placeholder="Confirm password"
+                value={adminPasswordConfirm}
+                onChange={(event) => setAdminPasswordConfirm(event.target.value)}
+                className="rounded-lg border border-white/10 bg-primary-navy px-3 py-2 text-xs text-white placeholder:text-white/40 focus:border-clinical-teal focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={adminPasswordSaving}
+                className="rounded-lg bg-clinical-teal px-4 py-2 text-xs font-bold text-deep-navy transition-colors hover:bg-clinical-teal-hover disabled:opacity-60"
+              >
+                {adminPasswordSaving ? "Saving..." : "Save Password"}
+              </button>
+              {(adminPasswordMessage || adminPasswordError) && (
+                <p className={`text-xs md:col-span-3 ${adminPasswordError ? "text-status-error" : "text-clinical-teal"}`}>
+                  {adminPasswordError || adminPasswordMessage}
+                </p>
+              )}
+            </form>
+          )}
         </div>
 
         {/* Tab Navigation */}

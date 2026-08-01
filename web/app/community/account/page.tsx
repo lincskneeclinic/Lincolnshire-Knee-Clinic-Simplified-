@@ -23,6 +23,11 @@ export default function CommunityAccountPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [confirmingDeactivate, setConfirmingDeactivate] = useState(false);
 
   useEffect(() => {
@@ -91,6 +96,42 @@ export default function CommunityAccountPage() {
     router.refresh();
   };
 
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordMessage("");
+
+    if (newPassword.length < 8) {
+      setPasswordError("Password must be at least 8 characters.");
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError("Passwords do not match.");
+      return;
+    }
+
+    setPasswordSaving(true);
+    try {
+      const supabase = createClient();
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+
+      if (updateError) {
+        setPasswordError(updateError.message);
+        return;
+      }
+
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setPasswordMessage("Your password has been updated.");
+    } catch (err) {
+      console.error(err);
+      setPasswordError("Network error. Please try again.");
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
   if (loading) {
     return <p className="text-sm text-text-secondary">Loading your account...</p>;
   }
@@ -154,6 +195,60 @@ export default function CommunityAccountPage() {
             {saving ? "Saving..." : "Save Changes"}
           </button>
         </form>
+
+        <div className="pt-4 border-t border-border-clinical">
+          <h3 className="text-sm font-bold text-deep-navy mb-3">Change Password</h3>
+          <form onSubmit={handlePasswordChange} className="space-y-4">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="new-password" className="text-xs font-semibold text-text-secondary">
+                New Password
+              </label>
+              <input
+                id="new-password"
+                type="password"
+                minLength={8}
+                required
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full px-4 py-2.5 text-sm bg-warm-off-white border border-border-clinical rounded-xl text-text-main focus:outline-none focus:border-clinical-teal"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label htmlFor="confirm-new-password" className="text-xs font-semibold text-text-secondary">
+                Confirm New Password
+              </label>
+              <input
+                id="confirm-new-password"
+                type="password"
+                minLength={8}
+                required
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                className="w-full px-4 py-2.5 text-sm bg-warm-off-white border border-border-clinical rounded-xl text-text-main focus:outline-none focus:border-clinical-teal"
+              />
+            </div>
+
+            {passwordMessage && (
+              <div className="bg-pale-clinical-blue border border-clinical-teal/30 text-deep-navy text-xs p-3 rounded-xl font-medium">
+                {passwordMessage}
+              </div>
+            )}
+            {passwordError && (
+              <div className="bg-status-error-bg border border-[#FAD8D8] text-status-error text-xs p-3 rounded-xl font-medium">
+                {passwordError}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={passwordSaving}
+              className="w-full font-bold py-3 px-6 rounded-xl transition-all shadow-md text-sm bg-deep-navy hover:bg-[#111827] text-white cursor-pointer disabled:opacity-60"
+            >
+              {passwordSaving ? "Updating..." : "Update Password"}
+            </button>
+          </form>
+        </div>
 
         <button
           type="button"
