@@ -33,7 +33,7 @@ INSTAGRAM: Open with a scroll-stopping, high-impact hook in the very first line 
 
 INSTAGRAM_STORY: Generate a very short, high-impact text overlay script (maximum 15 words) suitable to be put directly on a vertical 9:16 story background image. Keep it punchy and call-to-action driven. Suggest a vertical 9:16 image prompt description.
 
-INSTAGRAM_CAROUSEL: Design a step-by-step educational slideshow of 3 to 5 slides. For each slide, define: Slide Number, Slide Text Overlay (under 15 words, big bold text), and a specific Slide Image Description that represents that slide visually.
+INSTAGRAM_CAROUSEL: Design a step-by-step educational slideshow of 3 to 5 slides. For each slide, define: Slide Number, Slide Text Overlay (under 15 words, big bold text), and a Slide Image Description that visually depicts that specific slide's point (see the image-description rule below) — never a repeated generic clinic photo across slides.
 
 INSTAGRAM_REEL: Design a short, 30-second conversational video script. Include: (1) A scroll-stopping video intro hook, (2) 3 short, punchy talking points, (3) Visual B-roll action cues for the camera, and (4) Voiceover narration text.
 
@@ -50,7 +50,7 @@ Important: Do NOT write "Call 07770473437" or ask patients to call. Instead, spe
 
 Do not invent medical claims. Do not use fake statistics. Keep the clinic's tone empathetic and professional throughout.
 
-For EACH standard post and story, suggest a short, concrete description of a single representative image suitable for that specific post (for an AI image generator or manual photo selection) — describe it visually and specifically. Ensure descriptions are highly relevant to a premium UK knee clinic (Lincolnshire Knee Clinic), such as depicting professional consultant consultations, clinical rooms with navy/teal branding, anatomical model knee joints, patients performing rehabilitation exercises under physiotherapist supervision, or clean surgical diagram illustrations.`;
+Image description rule (applies to standard posts, stories, and every carousel slide): suggest a short, concrete description of a single representative image (for an AI image generator or manual photo selection). The image MUST depict the SPECIFIC subject the post is actually about — not a generic clinic photo. First identify exactly what the caption discusses (a symptom, a time of day, a body position, a piece of equipment, an activity, an anatomical structure, a recovery stage, etc.), then describe an image of that exact thing. For example: a post about nighttime pain or trouble sleeping after surgery should describe a patient in bed adjusting a pillow beneath an elevated knee at night — NOT a desk with an anatomical model. A post about icing should describe an ice pack being applied to a knee — NOT a consultation room. A post about a specific exercise should describe a patient performing that exact exercise. Only fall back to a generic clinic scene (consultant consultation, clinical room with navy/teal branding, anatomical model, rehab exercise under physiotherapist supervision, surgical diagram) when the topic genuinely has no specific visual subject of its own (e.g. a practice announcement).`;
 
 function buildGenerationPrompt(topic: string): string {
   return `Topic: "${topic}"
@@ -260,5 +260,49 @@ IMAGE:
   return {
     caption,
     imagePromptSuggestion: image || `A representative visual description for "${topic}"`
+  };
+}
+
+export async function rewriteCarouselSlides(
+  topic: string,
+  previousSlides: CarouselSlide[],
+  revisionNotes?: string
+): Promise<{ caption: string; imagePromptSuggestion: string; slides: CarouselSlide[] }> {
+  const model = getModel();
+  const previousText = previousSlides
+    .map((s) => `Slide ${s.slideNumber} Visual: ${s.imagePromptSuggestion}\nSlide ${s.slideNumber} Text: ${s.text}`)
+    .join("\n");
+
+  const prompt = `Topic: "${topic}"
+
+You previously wrote this Instagram Carousel slide deck:
+"""
+${previousText}
+"""
+
+${revisionNotes ? `The reviewer's feedback for the rewrite: "${revisionNotes}"` : "The reviewer wants a fresh alternative take on the slide deck — not a minor tweak."}
+
+Write a revised 3 to 5 slide Instagram Carousel now, following the INSTAGRAM_CAROUSEL rules and the image description rule from your system instructions, in EXACTLY this format (including the literal markers on their own lines):
+
+Slide 1 Visual: <visual description for slide 1>
+Slide 1 Text: <text overlay for slide 1>
+Slide 2 Visual: <visual description for slide 2>
+Slide 2 Text: <text overlay for slide 2>
+Slide 3 Visual: <visual description for slide 3>
+Slide 3 Text: <text overlay for slide 3>
+(continue up to Slide 5 if needed)`;
+
+  const result = await model.generateContent(prompt);
+  const output = result.response.text() || "";
+  const slides = parseCarouselSlides(output);
+
+  if (slides.length === 0) {
+    throw new Error("The AI response could not be parsed into carousel slides. Please try again.");
+  }
+
+  return {
+    caption: `Swipe through to learn about "${topic}"!`,
+    imagePromptSuggestion: `Carousel deck about "${topic}"`,
+    slides
   };
 }

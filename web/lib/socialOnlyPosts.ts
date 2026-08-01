@@ -31,6 +31,8 @@ export interface SocialOnlyPost {
     imagePromptSuggestion: string;
     script: string;
     status: "pending" | "approved";
+    videoUrl?: string;
+    videoSource?: "upload" | "ai-broll";
   };
   created_at: string;
   updated_at: string;

@@ -13,11 +13,27 @@ export function ArticleViewCounter({ slug, initialViews }: { slug: string; initi
   useEffect(() => {
     let cancelled = false;
 
-    fetch(`/api/education-views/${encodeURIComponent(slug)}`, { method: "POST" })
+    // Check localStorage to prevent duplicate increments from the same user
+    const storageKey = "lkc_viewed_articles";
+    let viewedSlugs: string[] = [];
+    try {
+      viewedSlugs = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    } catch (e) {
+      // Silent catch
+    }
+
+    const hasViewed = viewedSlugs.includes(slug);
+    const method = hasViewed ? "GET" : "POST";
+
+    fetch(`/api/education-views/${encodeURIComponent(slug)}`, { method })
       .then((res) => res.json())
       .then((data) => {
         if (!cancelled && data?.success && typeof data.views === "number") {
           setViews(data.views);
+          if (!hasViewed) {
+            viewedSlugs.push(slug);
+            localStorage.setItem(storageKey, JSON.stringify(viewedSlugs));
+          }
         }
       })
       .catch(() => {

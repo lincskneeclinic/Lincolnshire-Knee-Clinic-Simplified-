@@ -436,9 +436,9 @@ export default function NewsletterPageClient() {
           ) : activeMode === "archive" ? (
             <div className="space-y-6">
               <div>
-                <h2 className="font-serif text-xl font-bold text-deep-navy mb-1">Previous Newsletters & Clinical Updates</h2>
+                <h2 className="font-serif text-xl font-bold text-deep-navy mb-1">Past Newsletters</h2>
                 <p className="text-xs text-text-secondary">
-                  Browse past releases and research bulletins compiled by Lincolnshire Knee Clinic specialists.
+                  Browse newsletters previously sent to Lincolnshire Knee Clinic subscribers, newest first.
                 </p>
               </div>
 
@@ -449,21 +449,20 @@ export default function NewsletterPageClient() {
                 </div>
               ) : archiveList.length === 0 ? (
                 <div className="text-center text-text-secondary text-xs py-12 bg-warm-off-white border border-dashed border-border-clinical rounded-xl">
-                  No previous editions available.
+                  No previous newsletters have been sent yet.
                 </div>
               ) : (
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
                   {archiveList.map((item: any) => (
-                    <div key={item.slug} className="p-4 bg-warm-off-white border border-border-clinical hover:border-clinical-teal/50 rounded-xl space-y-2 hover:shadow-xs transition-all duration-200">
+                    <div key={item.id} className="p-4 bg-warm-off-white border border-border-clinical hover:border-clinical-teal/50 rounded-xl space-y-2 hover:shadow-xs transition-all duration-200">
                       <div className="flex justify-between items-center text-[10px] text-text-secondary">
-                        <span className="bg-pale-clinical-blue text-clinical-teal border border-clinical-teal/10 px-2 py-0.5 rounded font-bold uppercase tracking-wider">{item.category}</span>
                         <span className="font-mono">{new Date(item.dateSent).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
                       </div>
                       <h4 className="font-serif text-sm font-bold text-deep-navy leading-snug">{item.title}</h4>
                       <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed">{item.excerpt}</p>
                       <div className="flex justify-between items-center pt-2 border-t border-gray-100">
                         <span className="text-[10px] text-text-muted font-mono">{item.readTime} read</span>
-                        <Link href={item.url} target="_blank" className="text-clinical-teal hover:text-clinical-teal-hover hover:underline text-xs font-bold flex items-center gap-1">
+                        <Link href={item.url} className="text-clinical-teal hover:text-clinical-teal-hover hover:underline text-xs font-bold flex items-center gap-1">
                           Read Full Update →
                         </Link>
                       </div>

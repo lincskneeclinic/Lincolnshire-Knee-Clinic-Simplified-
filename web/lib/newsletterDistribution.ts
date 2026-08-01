@@ -3,6 +3,7 @@ import path from "path";
 import { isSupabaseConfigured, fetchContactsFromSupabase } from "./supabase";
 import { sendGraphMail } from "./graphMail";
 import { sendBrevoMail } from "./brevo";
+import { getStoreValue, setStoreValue } from "./dataStore";
 
 export interface NewsletterEdition {
   id: string;
@@ -22,32 +23,32 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const EDITIONS_FILE_PATH = path.join(DATA_DIR, "newsletters_editions.json");
 const NEWSLETTER_SUBSCRIBERS_PATH = path.join(DATA_DIR, "newsletter-subscribers.json");
 
-function ensureDirectoryExists(filePath: string) {
-  const dirname = path.dirname(filePath);
-  if (!fs.existsSync(dirname)) {
-    fs.mkdirSync(dirname, { recursive: true });
-  }
-}
+const NEWSLETTER_EDITIONS_STORE_KEY = "newsletter-editions";
 
 export async function getNewsletterEditions(): Promise<NewsletterEdition[]> {
+  const stored = await getStoreValue<NewsletterEdition[]>(NEWSLETTER_EDITIONS_STORE_KEY, []);
+  if (stored.length > 0) return stored;
+
+  // One-time migration path: this store used to be a local JSON file, which doesn't
+  // persist reliably on Hostinger's filesystem. If Supabase has nothing yet but a
+  // legacy local file does, adopt it into Supabase so existing drafts aren't lost.
   try {
-    ensureDirectoryExists(EDITIONS_FILE_PATH);
-    if (!fs.existsSync(EDITIONS_FILE_PATH)) return [];
-    const raw = fs.readFileSync(EDITIONS_FILE_PATH, "utf8");
-    return JSON.parse(raw || "[]");
+    if (fs.existsSync(EDITIONS_FILE_PATH)) {
+      const raw = fs.readFileSync(EDITIONS_FILE_PATH, "utf8");
+      const legacy = JSON.parse(raw || "[]");
+      if (Array.isArray(legacy) && legacy.length > 0) {
+        await setStoreValue(NEWSLETTER_EDITIONS_STORE_KEY, legacy);
+        return legacy;
+      }
+    }
   } catch (error) {
-    console.error("Failed to read newsletters_editions:", error);
-    return [];
+    console.error("Failed to read legacy newsletters_editions.json:", error);
   }
+  return [];
 }
 
 export async function saveNewsletterEditions(editions: NewsletterEdition[]): Promise<void> {
-  try {
-    ensureDirectoryExists(EDITIONS_FILE_PATH);
-    fs.writeFileSync(EDITIONS_FILE_PATH, JSON.stringify(editions, null, 2), "utf8");
-  } catch (error) {
-    console.error("Failed to write newsletters_editions:", error);
-  }
+  await setStoreValue(NEWSLETTER_EDITIONS_STORE_KEY, editions);
 }
 
 export async function deleteNewsletterEdition(id: string): Promise<boolean> {

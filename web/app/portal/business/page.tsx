@@ -8,6 +8,8 @@ import { ARTICLE_CATEGORIES } from "@/lib/articleCategories";
 import { SocialOnlyPost } from "@/lib/socialOnlyPosts";
 import { markdownToEmailHtml } from "@/lib/newsletterMarkdown";
 import { ReviewablePage, ClinicalReviewEntry } from "@/lib/clinicalReview";
+import GenerateImageModal from "@/components/portal/GenerateImageModal";
+import { DashboardFeedbackProvider, useToast, useConfirm, usePrompt } from "@/components/portal/DashboardFeedback";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
@@ -85,10 +87,24 @@ function cleanHeadingBugs(text: string): string {
 }
 
 export default function BusinessDashboardPage() {
+  return (
+    <DashboardFeedbackProvider>
+      <BusinessDashboardPageInner />
+    </DashboardFeedbackProvider>
+  );
+}
+
+function BusinessDashboardPageInner() {
+  const toast = useToast();
+  const confirmAction = useConfirm();
+  const promptAction = usePrompt();
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "newsletterCreator" | "pipeline" | "clinicalReview" | "community" | "educationHub" | "socialOnly">("overview");
   const [statsData, setStatsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [subscriberSearch, setSubscriberSearch] = useState("");
+  const [pipelineSearch, setPipelineSearch] = useState("");
+  const [educationSearch, setEducationSearch] = useState("");
 
   // Newsletter Creator & Distribution States
   const [newsletterEditions, setNewsletterEditions] = useState<any[]>([]);
@@ -174,6 +190,13 @@ export default function BusinessDashboardPage() {
   const [reviewFormReviewerTitle, setReviewFormReviewerTitle] = useState("");
   const [reviewFormLastReviewedDate, setReviewFormLastReviewedDate] = useState("");
   const [reviewFormEvidenceSource, setReviewFormEvidenceSource] = useState("");
+  const [clinicalReviewSearch, setClinicalReviewSearch] = useState("");
+  const [bulkReviewSelection, setBulkReviewSelection] = useState<Set<string>>(new Set());
+  const [isBulkReviewFormOpen, setIsBulkReviewFormOpen] = useState(false);
+  const [bulkReviewerName, setBulkReviewerName] = useState("");
+  const [bulkReviewerTitle, setBulkReviewerTitle] = useState("");
+  const [bulkReviewDate, setBulkReviewDate] = useState("");
+  const [isSavingBulkReview, setIsSavingBulkReview] = useState(false);
 
   // Education Hub Article Management State
   const [educationArticles, setEducationArticles] = useState<EducationArticleSummary[]>([]);
@@ -277,7 +300,7 @@ export default function BusinessDashboardPage() {
   };
 
   // Approve Draft: if the user has local edits that haven't been saved yet, warn them.
-  const handleApproveDraft = () => {
+  const handleApproveDraft = async () => {
     const serverDraft = selectedRun?.blog_drafts?.[0];
     const hasLocalEdits =
       editTitle !== (serverDraft?.title || "") ||
@@ -285,13 +308,14 @@ export default function BusinessDashboardPage() {
       editBody !== (serverDraft?.body_markdown || serverDraft?.body || "");
     if (hasLocalEdits) {
       if (editBody.trim().length < MIN_BLOG_BODY_LENGTH) {
-        alert(
+        toast.error(
           `The article body is too short to approve (minimum ${MIN_BLOG_BODY_LENGTH} characters). Please write or restore the full article content before approving.`
         );
         return;
       }
-      const proceed = confirm(
-        "You have unsaved edits in the editor.\n\nClick OK to save and approve your edited version, or Cancel to go back and review your changes first."
+      const proceed = await confirmAction(
+        "You have unsaved edits in the editor. Save and approve your edited version?",
+        { confirmLabel: "Save & Approve" }
       );
       if (!proceed) return;
       handleReviewSubmission("blog", "edited");
@@ -300,8 +324,8 @@ export default function BusinessDashboardPage() {
     }
   };
 
-  const handleDiscardChanges = () => {
-    if (confirm("Discard all unsaved edits? This will restore the original draft text.")) {
+  const handleDiscardChanges = async () => {
+    if (await confirmAction("Discard all unsaved edits? This will restore the original draft text.", { confirmLabel: "Discard", danger: true })) {
       const blogDraft = selectedRun?.blog_drafts?.[0];
       if (blogDraft) {
         setEditTitle(blogDraft.title || "");
@@ -543,15 +567,26 @@ export default function BusinessDashboardPage() {
     // marker in the body with real Markdown image syntax. This makes the image a
     // permanent part of body_markdown — no separate side-channel lookup needed.
     // ReactMarkdown's standard <img> renderer then displays it automatically.
-    //
-    // Matching is positional (by placeholderId, e.g. "placeholder-2"), not by label
-    // text — free-text label matching broke whenever the label was re-wrapped,
-    // re-punctuated, or edited slightly between what's stored and what's in the body.
-    // Position is stable regardless of label drift.
     const imageMarkdown = `![${label}](${url})`;
     let newBody = editBody;
 
-    if (isFeatured) {
+    // Try an exact match on this placeholder's own label text first. Image
+    // generation can take 10-30+ seconds with the modal open the whole time, and
+    // nothing stops the user resolving a *different* placeholder (or editing the
+    // body) while it's in flight — placeholderId ("placeholder-2") is just "the
+    // Nth still-unresolved marker" at the moment the button was clicked, and that
+    // numbering shifts every time an earlier placeholder gets resolved out from
+    // under it. An exact label match is immune to reordering; only fall back to
+    // positional counting if the label text itself no longer matches verbatim
+    // (e.g. it was hand-edited in the meantime).
+    const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const exactPattern = new RegExp(
+      `\\[${isFeatured ? "FEATURED IMAGE PLACEHOLDER" : "IMAGE PLACEHOLDER"}:\\s*${escapedLabel}\\s*\\]`,
+      "i"
+    );
+    if (exactPattern.test(editBody)) {
+      newBody = editBody.replace(exactPattern, imageMarkdown);
+    } else if (isFeatured) {
       const featuredPattern = /\[FEATURED IMAGE PLACEHOLDER:[^\]]*\]/i;
       newBody = editBody.replace(featuredPattern, imageMarkdown);
     } else {
@@ -568,8 +603,8 @@ export default function BusinessDashboardPage() {
       // Nothing matched — surface this clearly rather than silently discarding the
       // upload. The image itself uploaded fine (it has a real URL); only the
       // automatic placement into the draft text failed.
-      alert(
-        `The image uploaded successfully, but couldn't be automatically placed in the draft (the placeholder marker may have been removed from the text). You can paste this URL manually where you want the image:\n\n${url}`
+      toast.error(
+        `The image uploaded successfully, but couldn't be automatically placed in the draft (the placeholder marker may have been removed from the text). You can paste this URL manually where you want the image: ${url}`
       );
       return;
     }
@@ -663,7 +698,7 @@ export default function BusinessDashboardPage() {
         }
         return;
       }
-      alert("Could not locate the image in the editor text. You can manually delete it from the editor tab.");
+      toast.error("Could not locate the image in the editor text. You can manually delete it from the editor tab.");
       return;
     }
 
@@ -704,8 +739,8 @@ export default function BusinessDashboardPage() {
     }
   };
 
-  const handleRemovePlaceholder = (placeholderId: string, label: string, isFeatured?: boolean) => {
-    if (!confirm("Are you sure you want to permanently delete this image placeholder from the article?")) return;
+  const handleRemovePlaceholder = async (placeholderId: string, label: string, isFeatured?: boolean) => {
+    if (!(await confirmAction("Are you sure you want to permanently delete this image placeholder from the article?", { confirmLabel: "Delete", danger: true }))) return;
     
     const target = isFeatured
       ? `[FEATURED IMAGE PLACEHOLDER: ${label}]`
@@ -742,8 +777,8 @@ export default function BusinessDashboardPage() {
     }
   };
 
-  const handleRemoveResolvedImage = (altText: string, srcUrl: string) => {
-    if (!confirm("Are you sure you want to permanently delete this image from the article?")) return;
+  const handleRemoveResolvedImage = async (altText: string, srcUrl: string) => {
+    if (!(await confirmAction("Are you sure you want to permanently delete this image from the article?", { confirmLabel: "Delete", danger: true }))) return;
 
     const escapedSrc = srcUrl.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     const escapedAlt = altText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -805,11 +840,11 @@ export default function BusinessDashboardPage() {
         }
         setGeneratedImagePreview({ placeholderId, url: data.url });
       } else {
-        alert(`Image generation failed: ${data.error || "Unknown error"}`);
+        toast.error(`Image generation failed: ${data.error || "Unknown error"}`);
       }
     } catch (err) {
       console.error("AI image generation failed:", err);
-      alert("Image generation failed. Please check your connection and try again.");
+      toast.error("Image generation failed. Please check your connection and try again.");
     } finally {
       if (livePreviewRef.current) {
         pendingScrollRestoreRef.current = livePreviewRef.current.scrollTop;
@@ -854,7 +889,7 @@ export default function BusinessDashboardPage() {
   // Permanently deletes a draft that isn't worth continuing — e.g. from the "Needs
   // Your Attention" list when you decide not to pursue it further.
   const handleDeletePipelineRun = async (runId: string, topic: string) => {
-    if (!confirm(`Delete this draft ("${topic}")? This can't be undone.`)) return;
+    if (!(await confirmAction(`Delete this draft ("${topic}")? This can't be undone.`, { confirmLabel: "Delete", danger: true }))) return;
     try {
       const res = await fetch(`/api/portal/content-pipeline/runs/${encodeURIComponent(runId)}`, {
         method: "DELETE",
@@ -863,8 +898,9 @@ export default function BusinessDashboardPage() {
       if (!data.success) throw new Error(data.error || "Failed to delete the draft.");
       setPipelineRuns((prev) => prev.filter((r) => r.run_id !== runId));
       if (selectedRun?.run_id === runId) setSelectedRun(null);
+      toast.success("Draft deleted.");
     } catch (err: any) {
-      alert(err?.message || "Failed to delete the draft.");
+      toast.error(err?.message || "Failed to delete the draft.");
     }
   };
 
@@ -1075,11 +1111,11 @@ export default function BusinessDashboardPage() {
         setNewsletterHtmlPreview(data.edition.bodyHtml);
         setNewNewsletterTopic("");
       } else {
-        alert(data.error || "Failed to generate newsletter draft.");
+        toast.error(data.error || "Failed to generate newsletter draft.");
       }
     } catch (err) {
       console.error(err);
-      alert("Network error generating newsletter.");
+      toast.error("Network error generating newsletter.");
     } finally {
       setIsGeneratingNewsletter(false);
     }
@@ -1097,11 +1133,11 @@ export default function BusinessDashboardPage() {
         setNewsletterEditMarkdown(data.edition.bodyMarkdown);
         setNewsletterHtmlPreview(data.edition.bodyHtml);
       } else {
-        alert(data.error || "Failed to generate monthly digest draft.");
+        toast.error(data.error || "Failed to generate monthly digest draft.");
       }
     } catch (err) {
       console.error(err);
-      alert("Network error generating monthly digest.");
+      toast.error("Network error generating monthly digest.");
     } finally {
       setIsGeneratingDigest(false);
     }
@@ -1118,22 +1154,22 @@ export default function BusinessDashboardPage() {
       });
       const data = await res.json();
       if (data.success) {
-        alert(`Newsletter successfully distributed to ${data.sentCount} subscribed patients via ${data.mode}!`);
+        toast.success(`Newsletter successfully distributed to ${data.sentCount} subscribed patients via ${data.mode}!`);
         setShowNewsletterSendConfirm(false);
         fetchNewsletterEditions();
       } else {
-        alert(data.error || "Failed to send newsletter.");
+        toast.error(data.error || "Failed to send newsletter.");
       }
     } catch (err) {
       console.error(err);
-      alert("Network error sending newsletter.");
+      toast.error("Network error sending newsletter.");
     } finally {
       setIsSendingNewsletter(false);
     }
   };
 
   const handleDeleteNewsletter = async (editionId: string) => {
-    if (!confirm("Are you sure you want to permanently discard this newsletter draft?")) return;
+    if (!(await confirmAction("Are you sure you want to permanently discard this newsletter draft?", { confirmLabel: "Discard", danger: true }))) return;
     setIsDiscardingNewsletter(true);
     try {
       const res = await fetch("/api/portal/newsletter/delete", {
@@ -1151,11 +1187,11 @@ export default function BusinessDashboardPage() {
           setNewsletterHtmlPreview("");
         }
       } else {
-        alert(data.error || "Failed to discard draft.");
+        toast.error(data.error || "Failed to discard draft.");
       }
     } catch (err) {
       console.error(err);
-      alert("Network error discarding draft.");
+      toast.error("Network error discarding draft.");
     } finally {
       setIsDiscardingNewsletter(false);
     }
@@ -1229,7 +1265,7 @@ export default function BusinessDashboardPage() {
       setIsSocialOnlyModalOpen(false);
       setNewSocialOnlyTopic("");
     } catch (err: any) {
-      alert(err?.message || "An error occurred while generating the social posts.");
+      toast.error(err?.message || "An error occurred while generating the social posts.");
     } finally {
       setIsGeneratingSocialOnly(false);
     }
@@ -1268,7 +1304,7 @@ export default function BusinessDashboardPage() {
       }
       await patchSocialOnlyPost(postId, payload);
     } catch (err: any) {
-      alert(err?.message || "Failed to save the caption.");
+      toast.error(err?.message || "Failed to save the caption.");
     }
   };
 
@@ -1279,7 +1315,7 @@ export default function BusinessDashboardPage() {
     try {
       await patchSocialOnlyPost(postId, { platform, status: "approved" });
     } catch (err: any) {
-      alert(err?.message || "Failed to approve the post.");
+      toast.error(err?.message || "Failed to approve the post.");
     }
   };
 
@@ -1287,11 +1323,11 @@ export default function BusinessDashboardPage() {
     postId: string,
     platform: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel"
   ) => {
-    const notes = prompt("Any specific feedback for the rewrite? (Leave blank for a fresh alternative take.)") || undefined;
+    const notes = (await promptAction("Any specific feedback for the rewrite? (Leave blank for a fresh alternative take.)", { multiline: true, placeholder: "e.g. more casual tone, focus on recovery timeline..." })) || undefined;
     try {
       await patchSocialOnlyPost(postId, { platform, action: "regenerate", revisionNotes: notes });
     } catch (err: any) {
-      alert(err?.message || "Failed to regenerate the caption.");
+      toast.error(err?.message || "Failed to regenerate the caption.");
     }
   };
 
@@ -1312,7 +1348,19 @@ export default function BusinessDashboardPage() {
         await patchSocialOnlyPost(postId, { platform, imageUrl: url });
       }
     } catch (err: any) {
-      alert(err?.message || "Failed to attach the image.");
+      toast.error(err?.message || "Failed to attach the image.");
+    }
+  };
+
+  const handleAttachSocialVideo = async (
+    postId: string,
+    url: string,
+    source: "upload" | "ai-broll"
+  ) => {
+    try {
+      await patchSocialOnlyPost(postId, { platform: "instagramReel", videoUrl: url, videoSource: source });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to attach the video.");
     }
   };
 
@@ -1337,11 +1385,11 @@ export default function BusinessDashboardPage() {
       if (data.success && data.url) {
         await handleAttachSocialImage(postId, platform, data.url, slideIndex);
       } else {
-        alert(`Image generation failed: ${data.error || "Unknown error"}`);
+        toast.error(`Image generation failed: ${data.error || "Unknown error"}`);
       }
     } catch (err) {
       console.error("Social image generation failed:", err);
-      alert("Image generation failed. Please check your connection and try again.");
+      toast.error("Image generation failed. Please check your connection and try again.");
     } finally {
       setGeneratingSocialImageKey(null);
     }
@@ -1354,7 +1402,7 @@ export default function BusinessDashboardPage() {
   };
 
   const handleDeleteSocialOnlyPost = async (postId: string) => {
-    if (!confirm("Delete this social post draft? This can't be undone.")) return;
+    if (!(await confirmAction("Delete this social post draft? This can't be undone.", { confirmLabel: "Delete", danger: true }))) return;
     try {
       const res = await fetch(`/api/portal/social-only/${postId}`, { method: "DELETE" });
       const data = await res.json();
@@ -1362,7 +1410,7 @@ export default function BusinessDashboardPage() {
       setSocialOnlyPosts((prev) => prev.filter((p) => p.id !== postId));
       if (selectedSocialOnlyPost?.id === postId) setSelectedSocialOnlyPost(null);
     } catch (err: any) {
-      alert(err?.message || "Failed to delete the post.");
+      toast.error(err?.message || "Failed to delete the post.");
     }
   };
 
@@ -1388,7 +1436,7 @@ export default function BusinessDashboardPage() {
       );
       setTimeout(() => setActionFeedback(null), 4000);
     } catch (err: any) {
-      alert(err?.message || "An error occurred while updating the article.");
+      toast.error(err?.message || "An error occurred while updating the article.");
     } finally {
       setIsUpdatingArticleVisibility(false);
     }
@@ -1415,7 +1463,7 @@ export default function BusinessDashboardPage() {
       await fetchPipelineRuns();
       await fetchRunDetail(data.run.run_id);
     } catch (err: any) {
-      alert(err?.message || "An error occurred while starting the update.");
+      toast.error(err?.message || "An error occurred while starting the update.");
     } finally {
       setIsStartingArticleUpdate(null);
     }
@@ -1569,6 +1617,43 @@ export default function BusinessDashboardPage() {
     }
   };
 
+  const handleSaveBulkReview = async () => {
+    if (bulkReviewSelection.size === 0) return;
+    setIsSavingBulkReview(true);
+    try {
+      const pageIds = Array.from(bulkReviewSelection);
+      const results = await Promise.all(
+        pageIds.map((pageId) =>
+          fetch("/api/portal/clinical-review", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              pageId,
+              reviewed: true,
+              reviewerName: bulkReviewerName,
+              reviewerTitle: bulkReviewerTitle,
+              lastReviewedDate: bulkReviewDate,
+            }),
+          }).then((res) => res.json())
+        )
+      );
+      const failedCount = results.filter((r) => !r.success).length;
+      await fetchClinicalReviewPages();
+      setBulkReviewSelection(new Set());
+      setIsBulkReviewFormOpen(false);
+      if (failedCount > 0) {
+        toast.error(`${pageIds.length - failedCount} of ${pageIds.length} pages marked as reviewed — ${failedCount} failed.`);
+      } else {
+        toast.success(`${pageIds.length} page${pageIds.length === 1 ? "" : "s"} marked as clinically reviewed.`);
+      }
+    } catch (err: any) {
+      console.error("Bulk review save failed:", err);
+      toast.error("Failed to save bulk review status.");
+    } finally {
+      setIsSavingBulkReview(false);
+    }
+  };
+
   // Handle trigger new run submission
   // Runs the topic through /trigger (which returns almost immediately — see route
   // comments) then polls the run's own status endpoint until Stage 1 (research) and
@@ -1652,7 +1737,7 @@ export default function BusinessDashboardPage() {
     } catch (err: any) {
       if (triggerBackgroundedRef.current) return;
       console.error("Error triggering run:", err);
-      alert(err?.message || "An error occurred while triggering the automation run.");
+      toast.error(err?.message || "An error occurred while triggering the automation run.");
     } finally {
       if (!triggerBackgroundedRef.current) {
         setIsTriggering(false);
@@ -1783,11 +1868,11 @@ export default function BusinessDashboardPage() {
         setSelectedRun(data.run);
         await fetchPipelineRuns();
       } else {
-        alert(data.error || "Failed to generate the missing format.");
+        toast.error(data.error || "Failed to generate the missing format.");
       }
     } catch (err) {
       console.error(err);
-      alert("Network error generating the missing format.");
+      toast.error("Network error generating the missing format.");
     } finally {
       setIsBackfillingFormats(false);
     }
@@ -1874,11 +1959,40 @@ export default function BusinessDashboardPage() {
   };
 
   const totalSignups = statsData?.newsletter?.totalSignups || 0;
+  const subscribersList: any[] = statsData?.newsletter?.subscribersList || [];
   const clickEvents = statsData?.clickEvents || { callNowClicks: 0, bookAppointmentClicks: 0, whatsappClicks: 0 };
   const totalClicks = (clickEvents.callNowClicks || 0) + (clickEvents.bookAppointmentClicks || 0) + (clickEvents.whatsappClicks || 0);
   const trendingTopics = statsData?.trendingTopics || [];
   const pollResults = statsData?.pollResults || { votes: {}, suggestions: [] };
   const pollVotesTotal = Object.values(pollResults.votes || {}).reduce((a: any, b: any) => Number(a) + Number(b), 0);
+  const filteredSubscribers = subscriberSearch.trim()
+    ? subscribersList.filter((s) =>
+        `${s.name || ""} ${s.email || ""}`.toLowerCase().includes(subscriberSearch.trim().toLowerCase())
+      )
+    : subscribersList;
+
+  const handleExportSubscribersCsv = () => {
+    const header = ["Name", "Email", "Primary Interest", "Consent Source", "Consent Date"];
+    const rows = filteredSubscribers.map((s) => [
+      s.name || "",
+      s.email || "",
+      s.primaryInterest || "",
+      s.consentSource || "",
+      s.consentGivenAt ? formatDateSafe(s.consentGivenAt) : "",
+    ]);
+    const csv = [header, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `lkc-newsletter-subscribers-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
 
   // A run is "mid manual edit" (Save Progress was used) rather than a fresh, never-touched
   // draft when the run has been touched (updated_at) more recently than its latest draft
@@ -1902,6 +2016,11 @@ export default function BusinessDashboardPage() {
   const otherRuns = pipelineRuns.filter(
     (r) => r.status !== "awaiting_blog_approval" && r.status !== "awaiting_social_approval"
   );
+  const pipelineSearchTerm = pipelineSearch.trim().toLowerCase();
+  const matchesPipelineSearch = (r: ContentPipelineRun) =>
+    !pipelineSearchTerm || r.topic.toLowerCase().includes(pipelineSearchTerm) || r.run_id.toLowerCase().includes(pipelineSearchTerm);
+  const visibleReviewNeededRuns = reviewNeededRuns.filter(matchesPipelineSearch);
+  const visibleOtherRuns = otherRuns.filter(matchesPipelineSearch);
   const reviewNeededPages = clinicalReviewPages.filter((page) => !page.review.reviewed);
   const openCommunityReportsCount = communityReports.filter((report) => report.status === "open").length;
   const selectedRunHasSocial =
@@ -2210,21 +2329,27 @@ export default function BusinessDashboardPage() {
                       <span className="text-[11px] text-white/60 font-mono">From Contact Enquiries</span>
                     </div>
                     <div className="space-y-3">
-                      {trendingTopics.slice(0, 4).map((t: any, i: number) => (
-                        <div key={i} className="p-3.5 bg-dark-overlay-navy border border-white/5 rounded-xl space-y-1.5 text-xs">
-                          <div className="flex items-center justify-between">
-                            <span className="text-white/90 font-serif">{t.label}</span>
-                            <span className="bg-primary-navy text-clinical-teal border border-clinical-teal/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                              {t.enquiryCount} Enquiries
-                            </span>
-                          </div>
-                          {t.latestQueries && t.latestQueries[0] && (
-                            <p className="text-[11px] text-white/60 italic">
-                              "{t.latestQueries[0]}"
-                            </p>
-                          )}
+                      {trendingTopics.length === 0 ? (
+                        <div className="text-center text-white/40 text-xs py-8 border border-dashed border-white/10 rounded-xl">
+                          No trending topics yet — these are drawn from real patient contact enquiries.
                         </div>
-                      ))}
+                      ) : (
+                        trendingTopics.slice(0, 4).map((t: any, i: number) => (
+                          <div key={i} className="p-3.5 bg-dark-overlay-navy border border-white/5 rounded-xl space-y-1.5 text-xs">
+                            <div className="flex items-center justify-between">
+                              <span className="text-white/90 font-serif">{t.label}</span>
+                              <span className="bg-primary-navy text-clinical-teal border border-clinical-teal/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                {t.enquiryCount} Enquiries
+                              </span>
+                            </div>
+                            {t.latestQueries && t.latestQueries[0] && (
+                              <p className="text-[11px] text-white/60 italic">
+                                "{t.latestQueries[0]}"
+                              </p>
+                            )}
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
 
@@ -2234,21 +2359,27 @@ export default function BusinessDashboardPage() {
                       <span className="text-[11px] text-white/60 font-mono">{Number(pollVotesTotal)} Total Votes</span>
                     </div>
                     <div className="space-y-3">
-                      {Object.entries(pollResults.votes || {}).map(([opt, count]: [string, any], idx: number) => {
-                        const totalNum = Number(pollVotesTotal) || 0;
-                        const pct = totalNum > 0 ? Math.round((Number(count) / totalNum) * 100) : 0;
-                        return (
-                          <div key={idx} className="space-y-1.5 text-xs">
-                            <div className="flex justify-between text-white/80">
-                              <span className="truncate max-w-[280px]">{opt}</span>
-                              <span className="font-mono text-clinical-teal">{count} votes ({pct}%)</span>
+                      {Object.keys(pollResults.votes || {}).length === 0 ? (
+                        <div className="text-center text-white/40 text-xs py-8 border border-dashed border-white/10 rounded-xl">
+                          No poll votes yet.
+                        </div>
+                      ) : (
+                        Object.entries(pollResults.votes || {}).map(([opt, count]: [string, any], idx: number) => {
+                          const totalNum = Number(pollVotesTotal) || 0;
+                          const pct = totalNum > 0 ? Math.round((Number(count) / totalNum) * 100) : 0;
+                          return (
+                            <div key={idx} className="space-y-1.5 text-xs">
+                              <div className="flex justify-between text-white/80">
+                                <span className="truncate max-w-[280px]">{opt}</span>
+                                <span className="font-mono text-clinical-teal">{count} votes ({pct}%)</span>
+                              </div>
+                              <div className="w-full h-2 bg-dark-overlay-navy rounded-full overflow-hidden border border-white/5">
+                                <div className="bg-clinical-teal h-full rounded-full" style={{ width: `${pct}%` }} />
+                              </div>
                             </div>
-                            <div className="w-full h-2 bg-dark-overlay-navy rounded-full overflow-hidden border border-white/5">
-                              <div className="bg-clinical-teal h-full rounded-full" style={{ width: `${pct}%` }} />
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2265,26 +2396,32 @@ export default function BusinessDashboardPage() {
                   </div>
 
                   <div className="space-y-4">
-                    {trendingTopics.map((t: any, idx: number) => (
-                      <div key={idx} className="p-5 bg-dark-overlay-navy border border-white/5 rounded-xl space-y-3">
-                        <div className="flex items-center justify-between flex-wrap gap-2">
-                          <div>
-                            <span className="text-xs text-clinical-teal uppercase tracking-wider block mb-0.5">{t.category || "General"}</span>
-                            <h3 className="font-serif text-sm font-bold text-white">{t.label}</h3>
-                          </div>
-                          <button
-                            onClick={() => {
-                              setActiveTab("pipeline");
-                              setNewRunTopic(t.label);
-                              setIsTriggerModalOpen(true);
-                            }}
-                            className="bg-dark-overlay-navy hover:bg-white/5 text-clinical-teal border border-clinical-teal/40 text-xs px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
-                          >
-                            🚀 Trigger Content Run for Topic
-                          </button>
-                        </div>
+                    {trendingTopics.length === 0 ? (
+                      <div className="text-center text-white/40 text-xs py-12 border border-dashed border-white/10 rounded-xl">
+                        No trending topics yet — once patients submit contact enquiries, the most common themes will appear here for you to turn into content.
                       </div>
-                    ))}
+                    ) : (
+                      trendingTopics.map((t: any, idx: number) => (
+                        <div key={idx} className="p-5 bg-dark-overlay-navy border border-white/5 rounded-xl space-y-3">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div>
+                              <span className="text-xs text-clinical-teal uppercase tracking-wider block mb-0.5">{t.category || "General"}</span>
+                              <h3 className="font-serif text-sm font-bold text-white">{t.label}</h3>
+                            </div>
+                            <button
+                              onClick={() => {
+                                setActiveTab("pipeline");
+                                setNewRunTopic(t.label);
+                                setIsTriggerModalOpen(true);
+                              }}
+                              className="bg-dark-overlay-navy hover:bg-white/5 text-clinical-teal border border-clinical-teal/40 text-xs px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
+                            >
+                              🚀 Trigger Content Run for Topic
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -2320,9 +2457,64 @@ export default function BusinessDashboardPage() {
             {/* TAB: NEWSLETTER */}
             {activeTab === "newsletter" && (
               <div className="space-y-8">
-                <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-6">
-                  <h2 className="text-base font-bold text-white">Verified Subscriber Directory</h2>
-                  <p className="text-xs text-white/60">Total signups: {totalSignups}</p>
+                <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-base font-bold text-white">Verified Subscriber Directory</h2>
+                      <p className="text-xs text-white/60">Total signups: {totalSignups}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={subscriberSearch}
+                        onChange={(e) => setSubscriberSearch(e.target.value)}
+                        placeholder="Search name or email…"
+                        className="bg-dark-overlay-navy border border-white/20 text-white text-xs rounded-lg px-3 py-2 focus:border-clinical-teal focus:outline-none w-full sm:w-56"
+                      />
+                      <button
+                        onClick={handleExportSubscribersCsv}
+                        disabled={filteredSubscribers.length === 0}
+                        className="bg-dark-overlay-navy hover:bg-white/5 text-clinical-teal border border-clinical-teal/40 text-xs px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                      >
+                        ⬇ Export CSV
+                      </button>
+                    </div>
+                  </div>
+
+                  {subscribersList.length === 0 ? (
+                    <div className="text-center text-white/40 text-xs py-12 border border-dashed border-white/10 rounded-xl">
+                      No subscribers yet.
+                    </div>
+                  ) : filteredSubscribers.length === 0 ? (
+                    <div className="text-center text-white/40 text-xs py-12 border border-dashed border-white/10 rounded-xl">
+                      No subscribers match "{subscriberSearch}".
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto rounded-xl border border-white/10">
+                      <table className="min-w-full divide-y divide-white/10 text-xs">
+                        <thead className="bg-dark-overlay-navy">
+                          <tr>
+                            <th className="px-4 py-2.5 text-left font-bold text-white/70 uppercase tracking-wider text-[10px]">Name</th>
+                            <th className="px-4 py-2.5 text-left font-bold text-white/70 uppercase tracking-wider text-[10px]">Email</th>
+                            <th className="px-4 py-2.5 text-left font-bold text-white/70 uppercase tracking-wider text-[10px]">Primary Interest</th>
+                            <th className="px-4 py-2.5 text-left font-bold text-white/70 uppercase tracking-wider text-[10px]">Consent Date</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {filteredSubscribers.map((s, idx) => (
+                            <tr key={s.id || s.email || idx} className="hover:bg-white/5 transition-colors">
+                              <td className="px-4 py-2.5 text-white/90 font-medium whitespace-nowrap">{s.name || "—"}</td>
+                              <td className="px-4 py-2.5 text-white/70 whitespace-nowrap">{s.email || "—"}</td>
+                              <td className="px-4 py-2.5 text-white/70 whitespace-nowrap">{s.primaryInterest || "—"}</td>
+                              <td className="px-4 py-2.5 text-white/50 font-mono whitespace-nowrap">
+                                {s.consentGivenAt ? formatDateSafe(s.consentGivenAt) : "—"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -2843,44 +3035,177 @@ export default function BusinessDashboardPage() {
                   })()
                 ) : (
                   <div className="space-y-6">
-                    {(["symptoms", "conditions", "treatments", "injections"] as const).map((contentType) => {
-                      const pagesOfType = clinicalReviewPages.filter((p) => p.contentType === contentType);
-                      if (pagesOfType.length === 0) return null;
+                    {(() => {
+                      const searchTerm = clinicalReviewSearch.trim().toLowerCase();
+                      const visiblePages = searchTerm
+                        ? clinicalReviewPages.filter((p) => p.name.toLowerCase().includes(searchTerm))
+                        : clinicalReviewPages;
+                      const visibleIds = visiblePages.map((p) => p.pageId);
+                      const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => bulkReviewSelection.has(id));
+
+                      const toggleSelectAllVisible = () => {
+                        setBulkReviewSelection((prev) => {
+                          const next = new Set(prev);
+                          if (allVisibleSelected) {
+                            visibleIds.forEach((id) => next.delete(id));
+                          } else {
+                            visibleIds.forEach((id) => next.add(id));
+                          }
+                          return next;
+                        });
+                      };
+
+                      const togglePageSelected = (pageId: string) => {
+                        setBulkReviewSelection((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(pageId)) next.delete(pageId);
+                          else next.add(pageId);
+                          return next;
+                        });
+                      };
+
                       return (
-                        <div
-                          key={contentType}
-                          className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-3"
-                        >
-                          <h3 className="text-sm font-bold text-white uppercase tracking-wider capitalize">
-                            {contentType}
-                          </h3>
-                          <div className="space-y-2">
-                            {pagesOfType.map((page) => (
-                              <button
-                                key={page.pageId}
-                                onClick={() => handleSelectReviewPage(page)}
-                                className="w-full text-left bg-dark-overlay-navy border border-white/5 rounded-xl p-3.5 flex items-center justify-between gap-4 hover:border-clinical-teal/40 transition-colors cursor-pointer"
-                              >
-                                <span className="text-xs text-white/90 font-medium">{page.name}</span>
-                                {page.review.reviewed ? (
-                                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-clinical-teal/10 text-clinical-teal border border-clinical-teal/30 shrink-0">
-                                    Reviewed{page.review.lastReviewedDate ? ` — ${page.review.lastReviewedDate}` : ""}
-                                  </span>
-                                ) : page.review.staleReview ? (
-                                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/30 shrink-0">
-                                    ⚠ Needs Re-Review{page.review.lastReviewedDate ? ` (was: ${page.review.lastReviewedDate})` : ""}
-                                  </span>
-                                ) : (
-                                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0">
-                                    Awaiting review
-                                  </span>
-                                )}
-                              </button>
-                            ))}
+                        <>
+                          <div className="bg-primary-navy border border-white/10 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row sm:items-center gap-3">
+                            <input
+                              type="text"
+                              value={clinicalReviewSearch}
+                              onChange={(e) => setClinicalReviewSearch(e.target.value)}
+                              placeholder="Search pages by name…"
+                              className="bg-dark-overlay-navy border border-white/20 text-white text-xs rounded-lg px-3 py-2 focus:border-clinical-teal focus:outline-none w-full sm:w-64"
+                            />
+                            <label className="flex items-center gap-2 text-xs text-white/70 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={allVisibleSelected}
+                                onChange={toggleSelectAllVisible}
+                                className="w-4 h-4 accent-clinical-teal cursor-pointer"
+                              />
+                              Select all visible ({visiblePages.length})
+                            </label>
+                            {bulkReviewSelection.size > 0 && (
+                              <div className="sm:ml-auto flex items-center gap-2">
+                                <span className="text-xs text-clinical-teal font-semibold">{bulkReviewSelection.size} selected</span>
+                                <button
+                                  onClick={() => setIsBulkReviewFormOpen(true)}
+                                  className="bg-clinical-teal hover:bg-clinical-teal-hover text-deep-navy text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                                >
+                                  Bulk Mark Reviewed
+                                </button>
+                                <button
+                                  onClick={() => setBulkReviewSelection(new Set())}
+                                  className="text-xs text-white/50 hover:text-white/80 cursor-pointer"
+                                >
+                                  Clear
+                                </button>
+                              </div>
+                            )}
                           </div>
-                        </div>
+
+                          {isBulkReviewFormOpen && (
+                            <div className="bg-primary-navy border border-clinical-teal/40 rounded-2xl p-5 shadow-lg space-y-3">
+                              <h4 className="text-sm font-bold text-white">
+                                Mark {bulkReviewSelection.size} page{bulkReviewSelection.size === 1 ? "" : "s"} as clinically reviewed
+                              </h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <input
+                                  type="text"
+                                  value={bulkReviewerName}
+                                  onChange={(e) => setBulkReviewerName(e.target.value)}
+                                  placeholder="Reviewer name"
+                                  className="bg-dark-overlay-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                                />
+                                <input
+                                  type="text"
+                                  value={bulkReviewerTitle}
+                                  onChange={(e) => setBulkReviewerTitle(e.target.value)}
+                                  placeholder="Reviewer title"
+                                  className="bg-dark-overlay-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                                />
+                                <input
+                                  type="text"
+                                  value={bulkReviewDate}
+                                  onChange={(e) => setBulkReviewDate(e.target.value)}
+                                  placeholder="e.g. August 2026"
+                                  className="bg-dark-overlay-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                                />
+                              </div>
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={() => setIsBulkReviewFormOpen(false)}
+                                  className="border border-white/20 text-white/80 hover:bg-white/5 text-xs font-semibold px-4 py-2 rounded-xl transition-colors cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={handleSaveBulkReview}
+                                  disabled={isSavingBulkReview}
+                                  className="bg-clinical-teal hover:bg-clinical-teal-hover text-deep-navy text-xs font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+                                >
+                                  {isSavingBulkReview ? "Saving…" : "Confirm & Save"}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {visiblePages.length === 0 ? (
+                            <div className="text-center text-white/40 text-xs py-12 border border-dashed border-white/10 rounded-xl">
+                              No pages match "{clinicalReviewSearch}".
+                            </div>
+                          ) : (
+                            (["symptoms", "conditions", "treatments", "injections"] as const).map((contentType) => {
+                              const pagesOfType = visiblePages.filter((p) => p.contentType === contentType);
+                              if (pagesOfType.length === 0) return null;
+                              return (
+                                <div
+                                  key={contentType}
+                                  className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-3"
+                                >
+                                  <h3 className="text-sm font-bold text-white uppercase tracking-wider capitalize">
+                                    {contentType}
+                                  </h3>
+                                  <div className="space-y-2">
+                                    {pagesOfType.map((page) => (
+                                      <div
+                                        key={page.pageId}
+                                        className="w-full bg-dark-overlay-navy border border-white/5 rounded-xl p-3.5 flex items-center gap-3 hover:border-clinical-teal/40 transition-colors"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={bulkReviewSelection.has(page.pageId)}
+                                          onChange={() => togglePageSelected(page.pageId)}
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="w-4 h-4 accent-clinical-teal cursor-pointer shrink-0"
+                                        />
+                                        <button
+                                          onClick={() => handleSelectReviewPage(page)}
+                                          className="flex-1 text-left flex items-center justify-between gap-4 cursor-pointer"
+                                        >
+                                          <span className="text-xs text-white/90 font-medium">{page.name}</span>
+                                          {page.review.reviewed ? (
+                                            <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-clinical-teal/10 text-clinical-teal border border-clinical-teal/30 shrink-0">
+                                              Reviewed{page.review.lastReviewedDate ? ` — ${page.review.lastReviewedDate}` : ""}
+                                            </span>
+                                          ) : page.review.staleReview ? (
+                                            <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/30 shrink-0">
+                                              ⚠ Needs Re-Review{page.review.lastReviewedDate ? ` (was: ${page.review.lastReviewedDate})` : ""}
+                                            </span>
+                                          ) : (
+                                            <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0">
+                                              Awaiting review
+                                            </span>
+                                          )}
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </>
                       );
-                    })}
+                    })()}
                   </div>
                 )}
               </div>
@@ -2980,7 +3305,7 @@ export default function BusinessDashboardPage() {
             {/* TAB: EDUCATION HUB ARTICLE MANAGEMENT */}
             {activeTab === "educationHub" && (
               <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-4">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
                   <div>
                     <h3 className="text-sm font-bold text-white uppercase tracking-wider">Education Hub Articles</h3>
                     <p className="text-xs text-white/60 mt-1">
@@ -2990,15 +3315,35 @@ export default function BusinessDashboardPage() {
                       wording) — approving it publishes the changes live the same way.
                     </p>
                   </div>
+                  <input
+                    type="text"
+                    value={educationSearch}
+                    onChange={(e) => setEducationSearch(e.target.value)}
+                    placeholder="Search articles…"
+                    className="bg-dark-overlay-navy border border-white/20 text-white text-xs rounded-lg px-3 py-2 focus:border-clinical-teal focus:outline-none w-full sm:w-64 shrink-0"
+                  />
                 </div>
 
-                {educationArticlesLoading ? (
-                  <div className="py-8 text-center text-white/60 text-xs">Loading articles…</div>
-                ) : educationArticles.length === 0 ? (
-                  <div className="py-8 text-center text-white/60 text-xs">No Education Hub articles found.</div>
-                ) : (
+                {(() => {
+                  const searchTerm = educationSearch.trim().toLowerCase();
+                  const visibleArticles = searchTerm
+                    ? educationArticles.filter(
+                        (a) => a.title.toLowerCase().includes(searchTerm) || (a.category || "").toLowerCase().includes(searchTerm)
+                      )
+                    : educationArticles;
+
+                  if (educationArticlesLoading) {
+                    return <div className="py-8 text-center text-white/60 text-xs">Loading articles…</div>;
+                  }
+                  if (educationArticles.length === 0) {
+                    return <div className="py-8 text-center text-white/60 text-xs">No Education Hub articles found.</div>;
+                  }
+                  if (visibleArticles.length === 0) {
+                    return <div className="py-8 text-center text-white/40 text-xs">No articles match "{educationSearch}".</div>;
+                  }
+                  return (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {educationArticles.map((article) => (
+                    {visibleArticles.map((article) => (
                       <div
                         key={article.slug}
                         className={`p-4 rounded-xl border space-y-2 ${
@@ -3055,7 +3400,8 @@ export default function BusinessDashboardPage() {
                       </div>
                     ))}
                   </div>
-                )}
+                  );
+                })()}
               </div>
             )}
 
@@ -3266,6 +3612,10 @@ export default function BusinessDashboardPage() {
                             onCopy={() => handleCopySocialOnly(selectedSocialOnlyPost.instagramReel?.script || "", "social-only-reel")}
                             isCopied={socialOnlyCopiedKey === "social-only-reel"}
                             script={selectedSocialOnlyPost.instagramReel?.script}
+                            topic={selectedSocialOnlyPost.topic}
+                            attachedVideoUrl={selectedSocialOnlyPost.instagramReel?.videoUrl}
+                            videoSource={selectedSocialOnlyPost.instagramReel?.videoSource}
+                            onAttachVideo={(url, source) => handleAttachSocialVideo(selectedSocialOnlyPost.id, url, source)}
                             showManualUploadGuide
                           />
                         </div>
@@ -3286,7 +3636,7 @@ export default function BusinessDashboardPage() {
                                 <img src="/images/templates/square-post-template.png" className="object-cover w-full h-full" alt="Square Post Template" />
                               </div>
                               <button
-                                onClick={() => downloadImageFile("/images/templates/square-post-template.png", "lkc-square-post-template")}
+                                onClick={() => downloadImageFile("/images/templates/square-post-template.png", "lkc-square-post-template", toast.error)}
                                 className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-lg font-medium cursor-pointer transition-colors"
                               >
                                 ⬇ Download Square PNG
@@ -3299,7 +3649,7 @@ export default function BusinessDashboardPage() {
                                 <img src="/images/templates/vertical-story-template.png" className="object-cover w-full h-full" alt="Vertical Story Template" />
                               </div>
                               <button
-                                onClick={() => downloadImageFile("/images/templates/vertical-story-template.png", "lkc-vertical-story-template")}
+                                onClick={() => downloadImageFile("/images/templates/vertical-story-template.png", "lkc-vertical-story-template", toast.error)}
                                 className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-lg font-medium cursor-pointer transition-colors"
                               >
                                 ⬇ Download Vertical PNG
@@ -4563,6 +4913,12 @@ export default function BusinessDashboardPage() {
                                       }
                                       isCopied={copiedKey === "reel"}
                                       script={selectedRun.social_drafts[0]?.instagramReel?.script}
+                                      topic={selectedRun.topic}
+                                      attachedVideoUrl={selectedRun.social_drafts[0]?.instagramReel?.videoUrl}
+                                      videoSource={selectedRun.social_drafts[0]?.instagramReel?.videoSource}
+                                      onAttachVideo={(url, source) =>
+                                        handleReviewSubmission("social", "edited", { videoUrl: url, videoSource: source }, "instagramReel")
+                                      }
                                       showManualUploadGuide
                                     />
                                   </div>
@@ -4583,7 +4939,7 @@ export default function BusinessDashboardPage() {
                                           <img src="/images/templates/square-post-template.png" className="object-cover w-full h-full" alt="Square Post Template" />
                                         </div>
                                         <button
-                                          onClick={() => downloadImageFile("/images/templates/square-post-template.png", "lkc-square-post-template")}
+                                          onClick={() => downloadImageFile("/images/templates/square-post-template.png", "lkc-square-post-template", toast.error)}
                                           className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-lg font-medium cursor-pointer transition-colors"
                                         >
                                           ⬇ Download Square PNG
@@ -4596,7 +4952,7 @@ export default function BusinessDashboardPage() {
                                           <img src="/images/templates/vertical-story-template.png" className="object-cover w-full h-full" alt="Vertical Story Template" />
                                         </div>
                                         <button
-                                          onClick={() => downloadImageFile("/images/templates/vertical-story-template.png", "lkc-vertical-story-template")}
+                                          onClick={() => downloadImageFile("/images/templates/vertical-story-template.png", "lkc-vertical-story-template", toast.error)}
                                           className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-lg font-medium cursor-pointer transition-colors"
                                         >
                                           ⬇ Download Vertical PNG
@@ -4738,13 +5094,23 @@ export default function BusinessDashboardPage() {
                 ) : (
                   /* PIPELINE LIST VIEW */
                   <div className="space-y-8">
+                    <div className="bg-primary-navy border border-white/10 rounded-2xl p-4 shadow-lg">
+                      <input
+                        type="text"
+                        value={pipelineSearch}
+                        onChange={(e) => setPipelineSearch(e.target.value)}
+                        placeholder="Search runs by topic or ID…"
+                        className="bg-dark-overlay-navy border border-white/20 text-white text-xs rounded-lg px-3 py-2 focus:border-clinical-teal focus:outline-none w-full sm:w-72"
+                      />
+                    </div>
+
                     {/* SECTION 1: Needs Your Review */}
                     <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
                       <div className="flex items-center justify-between border-b border-white/10 pb-3">
                         <div className="flex items-center gap-2">
                           <span className="w-2.5 h-2.5 rounded-full bg-clinical-teal animate-ping" />
                           <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                            Needs Your Attention ({reviewNeededRuns.length})
+                            Needs Your Attention ({visibleReviewNeededRuns.length})
                           </h3>
                         </div>
                         <span className="text-[11px] text-clinical-teal font-mono">Action Required</span>
@@ -4754,27 +5120,30 @@ export default function BusinessDashboardPage() {
                         <div className="py-8 text-center text-white/60 text-xs">
                           🎉 No pending drafts require clinical review at this time.
                         </div>
+                      ) : visibleReviewNeededRuns.length === 0 ? (
+                        <div className="py-8 text-center text-white/40 text-xs">
+                          No runs match "{pipelineSearch}".
+                        </div>
                       ) : (
                         <div className="grid grid-cols-1 gap-4">
-                          {reviewNeededRuns.map((run) => (
+                          {visibleReviewNeededRuns.map((run) => (
                             <div
                               key={run.id}
                               onClick={() => fetchRunDetail(run.run_id)}
                               className="p-5 bg-dark-overlay-navy border border-white/10 hover:border-clinical-teal/50 rounded-xl transition-all shadow-md space-y-3 cursor-pointer group"
                             >
                               <div className="flex items-center justify-between flex-wrap gap-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-mono text-white/70">{run.run_id}</span>
-                                  <StatusBadge status={run.status} isContinueEditing={isBlogEditInProgress(run)} />
-                                </div>
+                                <h4 className="font-serif text-sm font-bold text-white group-hover:text-clinical-teal transition-colors">
+                                  {run.topic}
+                                </h4>
+                                <StatusBadge status={run.status} isContinueEditing={isBlogEditInProgress(run)} />
+                              </div>
+                              <div className="flex items-center justify-between flex-wrap gap-2">
+                                <span className="text-[10px] font-mono text-white/40">{run.run_id}</span>
                                 <span className="text-[11px] text-white/60 font-mono" title={`Created ${new Date(run.created_at).toLocaleString()}`}>
                                   Last saved: {new Date(run.updated_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                                 </span>
                               </div>
-
-                              <h4 className="font-serif text-sm font-bold text-white group-hover:text-clinical-teal transition-colors">
-                                {run.topic}
-                              </h4>
 
                               {run.blog_drafts?.[0]?.flags && run.blog_drafts[0].flags.length > 0 && (
                                 <div className="text-[11px] text-amber-300/90 bg-primary-navy border border-amber-500/40 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5">
@@ -4808,39 +5177,45 @@ export default function BusinessDashboardPage() {
                     <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-4">
                       <div className="border-b border-white/10 pb-3">
                         <h3 className="text-xs font-bold text-white/80 uppercase tracking-wider">
-                          In Progress, Published &amp; Archived Runs ({otherRuns.length})
+                          In Progress, Published &amp; Archived Runs ({visibleOtherRuns.length})
                         </h3>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {otherRuns.map((run) => (
-                          <div
-                            key={run.id}
-                            onClick={() => fetchRunDetail(run.run_id)}
-                            className="p-4 bg-dark-overlay-navy border border-white/10 hover:border-white/20 rounded-xl transition-all space-y-2 cursor-pointer"
-                          >
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="font-mono text-white/60">{run.run_id}</span>
-                              <StatusBadge status={run.status} isContinueEditing={isBlogEditInProgress(run)} />
+                      {otherRuns.length > 0 && visibleOtherRuns.length === 0 ? (
+                        <div className="py-8 text-center text-white/40 text-xs">
+                          No runs match "{pipelineSearch}".
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {visibleOtherRuns.map((run) => (
+                            <div
+                              key={run.id}
+                              onClick={() => fetchRunDetail(run.run_id)}
+                              className="p-4 bg-dark-overlay-navy border border-white/10 hover:border-white/20 rounded-xl transition-all space-y-2 cursor-pointer"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <h4 className="text-xs text-white/90 font-semibold line-clamp-2">{run.topic}</h4>
+                                <StatusBadge status={run.status} isContinueEditing={isBlogEditInProgress(run)} />
+                              </div>
+                              <div className="text-[10px] font-mono text-white/30">{run.run_id}</div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-[10px] text-white/40 font-mono">
+                                  Last saved: {new Date(run.updated_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeletePipelineRun(run.run_id, run.topic);
+                                  }}
+                                  className="text-[10px] text-status-error/80 hover:text-status-error cursor-pointer"
+                                >
+                                  Delete
+                                </button>
+                              </div>
                             </div>
-                            <h4 className="text-xs text-white/80 line-clamp-2">{run.topic}</h4>
-                            <div className="flex justify-between items-center">
-                              <span className="text-[10px] text-white/40 font-mono">
-                                Last saved: {new Date(run.updated_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-                              </span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeletePipelineRun(run.run_id, run.topic);
-                                }}
-                                className="text-[10px] text-status-error/80 hover:text-status-error cursor-pointer"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -5111,6 +5486,12 @@ function FormattedContent({
   onRemovePlaceholder?: (placeholderId: string, label: string, isFeatured?: boolean) => void;
   onRemoveResolvedImage?: (altText: string, srcUrl: string) => void;
 }) {
+  const [activeGeneratePlaceholder, setActiveGeneratePlaceholder] = useState<
+    { placeholderId: string; label: string; isFeatured?: boolean } | null
+  >(null);
+  const toast = useToast();
+  const promptAction = usePrompt();
+
   const content = cleanHeadingBugs(body_markdown || body || "");
   if (!content) return null;
 
@@ -5216,11 +5597,10 @@ function FormattedContent({
                             ✓ Accept
                           </button>
                           <button
-                            onClick={() => onGenerateImage?.(placeholderId, label, isFeatured)}
-                            disabled={isGeneratingThis}
+                            onClick={() => setActiveGeneratePlaceholder({ placeholderId, label, isFeatured })}
                             className="border border-white/20 text-white/80 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium disabled:opacity-50"
                           >
-                            {isGeneratingThis ? "Regenerating…" : "🔄 Regenerate"}
+                            🔄 Regenerate
                           </button>
                           {onRemovePlaceholder && (
                             <button
@@ -5255,11 +5635,11 @@ function FormattedContent({
                                 if (data.success && data.url) {
                                   onAttachPlaceholder(placeholderId, label, data.url, isFeatured);
                                 } else {
-                                  alert(`Image upload failed: ${data.error || "Unknown error"}`);
+                                  toast.error(`Image upload failed: ${data.error || "Unknown error"}`);
                                 }
                               } catch (err) {
                                 console.error("Placeholder upload failed:", err);
-                                alert("Image upload failed. Please check your connection and try again.");
+                                toast.error("Image upload failed. Please check your connection and try again.");
                               } finally {
                                 e.target.value = "";
                               }
@@ -5268,8 +5648,8 @@ function FormattedContent({
                           />
                         </label>
                         <button
-                          onClick={() => {
-                            const url = prompt("Enter the direct image URL:");
+                          onClick={async () => {
+                            const url = await promptAction("Enter the direct image URL:");
                             if (url) {
                               onAttachPlaceholder(placeholderId, label, url, isFeatured);
                             }
@@ -5278,22 +5658,12 @@ function FormattedContent({
                         >
                           Paste URL
                         </button>
-                        {onGenerateImage && (
-                          <button
-                            onClick={() => onGenerateImage(placeholderId, label, isFeatured)}
-                            disabled={isGeneratingThis}
-                            className="border border-white/20 text-white/80 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium disabled:opacity-50 flex items-center gap-1"
-                          >
-                            {isGeneratingThis ? (
-                              <>
-                                <span className="inline-block w-2 h-2 rounded-full bg-clinical-teal animate-ping" />
-                                Generating…
-                              </>
-                            ) : (
-                              "✨ Generate Image"
-                            )}
-                          </button>
-                        )}
+                        <button
+                          onClick={() => setActiveGeneratePlaceholder({ placeholderId, label, isFeatured })}
+                          className="border border-white/20 text-white/80 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium disabled:opacity-50 flex items-center gap-1"
+                        >
+                          ✨ Generate Image
+                        </button>
                         {onRemovePlaceholder && (
                           <button
                             onClick={() => onRemovePlaceholder(placeholderId, label, isFeatured)}
@@ -5375,6 +5745,27 @@ function FormattedContent({
         </div>
       )}
       <ArticleFooterTemplate />
+
+      <GenerateImageModal
+        isOpen={!!activeGeneratePlaceholder}
+        onClose={() => setActiveGeneratePlaceholder(null)}
+        contextHints={{
+          imageTitle: activeGeneratePlaceholder?.label,
+          placeholderLabel: activeGeneratePlaceholder?.label,
+          section: activeGeneratePlaceholder?.isFeatured ? "Featured Image" : "Inline Image",
+        }}
+        onGenerated={(result) => {
+          if (activeGeneratePlaceholder) {
+            onAttachPlaceholder?.(
+              activeGeneratePlaceholder.placeholderId,
+              activeGeneratePlaceholder.label,
+              result.url,
+              activeGeneratePlaceholder.isFeatured
+            );
+          }
+          setActiveGeneratePlaceholder(null);
+        }}
+      />
     </div>
   );
 }
@@ -5383,7 +5774,7 @@ function FormattedContent({
 // Fetches an image (even cross-origin, e.g. Supabase Storage) as a blob and triggers
 // a real download — a plain <a download> is silently ignored by browsers for
 // cross-origin URLs, so this is needed for the "Download Image" manual-upload step.
-async function downloadImageFile(url: string, filenameHint: string) {
+async function downloadImageFile(url: string, filenameHint: string, onError?: (message: string) => void) {
   try {
     const res = await fetch(url);
     const blob = await res.blob();
@@ -5398,8 +5789,95 @@ async function downloadImageFile(url: string, filenameHint: string) {
     URL.revokeObjectURL(objectUrl);
   } catch (err) {
     console.error("Image download failed:", err);
-    alert("Couldn't download the image automatically — right-click the image above and choose \"Save image as...\" instead.");
+    const message = "Couldn't download the image automatically — right-click the image above and choose \"Save image as...\" instead.";
+    if (onError) onError(message);
+    else alert(message);
   }
+}
+
+function escapeHtml(text: string): string {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Opens a self-contained mockup in a new window showing what a Story/Carousel/
+// Reel will actually look like once posted — with the caption composited on top
+// of the image the way Instagram renders it, not shown as separate text below
+// (which is all the inline card view has room for).
+function openSocialPreview(
+  kind: "story" | "carousel" | "reel",
+  data: {
+    caption?: string;
+    imageUrl?: string;
+    slides?: Array<{ slideNumber: number; text: string; imageUrl?: string }>;
+    script?: string;
+  }
+) {
+  const win = window.open("", "_blank", "width=480,height=820");
+  if (!win) {
+    alert("Please allow pop-ups for this site to preview the post.");
+    return;
+  }
+
+  let bodyHtml = "";
+  if (kind === "story") {
+    bodyHtml = `
+      <div class="story-frame">
+        ${data.imageUrl ? `<img src="${data.imageUrl}" alt="" />` : `<div class="no-image">No background image yet</div>`}
+        <div class="overlay-caption">${escapeHtml(data.caption || "")}</div>
+      </div>
+    `;
+  } else if (kind === "carousel") {
+    bodyHtml =
+      `<div class="carousel-row">` +
+      (data.slides || [])
+        .map(
+          (s) => `
+        <div class="slide-card">
+          <div class="slide-number">Slide ${s.slideNumber}</div>
+          ${s.imageUrl ? `<img src="${s.imageUrl}" alt="" />` : `<div class="no-image">No image yet</div>`}
+          <div class="overlay-caption">${escapeHtml(s.text)}</div>
+        </div>
+      `
+        )
+        .join("") +
+      `</div>`;
+  } else if (kind === "reel") {
+    bodyHtml = `
+      <div class="story-frame">
+        ${data.imageUrl ? `<img src="${data.imageUrl}" alt="" />` : `<div class="no-image">No cover image yet</div>`}
+        <div class="overlay-caption">${escapeHtml(data.caption || "")}</div>
+      </div>
+      <div class="script-box">
+        <h3>Script</h3>
+        <pre>${escapeHtml(data.script || "No script yet.")}</pre>
+      </div>
+    `;
+  }
+
+  win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<title>Post Preview</title>
+<style>
+  body { margin:0; padding:24px; background:#0b1b2b; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; display:flex; flex-direction:column; align-items:center; gap:20px; }
+  .story-frame { position:relative; width:320px; height:568px; border-radius:16px; overflow:hidden; background:#111827; box-shadow:0 8px 30px rgba(0,0,0,0.4); flex-shrink:0; }
+  .story-frame img { width:100%; height:100%; object-fit:cover; }
+  .overlay-caption { position:absolute; left:12px; right:12px; bottom:20px; background:rgba(0,0,0,0.65); backdrop-filter:blur(6px); color:#fff; padding:12px 14px; border-radius:10px; font-size:14px; line-height:1.45; text-align:center; }
+  .carousel-row { display:flex; gap:16px; overflow-x:auto; max-width:100%; padding-bottom:12px; }
+  .slide-card { position:relative; flex:0 0 auto; width:280px; height:280px; border-radius:12px; overflow:hidden; background:#111827; }
+  .slide-card img { width:100%; height:100%; object-fit:cover; }
+  .slide-number { position:absolute; top:8px; left:8px; background:rgba(0,0,0,0.6); color:#fff; font-size:11px; padding:3px 8px; border-radius:999px; z-index:2; }
+  .no-image { width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#8a99a8; font-size:12px; text-align:center; padding:16px; box-sizing:border-box; }
+  .script-box { width:320px; background:#12263a; border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:16px; color:#dbe8f2; box-sizing:border-box; }
+  .script-box h3 { margin:0 0 8px; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#5fd0e0; }
+  .script-box pre { white-space:pre-wrap; font-family:inherit; font-size:13px; line-height:1.55; margin:0; }
+</style>
+</head>
+<body>${bodyHtml}</body>
+</html>`);
+  win.document.close();
 }
 
 function PlatformCard({
@@ -5426,6 +5904,10 @@ function PlatformCard({
   showManualUploadGuide,
   slides,
   script,
+  topic,
+  attachedVideoUrl,
+  videoSource,
+  onAttachVideo,
 }: {
   platformKey: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel";
   platformLabel: string;
@@ -5450,6 +5932,10 @@ function PlatformCard({
   showManualUploadGuide?: boolean;
   slides?: Array<{ slideNumber: number; text: string; imagePromptSuggestion: string; imageUrl?: string }>;
   script?: string;
+  topic?: string;
+  attachedVideoUrl?: string;
+  videoSource?: "upload" | "ai-broll";
+  onAttachVideo?: (url: string, source: "upload" | "ai-broll") => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(caption);
@@ -5461,6 +5947,12 @@ function PlatformCard({
 
   const [activeSlide, setActiveSlide] = useState(0);
   const currentSlide = slides && slides.length > 0 ? slides[activeSlide] : null;
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isGeneratingBroll, setIsGeneratingBroll] = useState(false);
+  const [videoActionError, setVideoActionError] = useState<string | null>(null);
+  const toast = useToast();
+  const promptAction = usePrompt();
 
   useEffect(() => {
     setEditedText(caption);
@@ -5471,6 +5963,53 @@ function PlatformCard({
       setEditedText(caption);
     }
   }, [caption, isExternalEditing]);
+
+  const handleReelVideoUpload = async (file: File) => {
+    setVideoActionError(null);
+    setIsUploadingVideo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/portal/content-pipeline/upload-video", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        onAttachVideo?.(data.url, "upload");
+      } else {
+        setVideoActionError(data.error || "Video upload failed.");
+      }
+    } catch (err) {
+      console.error("Reel video upload failed:", err);
+      setVideoActionError("Video upload failed. Please check your connection and try again.");
+    } finally {
+      setIsUploadingVideo(false);
+    }
+  };
+
+  const handleGenerateBroll = async () => {
+    setVideoActionError(null);
+    setIsGeneratingBroll(true);
+    try {
+      const res = await fetch("/api/portal/content-pipeline/generate-reel-video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: topic || caption, script }),
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        onAttachVideo?.(data.url, "ai-broll");
+      } else {
+        setVideoActionError(data.error || "B-roll generation failed.");
+      }
+    } catch (err) {
+      console.error("Reel b-roll generation failed:", err);
+      setVideoActionError("B-roll generation failed. Please check your connection and try again.");
+    } finally {
+      setIsGeneratingBroll(false);
+    }
+  };
 
   return (
     <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4 animate-fadeIn">
@@ -5510,14 +6049,34 @@ function PlatformCard({
             </div>
           </div>
         )}
+        {isStory && (
+          <div className="flex justify-center">
+            <button
+              onClick={() =>
+                openSocialPreview("story", {
+                  caption,
+                  imageUrl: attachedImageUrl || "/images/templates/vertical-story-template.png",
+                })
+              }
+              className="text-[10px] text-clinical-teal hover:underline cursor-pointer font-medium"
+            >
+              🔍 Preview in new window
+            </button>
+          </div>
+        )}
 
         {isCarousel && currentSlide && (
           <div className="space-y-3 bg-primary-navy/50 p-4 rounded-xl border border-white/5 animate-fadeIn">
             <div className="flex justify-between items-center text-[10px] text-[#A8C0CC]">
               <span className="font-semibold text-clinical-teal">Slide {activeSlide + 1} of {slides!.length}</span>
-              <span className="text-white/40 font-mono">Interactive Draft</span>
+              <button
+                onClick={() => openSocialPreview("carousel", { slides })}
+                className="text-clinical-teal hover:underline cursor-pointer font-medium"
+              >
+                🔍 Preview all slides
+              </button>
             </div>
-            
+
             {currentSlide.imageUrl ? (
               <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md group">
                 <img
@@ -5562,11 +6121,10 @@ function PlatformCard({
                 </label>
                 {onGenerateImage && (
                   <button
-                    onClick={() => onGenerateImage(currentSlide.imagePromptSuggestion || `Visual card for slide ${activeSlide + 1}`, activeSlide)}
-                    disabled={isGeneratingImage}
+                    onClick={() => setIsGenerateModalOpen(true)}
                     className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
                   >
-                    {isGeneratingImage ? "Generating…" : "✨ Generate"}
+                    ✨ Generate
                   </button>
                 )}
               </div>
@@ -5604,13 +6162,103 @@ function PlatformCard({
 
         {isReel && (
           <div className="space-y-3 bg-primary-navy/50 p-4 rounded-xl border border-white/5 text-xs animate-fadeIn">
-            <div className="flex items-center gap-1.5 text-clinical-teal uppercase tracking-wider text-[10px] font-bold">
-              <span>🎬</span>
-              <span>Reel script outline</span>
+            <div className="flex items-center justify-between gap-1.5">
+              <span className="flex items-center gap-1.5 text-clinical-teal uppercase tracking-wider text-[10px] font-bold">
+                <span>🎬</span>
+                <span>Reel script outline</span>
+              </span>
+              <button
+                onClick={() => openSocialPreview("reel", { caption, imageUrl: attachedImageUrl || undefined, script })}
+                className="text-[10px] text-clinical-teal hover:underline cursor-pointer font-medium"
+              >
+                🔍 Preview
+              </button>
             </div>
-            
+
             <div className="bg-primary-navy p-3 rounded-lg border border-white/10 text-[11px] text-white/80 leading-relaxed font-sans whitespace-pre-wrap max-h-60 overflow-y-auto font-mono">
               {script || caption || "No script outline available."}
+            </div>
+
+            <div className="space-y-2 pt-1 border-t border-white/5">
+              <span className="flex items-center gap-1.5 text-clinical-teal uppercase tracking-wider text-[10px] font-bold">
+                <span>🎥</span>
+                <span>Reel Video</span>
+              </span>
+
+              {attachedVideoUrl ? (
+                <div className="space-y-2">
+                  <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md max-w-[210px] mx-auto">
+                    <video
+                      src={attachedVideoUrl}
+                      controls
+                      className="w-full aspect-[9/16] object-cover bg-black"
+                    />
+                    <div className="absolute top-2 left-2 bg-primary-navy/95 backdrop-blur text-[9px] text-clinical-teal font-mono px-2 py-0.5 rounded border border-white/10">
+                      {videoSource === "ai-broll" ? "🎞️ AI B-Roll" : "📤 Uploaded"}
+                    </div>
+                  </div>
+                  {!isPublished && (
+                    <div className="flex justify-end gap-1.5">
+                      <label className="bg-white/10 hover:bg-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors cursor-pointer font-medium border border-white/10">
+                        {isUploadingVideo ? "Uploading..." : "Replace with Upload"}
+                        <input
+                          type="file"
+                          accept="video/*"
+                          disabled={isUploadingVideo}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleReelVideoUpload(file);
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                      <button
+                        disabled={isGeneratingBroll}
+                        onClick={handleGenerateBroll}
+                        className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
+                      >
+                        {isGeneratingBroll ? "Generating... (~1-2 min)" : "🎞️ Regenerate B-Roll"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                !isPublished && (
+                  <div className="space-y-2">
+                    <div className="bg-primary-navy/70 border border-dashed border-white/20 rounded-lg p-3 text-center text-[10px] text-white/40 italic">
+                      No video attached yet
+                    </div>
+                    <div className="flex justify-center gap-1.5">
+                      <label className="bg-white/10 hover:bg-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1.5 rounded transition-colors cursor-pointer font-medium border border-white/10">
+                        {isUploadingVideo ? "Uploading..." : "📤 Upload Video"}
+                        <input
+                          type="file"
+                          accept="video/*"
+                          disabled={isUploadingVideo}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleReelVideoUpload(file);
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                      <button
+                        disabled={isGeneratingBroll}
+                        onClick={handleGenerateBroll}
+                        className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1.5 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
+                      >
+                        {isGeneratingBroll ? "Generating... (~1-2 min)" : "🎞️ Generate AI B-Roll"}
+                      </button>
+                    </div>
+                  </div>
+                )
+              )}
+
+              {videoActionError && (
+                <div className="text-[10px] text-red-300 bg-red-900/20 border border-red-500/20 rounded-lg p-2">
+                  {videoActionError}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -5659,8 +6307,8 @@ function PlatformCard({
                       />
                     </label>
                     <button
-                      onClick={() => {
-                        const url = prompt(`Enter direct image URL for ${platformLabel}:`);
+                      onClick={async () => {
+                        const url = await promptAction(`Enter direct image URL for ${platformLabel}:`);
                         if (url) {
                           onAttachImage?.(url);
                         }
@@ -5671,11 +6319,10 @@ function PlatformCard({
                     </button>
                     {onGenerateImage && (
                       <button
-                        onClick={() => onGenerateImage(imagePromptSuggestion || `A representative image for a ${platformLabel} post`)}
-                        disabled={isGeneratingImage}
+                        onClick={() => setIsGenerateModalOpen(true)}
                         className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
                       >
-                        {isGeneratingImage ? "Generating…" : "✨ Generate"}
+                        ✨ Generate
                       </button>
                     )}
                   </div>
@@ -5683,7 +6330,7 @@ function PlatformCard({
                 {showManualUploadGuide && (
                   <div className="flex justify-end">
                     <button
-                      onClick={() => downloadImageFile(attachedImageUrl, `${platformKey}-post-image`)}
+                      onClick={() => downloadImageFile(attachedImageUrl, `${platformKey}-post-image`, toast.error)}
                       className="text-[9px] text-clinical-teal hover:underline cursor-pointer font-medium"
                     >
                       ⬇ Download Image
@@ -5723,8 +6370,8 @@ function PlatformCard({
                       />
                     </label>
                     <button
-                      onClick={() => {
-                        const url = prompt(`Enter direct image URL for ${platformLabel}:`);
+                      onClick={async () => {
+                        const url = await promptAction(`Enter direct image URL for ${platformLabel}:`);
                         if (url) {
                           onAttachImage?.(url);
                         }
@@ -5735,11 +6382,10 @@ function PlatformCard({
                     </button>
                     {onGenerateImage && (
                       <button
-                        onClick={() => onGenerateImage(imagePromptSuggestion || `A representative image for a ${platformLabel} post`)}
-                        disabled={isGeneratingImage}
+                        onClick={() => setIsGenerateModalOpen(true)}
                         className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1 rounded-lg transition-colors font-medium cursor-pointer disabled:opacity-50"
                       >
-                        {isGeneratingImage ? "Generating…" : "✨ Generate"}
+                        ✨ Generate
                       </button>
                     )}
                   </div>
@@ -5755,30 +6401,31 @@ function PlatformCard({
               value={editedText}
               onChange={(e) => setEditedText(e.target.value)}
               rows={isStory ? 3 : 6}
-              className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-3 text-xs focus:border-clinical-teal focus:outline-none leading-relaxed font-sans"
+              className="w-full bg-primary-navy border border-white/20 text-white text-xs rounded-lg p-2.5 focus:border-clinical-teal focus:outline-none font-sans leading-relaxed"
             />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setIsEditing(false);
-                  onCancelExternalEdit?.();
-                }}
-                className="border border-white/20 text-white/70 hover:bg-white/5 text-[11px] px-3 py-1 rounded-lg cursor-pointer"
-              >
-                Cancel
-              </button>
+            <div className="flex justify-end gap-1.5">
               {!isPublished && (
                 <button
+                  type="button"
                   onClick={() => {
                     setIsEditing(false);
                     onCancelExternalEdit?.();
                     onRequestRevision();
                   }}
-                  className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[11px] px-3 py-1 rounded-lg transition-colors cursor-pointer"
+                  className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[11px] px-3 py-1 rounded-lg transition-colors cursor-pointer font-sans"
                 >
                   🔄 Revision
                 </button>
               )}
+              <button
+                onClick={() => {
+                  setIsEditing(false);
+                  onCancelExternalEdit?.();
+                }}
+                className="border border-white/20 hover:bg-white/5 text-white text-[11px] px-3 py-1 rounded-lg cursor-pointer"
+              >
+                Cancel
+              </button>
               <button
                 onClick={() => {
                   onSaveEdit(editedText);
@@ -5868,6 +6515,21 @@ function PlatformCard({
           </ol>
         </div>
       )}
+
+      <GenerateImageModal
+        isOpen={isGenerateModalOpen}
+        onClose={() => setIsGenerateModalOpen(false)}
+        contentType={isStory ? "story" : isCarousel ? "carousel" : isReel ? "reel" : "post"}
+        contextHints={{
+          imageTitle: (isCarousel ? currentSlide?.imagePromptSuggestion : imagePromptSuggestion) || undefined,
+          altText: caption || undefined,
+          section: platformLabel,
+        }}
+        onGenerated={(result) => {
+          onAttachImage?.(result.url, isCarousel ? activeSlide : undefined);
+          setIsGenerateModalOpen(false);
+        }}
+      />
     </div>
   );
 }

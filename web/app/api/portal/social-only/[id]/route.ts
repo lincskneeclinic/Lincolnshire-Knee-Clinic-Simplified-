@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSocialOnlyPost, updateSocialOnlyPost, deleteSocialOnlyPost, SocialOnlyPost } from "@/lib/socialOnlyPosts";
-import { rewriteSocialCaption } from "@/lib/socialWriterAgent";
+import { rewriteSocialCaption, rewriteCarouselSlides } from "@/lib/socialWriterAgent";
 
 export const maxDuration = 60;
 
@@ -43,10 +43,9 @@ export async function PATCH(
 
     if (platform === "instagramCarousel") {
       if (body.action === "regenerate") {
-        const rewritten = await rewriteSocialCaption(
+        const rewritten = await rewriteCarouselSlides(
           existing.topic,
-          platform,
-          existing.instagramCarousel?.caption || "",
+          existing.instagramCarousel?.slides || [],
           body.revisionNotes
         );
         const updated = await updateSocialOnlyPost(id, (post) => ({
@@ -54,7 +53,7 @@ export async function PATCH(
           instagramCarousel: {
             caption: rewritten.caption,
             imagePromptSuggestion: rewritten.imagePromptSuggestion,
-            slides: post.instagramCarousel?.slides || [],
+            slides: rewritten.slides,
             status: "pending",
           },
         }));
@@ -103,6 +102,8 @@ export async function PATCH(
           imagePromptSuggestion: body.imagePromptSuggestion !== undefined ? body.imagePromptSuggestion : existingReel.imagePromptSuggestion,
           script: body.script !== undefined ? body.script : existingReel.script,
           status: body.status !== undefined ? body.status : existingReel.status,
+          videoUrl: body.videoUrl !== undefined ? body.videoUrl : existingReel.videoUrl,
+          videoSource: body.videoSource !== undefined ? body.videoSource : existingReel.videoSource,
         };
         return next;
       });

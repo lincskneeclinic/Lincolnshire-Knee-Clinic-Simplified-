@@ -6,7 +6,7 @@ import { sendContentPipelineNotificationEmail } from "./graphMail";
 import { performResearchProcess } from "./researchAgent";
 import { writeBlogDraft } from "./blogWriterAgent";
 import { linkRunToArticle, getArticleSlugForRun, setArticleOverride } from "./educationArticles";
-import { writeSocialCaptions } from "./socialWriterAgent";
+import { writeSocialCaptions, rewriteSocialCaption, rewriteCarouselSlides } from "./socialWriterAgent";
 
 export type RunStatus =
   | "researching"
@@ -72,6 +72,8 @@ export interface SocialDraftVersion {
     imagePromptSuggestion: string;
     script: string;
     status: "pending" | "approved";
+    videoUrl?: string;
+    videoSource?: "upload" | "ai-broll";
   };
   created_at: string;
 }
@@ -984,10 +986,14 @@ export async function submitPipelineReview(
           if (payload.decision === "approved") {
             draft.status = "approved";
           } else if (payload.decision === "edited" && payload.editedContent) {
-            draft.caption = payload.editedContent.caption || draft.caption;
-            draft.slides = payload.editedContent.slides || draft.slides;
+            draft.caption = payload.editedContent.caption || payload.editedContent.instagramCarousel?.caption || draft.caption;
+            draft.slides = payload.editedContent.slides || payload.editedContent.instagramCarousel?.slides || draft.slides;
             draft.status = "approved";
           } else if (payload.decision === "revision_requested") {
+            const rewritten = await rewriteCarouselSlides(run.topic, draft.slides || [], payload.revisionNotes);
+            draft.caption = rewritten.caption;
+            draft.imagePromptSuggestion = rewritten.imagePromptSuggestion;
+            draft.slides = rewritten.slides;
             draft.status = "pending";
           }
           currentDraft.instagramCarousel = draft;
@@ -998,8 +1004,17 @@ export async function submitPipelineReview(
           } else if (payload.decision === "edited" && payload.editedContent) {
             draft.caption = payload.editedContent.caption || draft.caption;
             draft.script = payload.editedContent.script || draft.script;
-            draft.status = "approved";
+            if (payload.editedContent.videoUrl !== undefined) {
+              draft.videoUrl = payload.editedContent.videoUrl;
+              draft.videoSource = payload.editedContent.videoSource;
+            } else {
+              draft.status = "approved";
+            }
           } else if (payload.decision === "revision_requested") {
+            const rewritten = await rewriteSocialCaption(run.topic, "instagramReel", draft.script || draft.caption || "", payload.revisionNotes);
+            draft.caption = rewritten.caption;
+            draft.script = rewritten.caption;
+            draft.imagePromptSuggestion = rewritten.imagePromptSuggestion;
             draft.status = "pending";
           }
           currentDraft.instagramReel = draft;
@@ -1026,6 +1041,9 @@ export async function submitPipelineReview(
             }
             currentDraft[p]!.status = "approved";
           } else if (payload.decision === "revision_requested") {
+            const rewritten = await rewriteSocialCaption(run.topic, p, currentDraft[p]!.caption || "", payload.revisionNotes);
+            currentDraft[p]!.caption = rewritten.caption;
+            currentDraft[p]!.imagePromptSuggestion = rewritten.imagePromptSuggestion;
             currentDraft[p]!.status = "pending";
           }
         }
@@ -1048,12 +1066,41 @@ export async function submitPipelineReview(
           if (currentDraft.instagramCarousel) currentDraft.instagramCarousel.status = "approved";
           if (currentDraft.instagramReel) currentDraft.instagramReel.status = "approved";
         } else if (payload.decision === "revision_requested") {
+          const [instagramRewrite, facebookRewrite, linkedinRewrite] = await Promise.all([
+            rewriteSocialCaption(run.topic, "instagram", currentDraft.instagram.caption || "", payload.revisionNotes),
+            rewriteSocialCaption(run.topic, "facebook", currentDraft.facebook.caption || "", payload.revisionNotes),
+            rewriteSocialCaption(run.topic, "linkedin", currentDraft.linkedin.caption || "", payload.revisionNotes),
+          ]);
+          currentDraft.instagram.caption = instagramRewrite.caption;
+          currentDraft.instagram.imagePromptSuggestion = instagramRewrite.imagePromptSuggestion;
           currentDraft.instagram.status = "pending";
+          currentDraft.facebook.caption = facebookRewrite.caption;
+          currentDraft.facebook.imagePromptSuggestion = facebookRewrite.imagePromptSuggestion;
           currentDraft.facebook.status = "pending";
+          currentDraft.linkedin.caption = linkedinRewrite.caption;
+          currentDraft.linkedin.imagePromptSuggestion = linkedinRewrite.imagePromptSuggestion;
           currentDraft.linkedin.status = "pending";
-          if (currentDraft.instagramStory) currentDraft.instagramStory.status = "pending";
-          if (currentDraft.instagramCarousel) currentDraft.instagramCarousel.status = "pending";
-          if (currentDraft.instagramReel) currentDraft.instagramReel.status = "pending";
+
+          if (currentDraft.instagramStory) {
+            const storyRewrite = await rewriteSocialCaption(run.topic, "instagramStory", currentDraft.instagramStory.caption || "", payload.revisionNotes);
+            currentDraft.instagramStory.caption = storyRewrite.caption;
+            currentDraft.instagramStory.imagePromptSuggestion = storyRewrite.imagePromptSuggestion;
+            currentDraft.instagramStory.status = "pending";
+          }
+          if (currentDraft.instagramCarousel) {
+            const carouselRewrite = await rewriteCarouselSlides(run.topic, currentDraft.instagramCarousel.slides || [], payload.revisionNotes);
+            currentDraft.instagramCarousel.caption = carouselRewrite.caption;
+            currentDraft.instagramCarousel.imagePromptSuggestion = carouselRewrite.imagePromptSuggestion;
+            currentDraft.instagramCarousel.slides = carouselRewrite.slides;
+            currentDraft.instagramCarousel.status = "pending";
+          }
+          if (currentDraft.instagramReel) {
+            const reelRewrite = await rewriteSocialCaption(run.topic, "instagramReel", currentDraft.instagramReel.script || currentDraft.instagramReel.caption || "", payload.revisionNotes);
+            currentDraft.instagramReel.caption = reelRewrite.caption;
+            currentDraft.instagramReel.script = reelRewrite.caption;
+            currentDraft.instagramReel.imagePromptSuggestion = reelRewrite.imagePromptSuggestion;
+            currentDraft.instagramReel.status = "pending";
+          }
         }
       }
     }
