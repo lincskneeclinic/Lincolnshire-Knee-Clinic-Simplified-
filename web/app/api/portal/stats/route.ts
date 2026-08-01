@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { isSupabaseConfigured, fetchContactsFromSupabase } from "@/lib/supabase";
 import { getStoreValue } from "@/lib/dataStore";
+import { processDueWelcomeEmails } from "@/lib/welcomeSeries";
 
 const NEWSLETTER_PATH = path.join(process.cwd(), "data", "newsletter-subscribers.json");
 
@@ -18,6 +19,12 @@ function readJsonFile(filePath: string, fallback: any) {
 }
 
 export async function GET() {
+  // No dedicated scheduler on this deployment — piggyback on the dashboard's
+  // stats load (hit every time staff open the Overview tab) to send any
+  // welcome-series follow-ups that have become due. Never blocks/fails the
+  // stats response if something goes wrong.
+  processDueWelcomeEmails().catch((err) => console.error("Failed to process due welcome emails:", err));
+
   let subscribers: any[] = [];
   let storageSource = "local_file";
 

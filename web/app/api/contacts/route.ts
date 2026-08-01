@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { isSupabaseConfigured, saveContactToSupabase } from "@/lib/supabase";
 import { isBrevoConfigured, syncContactToBrevo } from "@/lib/brevo";
+import { enqueueWelcomeSeries } from "@/lib/welcomeSeries";
 
 const NEWSLETTER_DB_PATH = path.join(process.cwd(), "data", "newsletter-subscribers.json");
 
@@ -153,6 +154,11 @@ export async function POST(request: Request) {
         `Contact ${cleanEmail} saved to local fallback file — Supabase was unavailable. Investigate before this happens for real subscribers.`
       );
     }
+
+    // Fire-and-forget — doesn't block the signup response on email delivery.
+    enqueueWelcomeSeries(subscriberRecord.email, subscriberRecord.name || "Patient", subscriberRecord.primaryInterest).catch(
+      (err) => console.error("Failed to enqueue welcome series:", err)
+    );
 
     return NextResponse.json({
       success: true,

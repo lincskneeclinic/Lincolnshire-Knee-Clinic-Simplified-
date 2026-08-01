@@ -136,6 +136,7 @@ export function wrapNewsletterEmailTemplate(subject: string, contentHtml: string
       <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
         <tr>
           <td style="background-color: #0c4a6e; padding: 32px 24px; text-align: center;">
+            <img src="${SITE_URL}/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" width="48" height="56" style="display: block; margin: 0 auto 12px auto; width: 48px; height: 56px;" />
             <h1 style="color: #ffffff; font-family: Georgia, serif; font-size: 24px; margin: 0; font-weight: normal; letter-spacing: 0.5px;">Lincolnshire Knee Clinic</h1>
             <p style="color: #38bdf8; font-size: 12px; font-weight: bold; text-transform: uppercase; margin: 8px 0 0 0; letter-spacing: 1.5px;">Patient Education & Clinical Updates</p>
           </td>
@@ -149,6 +150,7 @@ export function wrapNewsletterEmailTemplate(subject: string, contentHtml: string
         </tr>
         <tr>
           <td style="background-color: #f1f5f9; padding: 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <img src="${SITE_URL}/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" width="28" height="33" style="display: block; margin: 0 auto 10px auto; width: 28px; height: 33px;" />
             <p style="margin: 0 0 8px 0; font-size: 13px; color: #475569; font-weight: bold;">Lincolnshire Knee Clinic</p>
             <p style="margin: 0 0 16px 0; font-size: 12px; color: #64748b; line-height: 1.5;">Consultant-led orthopaedic care and joint preservation pathways across Lincolnshire.</p>
             <div style="margin: 16px 0;">

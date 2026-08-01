@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { blogArticles } from "@/data/articles";
 import { getStoreValue } from "./dataStore";
 import { convertNewsletterMarkdownToHtml } from "./newsletterMarkdown";
+import { getTrendingCommunityTopics } from "./communityDigest";
 
 const apiKey = process.env.GEMINI_API_KEY;
 const SITE_URL = "https://lincolnshirekneeclinic.co.uk";
@@ -58,6 +59,7 @@ export async function writeMonthlyDigestEdition(): Promise<{
   const recentArticles = getRecentArticles();
   const topTopics = await getTopPatientTopics(5);
   const leadingPoll = await getLeadingPollOption();
+  const trendingCommunityTopics = await getTrendingCommunityTopics(3);
   const theme = monthlyTheme();
   const monthLabel = new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" });
 
@@ -128,6 +130,18 @@ CLOSING:
   if (topTopics.length > 0) {
     sections.push(`### What Patients Have Been Asking About\n\n${questionsIntro}`);
     sections.push(topTopics.map((t) => `- **${t.label}**`).join("\n"));
+  }
+
+  if (trendingCommunityTopics.length > 0) {
+    sections.push(`### Trending in Our Patient Community\n\nOur Community forum has patients discussing this too — join the conversation:`);
+    sections.push(
+      trendingCommunityTopics
+        .map(
+          (t) =>
+            `- [${t.title}](${SITE_URL}/community/${t.roomSlug}/${t.postId}) — ${t.roomName}${t.replyCount > 0 ? ` (${t.replyCount} ${t.replyCount === 1 ? "reply" : "replies"})` : ""}`
+        )
+        .join("\n")
+    );
   }
 
   if (leadingPoll) {

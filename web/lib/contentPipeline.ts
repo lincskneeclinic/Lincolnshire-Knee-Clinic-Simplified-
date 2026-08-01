@@ -7,6 +7,7 @@ import { performResearchProcess } from "./researchAgent";
 import { writeBlogDraft } from "./blogWriterAgent";
 import { linkRunToArticle, getArticleSlugForRun, setArticleOverride } from "./educationArticles";
 import { writeSocialCaptions, rewriteSocialCaption, rewriteCarouselSlides } from "./socialWriterAgent";
+import { syncPollTopicsIntoDynamicTopics } from "./pollTopicsSync";
 
 export type RunStatus =
   | "researching"
@@ -432,6 +433,7 @@ export async function createPendingPipelineRun(customTopic?: string): Promise<Co
 
   if (!selectedTopic) {
     try {
+      await syncPollTopicsIntoDynamicTopics();
       const topics = await getStoreValue<any[]>("dynamic-topics", []);
       if (topics.length > 0) {
         topics.sort((a: any, b: any) => (b.enquiryCount || 0) - (a.enquiryCount || 0));
