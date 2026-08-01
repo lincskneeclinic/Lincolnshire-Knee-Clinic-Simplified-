@@ -4,6 +4,7 @@ import {
   MissingReferenceDocError,
   type ImageContextHints,
   type ImageFormat,
+  type ImageStyle,
 } from "@/lib/medicalImagePrompts";
 
 export async function POST(request: Request) {
@@ -20,8 +21,9 @@ export async function POST(request: Request) {
     };
     const format: ImageFormat = body.format || "desktop";
     const transparentBackground: boolean = !!body.transparentBackground;
+    const style: ImageStyle | undefined = body.style === "photo" || body.style === "illustration" ? body.style : undefined;
 
-    const built = buildImagePrompt(hints, format, transparentBackground);
+    const built = buildImagePrompt(hints, format, transparentBackground, style);
 
     return NextResponse.json({ success: true, ...built, detectedContext: hints });
   } catch (error: any) {

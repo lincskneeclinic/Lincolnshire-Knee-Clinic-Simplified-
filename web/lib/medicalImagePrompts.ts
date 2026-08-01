@@ -265,6 +265,25 @@ function slugify(text: string): string {
     .slice(0, 60);
 }
 
+// Illustration vs photograph. The reference docs (image-prompt-library.md,
+// medical-imagery-guidelines.md) only define house style for anatomical
+// illustrations — appropriate for the subject-matched templates (diagrams of
+// internal knee structures, injection technique, surgical steps), which
+// can't be photographed anyway. But most fallback cases are real-world
+// scenes (a patient icing their knee at home, a bedroom at night, someone at
+// a desk) for blog/social content, which read as a photo, not a diagram —
+// forcing "medical illustration" language onto those was producing drawings
+// when a realistic photo was wanted. These two style constants are code-
+// defined rather than doc-derived since they're mechanical AI-generation
+// guardrails, not clinical/editorial policy the docs are meant to own.
+export type ImageStyle = "illustration" | "photo";
+
+const PHOTO_HOUSE_STYLE =
+  "Realistic, natural-looking photograph — photojournalistic style, natural lighting and shadows, authentic and candid rather than overly staged, true-to-life skin tones and textures, natural depth of field, suitable for a UK private orthopaedic clinic's website or social media.";
+
+const PHOTO_NEGATIVE_PROMPT =
+  "Avoid: illustration, drawing, cartoon, clipart, 3D render, CGI, painting, sketch, diagram, uncanny or distorted faces, extra or malformed fingers/limbs, unnatural or plastic-looking skin, unrealistic lighting, text, misspelled labels, logos, watermarks, borders, frames, low resolution, blurry, oversaturated colours, exaggerated expressions, medical gore, blood, graphic surgical content.";
+
 export type ImageFormat = "desktop" | "tablet" | "mobile-square" | "mobile-portrait";
 
 export const FORMAT_ASPECT_RATIOS: Record<ImageFormat, string> = {
@@ -291,15 +310,24 @@ export interface BuiltPrompt {
   proposedFilename: string;
   proposedAltText: string;
   isFallback: boolean;
+  style: ImageStyle;
 }
 
 export function buildImagePrompt(
   hints: ImageContextHints,
   format: ImageFormat = "desktop",
-  transparentBackground: boolean = false
+  transparentBackground: boolean = false,
+  style?: ImageStyle
 ): BuiltPrompt {
   const config = loadImagePromptConfig();
   const { subject, isFallback } = detectImageContext(hints, config);
+
+  // Fallback (no specific anatomical subject matched) almost always means a
+  // real-world scene rather than an internal-anatomy diagram, so default to a
+  // photo there; a matched subject is a library illustration template that
+  // can't sensibly become a photo (you can't photograph a cross-section of a
+  // ligament). Either way the caller can still override explicitly.
+  const resolvedStyle: ImageStyle = style || (isFallback ? "photo" : "illustration");
 
   // Priority matters here: placeholderLabel is a rich content description for blog
   // placeholders, but for social platform cards it's sometimes just a generic
@@ -309,19 +337,33 @@ export function buildImagePrompt(
   const fallbackSubjectDescription =
     hints.imageTitle || hints.topic || hints.altText || hints.placeholderLabel || "general knee health and care";
 
-  // The Universal Template (docs section 11) is written as prose guidance for a
-  // human/AI to compose a prompt from, with several [bracketed] slots — it isn't
-  // meant for a single mechanical .replace(). Filling in only "[specific knee
-  // subject]" left the rest ("[goal]", "[required structures or pathology]", etc.)
-  // as literal bracket text sent straight to the image model. Since no specific
-  // library subject matched, there's no real structure/pathology/goal to name
-  // anyway — a plain, clean description plus the house style is more accurate
-  // than fabricating values for slots we don't actually have answers for.
-  const subjectPrompt = isFallback
-    ? `Create an anatomically accurate, realistic 2D medical illustration relevant to: ${fallbackSubjectDescription}.`
-    : subject.template;
+  let subjectPrompt: string;
+  let houseStyle: string;
+  let negativePrompt: string;
 
-  const promptParts = [subjectPrompt, config.houseStyle];
+  if (resolvedStyle === "photo") {
+    subjectPrompt = `Create a realistic photograph relevant to: ${fallbackSubjectDescription}.`;
+    houseStyle = PHOTO_HOUSE_STYLE;
+    negativePrompt = PHOTO_NEGATIVE_PROMPT;
+  } else if (isFallback) {
+    // The Universal Template (docs section 11) is written as prose guidance for a
+    // human/AI to compose a prompt from, with several [bracketed] slots — it isn't
+    // meant for a single mechanical .replace(). Filling in only "[specific knee
+    // subject]" left the rest ("[goal]", "[required structures or pathology]", etc.)
+    // as literal bracket text sent straight to the image model. Since no specific
+    // library subject matched, there's no real structure/pathology/goal to name
+    // anyway — a plain, clean description plus the house style is more accurate
+    // than fabricating values for slots we don't actually have answers for.
+    subjectPrompt = `Create an anatomically accurate, realistic 2D medical illustration relevant to: ${fallbackSubjectDescription}.`;
+    houseStyle = config.houseStyle;
+    negativePrompt = config.negativePrompt;
+  } else {
+    subjectPrompt = subject.template;
+    houseStyle = config.houseStyle;
+    negativePrompt = config.negativePrompt;
+  }
+
+  const promptParts = [subjectPrompt, houseStyle];
   if (transparentBackground) {
     promptParts.push(
       "Isolated subject on a transparent background, suitable for a PNG/WebP asset with alpha transparency — no background scene or surface."
@@ -340,8 +382,9 @@ export function buildImagePrompt(
   const uniqueSuffix = Date.now().toString(36).slice(-5);
   const proposedFilename = `${subject.category}-${topicSlug}-${variant}-${uniqueSuffix}.webp`;
 
+  const mediumLabel = resolvedStyle === "photo" ? "Photograph" : "Illustration";
   const proposedAltText = isFallback
-    ? `Illustration related to ${hints.imageTitle || hints.topic || "knee care"}, for patient education.`
+    ? `${mediumLabel} related to ${hints.imageTitle || hints.topic || "knee care"}, for patient education.`
     : `${subject.title} — illustration for patient education on ${hints.topic || hints.pageTitle || "knee care"}.`;
 
   return {
@@ -349,10 +392,11 @@ export function buildImagePrompt(
     categoryLabel: subject.categoryLabel,
     subjectTitle: subject.title,
     prompt,
-    negativePrompt: config.negativePrompt,
+    negativePrompt,
     aspectRatio: FORMAT_ASPECT_RATIOS[format],
     proposedFilename,
     proposedAltText,
     isFallback,
+    style: resolvedStyle,
   };
 }

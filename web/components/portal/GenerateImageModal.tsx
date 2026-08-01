@@ -20,6 +20,7 @@ export interface GeneratedImageResult {
 }
 
 type ImageFormat = "desktop" | "tablet" | "mobile-square" | "mobile-portrait";
+type ImageStyle = "illustration" | "photo";
 
 const FORMAT_OPTIONS: { value: ImageFormat; label: string }[] = [
   { value: "desktop", label: "Desktop Landscape (16:9)" },
@@ -60,26 +61,21 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
   const [filename, setFilename] = useState("");
   const [altText, setAltText] = useState("");
   const [format, setFormat] = useState<ImageFormat>("desktop");
+  const [style, setStyle] = useState<ImageStyle>("photo");
   const [transparentBackground, setTransparentBackground] = useState(false);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [overwriteInfo, setOverwriteInfo] = useState<{ existingUrl: string } | null>(null);
 
-  useEffect(() => {
-    if (!isOpen) return;
+  const fetchPrompt = (formatOverride: ImageFormat, styleOverride?: ImageStyle) => {
     setLoadError(null);
-    setGenerateError(null);
-    setOverwriteInfo(null);
     setIsLoadingPrompt(true);
-
-    const defaultFormat = DEFAULT_FORMAT_BY_CONTENT_TYPE[contentType];
-    setFormat(defaultFormat);
 
     fetch("/api/portal/content-pipeline/build-image-prompt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...contextHints, format: defaultFormat }),
+      body: JSON.stringify({ ...contextHints, format: formatOverride, style: styleOverride }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -91,6 +87,7 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
           setNegativePrompt(data.negativePrompt);
           setFilename(data.proposedFilename);
           setAltText(data.proposedAltText);
+          setStyle(data.style);
         } else {
           setLoadError(data.error || "Failed to build the image prompt.");
         }
@@ -100,8 +97,23 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
         setLoadError("Network error while building the image prompt.");
       })
       .finally(() => setIsLoadingPrompt(false));
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setGenerateError(null);
+    setOverwriteInfo(null);
+
+    const defaultFormat = DEFAULT_FORMAT_BY_CONTENT_TYPE[contentType];
+    setFormat(defaultFormat);
+    fetchPrompt(defaultFormat);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  const handleStyleChange = (newStyle: ImageStyle) => {
+    if (newStyle === style) return;
+    fetchPrompt(format, newStyle);
+  };
 
   if (!isOpen) return null;
 
@@ -148,8 +160,8 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
       <div className="bg-primary-navy border border-white/10 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div className="flex justify-between items-center border-b border-white/10 pb-3">
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <span>🩻</span>
-            <span>Generate Medical Illustration</span>
+            <span>🖼️</span>
+            <span>Generate Image</span>
           </h3>
           <button onClick={onClose} className="text-white/60 hover:text-white text-sm cursor-pointer">✕</button>
         </div>
@@ -175,6 +187,36 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
               <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-3">
                 <span className="block text-white/50 uppercase tracking-wider text-[10px] mb-1">Prompt Category</span>
                 <span className="text-clinical-teal font-medium">{categoryLabel} — {subjectTitle}</span>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-white/80">Style</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleStyleChange("photo")}
+                  disabled={isLoadingPrompt}
+                  className={`flex-1 text-xs font-semibold px-3 py-2 rounded-xl border cursor-pointer transition-colors disabled:opacity-50 ${
+                    style === "photo"
+                      ? "bg-clinical-teal/15 border-clinical-teal text-clinical-teal"
+                      : "border-white/15 text-white/70 hover:border-white/30"
+                  }`}
+                >
+                  📷 Photograph
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleStyleChange("illustration")}
+                  disabled={isLoadingPrompt}
+                  className={`flex-1 text-xs font-semibold px-3 py-2 rounded-xl border cursor-pointer transition-colors disabled:opacity-50 ${
+                    style === "illustration"
+                      ? "bg-clinical-teal/15 border-clinical-teal text-clinical-teal"
+                      : "border-white/15 text-white/70 hover:border-white/30"
+                  }`}
+                >
+                  🎨 Illustration
+                </button>
               </div>
             </div>
 
