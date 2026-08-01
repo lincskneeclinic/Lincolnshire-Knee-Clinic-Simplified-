@@ -1,40 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { updateCommunitySession } from "./lib/supabase/middleware";
-
-function decodeBase64(str: string): string {
-  try {
-    if (typeof atob === "function") {
-      return atob(str);
-    }
-    if (typeof Buffer !== "undefined") {
-      return Buffer.from(str, "base64").toString("utf-8");
-    }
-    return "";
-  } catch {
-    return "";
-  }
-}
-
-function isAuthorized(request: NextRequest): boolean {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Basic ")) return false;
-
-  try {
-    const base64Credentials = authHeader.split(" ")[1];
-    const decoded = decodeBase64(base64Credentials);
-    const [user, pass] = decoded.split(":");
-
-    const expectedUser = process.env.DASHBOARD_USER;
-    const expectedPass = process.env.DASHBOARD_PASSWORD;
-
-    if (!expectedUser || !expectedPass) return false;
-
-    return user === expectedUser && pass === expectedPass;
-  } catch (err) {
-    return false;
-  }
-}
+import { requireAdminSession, updateCommunitySession } from "./lib/supabase/middleware";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -95,6 +61,16 @@ export async function proxy(request: NextRequest) {
     return updateCommunitySession(request);
   }
 
+  const isDashboardAuthRoute =
+    pathname === "/portal/business/login" ||
+    pathname === "/portal/business/forgot-password" ||
+    pathname === "/portal/business/reset-password" ||
+    pathname === "/portal/business/mfa";
+
+  if (isDashboardAuthRoute) {
+    return updateCommunitySession(request);
+  }
+
   const isDashboardRoute =
     pathname === "/portal/business" ||
     pathname.startsWith("/portal/business/") ||
@@ -114,13 +90,7 @@ export async function proxy(request: NextRequest) {
     pathname === "/api/intake";
 
   if (isDashboardRoute) {
-    if (!isAuthorized(request)) {
-      return new NextResponse("Authentication required", {
-        status: 401,
-        headers: { "WWW-Authenticate": 'Basic realm="Dashboard"' },
-      });
-    }
-    return NextResponse.next();
+    return requireAdminSession(request);
   }
 
   // Everything else under /portal and /api/portal stays fully blocked with 404.
