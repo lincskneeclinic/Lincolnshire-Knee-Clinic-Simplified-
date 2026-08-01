@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAllReviewablePages } from "@/lib/clinicalReview";
+import { getAllReviewablePages, ContentType } from "@/lib/clinicalReview";
 
 export interface SearchReferenceResult {
   title: string;
@@ -132,6 +132,26 @@ async function fetchEnrichedSummary(url: string, fallback: string): Promise<stri
   }
 }
 
+// Tailors the search terms to the page's content type instead of one fixed
+// generic suffix for every page — a treatment page needs NICE/orthopaedic
+// guideline sources, a symptom page needs differential-diagnosis/patient-
+// facing sources, an injection page needs procedure-specific clinical
+// evidence, etc. Also skips appending "knee" when the page name already
+// contains it (most condition/treatment/injection names already do), since
+// the redundant term dilutes an already-specific query.
+const CONTENT_TYPE_QUERY_SUFFIX: Record<ContentType, string> = {
+  symptoms: "symptoms causes differential diagnosis when to see a doctor NHS patient information",
+  conditions: "diagnosis NHS NICE clinical guideline patient information",
+  treatments: "NICE guideline orthopaedic surgical technique clinical evidence outcomes",
+  injections: "clinical evidence NICE guideline injection technique",
+};
+
+function buildEvidenceQuery(pageName: string, contentType: ContentType): string {
+  const suffix = CONTENT_TYPE_QUERY_SUFFIX[contentType];
+  const needsKneeTerm = !/knee/i.test(pageName);
+  return `${pageName}${needsKneeTerm ? " knee" : ""} ${suffix}`;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -155,7 +175,7 @@ export async function POST(request: Request) {
     }
 
     const pageCursor = typeof page === "number" && page >= 1 && page <= MAX_PAGE_CURSOR ? page : 1;
-    const query = `${reviewablePage.name} knee NHS NICE patient information`;
+    const query = buildEvidenceQuery(reviewablePage.name, reviewablePage.contentType);
 
     const serperRes = await fetch("https://google.serper.dev/search", {
       method: "POST",

@@ -13,6 +13,14 @@ export interface ResearchBrief {
 
 const apiKey = process.env.GEMINI_API_KEY;
 
+// Short (<=3 char) orthopaedic acronyms that must survive the stopword-length
+// filter below — a plain "word.length > 3" cutoff silently drops exactly the
+// terms that make a query specific (e.g. "ACL Reconstruction" -> "ACL" gets
+// filtered, leaving just "Reconstruction", which is far more generic).
+const SHORT_MEDICAL_TERMS = new Set([
+  "ACL", "PCL", "MCL", "LCL", "PRP", "MRI", "TKR", "TKA", "PKR", "PKA", "ROM", "ITB", "CT", "PT",
+]);
+
 /**
  * Conducts structured clinical evidence scan via PubMed (NCBI Entrez API)
  * and uses Gemini AI to synthesize an exhaustive literature review across
@@ -25,7 +33,7 @@ export async function performResearchProcess(topic: string): Promise<ResearchBri
   const queryKeywords = cleanTopic
     .replace(/[^a-zA-Z0-9\s]/g, "")
     .split(/\s+/)
-    .filter((w) => w.length > 3)
+    .filter((w) => w.length > 3 || SHORT_MEDICAL_TERMS.has(w.toUpperCase()))
     .slice(0, 6)
     .join(" ");
 
