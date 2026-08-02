@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ReviewablePage, ClinicalReviewEntry } from "@/lib/clinicalReview";
 import { PortalCard, PortalEmptyState } from "@/components/portal/ui";
 import { AiContentReviewPanel } from "@/components/portal/clinical-review/AiContentReviewPanel";
+import { EditPageContentPanel } from "@/components/portal/clinical-review/EditPageContentPanel";
 import { ClinicalContentReviewResult, ClinicalContentReviewFinding } from "@/lib/clinicalContentReviewAgent";
 
 export type ClinicalReviewListItem = ReviewablePage & { review: ClinicalReviewEntry };
@@ -58,6 +59,12 @@ interface ClinicalReviewTabProps {
   aiReviewResult: ClinicalContentReviewResult | null;
   onRunAiReview: () => void;
   onApproveAiFinding: (finding: ClinicalContentReviewFinding) => Promise<boolean>;
+
+  pageContentLoading: boolean;
+  pageContentAvailable: boolean;
+  pageContentFields: Record<string, string | string[]>;
+  pageContentFieldTypes: Record<string, "string" | "string[]">;
+  onSaveFieldContent: (fieldName: string, value: string | string[]) => Promise<boolean>;
 }
 
 const CONTENT_TYPES = ["symptoms", "conditions", "treatments", "injections"] as const;
@@ -106,6 +113,11 @@ export function ClinicalReviewTab({
   aiReviewResult,
   onRunAiReview,
   onApproveAiFinding,
+  pageContentLoading,
+  pageContentAvailable,
+  pageContentFields,
+  pageContentFieldTypes,
+  onSaveFieldContent,
 }: ClinicalReviewTabProps) {
   const selectedPage = selectedPageId ? pages.find((p) => p.pageId === selectedPageId) : null;
 
@@ -159,92 +171,14 @@ export function ClinicalReviewTab({
       ) : selectedPage ? (
         <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <PortalCard className="space-y-5 shadow-xl">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-clinical-teal">
-                {selectedPage.contentType}
-              </span>
-              <h3 className="text-base font-bold text-white">{selectedPage.name}</h3>
-              <Link href={selectedPage.url} target="_blank" className="text-xs text-clinical-teal hover:underline">
-                View page →
-              </Link>
-            </div>
-
-            <label className="flex items-center gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formReviewed}
-                onChange={(e) => onFormReviewedChange(e.target.checked)}
-                className="w-4 h-4 accent-clinical-teal cursor-pointer"
-              />
-              <span className="text-sm font-semibold text-white">Mark as clinically reviewed</span>
-            </label>
-
-            <div>
-              <div className="text-xs text-clinical-teal mb-1 font-semibold">Reviewer Name</div>
-              <input
-                type="text"
-                value={formReviewerName}
-                onChange={(e) => onFormReviewerNameChange(e.target.value)}
-                className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <div className="text-xs text-clinical-teal mb-1 font-semibold">Reviewer Title</div>
-              <input
-                type="text"
-                value={formReviewerTitle}
-                onChange={(e) => onFormReviewerTitleChange(e.target.value)}
-                className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <div className="text-xs text-clinical-teal mb-1 font-semibold">Last Reviewed Date</div>
-              <input
-                type="text"
-                placeholder="e.g. July 2026"
-                value={formLastReviewedDate}
-                onChange={(e) => onFormLastReviewedDateChange(e.target.value)}
-                className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <div className="text-xs text-clinical-teal mb-1 font-semibold">Evidence Sources</div>
-              <textarea
-                rows={3}
-                placeholder="e.g. NICE clinical knowledge summaries and British Orthopaedic Association (BOA) guidelines."
-                value={formEvidenceSource}
-                onChange={(e) => onFormEvidenceSourceChange(e.target.value)}
-                className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
-              />
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={onSaveReview}
-                disabled={isSavingReview}
-                className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer disabled:opacity-60"
-              >
-                {isSavingReview ? "Saving…" : "Save"}
-              </button>
-              {formReviewed && (
-                <button
-                  onClick={() => onFormReviewedChange(false)}
-                  className="border border-orange-500/30 hover:border-orange-500/50 text-orange-400 hover:bg-orange-500/5 text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer"
-                >
-                  Reset to Awaiting Review
-                </button>
-              )}
-              <button
-                onClick={onBackToList}
-                className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-            </div>
+          <PortalCard className="space-y-2 shadow-xl">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-clinical-teal">
+              {selectedPage.contentType}
+            </span>
+            <h3 className="text-base font-bold text-white">{selectedPage.name}</h3>
+            <Link href={selectedPage.url} target="_blank" className="text-xs text-clinical-teal hover:underline">
+              View page →
+            </Link>
           </PortalCard>
 
           <PortalCard className="space-y-4 flex flex-col shadow-xl">
@@ -344,12 +278,33 @@ export function ClinicalReviewTab({
           </PortalCard>
         </div>
 
+        <EditPageContentPanel
+          loading={pageContentLoading}
+          available={pageContentAvailable}
+          fields={pageContentFields}
+          fieldTypes={pageContentFieldTypes}
+          onSaveField={onSaveFieldContent}
+        />
+
         <AiContentReviewPanel
           loading={aiReviewLoading}
           error={aiReviewError}
           result={aiReviewResult}
           onRunReview={onRunAiReview}
           onApproveFinding={onApproveAiFinding}
+          formReviewed={formReviewed}
+          onFormReviewedChange={onFormReviewedChange}
+          formReviewerName={formReviewerName}
+          onFormReviewerNameChange={onFormReviewerNameChange}
+          formReviewerTitle={formReviewerTitle}
+          onFormReviewerTitleChange={onFormReviewerTitleChange}
+          formLastReviewedDate={formLastReviewedDate}
+          onFormLastReviewedDateChange={onFormLastReviewedDateChange}
+          formEvidenceSource={formEvidenceSource}
+          onFormEvidenceSourceChange={onFormEvidenceSourceChange}
+          onSaveReview={onSaveReview}
+          isSavingReview={isSavingReview}
+          onBackToList={onBackToList}
         />
         </div>
       ) : (

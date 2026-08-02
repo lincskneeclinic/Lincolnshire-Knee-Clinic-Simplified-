@@ -10,6 +10,20 @@ interface AiContentReviewPanelProps {
   result: ClinicalContentReviewResult | null;
   onRunReview: () => void;
   onApproveFinding: (finding: ClinicalContentReviewFinding) => Promise<boolean>;
+
+  formReviewed: boolean;
+  onFormReviewedChange: (value: boolean) => void;
+  formReviewerName: string;
+  onFormReviewerNameChange: (value: string) => void;
+  formReviewerTitle: string;
+  onFormReviewerTitleChange: (value: string) => void;
+  formLastReviewedDate: string;
+  onFormLastReviewedDateChange: (value: string) => void;
+  formEvidenceSource: string;
+  onFormEvidenceSourceChange: (value: string) => void;
+  onSaveReview: () => void;
+  isSavingReview: boolean;
+  onBackToList: () => void;
 }
 
 const SEVERITY_STYLES: Record<"high" | "medium" | "low", string> = {
@@ -56,7 +70,26 @@ function ArrayDiff({ current, suggested }: { current: string[]; suggested: strin
   );
 }
 
-export function AiContentReviewPanel({ loading, error, result, onRunReview, onApproveFinding }: AiContentReviewPanelProps) {
+export function AiContentReviewPanel({
+  loading,
+  error,
+  result,
+  onRunReview,
+  onApproveFinding,
+  formReviewed,
+  onFormReviewedChange,
+  formReviewerName,
+  onFormReviewerNameChange,
+  formReviewerTitle,
+  onFormReviewerTitleChange,
+  formLastReviewedDate,
+  onFormLastReviewedDateChange,
+  formEvidenceSource,
+  onFormEvidenceSourceChange,
+  onSaveReview,
+  isSavingReview,
+  onBackToList,
+}: AiContentReviewPanelProps) {
   const [findingStatus, setFindingStatus] = useState<Record<number, FindingStatus>>({});
 
   useEffect(() => {
@@ -175,6 +208,88 @@ export function AiContentReviewPanel({ loading, error, result, onRunReview, onAp
           )}
         </div>
       )}
+
+      <div className="space-y-4 border-t border-white/10 pt-4">
+        <h3 className="text-sm font-bold text-white">Approve this page</h3>
+
+        <label className="flex items-center gap-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={formReviewed}
+            onChange={(e) => onFormReviewedChange(e.target.checked)}
+            className="w-4 h-4 accent-clinical-teal cursor-pointer"
+          />
+          <span className="text-sm font-semibold text-white">Mark as clinically reviewed</span>
+        </label>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <div className="text-xs text-clinical-teal mb-1 font-semibold">Reviewer Name</div>
+            <input
+              type="text"
+              value={formReviewerName}
+              onChange={(e) => onFormReviewerNameChange(e.target.value)}
+              className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <div className="text-xs text-clinical-teal mb-1 font-semibold">Reviewer Title</div>
+            <input
+              type="text"
+              value={formReviewerTitle}
+              onChange={(e) => onFormReviewerTitleChange(e.target.value)}
+              className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div>
+          <div className="text-xs text-clinical-teal mb-1 font-semibold">Last Reviewed Date</div>
+          <input
+            type="text"
+            placeholder="e.g. July 2026"
+            value={formLastReviewedDate}
+            onChange={(e) => onFormLastReviewedDateChange(e.target.value)}
+            className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <div className="text-xs text-clinical-teal mb-1 font-semibold">Evidence Sources</div>
+          <textarea
+            rows={3}
+            placeholder="e.g. NICE clinical knowledge summaries and British Orthopaedic Association (BOA) guidelines."
+            value={formEvidenceSource}
+            onChange={(e) => onFormEvidenceSourceChange(e.target.value)}
+            className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+          />
+        </div>
+
+        <div className="flex gap-3 pt-1">
+          <button
+            onClick={onSaveReview}
+            disabled={isSavingReview}
+            className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer disabled:opacity-60"
+          >
+            {isSavingReview ? "Saving…" : "Save"}
+          </button>
+          {formReviewed && (
+            <button
+              onClick={() => onFormReviewedChange(false)}
+              className="border border-orange-500/30 hover:border-orange-500/50 text-orange-400 hover:bg-orange-500/5 text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer"
+            >
+              Reset to Awaiting Review
+            </button>
+          )}
+          <button
+            onClick={onBackToList}
+            className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </PortalCard>
   );
 }

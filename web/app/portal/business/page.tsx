@@ -143,6 +143,10 @@ function BusinessDashboardPageInner() {
   const [aiReviewLoading, setAiReviewLoading] = useState(false);
   const [aiReviewError, setAiReviewError] = useState<string | null>(null);
   const [aiReviewResult, setAiReviewResult] = useState<ClinicalContentReviewResult | null>(null);
+  const [pageContentLoading, setPageContentLoading] = useState(false);
+  const [pageContentAvailable, setPageContentAvailable] = useState(false);
+  const [pageContentFields, setPageContentFields] = useState<Record<string, string | string[]>>({});
+  const [pageContentFieldTypes, setPageContentFieldTypes] = useState<Record<string, "string" | "string[]">>({});
 
   // Education Hub Article Management State
   const [educationArticles, setEducationArticles] = useState<EducationArticleSummary[]>([]);
@@ -1494,7 +1498,33 @@ function BusinessDashboardPageInner() {
     fetchSearchReferences(page.pageId, 1);
     setAiReviewResult(null);
     setAiReviewError(null);
+    fetchPageContent(page.pageId);
   };
+
+  const fetchPageContent = async (pageId: string) => {
+    setPageContentLoading(true);
+    setPageContentFields({});
+    setPageContentFieldTypes({});
+    try {
+      const res = await fetch(`/api/portal/clinical-review/page-content?pageId=${encodeURIComponent(pageId)}`);
+      const data = await res.json();
+      if (data.success) {
+        setPageContentAvailable(!!data.available);
+        setPageContentFields(data.fields || {});
+        setPageContentFieldTypes(data.fieldTypes || {});
+      } else {
+        setPageContentAvailable(false);
+      }
+    } catch (err) {
+      console.error("Failed to load page content for manual editing:", err);
+      setPageContentAvailable(false);
+    } finally {
+      setPageContentLoading(false);
+    }
+  };
+
+  const handleSaveFieldContent = (fieldName: string, value: string | string[]): Promise<boolean> =>
+    handleApproveAiFinding({ severity: "low", category: "", note: "", field: fieldName, suggested_value: value });
 
   const handleRunAiReview = async () => {
     if (!selectedReviewPageId) return;
@@ -2571,6 +2601,11 @@ function BusinessDashboardPageInner() {
                 aiReviewResult={aiReviewResult}
                 onRunAiReview={handleRunAiReview}
                 onApproveAiFinding={handleApproveAiFinding}
+                pageContentLoading={pageContentLoading}
+                pageContentAvailable={pageContentAvailable}
+                pageContentFields={pageContentFields}
+                pageContentFieldTypes={pageContentFieldTypes}
+                onSaveFieldContent={handleSaveFieldContent}
               />
             )}
 

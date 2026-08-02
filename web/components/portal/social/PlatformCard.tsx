@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useToast, usePrompt } from "@/components/portal/DashboardFeedback";
 import GenerateImageModal from "@/components/portal/GenerateImageModal";
 import { downloadImageFile } from "@/lib/downloadImageFile";
+import { estimatePostScore } from "@/lib/estimatedPostScore";
 
 function escapeHtml(text: string): string {
   const div = document.createElement("div");
@@ -120,6 +121,38 @@ function scoreColor(score: number): string {
   if (score >= 65) return "text-clinical-teal border-clinical-teal/40";
   if (score >= 35) return "text-amber-400 border-amber-500/40";
   return "text-status-error border-status-error/40";
+}
+
+/**
+ * Heuristic score computed from the caption text alone (length, hashtags,
+ * CTA/question presence) — always available, unlike PerformancePanel's real
+ * score below which needs an approved + linked + Meta-connected post.
+ */
+function EstimatedScoreBadge({
+  score,
+  tips,
+  delta,
+  live,
+}: {
+  score: number;
+  tips: string[];
+  delta?: { before: number; after: number } | null;
+  live?: boolean;
+}) {
+  const tooltip = tips.length > 0 ? tips.join(" ") : "Estimated from the caption text only — length, hashtags, CTA presence.";
+  return (
+    <div className="flex items-center gap-2 flex-wrap" title={tooltip}>
+      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${scoreColor(score)}`}>
+        {live ? "Live estimate" : "Estimated"} {score}/100
+      </span>
+      {delta && delta.before !== delta.after && (
+        <span className="text-[9px] text-white/50">
+          {delta.before} → {delta.after} ({delta.after > delta.before ? "+" : ""}
+          {delta.after - delta.before})
+        </span>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -366,6 +399,28 @@ export function PlatformCard({
   const isCarousel = platformKey === "instagramCarousel";
   const isReel = platformKey === "instagramReel";
 
+  const scorePlatform: "instagram" | "facebook" | "linkedin" = platformKey === "facebook" ? "facebook" : platformKey === "linkedin" ? "linkedin" : "instagram";
+  const scorePostType: "post" | "story" | "carousel" | "reel" = isStory ? "story" : isCarousel ? "carousel" : isReel ? "reel" : "post";
+  const committedScoreText = isCarousel
+    ? (slides && slides.length > 0 ? slides.map((s) => s.text).join(" ") : caption)
+    : isReel
+    ? script || caption
+    : caption;
+  const estimated = estimatePostScore({ text: committedScoreText, platform: scorePlatform, postType: scorePostType });
+  const liveEstimated = estimatePostScore({ text: editedText, platform: scorePlatform, postType: scorePostType });
+
+  const prevScoreTextRef = useRef(committedScoreText);
+  const [scoreDelta, setScoreDelta] = useState<{ before: number; after: number } | null>(null);
+
+  useEffect(() => {
+    if (prevScoreTextRef.current !== committedScoreText) {
+      const before = estimatePostScore({ text: prevScoreTextRef.current, platform: scorePlatform, postType: scorePostType }).score;
+      const after = estimatePostScore({ text: committedScoreText, platform: scorePlatform, postType: scorePostType }).score;
+      prevScoreTextRef.current = committedScoreText;
+      setScoreDelta(before !== after ? { before, after } : null);
+    }
+  }, [committedScoreText, scorePlatform, scorePostType]);
+
   const [activeSlide, setActiveSlide] = useState(0);
   const currentSlide = slides && slides.length > 0 ? slides[activeSlide] : null;
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
@@ -450,6 +505,8 @@ export function PlatformCard({
             {status === "approved" || isPublished ? "✓ Approved" : "Pending Review"}
           </span>
         </div>
+
+        <EstimatedScoreBadge score={estimated.score} tips={estimated.tips} delta={scoreDelta} />
 
         {/* Custom Formats Renders */}
         {isStory && (
@@ -824,6 +881,7 @@ export function PlatformCard({
               rows={isStory ? 3 : 6}
               className="w-full bg-primary-navy border border-white/20 text-white text-xs rounded-lg p-2.5 focus:border-clinical-teal focus:outline-none font-sans leading-relaxed"
             />
+            <EstimatedScoreBadge score={liveEstimated.score} tips={liveEstimated.tips} live />
             <div className="flex justify-end gap-1.5">
               {!isPublished && (
                 <button
