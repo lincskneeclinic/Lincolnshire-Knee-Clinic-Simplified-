@@ -2052,44 +2052,62 @@ function BusinessDashboardPageInner() {
       icon: "💬",
     },
   ];
-  const navTabs = [
-    { id: "overview", label: "Overview", icon: "📊" },
-    { id: "newsletter", label: "Subscribers", icon: "📧" },
+  const navGroups: { label: string; tabs: { id: string; label: string; icon: string; badge?: number | null }[] }[] = [
     {
-      id: "newsletterCreator",
-      label: "Newsletters",
-      icon: "✉️",
-      badge: newsletterDraftCount > 0 ? newsletterDraftCount : null,
+      label: "",
+      tabs: [{ id: "overview", label: "Overview", icon: "📊" }],
     },
     {
-      id: "pipeline",
-      label: "Pipeline",
-      icon: "📝",
-      badge: reviewNeededRuns.length > 0 ? reviewNeededRuns.length : null,
+      label: "Content",
+      tabs: [
+        {
+          id: "pipeline",
+          label: "Pipeline",
+          icon: "📝",
+          badge: reviewNeededRuns.length > 0 ? reviewNeededRuns.length : null,
+        },
+        {
+          id: "newsletterCreator",
+          label: "Newsletters",
+          icon: "✉️",
+          badge: newsletterDraftCount > 0 ? newsletterDraftCount : null,
+        },
+        {
+          id: "educationHub",
+          label: "Education Hub",
+          icon: "📚",
+          badge: null,
+        },
+        {
+          id: "socialOnly",
+          label: "Social Posts",
+          icon: "📱",
+          badge: socialOnlyNeedsReviewCount > 0 ? socialOnlyNeedsReviewCount : null,
+        },
+      ],
     },
     {
-      id: "clinicalReview",
-      label: "Review",
-      icon: "🩺",
-      badge: reviewNeededPages.length > 0 ? reviewNeededPages.length : null,
+      label: "Engagement",
+      tabs: [
+        { id: "newsletter", label: "Subscribers", icon: "📧" },
+        {
+          id: "community",
+          label: "Community",
+          icon: "💬",
+          badge: openCommunityReportsCount > 0 ? openCommunityReportsCount : null,
+        },
+      ],
     },
     {
-      id: "community",
-      label: "Community",
-      icon: "💬",
-      badge: openCommunityReportsCount > 0 ? openCommunityReportsCount : null,
-    },
-    {
-      id: "educationHub",
-      label: "Education Hub",
-      icon: "📚",
-      badge: null,
-    },
-    {
-      id: "socialOnly",
-      label: "Social Posts",
-      icon: "📱",
-      badge: socialOnlyNeedsReviewCount > 0 ? socialOnlyNeedsReviewCount : null,
+      label: "Compliance",
+      tabs: [
+        {
+          id: "clinicalReview",
+          label: "Review",
+          icon: "🩺",
+          badge: reviewNeededPages.length > 0 ? reviewNeededPages.length : null,
+        },
+      ],
     },
   ];
   const handleNavTabClick = (tabId: string) => {
@@ -2285,24 +2303,29 @@ function BusinessDashboardPageInner() {
           {/* Mobile: horizontal scrollable strip */}
           <div className="relative md:hidden">
             <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide px-4">
-              {navTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => handleNavTabClick(tab.id)}
-                  className={`py-2 px-3 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer border shrink-0 whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-md"
-                      : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20"
-                  }`}
-                >
-                  <span className="text-xs">{tab.icon}</span>
-                  <span>{tab.label}</span>
-                  {tab.badge && (
-                    <span className="bg-clinical-teal text-deep-navy text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                      {tab.badge}
-                    </span>
-                  )}
-                </button>
+              {navGroups.map((group, groupIdx) => (
+                <React.Fragment key={group.label || "root"}>
+                  {groupIdx > 0 && <span className="shrink-0 w-px h-5 bg-white/10 mx-0.5" aria-hidden="true" />}
+                  {group.tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleNavTabClick(tab.id)}
+                      className={`py-2 px-3 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer border shrink-0 whitespace-nowrap ${
+                        activeTab === tab.id
+                          ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-md"
+                          : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20"
+                      }`}
+                    >
+                      <span className="text-xs">{tab.icon}</span>
+                      <span>{tab.label}</span>
+                      {tab.badge && (
+                        <span className="bg-clinical-teal text-deep-navy text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                          {tab.badge}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </React.Fragment>
               ))}
               <span className="shrink-0 w-1" aria-hidden="true" />
             </div>
@@ -2313,24 +2336,29 @@ function BusinessDashboardPageInner() {
           <div className="hidden md:block relative">
             <div className="overflow-x-auto scrollbar-hide">
               <div className="flex items-center justify-center gap-1.5 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-                {navTabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleNavTabClick(tab.id)}
-                    className={`py-1.5 px-2 rounded-lg text-[13px] transition-all flex items-center gap-1 cursor-pointer border shrink-0 whitespace-nowrap ${
-                      activeTab === tab.id
-                        ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-md"
-                        : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20"
-                    }`}
-                  >
-                    <span className="text-[13px]">{tab.icon}</span>
-                    <span>{tab.label}</span>
-                    {tab.badge && (
-                      <span className="bg-clinical-teal text-deep-navy text-[13px] font-bold px-1.5 py-0.5 rounded-full">
-                        {tab.badge}
-                      </span>
-                    )}
-                  </button>
+                {navGroups.map((group, groupIdx) => (
+                  <React.Fragment key={group.label || "root"}>
+                    {groupIdx > 0 && <span className="shrink-0 w-px h-5 bg-white/10 mx-1" aria-hidden="true" />}
+                    {group.tabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => handleNavTabClick(tab.id)}
+                        className={`py-1.5 px-2 rounded-lg text-[13px] transition-all flex items-center gap-1 cursor-pointer border shrink-0 whitespace-nowrap ${
+                          activeTab === tab.id
+                            ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-md"
+                            : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        <span className="text-[13px]">{tab.icon}</span>
+                        <span>{tab.label}</span>
+                        {tab.badge && (
+                          <span className="bg-clinical-teal text-deep-navy text-[13px] font-bold px-1.5 py-0.5 rounded-full">
+                            {tab.badge}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </React.Fragment>
                 ))}
               </div>
             </div>
