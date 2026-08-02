@@ -15,6 +15,7 @@ import { conditionsData } from "@/data/conditions";
 import { symptomsData } from "@/data/symptoms";
 import { getVisualAsset } from "@/data/visualsInventory";
 import { ContinueYourKneeJourney } from "@/components/ContinueYourKneeJourney";
+import { TopicNotifyWidget } from "@/components/TopicNotifyWidget";
 import { MedicalIllustrationBlock } from "@/components/visuals/MedicalIllustrationBlock";
 import { ComparisonDiagramBlock } from "@/components/visuals/ComparisonDiagramBlock";
 import { RecoveryTimelineBlock } from "@/components/visuals/RecoveryTimelineBlock";
@@ -930,6 +931,13 @@ export const TreatmentPage = async ({ slug }: TreatmentPageProps) => {
       <section className="bg-white py-2 w-full">
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           <ContinueYourKneeJourney currentStage={treatment.category === "recovery" ? "recovery" : "treatment"} />
+        </div>
+      </section>
+
+      {/* Topic notify */}
+      <section className="bg-white py-6 w-full">
+        <div className="max-w-2xl mx-auto px-6 md:px-8">
+          <TopicNotifyWidget topicId={`treatment:${slug}`} topicLabel={treatment.name} />
         </div>
       </section>
 

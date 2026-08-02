@@ -16,6 +16,7 @@ import { getVisualAsset } from "@/data/visualsInventory";
 import { getClinicalReviewStatus } from "@/lib/clinicalReview";
 import { SITE_URL } from "@/lib/site";
 import { ContinueYourKneeJourney } from "@/components/ContinueYourKneeJourney";
+import { TopicNotifyWidget } from "@/components/TopicNotifyWidget";
 import { MedicalIllustrationBlock } from "@/components/visuals/MedicalIllustrationBlock";
 import { ComparisonDiagramBlock } from "@/components/visuals/ComparisonDiagramBlock";
 import { ImagingExampleBlock } from "@/components/visuals/ImagingExampleBlock";
@@ -723,6 +724,13 @@ export const ConditionPage = async ({ slug }: ConditionPageProps) => {
       <section className="bg-white py-2 w-full">
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           <ContinueYourKneeJourney currentStage="condition" />
+        </div>
+      </section>
+
+      {/* Topic notify */}
+      <section className="bg-white py-6 w-full">
+        <div className="max-w-2xl mx-auto px-6 md:px-8">
+          <TopicNotifyWidget topicId={`condition:${slug}`} topicLabel={condition.name} />
         </div>
       </section>
 

@@ -17,6 +17,7 @@ import { SITE_URL } from "@/lib/site";
 import { ContinueYourKneeJourney } from "@/components/ContinueYourKneeJourney";
 import { MedicalIllustrationBlock } from "@/components/visuals/MedicalIllustrationBlock";
 import { PainLocationMap } from "@/components/visuals/PainLocationMap";
+import { TopicNotifyWidget } from "@/components/TopicNotifyWidget";
 import { VisualPathwayBlock } from "@/components/visuals/VisualPathwayBlock";
 import MedialKneePainDiagram from "@/components/visuals/MedialKneePainDiagram";
 
@@ -559,6 +560,13 @@ export const SymptomPage = async ({ slug }: SymptomPageProps) => {
       <section className="bg-white py-2 w-full">
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           <ContinueYourKneeJourney currentStage="symptom" />
+        </div>
+      </section>
+
+      {/* Topic notify */}
+      <section className="bg-white py-6 w-full">
+        <div className="max-w-2xl mx-auto px-6 md:px-8">
+          <TopicNotifyWidget topicId={`symptom:${slug}`} topicLabel={symptom.name} />
         </div>
       </section>
 

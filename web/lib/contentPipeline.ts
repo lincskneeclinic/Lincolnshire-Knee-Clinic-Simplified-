@@ -8,6 +8,8 @@ import { writeBlogDraft } from "./blogWriterAgent";
 import { linkRunToArticle, getArticleSlugForRun, setArticleOverride } from "./educationArticles";
 import { writeSocialCaptions, rewriteSocialCaption, rewriteCarouselSlides } from "./socialWriterAgent";
 import { syncPollTopicsIntoDynamicTopics } from "./pollTopicsSync";
+import { notifyTopicSubscribers } from "./topicNotify";
+import { blogArticles } from "@/data/articles";
 
 export type RunStatus =
   | "researching"
@@ -867,6 +869,18 @@ export async function submitPipelineReview(
           category: latestDraft.category,
           updatedAt: now,
         });
+
+        // Fan out to per-topic subscribers — deliberately scoped to only this
+        // "Update an existing article" flow (see notifyTopicSubscribers'
+        // own comment for why brand-new AI-topic runs don't trigger this).
+        // Fire-and-forget: never blocks or fails the review submission.
+        const sourceArticle = blogArticles[sourceArticleSlug];
+        if (sourceArticle?.relatedTopicSlugs?.length) {
+          const articleUrl = `https://lincolnshirekneeclinic.co.uk/education/${sourceArticle.category}/${sourceArticleSlug}`;
+          notifyTopicSubscribers(sourceArticle.relatedTopicSlugs, latestDraft.title, articleUrl).catch((err) =>
+            console.error("Failed to notify topic subscribers:", err)
+          );
+        }
       }
 
       if (!run.social_drafts || run.social_drafts.length === 0) {

@@ -4,6 +4,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { TableOfContents } from "@/components/TableOfContents";
 import { Button } from "@/components/Button";
 import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
+import { TopicNotifyWidget } from "@/components/TopicNotifyWidget";
 import { ClinicalMetadataBlock } from "@/components/ClinicalMetadataBlock";
 import { ReferencesList } from "@/components/ReferencesList";
 import { FaqAccordion } from "@/components/FaqAccordion";
@@ -533,6 +534,11 @@ export const InjectionPage = async ({ slug }: InjectionPageProps) => {
             evidenceSource={clinicalReview.evidenceSource}
             title="Evidence & References"
           />
+
+          {/* Topic notify */}
+          <section className="pt-4">
+            <TopicNotifyWidget topicId={`injection:${slug}`} topicLabel={injection.title} />
+          </section>
 
           {/* Section 17: Medical Disclaimer */}
           <section className="pt-4">

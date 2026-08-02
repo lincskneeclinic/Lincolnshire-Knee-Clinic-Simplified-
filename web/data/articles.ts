@@ -24,6 +24,14 @@ export interface ArticleContent {
     answer: string;
   }[];
   references?: string[];
+  // Symptom/condition/treatment/injection topic slugs this article covers,
+  // prefixed by type (e.g. "symptom:knee-pain", "treatment:acl-reconstruction").
+  // When an "Update" run for this article is approved (see
+  // contentPipeline.ts's submitPipelineReview, the setArticleOverride call),
+  // subscribers to any of these topics (see components/TopicNotifyWidget.tsx)
+  // get emailed. Optional and unset on existing articles — editors opt an
+  // article in by adding this field.
+  relatedTopicSlugs?: string[];
 }
 
 export const blogArticles: Record<string, ArticleContent> = {
