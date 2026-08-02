@@ -15,6 +15,22 @@ This file must be consulted before generating, selecting, placing, or modifying 
 
 ---
 
+## Default Medium: Photograph, Not Illustration
+
+**By default, generate realistic real-life 2D photographs.** Use a drawing, diagram, or illustration only when the subject genuinely cannot be shown in a real photograph, or when a request explicitly asks for one.
+
+Illustration/diagram remains the correct (and only accurate) choice for:
+- **internal anatomy** invisible from outside the body (ligaments, cartilage, meniscus, bone structures, joint capsule)
+- **injection technique** showing needle trajectory into the intra-articular space
+- **surgical/implant technique** (arthroscopy, reconstruction, replacement, tunnels, fixation)
+- **internal pathology comparisons** (e.g. torn vs intact ligament, cartilage defect vs normal cartilage)
+- **diagnostic imaging examples** (X-ray/MRI/ultrasound-style images — these follow their own established imaging convention, not ordinary photography)
+- **pathway/timeline graphics** (icon-based stage diagrams — inherently a graphic concept, not a photographable scene)
+
+Everything else — a patient experiencing a symptom, non-surgical treatment and rehabilitation in progress, recovery activity, lifestyle and "day in the life" scenes, clinic access photos — should default to a realistic photograph. This is a significant change from this document's original scope (which was illustration-only); the illustration-specific sections below remain correct for the categories listed above, and the Global Photo Style block in `/web/docs/image-prompt-library.md` governs everything else.
+
+---
+
 ## Core Principles
 
 All website visuals must be:
@@ -51,13 +67,23 @@ All website visuals must be:
 
 The website uses the following visual categories:
 
-### 1. Medical Illustrations
+### 0. Patient & Lifestyle Photography (default)
 Used for:
-- anatomy
-- pathology
+- symptom experience (a patient affected by pain, stiffness, swelling, etc.)
+- non-surgical treatment and rehabilitation in progress
+- recovery and everyday activity
+- general patient-facing and social media content
+- clinic exteriors/interiors where a real photo is available or appropriate
+
+This is the default category for anything not listed under categories 1-2 below.
+
+### 1. Medical Illustrations (internal anatomy/procedure only)
+Used for:
+- anatomy (internal structures)
+- pathology (internal)
 - joint mechanics
-- injections
-- procedures
+- injections (needle trajectory into the joint)
+- surgical/implant procedures
 - implant comparisons
 
 ### 2. Annotated Imaging Examples
@@ -146,12 +172,13 @@ AI-generated visuals are permitted for patient education purposes if all of the 
 - they are not misleading, sensational, or anatomically implausible
 
 AI visuals are especially suitable for:
-- realistic 2D medical illustrations
-- anatomy diagrams
-- injection explanation diagrams
-- comparison images
+- realistic real-life 2D photographs of patient scenarios, symptoms, treatment, and recovery (the default — see "Default Medium" above)
+- realistic 2D medical illustrations (internal anatomy, injection technique, surgical/implant technique)
+- comparison images (internal pathology)
 - simplified MRI/X-ray educational examples
 - pathway graphics
+
+A generated photograph must not be presented as an image of an actual, identifiable real patient — it depicts a realistic, plausible scenario for educational/illustrative purposes, same as an illustration would.
 
 AI visuals must not be used to imply:
 - diagnosis of a specific patient
@@ -172,7 +199,20 @@ AI visuals must not be used to imply:
 - not overly glossy or “tech demo”
 - not generic stock-photo style
 
-### Preferred Visual Direction
+### Preferred Visual Direction — Photographs (default)
+Use:
+- realistic, natural-looking photographs — photojournalistic, not staged or artificial
+- natural lighting and true-to-life skin tones/textures
+- authentic, candid patient/clinical scenarios
+- premium, calm, reassuring editorial quality
+
+Avoid:
+- an obvious "stock photo" look (forced smiles, artificial poses)
+- uncanny or distorted faces, extra/malformed fingers or limbs
+- plastic-looking or unnaturally smooth skin
+- oversaturated colours
+
+### Preferred Visual Direction — Illustrations (internal anatomy, injection technique, surgical technique only)
 Use:
 - realistic 2D medical illustrations
 - clean white or very light backgrounds
@@ -203,32 +243,43 @@ Images should not clash with this palette.
 
 ## Standard Master Prompt Style
 
-Use the following master style phrasing when generating medical illustrations:
+### Photograph (default)
+
+Use the following master style phrasing for real-life photographs — this is the default for anything not listed under "Default Medium: Photograph, Not Illustration" above as requiring illustration:
+
+> Realistic, natural-looking photograph, photojournalistic style, natural lighting and shadows, authentic and candid rather than staged, true-to-life skin tones and textures, natural depth of field, premium and reassuring editorial quality, suitable for a UK private orthopaedic clinic's website or social media. No text, no watermark, no logo.
+
+### Illustration (internal anatomy, injection technique, surgical technique only)
+
+Use the following master style phrasing when illustration is the correct medium (see "Default Medium" above):
 
 > Anatomically accurate, realistic 2D medical illustration, premium patient-education style, clean white background, clinically credible, restrained natural colours, soft medical lighting, no labels, no text, no watermark, no logo, no blood, non-graphic, modern orthopaedic educational style.
 
-This style block should be reused across most medical illustration prompts.
+These style blocks should be reused across most prompts of their respective medium.
 
 ---
 
 ## Default Prompt Templates
 
-### 1. Anatomy Illustration Template
+### 1. Patient & Lifestyle Photograph Template (default for symptoms, non-surgical treatment, recovery, and general content)
+> Create a realistic, natural photograph relevant to: [scenario/subject]. Photojournalistic style, natural lighting, authentic and candid, true-to-life skin tones and textures, premium reassuring editorial quality. No text, no watermark, no logo.
+
+### 2. Anatomy Illustration Template (internal anatomy only)
 > Anatomically accurate, realistic 2D medical illustration of the adult human knee, [view], showing [structures]. Premium patient-education style, clinically accurate anatomy, white background, restrained colours, soft shadows, no labels, no text, no watermark, no logo, modern orthopaedic educational style.
 
-### 2. Pathology Illustration Template
+### 3. Pathology Illustration Template (internal pathology only)
 > Anatomically accurate, realistic 2D medical illustration of a knee with [condition]. Show [specific pathology details]. Use a clean cutaway or three-quarter clinical view. Premium patient-education style, white background, restrained colours, no labels, no text, clinically accurate, no blood, no watermark, no logo.
 
-### 3. Comparison Illustration Template
+### 4. Comparison Illustration Template (internal pathology comparisons only)
 > Side-by-side realistic 2D medical illustration comparing [state A] and [state B]. Keep the same angle, scale, lighting, and anatomical proportions in both panels. Premium patient-education style, white background, no labels, no text, clinically accurate, restrained colours.
 
-### 4. Injection Illustration Template
+### 5. Injection Illustration Template (internal joint view only)
 > Realistic 2D medical illustration showing a [type of injection] into the knee joint. Show accurate knee anatomy, safe needle position, and the target intra-articular space. Non-graphic, patient-friendly, premium educational style, white background, no labels, no text, no branding.
 
-### 5. Treatment Procedure Illustration Template
-> Realistic 2D medical illustration of [treatment/procedure], showing the relevant knee anatomy and the principle of treatment. Premium patient-education style, white background, clinically accurate, restrained colours, no labels, no text, no watermark, no logo.
+### 6. Surgical/Implant Illustration Template (internal procedure only)
+> Realistic 2D medical illustration of [surgical procedure], showing the relevant knee anatomy and the principle of treatment. Premium patient-education style, white background, clinically accurate, restrained colours, no labels, no text, no watermark, no logo.
 
-### 6. Annotated Imaging Example Template
+### 7. Annotated Imaging Example Template
 > Create an educational imaging example of [X-ray/MRI/ultrasound] showing [condition]. The image should be clear and realistic, with optional separate annotation overlays added later in the website or design software. Keep the underlying image clean, high contrast, patient-education oriented, and easy to understand.
 
 ---
@@ -415,7 +466,8 @@ Use:
 Use realism carefully.
 
 ### Suitable realism
-- anatomically accurate 2D medical realism
+- realistic, natural real-life photography for patient/lifestyle content (the default)
+- anatomically accurate 2D medical realism for internal anatomy/procedure illustration
 - clinically clean surgical concepts
 - realistic anatomy and pathology
 
@@ -424,6 +476,7 @@ Use realism carefully.
 - disturbing intra-operative detail
 - misleading scan realism presented as real patient imaging
 - sensational surgical imagery
+- presenting a generated photograph as if it depicts a specific, identifiable real patient
 
 Patient-facing realism should reassure rather than alarm.
 

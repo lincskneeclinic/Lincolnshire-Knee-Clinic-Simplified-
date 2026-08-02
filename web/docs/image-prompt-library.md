@@ -17,21 +17,36 @@ Before generating, selecting, editing, or placing any medical image, read and fo
 For every knee-image task:
 
 1. Read `/docs/medical-imagery-guidelines.md`.
-2. Identify whether the image is for a symptom, condition, diagnostic, injection, treatment, surgery, rehabilitation, or comparison page.
-3. Define the educational purpose.
-4. Select and adapt the closest prompt in this library.
-5. Maintain consistent anatomy, viewing angles, lighting, colour palette, and illustration style.
-6. Generate clean images without embedded labels unless specifically requested.
-7. Add labels later in the website, Figma, Canva, or SVG where possible.
-8. Treat generated images as patient-education illustrations, not diagnostic evidence.
-9. Flag clinically doubtful or anatomically implausible output before publication.
-10. Do not introduce medical subjects unrelated to the knee.
+2. **Default to a real-life photograph unless the subject is internal anatomy, injection technique, surgical/implant technique, an internal pathology comparison, or diagnostic imaging** — those require illustration for clinical accuracy (a camera cannot see inside a joint). See "Default Medium" in the guidelines file.
+3. Identify whether the image is for a symptom, condition, diagnostic, injection, treatment, surgery, rehabilitation, or comparison page.
+4. Define the educational purpose.
+5. Select and adapt the closest prompt in this library.
+6. Maintain consistent subject framing, viewing angles, lighting, and colour palette within whichever medium (photo or illustration) is being used.
+7. Generate clean images without embedded labels unless specifically requested.
+8. Add labels later in the website, Figma, Canva, or SVG where possible.
+9. Treat generated images as patient-education material, not diagnostic evidence, and never present a generated photograph as an image of a specific identifiable real patient.
+10. Flag clinically doubtful, anatomically implausible, or unnaturally artificial-looking output before publication.
+11. Do not introduce medical subjects unrelated to the knee.
+
+---
+
+# Global Photo Style
+
+Append this to most prompts — this is the default medium (see Core Instructions above):
+
+> Realistic, natural-looking photograph, photojournalistic style, natural lighting and shadows, authentic and candid rather than staged or artificial, true-to-life skin tones and textures, natural depth of field, premium and reassuring editorial quality, suitable for a UK private orthopaedic clinic's website or social media. No text, no watermark, no logo.
+
+---
+
+# Photo Negative Prompt
+
+> Avoid: illustration, drawing, cartoon, clipart, 3D render, CGI, painting, sketch, diagram, uncanny or distorted faces, extra or malformed fingers/limbs, unnatural or plastic-looking skin, unrealistic lighting, text, misspelled labels, logos, watermarks, borders, frames, low resolution, blurry, oversaturated colours, exaggerated expressions, medical gore, blood, graphic surgical content.
 
 ---
 
 # Global House Style
 
-Append this to most prompts:
+Append this to illustration prompts only (internal anatomy, injection technique, surgical/implant technique, internal pathology comparisons — see Core Instructions above):
 
 > Anatomically accurate, realistic 2D medical illustration of the human knee, premium patient-education style, clinically credible anatomy, restrained natural colours, clean white or very pale neutral background, soft directional medical lighting, subtle shadows, crisp detail, modern orthopaedic textbook quality, calm and non-graphic, no blood, no gore, no text, no labels, no logo, no watermark.
 
@@ -42,6 +57,8 @@ For branded diagrams, add:
 ---
 
 # 1. Normal Knee Anatomy
+
+*Illustration only — internal anatomy invisible from outside the body; use the Global House Style, not the Global Photo Style.*
 
 ## Healthy Knee – Three-Quarter View
 
@@ -63,45 +80,49 @@ For branded diagrams, add:
 
 # 2. Knee Symptoms
 
+*Photograph (default) — a patient experiencing the symptom, not an internal view.*
+
 ## General Knee Pain
 
-> Create a realistic 2D patient-education illustration of an adult knee showing the principal regions where pain may arise: anterior knee, medial joint line, lateral joint line, posterior knee, and around the patella. Use restrained highlight zones without labels or text.
+> Create a realistic photograph of an adult patient at home gently holding or pressing their knee with a discomforted expression, seated in a naturally lit room. Authentic, candid, photojournalistic style.
 
 ## Knee Swelling
 
-> Create a realistic 2D illustration of a mildly swollen knee with a clinically plausible joint effusion. Show fullness around the suprapatellar pouch and soft tissues while maintaining accurate anatomy.
+> Create a realistic close-up photograph of a visibly swollen adult knee, natural skin tone and lighting, in a seated or resting position. Clinically plausible mild-to-moderate visible swelling.
 
 ## Knee Locking
 
-> Create a realistic 2D cutaway illustration of a knee with a displaced meniscal fragment mechanically obstructing extension. Clearly show how the fragment lies between the femur and tibia.
+> Create a realistic photograph of an adult patient pausing mid-movement with a startled, uncomfortable expression as if their knee has suddenly locked while walking or standing up, natural indoor setting.
 
 ## Knee Giving Way
 
-> Create a realistic 2D illustration of knee instability caused by ACL insufficiency. Show subtle abnormal anterior translation and rotational instability of the tibia relative to the femur using restrained directional arrows.
+> Create a realistic photograph of an adult patient reaching for support — a stair rail, chair, or wall — as their knee gives way beneath them, candid moment captured mid-motion, natural setting.
 
 ## Knee Stiffness
 
-> Create a realistic 2D illustration of a stiff osteoarthritic knee. Show reduced movement, cartilage loss, joint-space narrowing, small osteophytes, and mild capsular restriction.
+> Create a realistic photograph of an older adult patient carefully bending or straightening their knee while seated on the edge of a bed or chair in the morning, natural light, authentic expression of stiffness.
 
 ## Anterior Knee Pain
 
-> Create a realistic 2D illustration focused on the patellofemoral joint. Highlight the region behind and around the patella where anterior knee pain commonly occurs. Show the patella, trochlear groove, quadriceps tendon, and patellar tendon.
+> Create a realistic close-up photograph of an adult patient pressing a hand against the front of their knee, around the kneecap, with a discomforted expression, natural lighting.
 
 ## Medial Knee Pain
 
-> Create a realistic 2D illustration of the medial knee. Show the medial joint line, medial meniscus, MCL, pes anserinus region, and medial compartment. Use a subtle highlight over the pain region.
+> Create a realistic close-up photograph of an adult patient pressing a hand against the inner side of their knee with a discomforted expression, natural lighting.
 
 ## Lateral Knee Pain
 
-> Create a realistic 2D illustration of the lateral knee. Show the lateral joint line, lateral meniscus, LCL, fibular head, iliotibial band, and lateral compartment.
+> Create a realistic close-up photograph of an adult patient pressing a hand against the outer side of their knee with a discomforted expression, natural lighting.
 
 ## Posterior Knee Pain
 
-> Create a realistic 2D posterior illustration of the knee showing the popliteal region, hamstring tendons, gastrocnemius origins, posterior capsule, and the typical location of a Baker’s cyst.
+> Create a realistic photograph of an adult patient reaching behind their own knee to touch the back of it with a discomforted expression, seated position, natural lighting.
 
 ---
 
 # 3. Knee Conditions
+
+*Illustration only — internal pathology invisible from outside the body; use the Global House Style, not the Global Photo Style.*
 
 ## Knee Osteoarthritis
 
@@ -183,6 +204,8 @@ For branded diagrams, add:
 
 # 4. Knee Diagnostics
 
+*Diagnostic imaging style only — X-ray/MRI/ultrasound-style images follow their own established imaging convention, not the Global Photo Style or Global House Style.*
+
 ## Normal Knee X-ray
 
 > Create a realistic educational AP weight-bearing X-ray-style image of a normal adult knee. Show preserved medial and lateral joint spaces, normal alignment, smooth articular contours, and no obvious osteophytes. This must appear as an educational illustration, not a real patient image.
@@ -210,6 +233,8 @@ For branded diagrams, add:
 ---
 
 # 5. Knee Injections
+
+*Illustration only — needle trajectory into the intra-articular space can't be seen from outside the body; use the Global House Style, not the Global Photo Style.*
 
 ## Generic Knee Joint Injection
 
@@ -243,29 +268,33 @@ For branded diagrams, add:
 
 # 6. Non-Surgical Knee Treatment
 
+*Photograph (default) — externally visible treatment/rehabilitation activity.*
+
 ## Knee Physiotherapy
 
-> Create a realistic 2D patient-education illustration showing an adult performing controlled knee-strengthening exercises under physiotherapy guidance. Focus on safe quadriceps and hip strengthening and neutral alignment.
+> Create a realistic photograph of an adult patient performing guided knee-strengthening exercises with a physiotherapist in a bright clinical or gym setting, correct form, authentic candid interaction.
 
 ## Quadriceps Strengthening
 
-> Create a realistic 2D illustration of a straight-leg raise for knee rehabilitation. Show correct leg position, quadriceps activation, and safe posture.
+> Create a realistic photograph of an adult performing a straight-leg raise exercise on a mat or bed, correct leg position and posture, natural lighting.
 
 ## Cycling Rehabilitation
 
-> Create a realistic 2D illustration of an adult using a stationary bicycle as part of knee rehabilitation. Show a comfortable range of motion and safe position.
+> Create a realistic photograph of an adult using a stationary exercise bike as part of knee rehabilitation, comfortable seated position, natural gym or home setting.
 
 ## Knee Brace
 
-> Create a realistic 2D illustration of an adult knee fitted with a clinically appropriate hinged or unloading knee brace. Show correct positioning.
+> Create a realistic close-up photograph of an adult's knee fitted with a clinically appropriate hinged or unloading knee brace, correct positioning, natural skin tone and lighting.
 
 ## Low-Impact Activity
 
-> Create a patient-friendly 2D visual showing walking, cycling, swimming, and controlled strengthening as low-impact activities for knee rehabilitation.
+> Create a realistic photograph of an adult engaged in a low-impact activity such as walking, cycling, or swimming, outdoors or in a leisure setting, authentic candid moment.
 
 ---
 
 # 7. Knee Surgery
+
+*Illustration only — internal surgical/implant technique invisible from outside the body; use the Global House Style, not the Global Photo Style.*
 
 ## Knee Arthroscopy
 
@@ -319,29 +348,33 @@ For branded diagrams, add:
 
 # 8. Recovery and Rehabilitation
 
+*Photograph (default) — a representative moment of recovery/rehabilitation activity.*
+
 ## Postoperative Knee Care
 
-> Create a realistic 2D illustration of early postoperative knee care showing elevation, a safely wrapped ice pack, crutches nearby, and a clean dressing.
+> Create a realistic photograph of an adult patient at home in early post-operative recovery: leg elevated on cushions, a safely wrapped ice pack on the knee, crutches resting nearby, clean bandage visible. Natural home setting, authentic and reassuring.
 
 ## Walking with Crutches
 
-> Create a realistic 2D illustration of an adult using crutches correctly after knee surgery. Show safe posture and a controlled gait pattern.
+> Create a realistic photograph of an adult patient using crutches correctly after knee surgery, safe posture and a controlled gait, natural indoor or outdoor setting.
 
 ## Range-of-Motion Exercise
 
-> Create a realistic 2D illustration of a patient performing a supported heel-slide exercise to improve knee flexion after surgery.
+> Create a realistic photograph of an adult patient performing a supported heel-slide exercise on a bed or mat to improve knee flexion after surgery, correct form, natural lighting.
 
 ## Return-to-Sport Pathway
 
-> Create a clean 2D pathway showing stages from pain control and range of motion through strength, balance, running, sport-specific drills, and return to sport. Use knee-related rehabilitation icons without embedded text.
+> Create a realistic photograph of an adult patient athlete performing a guided sport-specific training drill — light jogging, agility ladder work, or balance work — on a training pitch or in a gym, as part of return-to-sport rehabilitation. Natural sports setting, authentic and encouraging, representing progress rather than a literal multi-stage diagram.
 
 ## Knee Surgery Recovery Timeline
 
-> Create a clean horizontal recovery timeline showing immediate recovery, early mobility, physiotherapy, progressive strengthening, return to daily activity, and later functional recovery. Use icons without embedded text.
+> Create a realistic photograph of an adult patient demonstrating confident, steady mobility during knee recovery — for example walking unaided in a garden or corridor, or cycling on a stationary bike — symbolising progress through the recovery journey. Natural lighting, authentic and encouraging, representing progress rather than a literal timeline graphic.
 
 ---
 
 # 9. Comparison Graphics
+
+*Illustration only — internal pathology comparisons invisible from outside the body; use the Global House Style, not the Global Photo Style.*
 
 ## Normal vs Torn Meniscus
 
@@ -403,11 +436,21 @@ For branded diagrams, add:
 
 # 11. Universal Prompt Template
 
+Use the photo version by default; use the illustration version only for internal anatomy, injection technique, surgical/implant technique, or internal pathology comparisons (see "Default Medium" in the guidelines file).
+
+### Universal Photo Prompt Template (default)
+
+> Create a realistic, natural photograph of [specific scenario/subject]. The educational purpose is to help patients understand [goal]. Show [what the photo depicts] from a [angle/framing] perspective. Use the Lincolnshire Knee Clinic photo style: photojournalistic, natural lighting, authentic and candid, true-to-life skin tones and textures, premium reassuring editorial quality, no text, no watermark, no logo. Format for [desktop/tablet/mobile] in [orientation or aspect ratio].
+
+### Universal Illustration Template (internal anatomy/procedure only)
+
 > Create an anatomically accurate, realistic 2D medical illustration of [specific knee subject]. The educational purpose is to help patients understand [goal]. Show [required structures or pathology] from a [view] perspective. Emphasise [key feature] subtly and clinically plausibly. Use the Lincolnshire Knee Clinic house style: premium patient-education quality, restrained natural colours, clean white or pale neutral background, calm clinical appearance, no blood, no gore, no text, no labels, no logo, and no watermark. Format for [desktop/tablet/mobile] in [orientation or aspect ratio].
 
 ---
 
 # 12. Negative Prompt
+
+Use the photo negative prompt by default (see "Photo Negative Prompt" above); this illustration negative prompt applies only to internal anatomy/procedure illustration content.
 
 > Avoid incorrect ligament attachments, duplicated bones or tendons, malformed patellae, impossible joint geometry, excessive cartilage thickness, unrealistic meniscal shape, misplaced implants, incorrect surgical tunnels, exaggerated inflammation, blood, gore, text, misspelled labels, logos, watermarks, stock-photo aesthetics, cartoon anatomy, and decorative elements unrelated to the knee.
 

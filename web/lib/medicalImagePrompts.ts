@@ -37,6 +37,26 @@ const SECTION_CATEGORY: Record<string, ImageCategory> = {
   "9": "comparison",
 };
 
+// Per "Default Medium" in medical-imagery-guidelines.md: photograph by
+// default, illustration reserved for content that genuinely can't be
+// photographed (internal anatomy/pathology, injection needle trajectory,
+// surgical/implant technique, internal pathology comparisons). Diagnostic
+// imaging (X-ray/MRI/ultrasound) is its own convention, not really either —
+// treated as "illustration" here only in the sense of "not a Global Photo
+// Style photo", since its actual prompt text already fully describes the
+// imaging-style look it needs.
+const CATEGORY_STYLE: Record<ImageCategory, ImageStyle> = {
+  anatomy: "illustration",
+  symptom: "photo",
+  condition: "illustration",
+  diagnostic: "illustration",
+  injection: "illustration",
+  treatment: "photo",
+  surgery: "illustration",
+  recovery: "photo",
+  comparison: "illustration",
+};
+
 export interface ImageSubject {
   id: string;
   category: ImageCategory;
@@ -51,6 +71,8 @@ export interface ImagePromptConfig {
   brandColorClause: string;
   negativePrompt: string;
   universalTemplate: string;
+  photoHouseStyle: string;
+  photoNegativePrompt: string;
   subjects: ImageSubject[];
 }
 
@@ -93,6 +115,8 @@ function parseImagePromptLibrary(raw: string): {
   brandColorClause: string;
   negativePrompt: string;
   universalTemplate: string;
+  photoHouseStyle: string;
+  photoNegativePrompt: string;
   subjects: ImageSubject[];
 } {
   // Global House Style block (two blockquotes: the main style, then the
@@ -104,7 +128,15 @@ function parseImagePromptLibrary(raw: string): {
   const houseStyle = houseStyleBlockquotes[0] || "";
   const brandColorClause = houseStyleBlockquotes[1] || "";
 
-  // Negative Prompt (section 12)
+  // Global Photo Style — the default medium (see "Default Medium" in
+  // medical-imagery-guidelines.md).
+  const photoStyleSection = raw.match(/# Global Photo Style([\s\S]*?)(?=\n# )/);
+  const photoHouseStyle = photoStyleSection ? extractBlockquote(photoStyleSection[1]) || "" : "";
+
+  const photoNegativeSection = raw.match(/# Photo Negative Prompt([\s\S]*?)(?=\n# )/);
+  const photoNegativePrompt = photoNegativeSection ? extractBlockquote(photoNegativeSection[1]) || "" : "";
+
+  // Negative Prompt (section 12) — illustration-only, see section 12's own intro line.
   const negativeSection = raw.match(/# 12\. Negative Prompt([\s\S]*?)(?=\n# )/);
   const negativePrompt = negativeSection ? extractBlockquote(negativeSection[1]) || "" : "";
 
@@ -137,7 +169,7 @@ function parseImagePromptLibrary(raw: string): {
     }
   }
 
-  return { houseStyle, brandColorClause, negativePrompt, universalTemplate, subjects };
+  return { houseStyle, brandColorClause, negativePrompt, universalTemplate, photoHouseStyle, photoNegativePrompt, subjects };
 }
 
 let cachedConfig: ImagePromptConfig | null = null;
@@ -152,9 +184,15 @@ export function loadImagePromptConfig(): ImagePromptConfig {
   if (!guidelinesRaw.trim()) throw new MissingReferenceDocError(GUIDELINES_PATH);
 
   const parsed = parseImagePromptLibrary(libraryRaw);
-  if (parsed.subjects.length === 0 || !parsed.houseStyle || !parsed.negativePrompt) {
+  if (
+    parsed.subjects.length === 0 ||
+    !parsed.houseStyle ||
+    !parsed.negativePrompt ||
+    !parsed.photoHouseStyle ||
+    !parsed.photoNegativePrompt
+  ) {
     throw new Error(
-      "docs/image-prompt-library.md could not be parsed into usable prompt rules (house style, negative prompt, or subject templates missing)."
+      "docs/image-prompt-library.md could not be parsed into usable prompt rules (house style, photo style, negative prompt, or subject templates missing)."
     );
   }
 
@@ -265,24 +303,16 @@ function slugify(text: string): string {
     .slice(0, 60);
 }
 
-// Illustration vs photograph. The reference docs (image-prompt-library.md,
-// medical-imagery-guidelines.md) only define house style for anatomical
-// illustrations — appropriate for the subject-matched templates (diagrams of
-// internal knee structures, injection technique, surgical steps), which
-// can't be photographed anyway. But most fallback cases are real-world
-// scenes (a patient icing their knee at home, a bedroom at night, someone at
-// a desk) for blog/social content, which read as a photo, not a diagram —
-// forcing "medical illustration" language onto those was producing drawings
-// when a realistic photo was wanted. These two style constants are code-
-// defined rather than doc-derived since they're mechanical AI-generation
-// guardrails, not clinical/editorial policy the docs are meant to own.
+// Illustration vs photograph. Per "Default Medium" in
+// medical-imagery-guidelines.md, photograph is the default across the
+// website; illustration is reserved for content that genuinely can't be
+// photographed (internal anatomy/pathology, injection needle trajectory,
+// surgical/implant technique, internal pathology comparisons — see
+// CATEGORY_STYLE above). Both styles' house-style/negative-prompt text are
+// parsed from image-prompt-library.md's "Global Photo Style"/"Photo Negative
+// Prompt" and "Global House Style"/"12. Negative Prompt" sections respectively
+// — the docs are the single source of truth for this, not this file.
 export type ImageStyle = "illustration" | "photo";
-
-const PHOTO_HOUSE_STYLE =
-  "Realistic, natural-looking photograph — photojournalistic style, natural lighting and shadows, authentic and candid rather than overly staged, true-to-life skin tones and textures, natural depth of field, suitable for a UK private orthopaedic clinic's website or social media.";
-
-const PHOTO_NEGATIVE_PROMPT =
-  "Avoid: illustration, drawing, cartoon, clipart, 3D render, CGI, painting, sketch, diagram, uncanny or distorted faces, extra or malformed fingers/limbs, unnatural or plastic-looking skin, unrealistic lighting, text, misspelled labels, logos, watermarks, borders, frames, low resolution, blurry, oversaturated colours, exaggerated expressions, medical gore, blood, graphic surgical content.";
 
 export type ImageFormat = "desktop" | "tablet" | "mobile-square" | "mobile-portrait";
 
@@ -322,12 +352,13 @@ export function buildImagePrompt(
   const config = loadImagePromptConfig();
   const { subject, isFallback } = detectImageContext(hints, config);
 
-  // Fallback (no specific anatomical subject matched) almost always means a
-  // real-world scene rather than an internal-anatomy diagram, so default to a
-  // photo there; a matched subject is a library illustration template that
-  // can't sensibly become a photo (you can't photograph a cross-section of a
-  // ligament). Either way the caller can still override explicitly.
-  const resolvedStyle: ImageStyle = style || (isFallback ? "photo" : "illustration");
+  // Fallback (no specific subject matched) almost always means a real-world
+  // scene, so it defaults to photo. A matched subject uses its own
+  // category's default (CATEGORY_STYLE) — photo for symptom/treatment/
+  // recovery, illustration for anatomy/condition/diagnostic/injection/
+  // surgery/comparison, since those genuinely can't be photographed. Either
+  // way the caller can still override explicitly via the `style` param.
+  const resolvedStyle: ImageStyle = style || (isFallback ? "photo" : CATEGORY_STYLE[subject.category]);
 
   // Priority matters here: placeholderLabel is a rich content description for blog
   // placeholders, but for social platform cards it's sometimes just a generic
@@ -338,14 +369,8 @@ export function buildImagePrompt(
     hints.imageTitle || hints.topic || hints.altText || hints.placeholderLabel || "general knee health and care";
 
   let subjectPrompt: string;
-  let houseStyle: string;
-  let negativePrompt: string;
 
-  if (resolvedStyle === "photo") {
-    subjectPrompt = `Create a realistic photograph relevant to: ${fallbackSubjectDescription}.`;
-    houseStyle = PHOTO_HOUSE_STYLE;
-    negativePrompt = PHOTO_NEGATIVE_PROMPT;
-  } else if (isFallback) {
+  if (isFallback) {
     // The Universal Template (docs section 11) is written as prose guidance for a
     // human/AI to compose a prompt from, with several [bracketed] slots — it isn't
     // meant for a single mechanical .replace(). Filling in only "[specific knee
@@ -354,14 +379,29 @@ export function buildImagePrompt(
     // library subject matched, there's no real structure/pathology/goal to name
     // anyway — a plain, clean description plus the house style is more accurate
     // than fabricating values for slots we don't actually have answers for.
-    subjectPrompt = `Create an anatomically accurate, realistic 2D medical illustration relevant to: ${fallbackSubjectDescription}.`;
-    houseStyle = config.houseStyle;
-    negativePrompt = config.negativePrompt;
-  } else {
+    subjectPrompt =
+      resolvedStyle === "photo"
+        ? `Create a realistic photograph relevant to: ${fallbackSubjectDescription}.`
+        : `Create an anatomically accurate, realistic 2D medical illustration relevant to: ${fallbackSubjectDescription}.`;
+  } else if (CATEGORY_STYLE[subject.category] === resolvedStyle) {
+    // The matched subject's own template is already authored in this style —
+    // use it directly (this is the common case).
     subjectPrompt = subject.template;
-    houseStyle = config.houseStyle;
-    negativePrompt = config.negativePrompt;
+  } else {
+    // Caller explicitly forced the opposite style from what this subject's
+    // category defaults to (e.g. illustration forced for a symptom, or photo
+    // forced for an anatomy subject). The subject's own template text is
+    // written for the other medium and would contradict the requested
+    // style's house-style/negative-prompt if reused as-is — fall back to a
+    // clean generic sentence in the requested style instead.
+    subjectPrompt =
+      resolvedStyle === "photo"
+        ? `Create a realistic photograph relevant to: ${subject.title}.`
+        : `Create an anatomically accurate, realistic 2D medical illustration relevant to: ${subject.title}.`;
   }
+
+  const houseStyle = resolvedStyle === "photo" ? config.photoHouseStyle : config.houseStyle;
+  const negativePrompt = resolvedStyle === "photo" ? config.photoNegativePrompt : config.negativePrompt;
 
   const promptParts = [subjectPrompt, houseStyle];
   if (transparentBackground) {
@@ -385,7 +425,7 @@ export function buildImagePrompt(
   const mediumLabel = resolvedStyle === "photo" ? "Photograph" : "Illustration";
   const proposedAltText = isFallback
     ? `${mediumLabel} related to ${hints.imageTitle || hints.topic || "knee care"}, for patient education.`
-    : `${subject.title} — illustration for patient education on ${hints.topic || hints.pageTitle || "knee care"}.`;
+    : `${subject.title} — ${mediumLabel.toLowerCase()} for patient education on ${hints.topic || hints.pageTitle || "knee care"}.`;
 
   return {
     category: subject.category,
