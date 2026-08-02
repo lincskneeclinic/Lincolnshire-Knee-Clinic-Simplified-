@@ -4,6 +4,8 @@ import React from "react";
 import Link from "next/link";
 import { ReviewablePage, ClinicalReviewEntry } from "@/lib/clinicalReview";
 import { PortalCard, PortalEmptyState } from "@/components/portal/ui";
+import { AiContentReviewPanel } from "@/components/portal/clinical-review/AiContentReviewPanel";
+import { ClinicalContentReviewResult } from "@/lib/clinicalContentReviewAgent";
 
 export type ClinicalReviewListItem = ReviewablePage & { review: ClinicalReviewEntry };
 export type SearchReference = { title: string; url: string; source: string; summary: string };
@@ -50,6 +52,11 @@ interface ClinicalReviewTabProps {
   onBulkReviewDateChange: (value: string) => void;
   onSaveBulkReview: () => void;
   isSavingBulkReview: boolean;
+
+  aiReviewLoading: boolean;
+  aiReviewError: string | null;
+  aiReviewResult: ClinicalContentReviewResult | null;
+  onRunAiReview: () => void;
 }
 
 const CONTENT_TYPES = ["symptoms", "conditions", "treatments", "injections"] as const;
@@ -93,6 +100,10 @@ export function ClinicalReviewTab({
   onBulkReviewDateChange,
   onSaveBulkReview,
   isSavingBulkReview,
+  aiReviewLoading,
+  aiReviewError,
+  aiReviewResult,
+  onRunAiReview,
 }: ClinicalReviewTabProps) {
   const selectedPage = selectedPageId ? pages.find((p) => p.pageId === selectedPageId) : null;
 
@@ -144,6 +155,7 @@ export function ClinicalReviewTab({
       {loading ? (
         <div className="text-center text-white/50 text-sm py-12">Loading pages…</div>
       ) : selectedPage ? (
+        <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <PortalCard className="space-y-5 shadow-xl">
             <div>
@@ -328,6 +340,14 @@ export function ClinicalReviewTab({
               </div>
             )}
           </PortalCard>
+        </div>
+
+        <AiContentReviewPanel
+          loading={aiReviewLoading}
+          error={aiReviewError}
+          result={aiReviewResult}
+          onRunReview={onRunAiReview}
+        />
         </div>
       ) : (
         <div className="space-y-6">

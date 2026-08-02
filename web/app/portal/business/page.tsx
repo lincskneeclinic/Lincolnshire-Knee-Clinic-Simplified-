@@ -13,6 +13,7 @@ import { OverviewTab, NeedsAttentionItem } from "@/components/portal/overview/Ov
 import { SubscribersTab } from "@/components/portal/subscribers/SubscribersTab";
 import { EducationHubTab, EducationArticleSummary } from "@/components/portal/education/EducationHubTab";
 import { ClinicalReviewTab, ClinicalReviewListItem, SearchReference } from "@/components/portal/clinical-review/ClinicalReviewTab";
+import { ClinicalContentReviewResult } from "@/lib/clinicalContentReviewAgent";
 import { SocialPostsTab } from "@/components/portal/social/SocialPostsTab";
 import { NewsletterCreatorTab } from "@/components/portal/newsletter/NewsletterCreatorTab";
 import { PipelineTriggerModal } from "@/components/portal/pipeline/PipelineTriggerModal";
@@ -139,6 +140,9 @@ function BusinessDashboardPageInner() {
   const [bulkReviewerTitle, setBulkReviewerTitle] = useState("");
   const [bulkReviewDate, setBulkReviewDate] = useState("");
   const [isSavingBulkReview, setIsSavingBulkReview] = useState(false);
+  const [aiReviewLoading, setAiReviewLoading] = useState(false);
+  const [aiReviewError, setAiReviewError] = useState<string | null>(null);
+  const [aiReviewResult, setAiReviewResult] = useState<ClinicalContentReviewResult | null>(null);
 
   // Education Hub Article Management State
   const [educationArticles, setEducationArticles] = useState<EducationArticleSummary[]>([]);
@@ -1461,6 +1465,32 @@ function BusinessDashboardPageInner() {
     setAddedResults([]);
     setSearchPageCursor(1);
     fetchSearchReferences(page.pageId, 1);
+    setAiReviewResult(null);
+    setAiReviewError(null);
+  };
+
+  const handleRunAiReview = async () => {
+    if (!selectedReviewPageId) return;
+    setAiReviewLoading(true);
+    setAiReviewError(null);
+    try {
+      const res = await fetch("/api/portal/clinical-review/ai-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageId: selectedReviewPageId }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setAiReviewError(data.error || "AI review failed.");
+        return;
+      }
+      setAiReviewResult(data.result);
+    } catch (err) {
+      console.error("AI content review failed:", err);
+      setAiReviewError("AI review failed. Please check your connection and try again.");
+    } finally {
+      setAiReviewLoading(false);
+    }
   };
 
   const fetchSearchReferences = async (pageId: string, cursor: number) => {
@@ -2483,6 +2513,10 @@ function BusinessDashboardPageInner() {
                 onBulkReviewDateChange={setBulkReviewDate}
                 onSaveBulkReview={handleSaveBulkReview}
                 isSavingBulkReview={isSavingBulkReview}
+                aiReviewLoading={aiReviewLoading}
+                aiReviewError={aiReviewError}
+                aiReviewResult={aiReviewResult}
+                onRunAiReview={handleRunAiReview}
               />
             )}
 
