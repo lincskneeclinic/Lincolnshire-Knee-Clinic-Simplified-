@@ -99,6 +99,19 @@ export default function SymptomsHub() {
         Content is intended for general patient education. Each page shows its current clinical review status below.
       </p>
 
+      {/* Symptom Checker CTA */}
+      <div className="my-8 bg-white border border-clinical-teal/30 rounded-xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[0_4px_20px_rgba(8,47,73,0.02)]">
+        <div className="max-w-2xl">
+          <h2 className="font-serif text-xl font-bold text-deep-navy mb-2">Not sure which symptom matches you?</h2>
+          <p className="text-sm text-text-secondary">
+            Answer a couple of quick questions and we'll point you to the most relevant page.
+          </p>
+        </div>
+        <Button href="/symptom-checker" variant="teal" className="shrink-0">
+          Try the Symptom Checker
+        </Button>
+      </div>
+
       {/* Grid of symptoms */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-8">
         {symptoms.map((symptom, index) => {

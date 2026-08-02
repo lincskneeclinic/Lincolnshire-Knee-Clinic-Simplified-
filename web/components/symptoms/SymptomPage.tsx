@@ -204,13 +204,16 @@ export const SymptomPage = async ({ slug }: SymptomPageProps) => {
       />
 
       {/* 1. Breadcrumbs */}
-      <div className="max-w-7xl mx-auto px-6 md:px-8 pt-6 pb-2 w-full font-sans">
+      <div className="max-w-7xl mx-auto px-6 md:px-8 pt-6 pb-2 w-full font-sans flex flex-wrap items-center justify-between gap-2">
         <Breadcrumbs
           items={[
             { label: "Symptoms", href: "/symptoms" },
             { label: symptom.name },
           ]}
         />
+        <Link href="/symptom-checker" className="text-xs font-semibold text-clinical-teal hover:text-deep-navy hover:underline">
+          Not the right symptom? Try our Symptom Checker →
+        </Link>
       </div>
 
       {/* 2. Compact dark navy page hero */}
