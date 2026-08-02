@@ -10,6 +10,7 @@ import Link from "next/link";
 import { SITE_URL } from "@/lib/site";
 import { getRemovedArticleSlugs, getArticleOverride, getArticleViewCounts, ArticleOverride } from "@/lib/educationArticles";
 import { ArticleViewCounter } from "@/components/ArticleViewCounter";
+import { ArticleFeedbackWidget } from "@/components/education/ArticleFeedbackWidget";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -391,6 +392,9 @@ export default async function ArticlePage({ params }: PageProps) {
           ))}
         </>
         )}
+
+        {/* Was this helpful? feedback */}
+        <ArticleFeedbackWidget slug={article} />
 
         {/* Next Steps / CTAs */}
         <section className="bg-soft-blue border border-border-clinical p-6 md:p-8 rounded-xl text-center my-8">

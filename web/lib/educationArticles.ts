@@ -117,6 +117,32 @@ export async function getArticleViewCounts(): Promise<Record<string, number>> {
   return getStoreValue<Record<string, number>>(ARTICLE_VIEWS_KEY, {});
 }
 
+// "Was this helpful?" feedback — see components/education/ArticleFeedbackWidget.tsx
+// and app/api/education-feedback/[slug]/route.ts. Plain KV read-modify-write, same
+// accepted concurrency tradeoff as app/api/newsletter/poll/route.ts's vote counts —
+// feedback volume per article is low enough that a lost increment under a race is an
+// acceptable risk, so this doesn't need the atomic-Postgres-counter treatment
+// getArticleViewCounts() above has.
+const ARTICLE_FEEDBACK_KEY = "article-feedback";
+
+export interface ArticleFeedbackSummary {
+  up: number;
+  down: number;
+  commentCount: number;
+}
+
+export async function getArticleFeedbackCounts(): Promise<Record<string, ArticleFeedbackSummary>> {
+  const feedback = await getStoreValue<Record<string, { up: number; down: number; comments: unknown[] }>>(
+    ARTICLE_FEEDBACK_KEY,
+    {}
+  );
+  const result: Record<string, ArticleFeedbackSummary> = {};
+  for (const [slug, entry] of Object.entries(feedback)) {
+    result[slug] = { up: entry.up || 0, down: entry.down || 0, commentCount: entry.comments?.length || 0 };
+  }
+  return result;
+}
+
 export async function incrementArticleView(slug: string): Promise<number> {
   try {
     const admin = createAdminClient();

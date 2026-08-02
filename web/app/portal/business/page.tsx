@@ -60,6 +60,8 @@ interface EducationArticleSummary {
   removedAt: string | null;
   updatedAt: string | null;
   views: number;
+  feedbackUp: number;
+  feedbackDown: number;
 }
 
 // Guards against rendering "Invalid Date" if an article's stored date string isn't in
@@ -3479,6 +3481,9 @@ function BusinessDashboardPageInner() {
                             <span className="text-status-error/80">Removed: {formatDateSafe(article.removedAt)}</span>
                           )}
                           <span>{article.views.toLocaleString()} views</span>
+                          {(article.feedbackUp > 0 || article.feedbackDown > 0) && (
+                            <span>👍 {article.feedbackUp} · 👎 {article.feedbackDown}</span>
+                          )}
                         </div>
                         <div className="flex justify-end items-center gap-2 pt-1 flex-wrap">
                           {!article.removed && (
