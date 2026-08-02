@@ -18,6 +18,9 @@ import { NewsletterCreatorTab } from "@/components/portal/newsletter/NewsletterC
 import { PlatformCard } from "@/components/portal/social/PlatformCard";
 import { StatusBadge } from "@/components/portal/pipeline/StatusBadge";
 import { FormattedContent } from "@/components/portal/pipeline/FormattedContent";
+import { PipelineListView } from "@/components/portal/pipeline/PipelineListView";
+import { PipelineTriggerModal } from "@/components/portal/pipeline/PipelineTriggerModal";
+import { PipelineRevisionModal } from "@/components/portal/pipeline/PipelineRevisionModal";
 import { downloadImageFile } from "@/lib/downloadImageFile";
 import { formatDateSafe } from "@/lib/formatDate";
 import { RunDetailTab, getRenderableImageUrl, cleanHeadingBugs } from "@/lib/contentPipelineFormatting";
@@ -3876,132 +3879,17 @@ function BusinessDashboardPageInner() {
                     </div>
                   </div>
                 ) : (
-                  /* PIPELINE LIST VIEW */
-                  <div className="space-y-8">
-                    <div className="bg-primary-navy border border-white/10 rounded-2xl p-4 shadow-lg">
-                      <input
-                        type="text"
-                        value={pipelineSearch}
-                        onChange={(e) => setPipelineSearch(e.target.value)}
-                        placeholder="Search runs by topic or ID…"
-                        className="bg-dark-overlay-navy border border-white/20 text-white text-xs rounded-lg px-3 py-2 focus:border-clinical-teal focus:outline-none w-full sm:w-72"
-                      />
-                    </div>
-
-                    {/* SECTION 1: Needs Your Review */}
-                    <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
-                      <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full bg-clinical-teal animate-ping" />
-                          <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                            Needs Your Attention ({visibleReviewNeededRuns.length})
-                          </h3>
-                        </div>
-                        <span className="text-[11px] text-clinical-teal font-mono">Action Required</span>
-                      </div>
-
-                      {reviewNeededRuns.length === 0 ? (
-                        <div className="py-8 text-center text-white/60 text-xs">
-                          🎉 No pending drafts require clinical review at this time.
-                        </div>
-                      ) : visibleReviewNeededRuns.length === 0 ? (
-                        <div className="py-8 text-center text-white/40 text-xs">
-                          No runs match "{pipelineSearch}".
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 gap-4">
-                          {visibleReviewNeededRuns.map((run) => (
-                            <div
-                              key={run.id}
-                              onClick={() => fetchRunDetail(run.run_id)}
-                              className="p-5 bg-dark-overlay-navy border border-white/10 hover:border-clinical-teal/50 rounded-xl transition-all shadow-md space-y-3 cursor-pointer group"
-                            >
-                              <div className="flex items-center justify-between flex-wrap gap-2">
-                                <h4 className="font-serif text-sm font-bold text-white group-hover:text-clinical-teal transition-colors">
-                                  {run.topic}
-                                </h4>
-                                <StatusBadge status={run.status} isContinueEditing={isBlogEditInProgress(run)} />
-                              </div>
-                              <div className="flex items-center justify-between flex-wrap gap-2">
-                                <span className="text-[10px] font-mono text-white/40">{run.run_id}</span>
-                                <span className="text-[11px] text-white/60 font-mono" title={`Created ${new Date(run.created_at).toLocaleString()}`}>
-                                  Last saved: {new Date(run.updated_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-                                </span>
-                              </div>
-
-                              {run.blog_drafts?.[0]?.flags && run.blog_drafts[0].flags.length > 0 && (
-                                <div className="text-[11px] text-amber-300/90 bg-primary-navy border border-amber-500/40 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5">
-                                  <span>⚠️</span>
-                                  <span>{run.blog_drafts[0].flags.length} Clinical Review Flag(s)</span>
-                                </div>
-                              )}
-
-                              <div className="flex justify-between items-center">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeletePipelineRun(run.run_id, run.topic);
-                                  }}
-                                  className="text-[11px] text-status-error/80 hover:text-status-error cursor-pointer"
-                                >
-                                  Delete
-                                </button>
-                                <div className="flex text-xs text-clinical-teal items-center gap-1">
-                                  <span>Open Review Workspace</span>
-                                  <span>→</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* SECTION 2: Secondary Section - All Other Runs */}
-                    <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-4">
-                      <div className="border-b border-white/10 pb-3">
-                        <h3 className="text-xs font-bold text-white/80 uppercase tracking-wider">
-                          In Progress, Published &amp; Archived Runs ({visibleOtherRuns.length})
-                        </h3>
-                      </div>
-
-                      {otherRuns.length > 0 && visibleOtherRuns.length === 0 ? (
-                        <div className="py-8 text-center text-white/40 text-xs">
-                          No runs match "{pipelineSearch}".
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {visibleOtherRuns.map((run) => (
-                            <div
-                              key={run.id}
-                              onClick={() => fetchRunDetail(run.run_id)}
-                              className="p-4 bg-dark-overlay-navy border border-white/10 hover:border-white/20 rounded-xl transition-all space-y-2 cursor-pointer"
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <h4 className="text-xs text-white/90 font-semibold line-clamp-2">{run.topic}</h4>
-                                <StatusBadge status={run.status} isContinueEditing={isBlogEditInProgress(run)} />
-                              </div>
-                              <div className="text-[10px] font-mono text-white/30">{run.run_id}</div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-[10px] text-white/40 font-mono">
-                                  Last saved: {new Date(run.updated_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-                                </span>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeletePipelineRun(run.run_id, run.topic);
-                                  }}
-                                  className="text-[10px] text-status-error/80 hover:text-status-error cursor-pointer"
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <PipelineListView
+                    reviewNeededCount={reviewNeededRuns.length}
+                    visibleReviewNeededRuns={visibleReviewNeededRuns}
+                    otherCount={otherRuns.length}
+                    visibleOtherRuns={visibleOtherRuns}
+                    search={pipelineSearch}
+                    onSearchChange={setPipelineSearch}
+                    onSelectRun={fetchRunDetail}
+                    onDeleteRun={handleDeletePipelineRun}
+                    isBlogEditInProgress={isBlogEditInProgress}
+                  />
                 )}
               </div>
             )}
@@ -4009,150 +3897,32 @@ function BusinessDashboardPageInner() {
         )}
 
         {/* START NEW RUN MODAL */}
-        {isTriggerModalOpen && (
-          <div className="fixed inset-0 z-50 bg-deep-navy/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-primary-navy border border-white/10 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-              <div className="flex justify-between items-center border-b border-white/10 pb-3">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <span>✨</span>
-                  <span>Start New Content Automation Run</span>
-                </h3>
-                <button
-                  onClick={() => (isTriggering ? handleBackgroundTriggerRun() : setIsTriggerModalOpen(false))}
-                  className="text-white/60 hover:text-white text-sm cursor-pointer"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <form onSubmit={handleTriggerRun} className="space-y-4">
-                <div>
-                  <label className="block text-xs text-white/80 mb-1">
-                    Custom Topic / Patient Question (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={newRunTopic}
-                    onChange={(e) => setNewRunTopic(e.target.value)}
-                    disabled={isTriggering}
-                    placeholder="e.g. Can I kneel after partial knee replacement?"
-                    className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                  <p className="text-[11px] text-white/60 mt-1.5">
-                    If left blank, the pipeline will automatically select the highest-trending patient question from contact enquiries.
-                  </p>
-                </div>
-
-                {isTriggering && (
-                  <div className="bg-dark-overlay-navy p-4 rounded-xl border border-clinical-teal/30 space-y-3 my-2 shadow-lg">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-clinical-teal flex items-center gap-2 truncate pr-2">
-                        <span className="inline-block w-2 h-2 rounded-full bg-clinical-teal animate-ping shrink-0" />
-                        <span className="truncate">{triggerStep || "Initializing pipeline..."}</span>
-                      </span>
-                      <span className="text-white/80 font-mono shrink-0">{triggerProgress}%</span>
-                    </div>
-                    <div className="w-full bg-primary-navy h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-clinical-teal h-full rounded-full transition-all duration-500 ease-out"
-                        style={{ width: `${triggerProgress}%` }}
-                      />
-                    </div>
-                    <p className="text-[11px] text-white/60 italic text-center">
-                      Please wait while our AI clinical agents analyze medical literature and synthesize your draft — or close this
-                      window and it'll keep generating in the background; check the run list shortly.
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex justify-end gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => (isTriggering ? handleBackgroundTriggerRun() : setIsTriggerModalOpen(false))}
-                    className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
-                  >
-                    {isTriggering ? "Run in Background" : "Cancel"}
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isTriggering}
-                    className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-5 py-2 rounded-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {isTriggering && (
-                      <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    )}
-                    {isTriggering ? "Initiating Pipeline..." : "Launch Automation Run"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        <PipelineTriggerModal
+          isOpen={isTriggerModalOpen}
+          onClose={() => setIsTriggerModalOpen(false)}
+          onBackground={handleBackgroundTriggerRun}
+          topic={newRunTopic}
+          onTopicChange={setNewRunTopic}
+          isTriggering={isTriggering}
+          triggerProgress={triggerProgress}
+          triggerStep={triggerStep}
+          onSubmit={handleTriggerRun}
+        />
 
         {/* REQUEST REVISION MODAL */}
-        {isRevisionModalOpen && (
-          <div className="fixed inset-0 z-50 bg-deep-navy/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-primary-navy border border-white/10 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-              <div className="flex justify-between items-center border-b border-white/10 pb-3">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <span>🔄</span>
-                  <span>
-                    Request Revision ({revisionStage.toUpperCase()}
-                    {revisionPlatform ? ` — ${revisionPlatform.toUpperCase()}` : ""})
-                  </span>
-                </h3>
-                <button
-                  onClick={() => {
-                    setIsRevisionModalOpen(false);
-                    setRevisionPlatform(undefined);
-                  }}
-                  className="text-white/60 hover:text-white text-sm cursor-pointer"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs text-amber-300/90 mb-1">
-                    Clinical Revision Notes (Required)
-                  </label>
-                  <textarea
-                    value={revisionNotes}
-                    onChange={(e) => setRevisionNotes(e.target.value)}
-                    rows={4}
-                    placeholder="Specify exact wording adjustments or clinical clarifications required..."
-                    className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none"
-                  />
-                </div>
-
-                <div className="flex justify-end gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsRevisionModalOpen(false);
-                      setRevisionPlatform(undefined);
-                    }}
-                    className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isSubmittingReview || !revisionNotes.trim()}
-                    onClick={() => handleReviewSubmission(revisionStage, "revision_requested", undefined, revisionPlatform)}
-                    className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-5 py-2 rounded-xl cursor-pointer disabled:opacity-50"
-                  >
-                    {isSubmittingReview ? "Submitting..." : "Send Revision Request"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <PipelineRevisionModal
+          isOpen={isRevisionModalOpen}
+          onClose={() => {
+            setIsRevisionModalOpen(false);
+            setRevisionPlatform(undefined);
+          }}
+          stage={revisionStage}
+          platform={revisionPlatform}
+          notes={revisionNotes}
+          onNotesChange={setRevisionNotes}
+          isSubmitting={isSubmittingReview}
+          onSubmit={() => handleReviewSubmission(revisionStage, "revision_requested", undefined, revisionPlatform)}
+        />
       </main>
     </div>
   );
