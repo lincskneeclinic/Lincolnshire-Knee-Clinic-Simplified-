@@ -15,6 +15,7 @@ import { SubscribersTab } from "@/components/portal/subscribers/SubscribersTab";
 import { EducationHubTab, EducationArticleSummary } from "@/components/portal/education/EducationHubTab";
 import { ClinicalReviewTab, ClinicalReviewListItem, SearchReference } from "@/components/portal/clinical-review/ClinicalReviewTab";
 import { SocialPostsTab } from "@/components/portal/social/SocialPostsTab";
+import { NewsletterCreatorTab } from "@/components/portal/newsletter/NewsletterCreatorTab";
 import { PlatformCard } from "@/components/portal/social/PlatformCard";
 import { downloadImageFile } from "@/lib/downloadImageFile";
 import { formatDateSafe } from "@/lib/formatDate";
@@ -2009,6 +2010,7 @@ function BusinessDashboardPageInner() {
   const socialOnlyNeedsReviewCount = socialOnlyPosts.filter(
     (p) => !(p.instagram.status === "approved" && p.facebook.status === "approved" && p.linkedin.status === "approved")
   ).length;
+  const newsletterDraftCount = newsletterEditions.filter((e) => e.status === "draft").length;
   const selectedRunHasSocial =
     !!selectedRun &&
     (selectedRun.status === "awaiting_social_approval" ||
@@ -2053,7 +2055,12 @@ function BusinessDashboardPageInner() {
   const navTabs = [
     { id: "overview", label: "Overview", icon: "📊" },
     { id: "newsletter", label: "Subscribers", icon: "📧" },
-    { id: "newsletterCreator", label: "Newsletters", icon: "✉️" },
+    {
+      id: "newsletterCreator",
+      label: "Newsletters",
+      icon: "✉️",
+      badge: newsletterDraftCount > 0 ? newsletterDraftCount : null,
+    },
     {
       id: "pipeline",
       label: "Pipeline",
@@ -2441,303 +2448,30 @@ function BusinessDashboardPageInner() {
 
             {/* TAB: NEWSLETTER CREATOR */}
             {activeTab === "newsletterCreator" && (
-              <div className="space-y-6">
-                <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg font-serif font-bold text-white">Clinical Newsletter Creator</h2>
-                    <p className="text-xs text-white/60 mt-1">
-                      Draft evidence-based patient newsletters using PubMed research and distribute directly to your subscribed audience.
-                    </p>
-                  </div>
-                  <div className="bg-dark-overlay-navy border border-white/10 px-4 py-2 rounded-xl text-center">
-                    <span className="text-[10px] uppercase font-bold text-clinical-teal tracking-wider block">Audience Size</span>
-                    <span className="text-lg font-mono font-bold text-white">{activeSubscribersCount} active subscribers</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  {/* Topic Planner and List column */}
-                  <div className="lg:col-span-4 space-y-6">
-                    {/* Monthly Digest Generator */}
-                    <div className="bg-primary-navy border border-clinical-teal/30 rounded-2xl p-5 shadow-lg space-y-3">
-                      <div>
-                        <h3 className="text-sm font-bold text-white">Monthly Digest</h3>
-                        <p className="text-[11px] text-white/60 mt-1">
-                          Auto-composed from this month's blog posts, top patient questions, and the newsletter poll — plus one rotating educational tip.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleGenerateDigestNewsletter}
-                        disabled={isGeneratingDigest}
-                        className={`w-full font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow transition-all ${
-                          isGeneratingDigest
-                            ? "bg-white/10 text-white/40 cursor-not-allowed"
-                            : "bg-clinical-teal hover:bg-clinical-teal-hover text-white cursor-pointer"
-                        }`}
-                      >
-                        {isGeneratingDigest ? (
-                          <>
-                            <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
-                            Composing Digest...
-                          </>
-                        ) : (
-                          "✨ Generate Monthly Digest"
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Draft Generator Form */}
-                    <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg space-y-4">
-                      <h3 className="text-sm font-bold text-white">Generate Single-Topic Draft</h3>
-
-                      <div className="space-y-3">
-                        <label className="block text-xs font-semibold text-white/80">Newsletter Topic / Clinical Question</label>
-                        <textarea
-                          rows={3}
-                          value={newNewsletterTopic}
-                          onChange={(e) => setNewNewsletterTopic(e.target.value)}
-                          placeholder="e.g., Viscosupplementation vs Steroids for Knee OA, or recovery tips after Meniscus rehab"
-                          className="w-full bg-dark-overlay-navy border border-white/15 text-white placeholder-white/40 text-xs rounded-xl p-3 focus:outline-none focus:border-clinical-teal resize-none"
-                        />
-                      </div>
-
-                      <label className="flex items-center gap-2.5 cursor-pointer py-1 select-none">
-                        <input
-                          type="checkbox"
-                          checked={newsletterIncludeResearch}
-                          onChange={(e) => setNewsletterIncludeResearch(e.target.checked)}
-                          className="w-4 h-4 accent-clinical-teal cursor-pointer"
-                        />
-                        <span className="text-xs text-white/90">Perform PubMed Research & Cite Studies</span>
-                      </label>
-
-                      <button
-                        type="button"
-                        onClick={handleGenerateNewsletter}
-                        disabled={isGeneratingNewsletter || !newNewsletterTopic.trim()}
-                        className={`w-full font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow transition-all ${
-                          isGeneratingNewsletter || !newNewsletterTopic.trim()
-                            ? "bg-white/10 text-white/40 cursor-not-allowed"
-                            : "bg-clinical-teal hover:bg-clinical-teal-hover text-white cursor-pointer"
-                        }`}
-                      >
-                        {isGeneratingNewsletter ? (
-                          <>
-                            <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
-                            Analyzing PubMed & Writing...
-                          </>
-                        ) : (
-                          "✨ Generate Newsletter Draft"
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Suggested Patient Topics */}
-                    <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg space-y-3">
-                      <h3 className="text-xs uppercase font-bold text-clinical-teal tracking-wider">Suggested Clinic Topics</h3>
-                      <div className="space-y-2">
-                        {[
-                          "PRP Injections vs Cortisone for Knee Osteoarthritis",
-                          "Arthrosamid for Knee Joint Preservation",
-                          "Timeline and Exercises for ACL Post-Op Recovery",
-                          "How to Manage Baker's Cyst Pain at Home",
-                          "Understanding Meniscus Tears: Surgery vs Rehab",
-                          "General Knee Health & Preservation Tips"
-                        ].map((t) => (
-                          <button
-                            key={t}
-                            type="button"
-                            onClick={() => setNewNewsletterTopic(t)}
-                            className="w-full text-left bg-dark-overlay-navy hover:bg-white/5 border border-white/5 hover:border-white/10 text-white/90 text-xs p-2.5 rounded-xl transition-all block cursor-pointer"
-                          >
-                            💡 {t}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* History & Drafts List */}
-                    <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg space-y-3">
-                      <h3 className="text-xs uppercase font-bold text-clinical-teal tracking-wider">Newsletter History & Drafts</h3>
-                      {newsletterLoading ? (
-                        <div className="text-center text-white/40 text-xs py-8">Loading history...</div>
-                      ) : newsletterEditions.length === 0 ? (
-                        <div className="text-center text-white/40 text-xs py-8 border border-dashed border-white/10 rounded-xl">
-                          No drafts or sent editions.
-                        </div>
-                      ) : (
-                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                          {newsletterEditions.map((item) => (
-                            <div
-                              key={item.id}
-                              onClick={() => selectNewsletterForEdit(item)}
-                              className={`p-3 border rounded-xl transition-all cursor-pointer text-left ${
-                                selectedNewsletter?.id === item.id
-                                  ? "bg-clinical-teal/10 border-clinical-teal"
-                                  : "bg-dark-overlay-navy border-white/5 hover:border-white/10"
-                              }`}
-                            >
-                              <div className="flex justify-between items-center text-[9px] text-white/50 mb-1.5">
-                                <span className={`font-bold px-1.5 py-0.5 rounded uppercase ${
-                                  item.status === "sent" ? "bg-emerald-500/10 text-emerald-400" : "bg-orange-500/10 text-orange-400"
-                                }`}>
-                                  {item.status}
-                                </span>
-                                <span>{new Date(item.created_at).toLocaleDateString()}</span>
-                              </div>
-                              <h4 className="font-bold text-white text-xs truncate">{item.subject}</h4>
-                              <p className="text-[10px] text-white/60 truncate mt-1">Topic: {item.topic}</p>
-                              {item.status === "sent" && (
-                                <p className="text-[9px] text-emerald-400 font-mono mt-1">✓ Sent to {item.recipientsCount} patients</p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Side-by-Side Live Editor & Preview */}
-                  <div className="lg:col-span-8">
-                    {selectedNewsletter ? (
-                      <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg space-y-6">
-                        <div className="flex justify-between items-center pb-3 border-b border-white/10">
-                          <div>
-                            <span className="text-[10px] font-bold text-clinical-teal uppercase tracking-wider block">Editing Newsletter Draft</span>
-                            <span className="text-white text-xs font-mono font-bold">{selectedNewsletter.id}</span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteNewsletter(selectedNewsletter.id)}
-                              className="text-white/60 hover:text-rose-400 text-xs px-3 py-1.5 rounded-lg border border-white/10 hover:border-rose-500/30 transition-all cursor-pointer"
-                            >
-                              Discard Draft
-                            </button>
-                            {selectedNewsletter.status === "draft" && (
-                              <button
-                                type="button"
-                                onClick={() => setShowNewsletterSendConfirm(true)}
-                                className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-md transition-all cursor-pointer"
-                              >
-                                🚀 Send Newsletter
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Subject Editor */}
-                        <div className="space-y-2">
-                          <label className="block text-xs font-semibold text-white/80">Email Subject Line</label>
-                          <input
-                            type="text"
-                            value={newsletterEditSubject}
-                            onChange={(e) => handleUpdateNewsletterContent(e.target.value, newsletterEditMarkdown)}
-                            disabled={selectedNewsletter.status === "sent"}
-                            className="w-full bg-dark-overlay-navy border border-white/15 text-white text-xs rounded-xl p-3 focus:outline-none focus:border-clinical-teal"
-                          />
-                        </div>
-
-                        {/* Markdown / Live HTML Preview Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
-                          {/* Markdown Text Area */}
-                          <div className="space-y-2">
-                            <label className="block text-xs font-semibold text-white/80">Newsletter Body (Markdown)</label>
-                            <textarea
-                              rows={16}
-                              value={newsletterEditMarkdown}
-                              onChange={(e) => handleUpdateNewsletterContent(newsletterEditSubject, e.target.value)}
-                              disabled={selectedNewsletter.status === "sent"}
-                              placeholder="Draft your newsletter text here..."
-                              className="w-full h-[400px] bg-dark-overlay-navy border border-white/15 text-white placeholder-white/30 text-xs font-mono rounded-xl p-4 focus:outline-none focus:border-clinical-teal"
-                            />
-                          </div>
-
-                          {/* Live HTML Inbox Preview */}
-                          <div className="space-y-2">
-                            <label className="block text-xs font-semibold text-white/80">Inbox Preview (HTML Rendering)</label>
-                            <div className="w-full h-[400px] bg-[#f8fafc] border border-white/10 rounded-xl overflow-y-auto">
-                              {newsletterHtmlPreview ? (
-                                <div dangerouslySetInnerHTML={{ __html: newsletterHtmlPreview }} />
-                              ) : (
-                                <div className="text-center text-slate-400 text-xs py-20">Preview renders dynamically as you type.</div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="h-full min-h-[400px] bg-primary-navy border border-white/10 rounded-2xl p-8 shadow-lg flex flex-col items-center justify-center text-center space-y-3">
-                        <span className="text-4xl">✉️</span>
-                        <h3 className="font-bold text-white text-sm">No Newsletter Selected</h3>
-                        <p className="text-xs text-white/60 max-w-sm">
-                          Select a newsletter draft from the history list or generate a new one from the generator panel.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Newsletter Campaign Distribution Confirmation Modal */}
-                {showNewsletterSendConfirm && selectedNewsletter && (
-                  <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-                    <div className="bg-primary-navy border border-white/10 max-w-md w-full rounded-2xl p-6 shadow-2xl space-y-6">
-                      <div className="text-center space-y-2">
-                        <span className="text-4xl block">📣</span>
-                        <h3 className="font-serif text-lg font-bold text-white">Confirm Campaign Distribution</h3>
-                        <p className="text-xs text-white/70">
-                          You are about to distribute the newsletter **"{selectedNewsletter.subject}"** to all subscribed patients.
-                        </p>
-                      </div>
-
-                      <div className="bg-dark-overlay-navy border border-white/5 rounded-xl p-4 space-y-3">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">Campaign Topic:</span>
-                          <span className="text-white font-bold">{selectedNewsletter.topic}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">Recipient Count:</span>
-                          <span className="text-clinical-teal font-mono font-bold">{activeSubscribersCount} active subscribers</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">Includes PubMed citations:</span>
-                          <span className="text-white font-semibold">{selectedNewsletter.includeResearch ? "Yes (Stage 1 scan)" : "No (Lay update)"}</span>
-                        </div>
-                      </div>
-
-                      <div className="bg-teal-500/10 border border-teal-500/25 text-teal-400 text-[10px] leading-relaxed p-3.5 rounded-xl">
-                        🔒 **Clinical Guidelines Enforcement**: The newsletter contents utilize layman's terms with jargon-control filters and direct consultation booking links for patient safety.
-                      </div>
-
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setShowNewsletterSendConfirm(false)}
-                          className="flex-1 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold py-3 px-4 rounded-xl transition-all cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleSendNewsletter}
-                          disabled={isSendingNewsletter}
-                          className="flex-1 bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs font-bold py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          {isSendingNewsletter ? (
-                            <>
-                              <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
-                              Distributing...
-                            </>
-                          ) : (
-                            "Confirm Send"
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <NewsletterCreatorTab
+                activeSubscribersCount={activeSubscribersCount}
+                isGeneratingDigest={isGeneratingDigest}
+                onGenerateDigest={handleGenerateDigestNewsletter}
+                newTopic={newNewsletterTopic}
+                onNewTopicChange={setNewNewsletterTopic}
+                includeResearch={newsletterIncludeResearch}
+                onIncludeResearchChange={setNewsletterIncludeResearch}
+                isGeneratingNewsletter={isGeneratingNewsletter}
+                onGenerateNewsletter={handleGenerateNewsletter}
+                loading={newsletterLoading}
+                editions={newsletterEditions}
+                selectedNewsletter={selectedNewsletter}
+                onSelectForEdit={selectNewsletterForEdit}
+                onDeleteNewsletter={handleDeleteNewsletter}
+                editSubject={newsletterEditSubject}
+                editMarkdown={newsletterEditMarkdown}
+                onUpdateContent={handleUpdateNewsletterContent}
+                htmlPreview={newsletterHtmlPreview}
+                showSendConfirm={showNewsletterSendConfirm}
+                onShowSendConfirmChange={setShowNewsletterSendConfirm}
+                isSending={isSendingNewsletter}
+                onSendNewsletter={handleSendNewsletter}
+              />
             )}
 
             {/* TAB: CLINICAL REVIEW */}
