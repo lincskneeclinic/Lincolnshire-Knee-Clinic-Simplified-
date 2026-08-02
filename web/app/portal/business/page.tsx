@@ -11,6 +11,7 @@ import { ReviewablePage, ClinicalReviewEntry } from "@/lib/clinicalReview";
 import GenerateImageModal from "@/components/portal/GenerateImageModal";
 import { DashboardFeedbackProvider, useToast, useConfirm, usePrompt } from "@/components/portal/DashboardFeedback";
 import { CommunityReportsTab, CommunityReport } from "@/components/portal/community/CommunityReportsTab";
+import { OverviewTab, NeedsAttentionItem } from "@/components/portal/overview/OverviewTab";
 import { createClient } from "@/lib/supabase/client";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -91,7 +92,7 @@ function BusinessDashboardPageInner() {
   const confirmAction = useConfirm();
   const promptAction = usePrompt();
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "topics" | "events" | "newsletter" | "newsletterCreator" | "pipeline" | "clinicalReview" | "community" | "educationHub" | "socialOnly">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "newsletter" | "newsletterCreator" | "pipeline" | "clinicalReview" | "community" | "educationHub" | "socialOnly">("overview");
   const [statsData, setStatsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [subscriberSearch, setSubscriberSearch] = useState("");
@@ -2039,10 +2040,31 @@ function BusinessDashboardPageInner() {
     { key: "facebook" as const, label: "Facebook" },
     { key: "linkedin" as const, label: "LinkedIn" },
   ];
+  const needsAttentionItems: NeedsAttentionItem[] = [
+    {
+      label: "Content Pipeline",
+      description: "Runs awaiting draft or social review",
+      count: reviewNeededRuns.length,
+      tabId: "pipeline",
+      icon: "📝",
+    },
+    {
+      label: "Clinical Review",
+      description: "Pages needing a reviewer sign-off",
+      count: reviewNeededPages.length,
+      tabId: "clinicalReview",
+      icon: "🩺",
+    },
+    {
+      label: "Community Reports",
+      description: "Flagged posts or replies awaiting action",
+      count: openCommunityReportsCount,
+      tabId: "community",
+      icon: "💬",
+    },
+  ];
   const navTabs = [
     { id: "overview", label: "Overview", icon: "📊" },
-    { id: "topics", label: "Topics", icon: "💡" },
-    { id: "events", label: "Clicks", icon: "👆" },
     { id: "newsletter", label: "Subscribers", icon: "📧" },
     { id: "newsletterCreator", label: "Newsletters", icon: "✉️" },
     {
@@ -2402,156 +2424,20 @@ function BusinessDashboardPageInner() {
 
             {/* TAB: OVERVIEW */}
             {activeTab === "overview" && (
-              <div className="space-y-8">
-                <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-dark-overlay-navy border border-clinical-teal/30 text-clinical-teal text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                        ✓ Click Events Active
-                      </span>
-                      <span className="bg-dark-overlay-navy border border-clinical-teal/30 text-clinical-teal text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                        {statsData?.analyticsConnected ? "✓ Microsoft Clarity Connected" : "Clarity Script Ready"}
-                      </span>
-                    </div>
-                  </div>
-                  <h2 className="text-lg font-serif font-bold text-white">
-                    Live Practice Telemetry &amp; Content Insights
-                  </h2>
-                  <p className="text-xs text-white/70 max-w-3xl leading-relaxed">
-                    This dashboard surfaces real enquiry topics from incoming contact messages, votes from patient content polls, signup growth from validated opt-in consents, and real click event counters for call and booking links. All data remains strictly aggregate and non-identifying.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-4">
-                    <div className="flex justify-between items-center border-b border-white/10 pb-3">
-                      <h3 className="text-xs font-bold text-white uppercase tracking-wider">Top Trending Patient Questions</h3>
-                      <span className="text-[11px] text-white/60 font-mono">From Contact Enquiries</span>
-                    </div>
-                    <div className="space-y-3">
-                      {trendingTopics.length === 0 ? (
-                        <div className="text-center text-white/40 text-xs py-8 border border-dashed border-white/10 rounded-xl">
-                          No trending topics yet — these are drawn from real patient contact enquiries.
-                        </div>
-                      ) : (
-                        trendingTopics.slice(0, 4).map((t: any, i: number) => (
-                          <div key={i} className="p-3.5 bg-dark-overlay-navy border border-white/5 rounded-xl space-y-1.5 text-xs">
-                            <div className="flex items-center justify-between">
-                              <span className="text-white/90 font-serif">{t.label}</span>
-                              <span className="bg-primary-navy text-clinical-teal border border-clinical-teal/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                {t.enquiryCount} Enquiries
-                              </span>
-                            </div>
-                            {t.latestQueries && t.latestQueries[0] && (
-                              <p className="text-[11px] text-white/60 italic">
-                                "{t.latestQueries[0]}"
-                              </p>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-4">
-                    <div className="flex justify-between items-center border-b border-white/10 pb-3">
-                      <h3 className="text-xs font-bold text-white uppercase tracking-wider">Patient Content Poll Votes</h3>
-                      <span className="text-[11px] text-white/60 font-mono">{Number(pollVotesTotal)} Total Votes</span>
-                    </div>
-                    <div className="space-y-3">
-                      {Object.keys(pollResults.votes || {}).length === 0 ? (
-                        <div className="text-center text-white/40 text-xs py-8 border border-dashed border-white/10 rounded-xl">
-                          No poll votes yet.
-                        </div>
-                      ) : (
-                        Object.entries(pollResults.votes || {}).map(([opt, count]: [string, any], idx: number) => {
-                          const totalNum = Number(pollVotesTotal) || 0;
-                          const pct = totalNum > 0 ? Math.round((Number(count) / totalNum) * 100) : 0;
-                          return (
-                            <div key={idx} className="space-y-1.5 text-xs">
-                              <div className="flex justify-between text-white/80">
-                                <span className="truncate max-w-[280px]">{opt}</span>
-                                <span className="font-mono text-clinical-teal">{count} votes ({pct}%)</span>
-                              </div>
-                              <div className="w-full h-2 bg-dark-overlay-navy rounded-full overflow-hidden border border-white/5">
-                                <div className="bg-clinical-teal h-full rounded-full" style={{ width: `${pct}%` }} />
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB: TOPICS */}
-            {activeTab === "topics" && (
-              <div className="space-y-8">
-                <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-6">
-                  <div className="border-b border-white/10 pb-4">
-                    <h2 className="text-base font-bold text-white">Trending Patient Questions &amp; Content Input</h2>
-                    <p className="text-xs text-white/60">Direct input for blog articles and patient education resources from real message enquiries</p>
-                  </div>
-
-                  <div className="space-y-4">
-                    {trendingTopics.length === 0 ? (
-                      <div className="text-center text-white/40 text-xs py-12 border border-dashed border-white/10 rounded-xl">
-                        No trending topics yet — once patients submit contact enquiries, the most common themes will appear here for you to turn into content.
-                      </div>
-                    ) : (
-                      trendingTopics.map((t: any, idx: number) => (
-                        <div key={idx} className="p-5 bg-dark-overlay-navy border border-white/5 rounded-xl space-y-3">
-                          <div className="flex items-center justify-between flex-wrap gap-2">
-                            <div>
-                              <span className="text-xs text-clinical-teal uppercase tracking-wider block mb-0.5">{t.category || "General"}</span>
-                              <h3 className="font-serif text-sm font-bold text-white">{t.label}</h3>
-                            </div>
-                            <button
-                              onClick={() => {
-                                setActiveTab("pipeline");
-                                setNewRunTopic(t.label);
-                                setIsTriggerModalOpen(true);
-                              }}
-                              className="bg-dark-overlay-navy hover:bg-white/5 text-clinical-teal border border-clinical-teal/40 text-xs px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
-                            >
-                              🚀 Trigger Content Run for Topic
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB: EVENTS */}
-            {activeTab === "events" && (
-              <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-6">
-                <div className="border-b border-white/10 pb-4">
-                  <h2 className="text-base font-bold text-white">Call &amp; Appointment Click Event Telemetry</h2>
-                  <p className="text-xs text-white/60">Real-time counts for high-intent action button clicks (non-clinical, anonymous)</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="p-6 bg-dark-overlay-navy border border-white/5 rounded-xl space-y-3 text-center">
-                    <span className="text-3xl">📞</span>
-                    <h3 className="font-bold text-white text-sm">"Call Clinic Reception" Clicks</h3>
-                    <div className="font-mono text-2xl font-bold text-clinical-teal pt-2">{clickEvents.callNowClicks}</div>
-                  </div>
-                  <div className="p-6 bg-dark-overlay-navy border border-white/5 rounded-xl space-y-3 text-center">
-                    <span className="text-3xl">📅</span>
-                    <h3 className="font-bold text-white text-sm">"Book Appointment" Clicks</h3>
-                    <div className="font-mono text-2xl font-bold text-clinical-teal pt-2">{clickEvents.bookAppointmentClicks}</div>
-                  </div>
-                  <div className="p-6 bg-dark-overlay-navy border border-white/5 rounded-xl space-y-3 text-center">
-                    <span className="text-3xl">💬</span>
-                    <h3 className="font-bold text-white text-sm">WhatsApp Help Clicks</h3>
-                    <div className="font-mono text-2xl font-bold text-clinical-teal pt-2">{clickEvents.whatsappClicks}</div>
-                  </div>
-                </div>
-              </div>
+              <OverviewTab
+                analyticsConnected={!!statsData?.analyticsConnected}
+                needsAttention={needsAttentionItems}
+                trendingTopics={trendingTopics}
+                pollVotes={pollResults.votes || {}}
+                pollVotesTotal={Number(pollVotesTotal) || 0}
+                clickEvents={clickEvents}
+                onNavigate={handleNavTabClick}
+                onTriggerTopic={(label) => {
+                  setActiveTab("pipeline");
+                  setNewRunTopic(label);
+                  setIsTriggerModalOpen(true);
+                }}
+              />
             )}
 
             {/* TAB: NEWSLETTER */}
