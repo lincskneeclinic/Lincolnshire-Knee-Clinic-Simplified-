@@ -4,6 +4,7 @@ import React from "react";
 import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
 import { ContentPipelineRun } from "@/lib/contentPipeline";
 import { PlatformCard } from "@/components/portal/social/PlatformCard";
+import { ConnectedAccountsCard } from "@/components/portal/social/ConnectedAccountsCard";
 import { downloadImageFile } from "@/lib/downloadImageFile";
 import { useToast } from "@/components/portal/DashboardFeedback";
 
@@ -81,6 +82,8 @@ export function PipelineSocialTab({
     <div className="space-y-6">
       {selectedRunHasSocial ? (
         <>
+          <ConnectedAccountsCard />
+
           {/* Social Formats Sub-Tab Navigation */}
           <div className="flex border-b border-white/10 gap-2 overflow-x-auto pb-px">
             {(["feed", "story", "carousel", "reel", "brandkit"] as const).map((tab) => (
@@ -162,6 +165,8 @@ export function PipelineSocialTab({
                 }}
                 isGeneratingImage={generatingSocialImageKey === `${selectedRun.id}-instagram`}
                 showManualUploadGuide
+                sourceType="pipeline"
+                sourceId={selectedRun.run_id}
               />
 
               <PlatformCard
@@ -221,6 +226,8 @@ export function PipelineSocialTab({
                 }}
                 isGeneratingImage={generatingSocialImageKey === `${selectedRun.id}-facebook`}
                 showManualUploadGuide
+                sourceType="pipeline"
+                sourceId={selectedRun.run_id}
               />
 
               <PlatformCard
@@ -349,6 +356,8 @@ export function PipelineSocialTab({
                 }}
                 isGeneratingImage={generatingSocialImageKey === `${selectedRun.id}-instagramStory`}
                 showManualUploadGuide
+                sourceType="pipeline"
+                sourceId={selectedRun.run_id}
               />
             </div>
           )}
@@ -443,6 +452,8 @@ export function PipelineSocialTab({
                 }}
                 isGeneratingImage={generatingSocialImageKey === `${selectedRun.id}-instagramCarousel`}
                 showManualUploadGuide
+                sourceType="pipeline"
+                sourceId={selectedRun.run_id}
               />
             </div>
           )}
@@ -481,6 +492,8 @@ export function PipelineSocialTab({
                   onReviewSubmission("social", "edited", { videoUrl: url, videoSource: source }, "instagramReel")
                 }
                 showManualUploadGuide
+                sourceType="pipeline"
+                sourceId={selectedRun.run_id}
               />
             </div>
           )}

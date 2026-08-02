@@ -6,6 +6,7 @@ import { SocialOnlyPost } from "@/lib/socialOnlyPosts";
 import { PortalCard, PortalModal, PortalEmptyState } from "@/components/portal/ui";
 import { useToast } from "@/components/portal/DashboardFeedback";
 import { PlatformCard } from "@/components/portal/social/PlatformCard";
+import { ConnectedAccountsCard } from "@/components/portal/social/ConnectedAccountsCard";
 import { downloadImageFile } from "@/lib/downloadImageFile";
 import { formatDateSafe } from "@/lib/formatDate";
 
@@ -95,6 +96,8 @@ export function SocialPostsTab({
           )}
         </div>
 
+        {!selectedPost && <ConnectedAccountsCard />}
+
         {selectedPost ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
@@ -146,6 +149,8 @@ export function SocialPostsTab({
                     onGenerateImage={(prompt) => onGenerateSocialImage(selectedPost.id, "instagram", prompt)}
                     isGeneratingImage={generatingImageKey === `${selectedPost.id}-instagram`}
                     showManualUploadGuide
+                    sourceType="social_only"
+                    sourceId={selectedPost.id}
                   />
                   <PlatformCard
                     platformKey="facebook"
@@ -167,6 +172,8 @@ export function SocialPostsTab({
                     onGenerateImage={(prompt) => onGenerateSocialImage(selectedPost.id, "facebook", prompt)}
                     isGeneratingImage={generatingImageKey === `${selectedPost.id}-facebook`}
                     showManualUploadGuide
+                    sourceType="social_only"
+                    sourceId={selectedPost.id}
                   />
                   <PlatformCard
                     platformKey="linkedin"
@@ -217,6 +224,8 @@ export function SocialPostsTab({
                     onGenerateImage={(prompt) => onGenerateSocialImage(selectedPost.id, "instagramStory", prompt)}
                     isGeneratingImage={generatingImageKey === `${selectedPost.id}-instagramStory`}
                     showManualUploadGuide
+                    sourceType="social_only"
+                    sourceId={selectedPost.id}
                   />
                 </div>
               )}
@@ -259,6 +268,8 @@ export function SocialPostsTab({
                     }
                     isGeneratingImage={generatingImageKey === `${selectedPost.id}-instagramCarousel`}
                     showManualUploadGuide
+                    sourceType="social_only"
+                    sourceId={selectedPost.id}
                   />
                 </div>
               )}
@@ -285,6 +296,8 @@ export function SocialPostsTab({
                     videoSource={selectedPost.instagramReel?.videoSource}
                     onAttachVideo={(url, source) => onAttachSocialVideo(selectedPost.id, url, source)}
                     showManualUploadGuide
+                    sourceType="social_only"
+                    sourceId={selectedPost.id}
                   />
                 </div>
               )}

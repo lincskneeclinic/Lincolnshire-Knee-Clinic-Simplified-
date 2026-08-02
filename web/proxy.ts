@@ -78,6 +78,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/portal/clinician-intake/") ||
     pathname === "/api/portal/stats" ||
     pathname.startsWith("/api/portal/clinical-review") ||
+    pathname.startsWith("/api/portal/meta") ||
     pathname.startsWith("/api/portal/content-pipeline") ||
     pathname.startsWith("/api/portal/patients") ||
     pathname.startsWith("/api/portal/injections") ||

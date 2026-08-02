@@ -110,3 +110,76 @@ CREATE POLICY "Service role full access to content_field_overrides"
   ON content_field_overrides FOR ALL
   TO service_role
   USING (true);
+
+-- ============================================================
+-- 5. Meta (Instagram + Facebook) post performance analytics.
+--    meta_connected_accounts holds the Page/Instagram Business Account
+--    access tokens obtained via the Facebook Login OAuth flow.
+--    meta_post_links maps an internal pipeline/social-only post to the
+--    real platform post a staff member manually published, via a pasted
+--    permalink resolved to a real media/post ID.
+--    meta_post_metrics stores timestamped snapshots (never overwritten in
+--    place) so a future scheduled re-poll can build real trend history
+--    without a schema change.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS meta_connected_accounts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  platform TEXT NOT NULL CHECK (platform IN ('facebook', 'instagram')),
+  account_id TEXT NOT NULL,
+  account_name TEXT,
+  access_token TEXT NOT NULL,
+  token_expires_at TIMESTAMPTZ,
+  connected_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (platform, account_id)
+);
+
+ALTER TABLE meta_connected_accounts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role full access to meta_connected_accounts"
+  ON meta_connected_accounts FOR ALL
+  TO service_role
+  USING (true);
+
+CREATE TABLE IF NOT EXISTS meta_post_links (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_type TEXT NOT NULL CHECK (source_type IN ('pipeline', 'social_only')),
+  source_id TEXT NOT NULL,
+  platform TEXT NOT NULL CHECK (platform IN ('facebook', 'instagram')),
+  permalink TEXT NOT NULL,
+  media_id TEXT NOT NULL,
+  linked_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (source_type, source_id, platform)
+);
+
+ALTER TABLE meta_post_links ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role full access to meta_post_links"
+  ON meta_post_links FOR ALL
+  TO service_role
+  USING (true);
+
+CREATE TABLE IF NOT EXISTS meta_post_metrics (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  media_id TEXT NOT NULL,
+  platform TEXT NOT NULL CHECK (platform IN ('facebook', 'instagram')),
+  post_type TEXT NOT NULL DEFAULT 'feed',
+  fetched_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  reach INTEGER,
+  views INTEGER,
+  likes INTEGER,
+  comments INTEGER,
+  shares INTEGER,
+  saves INTEGER,
+  engagement_rate NUMERIC,
+  raw JSONB
+);
+
+CREATE INDEX IF NOT EXISTS idx_meta_post_metrics_media ON meta_post_metrics(media_id, fetched_at DESC);
+
+ALTER TABLE meta_post_metrics ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role full access to meta_post_metrics"
+  ON meta_post_metrics FOR ALL
+  TO service_role
+  USING (true);

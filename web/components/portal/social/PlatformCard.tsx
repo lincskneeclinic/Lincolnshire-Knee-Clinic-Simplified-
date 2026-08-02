@@ -90,6 +90,212 @@ function openSocialPreview(
   win.document.close();
 }
 
+interface MetricsSnapshot {
+  fetched_at: string;
+  reach: number | null;
+  views: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  saves: number | null;
+  engagement_rate: number | null;
+}
+
+interface PerformanceAnalysis {
+  score: number;
+  assessment: string;
+  suggestions: string[];
+}
+
+const METRIC_LABELS: Array<{ key: keyof MetricsSnapshot; label: string }> = [
+  { key: "reach", label: "Reach" },
+  { key: "views", label: "Views" },
+  { key: "likes", label: "Likes" },
+  { key: "comments", label: "Comments" },
+  { key: "shares", label: "Shares" },
+  { key: "saves", label: "Saves" },
+];
+
+function scoreColor(score: number): string {
+  if (score >= 65) return "text-clinical-teal border-clinical-teal/40";
+  if (score >= 35) return "text-amber-400 border-amber-500/40";
+  return "text-status-error border-status-error/40";
+}
+
+/**
+ * Real (not AI-estimated) post performance, pulled from the Instagram/Facebook
+ * Graph API for a post the account holder manually published and then linked
+ * back here by pasting its live URL. Self-contained: fetches its own state
+ * directly (matches this file's existing convention for video upload/generation),
+ * since nothing else in the dashboard needs to share this state.
+ */
+function PerformancePanel({
+  platformKey,
+  sourceType,
+  sourceId,
+  caption,
+}: {
+  platformKey: "instagram" | "facebook" | "instagramStory" | "instagramCarousel" | "instagramReel";
+  sourceType: "pipeline" | "social_only";
+  sourceId: string;
+  caption: string;
+}) {
+  const platform: "instagram" | "facebook" = platformKey === "facebook" ? "facebook" : "instagram";
+  const [checked, setChecked] = useState(false);
+  const [linked, setLinked] = useState(false);
+  const [metrics, setMetrics] = useState<MetricsSnapshot | null>(null);
+  const [performance, setPerformance] = useState<PerformanceAnalysis | null>(null);
+  const [permalinkInput, setPermalinkInput] = useState("");
+  const [isBusy, setIsBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setChecked(false);
+    fetch(`/api/portal/meta/link-post?sourceType=${sourceType}&sourceId=${encodeURIComponent(sourceId)}&platform=${platform}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data.success) {
+          setLinked(!!data.linked);
+          setMetrics(data.metrics || null);
+        }
+      })
+      .catch(() => {})
+      .finally(() => !cancelled && setChecked(true));
+    return () => {
+      cancelled = true;
+    };
+  }, [sourceType, sourceId, platform]);
+
+  const refreshMetrics = async () => {
+    setError(null);
+    setIsBusy(true);
+    try {
+      const res = await fetch("/api/portal/meta/refresh-metrics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourceType, sourceId, platform, postType: platformKey, caption }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMetrics(data.metrics);
+        setPerformance(data.performance);
+      } else {
+        setError(data.error || "Failed to fetch performance data.");
+      }
+    } catch {
+      setError("Failed to fetch performance data. Please check your connection and try again.");
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const linkAndAnalyze = async () => {
+    if (!permalinkInput.trim()) return;
+    setError(null);
+    setIsBusy(true);
+    try {
+      const res = await fetch("/api/portal/meta/link-post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourceType, sourceId, platform, permalinkUrl: permalinkInput.trim() }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.error || "Couldn't link that post.");
+        setIsBusy(false);
+        return;
+      }
+      setLinked(true);
+      await refreshMetrics();
+    } catch {
+      setError("Couldn't link that post. Please check your connection and try again.");
+      setIsBusy(false);
+    }
+  };
+
+  if (!checked) return null;
+
+  return (
+    <div className="bg-primary-navy/50 border border-white/10 rounded-lg p-3 space-y-2.5 text-left">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-clinical-teal">
+        Real Performance {platform === "instagram" ? "(Instagram)" : "(Facebook)"}
+      </span>
+
+      {!linked ? (
+        <div className="space-y-2">
+          <p className="text-[10px] text-white/60 leading-relaxed">
+            Once you've posted this manually, paste the live post URL to pull real reach and engagement numbers.
+          </p>
+          <div className="flex gap-1.5">
+            <input
+              type="text"
+              value={permalinkInput}
+              onChange={(e) => setPermalinkInput(e.target.value)}
+              placeholder={platform === "instagram" ? "https://www.instagram.com/p/..." : "https://www.facebook.com/.../posts/..."}
+              className="flex-1 bg-dark-overlay-navy border border-white/20 text-white text-[10px] rounded-lg px-2 py-1.5 focus:border-clinical-teal focus:outline-none"
+            />
+            <button
+              onClick={linkAndAnalyze}
+              disabled={isBusy || !permalinkInput.trim()}
+              className="bg-clinical-teal hover:bg-clinical-teal-hover text-deep-navy text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+            >
+              {isBusy ? "Linking…" : "Link & Analyze"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {metrics && (
+            <div className="grid grid-cols-3 gap-1.5">
+              {METRIC_LABELS.filter((m) => metrics[m.key] !== null && metrics[m.key] !== undefined).map((m) => (
+                <div key={m.key} className="bg-dark-overlay-navy border border-white/5 rounded-lg px-2 py-1.5 text-center">
+                  <div className="text-[13px] font-bold text-white">{metrics[m.key]}</div>
+                  <div className="text-[8px] text-white/50 uppercase tracking-wide">{m.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {performance && (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-bold px-2 py-0.5 rounded-full border ${scoreColor(performance.score)}`}>
+                  {performance.score}/100
+                </span>
+                <span className="text-[9px] text-white/40">real, measured vs. this account's own history</span>
+              </div>
+              <p className="text-[10px] text-white/80 leading-relaxed">{performance.assessment}</p>
+              {performance.suggestions.length > 0 && (
+                <ul className="text-[10px] text-white/70 leading-relaxed list-disc list-inside space-y-0.5">
+                  {performance.suggestions.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={refreshMetrics}
+            disabled={isBusy}
+            className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[10px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {isBusy ? "Refreshing…" : performance ? "🔄 Refresh & Re-analyze" : "Fetch Real Performance"}
+          </button>
+        </div>
+      )}
+
+      {error && (
+        <div className="text-[10px] text-status-error bg-status-error/10 border border-status-error/20 rounded-lg p-2">
+          {error}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function PlatformCard({
   platformKey,
   platformLabel,
@@ -118,6 +324,8 @@ export function PlatformCard({
   attachedVideoUrl,
   videoSource,
   onAttachVideo,
+  sourceType,
+  sourceId,
 }: {
   platformKey: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel";
   platformLabel: string;
@@ -146,6 +354,9 @@ export function PlatformCard({
   attachedVideoUrl?: string;
   videoSource?: "upload" | "ai-broll";
   onAttachVideo?: (url: string, source: "upload" | "ai-broll") => void;
+  /** Identifies this post for real Meta performance tracking. Omit to hide that panel (e.g. LinkedIn, which isn't supported yet). */
+  sourceType?: "pipeline" | "social_only";
+  sourceId?: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(caption);
@@ -724,6 +935,10 @@ export function PlatformCard({
             )}
           </ol>
         </div>
+      )}
+
+      {status === "approved" && platformKey !== "linkedin" && sourceType && sourceId && (
+        <PerformancePanel platformKey={platformKey} sourceType={sourceType} sourceId={sourceId} caption={caption} />
       )}
 
       <GenerateImageModal

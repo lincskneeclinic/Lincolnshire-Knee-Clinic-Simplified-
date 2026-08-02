@@ -174,6 +174,33 @@ function BusinessDashboardPageInner() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchPageCursor, setSearchPageCursor] = useState(1);
 
+  // Picks up ?tab=&metaConnect=&metaConnectDetail= after the Meta OAuth
+  // callback redirects back here, then strips them so a refresh doesn't
+  // re-show the toast or re-navigate.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    const metaConnect = params.get("metaConnect");
+    if (!tab && !metaConnect) return;
+
+    const validTabs = ["overview", "newsletter", "newsletterCreator", "pipeline", "clinicalReview", "community", "educationHub", "socialOnly"] as const;
+    if (tab && (validTabs as readonly string[]).includes(tab)) {
+      setActiveTab(tab as (typeof validTabs)[number]);
+    }
+    if (metaConnect === "connected") {
+      toast.success(`Meta account connected — ${params.get("metaConnectDetail") || "ready to link posts."}`);
+    } else if (metaConnect === "error") {
+      toast.error(params.get("metaConnectDetail") || "Failed to connect Meta account.");
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("tab");
+    url.searchParams.delete("metaConnect");
+    url.searchParams.delete("metaConnectDetail");
+    window.history.replaceState({}, "", url.toString());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Initialize/reset history stack when entering Edit mode
   useEffect(() => {
     if (isEditMode) {
