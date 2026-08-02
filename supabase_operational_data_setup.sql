@@ -86,3 +86,27 @@ CREATE POLICY "Service role full access to intake_registry"
   ON intake_registry FOR ALL
   TO service_role
   USING (true);
+
+-- ============================================================
+-- 4. Content field overrides — approved AI-suggested edits to individual
+--    fields on symptom/condition/treatment/injection pages (from the
+--    dashboard's Clinical Review "AI Content Review" panel). Field-level
+--    (one row per page_id + field_name), so approving one suggested fix
+--    doesn't disturb the rest of that page's static content. Read at
+--    render time and merged on top of the static web/data/*.ts entry.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS content_field_overrides (
+  page_id TEXT NOT NULL,
+  field_name TEXT NOT NULL,
+  field_value JSONB NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (page_id, field_name)
+);
+
+ALTER TABLE content_field_overrides ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role full access to content_field_overrides"
+  ON content_field_overrides FOR ALL
+  TO service_role
+  USING (true);

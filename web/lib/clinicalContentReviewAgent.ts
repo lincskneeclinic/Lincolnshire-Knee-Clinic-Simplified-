@@ -1,14 +1,28 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { ReviewablePage } from "@/lib/clinicalReview";
+import { ReviewablePage, ContentType } from "@/lib/clinicalReview";
+import { EDITABLE_FIELDS, getEditableFieldType } from "@/lib/contentFieldOverrides";
 import { symptomsData } from "@/data/symptoms";
 import { conditionsData } from "@/data/conditions";
 import { treatmentsData } from "@/data/treatments";
 import { injectionsData } from "@/data/injections";
 import { SITE_URL } from "@/lib/site";
 
+export interface ClinicalContentReviewFinding {
+  severity: "high" | "medium" | "low";
+  category: string;
+  note: string;
+  // Only present when the finding maps to one known editable field and the
+  // AI proposed a specific replacement — lets the dashboard show a before/
+  // after preview with Approve/Decline. current_value is read server-side
+  // from the real data, never trusted from the model.
+  field?: string;
+  current_value?: string | string[];
+  suggested_value?: string | string[];
+}
+
 export interface ClinicalContentReviewResult {
   overall_assessment: string;
-  findings: Array<{ severity: "high" | "medium" | "low"; category: string; note: string }>;
+  findings: ClinicalContentReviewFinding[];
 }
 
 function section(label: string, content: string | string[] | undefined): string {
@@ -52,70 +66,75 @@ async function scrapeLivePageText(url: string): Promise<string> {
   return texts.join("\n");
 }
 
+/** The raw structured data object for a page, or null for the 2 pages with no data-file entry. */
+function getPageDataObject(page: ReviewablePage): Record<string, any> | null {
+  switch (page.contentType) {
+    case "symptoms":
+      return symptomsData[page.slug] || null;
+    case "conditions":
+      return conditionsData[page.slug] || null;
+    case "treatments":
+      return treatmentsData[page.slug] || null;
+    case "injections":
+      return injectionsData.find((i) => i.slug === page.slug) || null;
+  }
+}
+
 /** Builds the plain-text content of a reviewable page, for the AI to review. */
 async function buildPageContentText(page: ReviewablePage): Promise<string> {
-  switch (page.contentType) {
-    case "symptoms": {
-      const d = symptomsData[page.slug];
-      if (!d) break;
-      return [
-        section("Introduction", d.introduction),
-        section("What is it", d.whatIs),
-        section("Common presentations", d.commonPresentations),
-        section("Duration pattern", d.durationPattern),
-        section("Warning signs (red flags)", d.warningSigns),
-        section("Assessment", d.assessment),
-        section("Investigations", d.investigations),
-        section("Initial management", d.initialManagement),
-        section("When to consult", d.whenToConsult),
-        faqSection(d.faqs),
-      ].join("\n");
-    }
-    case "conditions": {
-      const d = conditionsData[page.slug];
-      if (!d) break;
-      return [
-        section("Introduction", d.introduction),
-        section("What is it", d.whatIs),
-        section("Symptoms", d.symptoms),
-        section("Causes", d.causes),
-        section("Assessment", d.assessment),
-        section("Investigations", d.investigations),
-        section("Treatments", d.treatments),
-        section(d.surgeryTitle || "Surgery", d.surgeryDetails),
-        faqSection(d.faqs),
-      ].join("\n");
-    }
-    case "treatments": {
-      const d = treatmentsData[page.slug];
-      if (!d) break;
-      return [
-        section("Introduction", d.introduction),
-        section("What is it", d.whatIs),
-        section("What it involves", d.whatItInvolves),
-        section("Suitability", d.suitability),
-        section("Not suitable for", d.notSuitable),
-        section("Alternatives", d.alternatives),
-        section("Risks", d.risks),
-        section("Recovery", d.recovery),
-        section("Rehabilitation", d.rehabilitation),
-        faqSection(d.faqs),
-      ].join("\n");
-    }
-    case "injections": {
-      const d = injectionsData.find((i) => i.slug === page.slug);
-      if (!d) break;
-      return [
-        section("Description", d.description),
-        section("How it works", d.howItWorks),
-        section("Who may be considered", d.whoConsidered),
-        section("Who may not be suitable", d.whoNotSuitable),
-        section("Benefits", d.benefits),
-        section("Risks and limitations", d.risksLimitations),
-        section("Procedure steps", d.procedureSteps),
-        section("Aftercare", d.aftercareSteps),
-        faqSection(d.faqs),
-      ].join("\n");
+  const d = getPageDataObject(page);
+  if (d) {
+    switch (page.contentType) {
+      case "symptoms":
+        return [
+          section("Introduction", d.introduction),
+          section("What is it", d.whatIs),
+          section("Common presentations", d.commonPresentations),
+          section("Duration pattern", d.durationPattern),
+          section("Warning signs (red flags)", d.warningSigns),
+          section("Assessment", d.assessment),
+          section("Investigations", d.investigations),
+          section("Initial management", d.initialManagement),
+          section("When to consult", d.whenToConsult),
+          faqSection(d.faqs),
+        ].join("\n");
+      case "conditions":
+        return [
+          section("Introduction", d.introduction),
+          section("What is it", d.whatIs),
+          section("Symptoms", d.symptoms),
+          section("Causes", d.causes),
+          section("Assessment", d.assessment),
+          section("Investigations", d.investigations),
+          section("Treatments", d.treatments),
+          section(d.surgeryTitle || "Surgery", d.surgeryDetails),
+          faqSection(d.faqs),
+        ].join("\n");
+      case "treatments":
+        return [
+          section("Introduction", d.introduction),
+          section("What is it", d.whatIs),
+          section("What it involves", d.whatItInvolves),
+          section("Suitability", d.suitability),
+          section("Not suitable for", d.notSuitable),
+          section("Alternatives", d.alternatives),
+          section("Risks", d.risks),
+          section("Recovery", d.recovery),
+          section("Rehabilitation", d.rehabilitation),
+          faqSection(d.faqs),
+        ].join("\n");
+      case "injections":
+        return [
+          section("Description", d.description),
+          section("How it works", d.howItWorks),
+          section("Who may be considered", d.whoConsidered),
+          section("Who may not be suitable", d.whoNotSuitable),
+          section("Benefits", d.benefits),
+          section("Risks and limitations", d.risksLimitations),
+          section("Procedure steps", d.procedureSteps),
+          section("Aftercare", d.aftercareSteps),
+          faqSection(d.faqs),
+        ].join("\n");
     }
   }
 
@@ -123,12 +142,19 @@ async function buildPageContentText(page: ReviewablePage): Promise<string> {
   return scrapeLivePageText(`${SITE_URL}${page.url}`);
 }
 
+function buildEditableFieldsList(contentType: ContentType): string {
+  return Object.entries(EDITABLE_FIELDS[contentType])
+    .map(([field, type]) => `- "${field}" (${type === "string[]" ? "a list of bullet points" : "a paragraph of text"})`)
+    .join("\n");
+}
+
 /**
  * Sends a reviewable page's own content to Gemini for an advisory clinical-
  * accuracy review, alongside the existing "Suggested Evidence Sources" web
  * search — this reviews what's already written, rather than finding new
  * references. Purely advisory: the human reviewer (a Consultant Orthopaedic
- * Surgeon) always makes the final call before marking a page reviewed.
+ * Surgeon) always makes the final call, and every proposed fix requires an
+ * explicit Approve click before it goes live.
  */
 export async function reviewPageContent(page: ReviewablePage): Promise<ClinicalContentReviewResult> {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -140,6 +166,9 @@ export async function reviewPageContent(page: ReviewablePage): Promise<ClinicalC
   if (!contentText.trim()) {
     throw new Error("Could not load this page's content to review.");
   }
+
+  const pageData = getPageDataObject(page);
+  const editableFieldsList = buildEditableFieldsList(page.contentType);
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
@@ -157,11 +186,21 @@ Rules:
 - Only raise genuine, specific concerns tied to the actual text provided — do not pad the list with generic or low-value observations.
 - If the content looks clinically sound, say so plainly and return an empty findings array — do not invent issues to appear thorough.
 
+When a finding is about ONE of the following specific fields, propose an exact replacement so the reviewer can preview and approve it directly:
+${editableFieldsList}
+For a "list of bullet points" field, "suggested_value" must be the COMPLETE replacement list (every bullet that should remain, plus your change), not just the new item. For a "paragraph of text" field, "suggested_value" must be the complete replacement paragraph. Only include "field" and "suggested_value" when you are proposing a specific, concrete edit to one of the fields listed above — omit them entirely for findings that are general observations rather than a specific text fix (e.g. something you'd want the human clinician to research or decide, not a wording edit).
+
 You MUST output your response strictly as valid JSON matching this schema:
 {
   "overall_assessment": "1-2 sentence plain-English summary of your overall impression of this page.",
   "findings": [
-    { "severity": "high" | "medium" | "low", "category": "short label, e.g. Clinical accuracy / Missing safety information / Patient clarity", "note": "specific, concrete observation" }
+    {
+      "severity": "high" | "medium" | "low",
+      "category": "short label, e.g. Clinical accuracy / Missing safety information / Patient clarity",
+      "note": "specific, concrete observation",
+      "field": "optional — exact field name from the list above, only if proposing a specific text fix",
+      "suggested_value": "optional — the complete replacement text or bullet list for that field"
+    }
   ]
 }`,
   });
@@ -180,14 +219,36 @@ Review this page content now and return the JSON.`;
 
   const aiData = JSON.parse(rawText);
 
-  const findings = Array.isArray(aiData.findings)
+  const findings: ClinicalContentReviewFinding[] = Array.isArray(aiData.findings)
     ? aiData.findings
         .filter((f: any) => f && typeof f.note === "string")
-        .map((f: any) => ({
-          severity: f.severity === "high" || f.severity === "medium" || f.severity === "low" ? f.severity : "low",
-          category: typeof f.category === "string" && f.category ? f.category : "General",
-          note: f.note as string,
-        }))
+        .map((f: any) => {
+          const finding: ClinicalContentReviewFinding = {
+            severity: f.severity === "high" || f.severity === "medium" || f.severity === "low" ? f.severity : "low",
+            category: typeof f.category === "string" && f.category ? f.category : "General",
+            note: f.note as string,
+          };
+
+          // Only attach a field-level fix if the field is a real, known-editable
+          // field for this content type, and the proposed value's shape (string
+          // vs string[]) matches what that field actually holds — anything else
+          // is dropped, leaving the finding as informational-only rather than
+          // risking a malformed or hallucinated field being offered for approval.
+          if (typeof f.field === "string" && pageData) {
+            const expectedType = getEditableFieldType(page.contentType, f.field);
+            if (expectedType) {
+              const isCorrectShape =
+                expectedType === "string[]" ? Array.isArray(f.suggested_value) : typeof f.suggested_value === "string";
+              if (isCorrectShape) {
+                finding.field = f.field;
+                finding.current_value = pageData[f.field];
+                finding.suggested_value = f.suggested_value;
+              }
+            }
+          }
+
+          return finding;
+        })
     : [];
 
   return {

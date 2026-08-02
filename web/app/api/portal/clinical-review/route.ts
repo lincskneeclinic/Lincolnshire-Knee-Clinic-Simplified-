@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import {
   getAllReviewablePages,
   getReviewRegistry,
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Failed to save review status" }, { status: 500 });
     }
 
+    revalidatePath(matchingPage.url);
     return NextResponse.json({ success: true, pageId, review: entry });
   } catch (error) {
     console.error("Clinical review save error:", error);

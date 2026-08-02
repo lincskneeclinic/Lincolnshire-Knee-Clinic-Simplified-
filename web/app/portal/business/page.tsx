@@ -13,7 +13,7 @@ import { OverviewTab, NeedsAttentionItem } from "@/components/portal/overview/Ov
 import { SubscribersTab } from "@/components/portal/subscribers/SubscribersTab";
 import { EducationHubTab, EducationArticleSummary } from "@/components/portal/education/EducationHubTab";
 import { ClinicalReviewTab, ClinicalReviewListItem, SearchReference } from "@/components/portal/clinical-review/ClinicalReviewTab";
-import { ClinicalContentReviewResult } from "@/lib/clinicalContentReviewAgent";
+import { ClinicalContentReviewResult, ClinicalContentReviewFinding } from "@/lib/clinicalContentReviewAgent";
 import { SocialPostsTab } from "@/components/portal/social/SocialPostsTab";
 import { NewsletterCreatorTab } from "@/components/portal/newsletter/NewsletterCreatorTab";
 import { PipelineTriggerModal } from "@/components/portal/pipeline/PipelineTriggerModal";
@@ -1493,6 +1493,32 @@ function BusinessDashboardPageInner() {
     }
   };
 
+  const handleApproveAiFinding = async (finding: ClinicalContentReviewFinding): Promise<boolean> => {
+    if (!selectedReviewPageId || !finding.field || finding.suggested_value === undefined) return false;
+    try {
+      const res = await fetch("/api/portal/clinical-review/field-override", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pageId: selectedReviewPageId,
+          fieldName: finding.field,
+          value: finding.suggested_value,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        toast.error(data.error || "Failed to apply this change.");
+        return false;
+      }
+      toast.success("Change applied — now live on the page.");
+      return true;
+    } catch (err) {
+      console.error("Failed to apply AI-suggested field override:", err);
+      toast.error("Failed to apply this change. Please check your connection and try again.");
+      return false;
+    }
+  };
+
   const fetchSearchReferences = async (pageId: string, cursor: number) => {
     setSearchLoading(true);
     setSearchError(null);
@@ -2517,6 +2543,7 @@ function BusinessDashboardPageInner() {
                 aiReviewError={aiReviewError}
                 aiReviewResult={aiReviewResult}
                 onRunAiReview={handleRunAiReview}
+                onApproveAiFinding={handleApproveAiFinding}
               />
             )}
 

@@ -13,6 +13,7 @@ import { symptomsData } from "@/data/symptoms";
 import { conditionsData } from "@/data/conditions";
 import { getVisualAsset } from "@/data/visualsInventory";
 import { getClinicalReviewStatus } from "@/lib/clinicalReview";
+import { getSymptomWithOverrides } from "@/lib/contentFieldOverrides";
 import { SITE_URL } from "@/lib/site";
 import { ContinueYourKneeJourney } from "@/components/ContinueYourKneeJourney";
 import { MedicalIllustrationBlock } from "@/components/visuals/MedicalIllustrationBlock";
@@ -73,7 +74,7 @@ interface SymptomPageProps {
 }
 
 export const SymptomPage = async ({ slug }: SymptomPageProps) => {
-  const symptom = symptomsData[slug];
+  const symptom = await getSymptomWithOverrides(slug);
   const clinicalReview = await getClinicalReviewStatus(`symptoms/${slug}`);
 
   if (!symptom) {

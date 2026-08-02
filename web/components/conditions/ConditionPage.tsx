@@ -14,6 +14,7 @@ import { conditionsData } from "@/data/conditions";
 import { symptomsData } from "@/data/symptoms";
 import { getVisualAsset } from "@/data/visualsInventory";
 import { getClinicalReviewStatus } from "@/lib/clinicalReview";
+import { getConditionWithOverrides } from "@/lib/contentFieldOverrides";
 import { SITE_URL } from "@/lib/site";
 import { ContinueYourKneeJourney } from "@/components/ContinueYourKneeJourney";
 import { TopicNotifyWidget } from "@/components/TopicNotifyWidget";
@@ -131,7 +132,7 @@ interface ConditionPageProps {
 }
 
 export const ConditionPage = async ({ slug }: ConditionPageProps) => {
-  const condition = conditionsData[slug];
+  const condition = await getConditionWithOverrides(slug);
   const clinicalReview = await getClinicalReviewStatus(`conditions/${slug}`);
 
   if (!condition) {

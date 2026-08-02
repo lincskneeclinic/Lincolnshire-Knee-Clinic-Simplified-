@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ReviewablePage, ClinicalReviewEntry } from "@/lib/clinicalReview";
 import { PortalCard, PortalEmptyState } from "@/components/portal/ui";
 import { AiContentReviewPanel } from "@/components/portal/clinical-review/AiContentReviewPanel";
-import { ClinicalContentReviewResult } from "@/lib/clinicalContentReviewAgent";
+import { ClinicalContentReviewResult, ClinicalContentReviewFinding } from "@/lib/clinicalContentReviewAgent";
 
 export type ClinicalReviewListItem = ReviewablePage & { review: ClinicalReviewEntry };
 export type SearchReference = { title: string; url: string; source: string; summary: string };
@@ -57,6 +57,7 @@ interface ClinicalReviewTabProps {
   aiReviewError: string | null;
   aiReviewResult: ClinicalContentReviewResult | null;
   onRunAiReview: () => void;
+  onApproveAiFinding: (finding: ClinicalContentReviewFinding) => Promise<boolean>;
 }
 
 const CONTENT_TYPES = ["symptoms", "conditions", "treatments", "injections"] as const;
@@ -104,6 +105,7 @@ export function ClinicalReviewTab({
   aiReviewError,
   aiReviewResult,
   onRunAiReview,
+  onApproveAiFinding,
 }: ClinicalReviewTabProps) {
   const selectedPage = selectedPageId ? pages.find((p) => p.pageId === selectedPageId) : null;
 
@@ -347,6 +349,7 @@ export function ClinicalReviewTab({
           error={aiReviewError}
           result={aiReviewResult}
           onRunReview={onRunAiReview}
+          onApproveFinding={onApproveAiFinding}
         />
         </div>
       ) : (

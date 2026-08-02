@@ -10,6 +10,7 @@ import { Button } from "@/components/Button";
 import Link from "next/link";
 import { treatmentsData } from "@/data/treatments";
 import { getClinicalReviewStatus } from "@/lib/clinicalReview";
+import { getTreatmentWithOverrides } from "@/lib/contentFieldOverrides";
 import { SITE_URL } from "@/lib/site";
 import { conditionsData } from "@/data/conditions";
 import { symptomsData } from "@/data/symptoms";
@@ -75,7 +76,7 @@ interface TreatmentPageProps {
 }
 
 export const TreatmentPage = async ({ slug }: TreatmentPageProps) => {
-  const treatment = treatmentsData[slug];
+  const treatment = await getTreatmentWithOverrides(slug);
   const clinicalReview = await getClinicalReviewStatus(`treatments/${slug}`);
 
   if (!treatment) {

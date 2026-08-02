@@ -10,6 +10,7 @@ import { ReferencesList } from "@/components/ReferencesList";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { injectionsData } from "@/data/injections";
 import { getClinicalReviewStatus } from "@/lib/clinicalReview";
+import { getInjectionWithOverrides } from "@/lib/contentFieldOverrides";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -56,7 +57,7 @@ export function getInjectionMetadata(slug: string): Metadata {
 }
 
 export const InjectionPage = async ({ slug }: InjectionPageProps) => {
-  const injection = injectionsData.find((inj) => inj.slug === slug);
+  const injection = await getInjectionWithOverrides(slug);
   if (!injection) {
     notFound();
   }
