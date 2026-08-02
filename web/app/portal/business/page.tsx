@@ -12,6 +12,8 @@ import GenerateImageModal from "@/components/portal/GenerateImageModal";
 import { DashboardFeedbackProvider, useToast, useConfirm, usePrompt } from "@/components/portal/DashboardFeedback";
 import { CommunityReportsTab, CommunityReport } from "@/components/portal/community/CommunityReportsTab";
 import { OverviewTab, NeedsAttentionItem } from "@/components/portal/overview/OverviewTab";
+import { SubscribersTab } from "@/components/portal/subscribers/SubscribersTab";
+import { formatDateSafe } from "@/lib/formatDate";
 import { createClient } from "@/lib/supabase/client";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -56,11 +58,6 @@ interface EducationArticleSummary {
 
 // Guards against rendering "Invalid Date" if an article's stored date string isn't in
 // a format Date can parse — falls back to showing the raw string instead.
-function formatDateSafe(value: string): string {
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString();
-}
-
 function getRenderableImageUrl(suggestedImages?: any[]): string | null {
   if (!suggestedImages || !Array.isArray(suggestedImages) || suggestedImages.length === 0) return null;
   const match = suggestedImages.find(
@@ -2442,67 +2439,14 @@ function BusinessDashboardPageInner() {
 
             {/* TAB: NEWSLETTER */}
             {activeTab === "newsletter" && (
-              <div className="space-y-8">
-                <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <h2 className="text-base font-bold text-white">Verified Subscriber Directory</h2>
-                      <p className="text-xs text-white/60">Total signups: {totalSignups}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={subscriberSearch}
-                        onChange={(e) => setSubscriberSearch(e.target.value)}
-                        placeholder="Search name or email…"
-                        className="bg-dark-overlay-navy border border-white/20 text-white text-xs rounded-lg px-3 py-2 focus:border-clinical-teal focus:outline-none w-full sm:w-56"
-                      />
-                      <button
-                        onClick={handleExportSubscribersCsv}
-                        disabled={filteredSubscribers.length === 0}
-                        className="bg-dark-overlay-navy hover:bg-white/5 text-clinical-teal border border-clinical-teal/40 text-xs px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
-                      >
-                        ⬇ Export CSV
-                      </button>
-                    </div>
-                  </div>
-
-                  {subscribersList.length === 0 ? (
-                    <div className="text-center text-white/40 text-xs py-12 border border-dashed border-white/10 rounded-xl">
-                      No subscribers yet.
-                    </div>
-                  ) : filteredSubscribers.length === 0 ? (
-                    <div className="text-center text-white/40 text-xs py-12 border border-dashed border-white/10 rounded-xl">
-                      No subscribers match "{subscriberSearch}".
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto rounded-xl border border-white/10">
-                      <table className="min-w-full divide-y divide-white/10 text-xs">
-                        <thead className="bg-dark-overlay-navy">
-                          <tr>
-                            <th className="px-4 py-2.5 text-left font-bold text-white/70 uppercase tracking-wider text-[10px]">Name</th>
-                            <th className="px-4 py-2.5 text-left font-bold text-white/70 uppercase tracking-wider text-[10px]">Email</th>
-                            <th className="px-4 py-2.5 text-left font-bold text-white/70 uppercase tracking-wider text-[10px]">Primary Interest</th>
-                            <th className="px-4 py-2.5 text-left font-bold text-white/70 uppercase tracking-wider text-[10px]">Consent Date</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                          {filteredSubscribers.map((s, idx) => (
-                            <tr key={s.id || s.email || idx} className="hover:bg-white/5 transition-colors">
-                              <td className="px-4 py-2.5 text-white/90 font-medium whitespace-nowrap">{s.name || "—"}</td>
-                              <td className="px-4 py-2.5 text-white/70 whitespace-nowrap">{s.email || "—"}</td>
-                              <td className="px-4 py-2.5 text-white/70 whitespace-nowrap">{s.primaryInterest || "—"}</td>
-                              <td className="px-4 py-2.5 text-white/50 font-mono whitespace-nowrap">
-                                {s.consentGivenAt ? formatDateSafe(s.consentGivenAt) : "—"}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <SubscribersTab
+                totalSignups={totalSignups}
+                search={subscriberSearch}
+                onSearchChange={setSubscriberSearch}
+                hasAnySubscribers={subscribersList.length > 0}
+                filteredSubscribers={filteredSubscribers}
+                onExportCsv={handleExportSubscribersCsv}
+              />
             )}
 
             {/* TAB: NEWSLETTER CREATOR */}
