@@ -253,3 +253,14 @@ CREATE POLICY "Service role full access to reports"
 --   SET is_admin = true,
 --       status = 'active';
 -- END $$;
+
+-- ============================================================
+-- 7. Reply notification preference
+-- ============================================================
+-- Lets a member opt out of "someone replied to your post" emails
+-- independently of their separate newsletter_opt_in (marketing) setting.
+-- lib/communityNotifications.ts already handles this column not existing yet
+-- (defaults to "notify") so this migration can be run at any time without
+-- breaking the feature in the meantime.
+ALTER TABLE community_profiles
+  ADD COLUMN IF NOT EXISTS reply_notifications_opt_out BOOLEAN NOT NULL DEFAULT false;

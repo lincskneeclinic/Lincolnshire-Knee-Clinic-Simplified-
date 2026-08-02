@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile, attachDisplayNames } from "@/lib/community";
+import { notifyPostAuthorOfReply } from "@/lib/communityNotifications";
 
 export async function GET(
   request: Request,
@@ -63,6 +64,11 @@ export async function POST(
       console.error("Error creating community reply:", insertError);
       return NextResponse.json({ success: false, message: "Failed to post reply." }, { status: 500 });
     }
+
+    // Fire-and-forget — never blocks or fails the reply on email delivery.
+    notifyPostAuthorOfReply(postId, userId, cleanBody).catch((err) =>
+      console.error("Failed to notify post author of reply:", err)
+    );
 
     return NextResponse.json({ success: true, replyId: reply.id });
   } catch (error) {

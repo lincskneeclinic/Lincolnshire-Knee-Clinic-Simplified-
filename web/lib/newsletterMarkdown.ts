@@ -130,7 +130,35 @@ function buildNewsletterPollHtml(recipientEmailPlaceholder: string): string {
   `;
 }
 
-export function wrapNewsletterEmailTemplate(subject: string, contentHtml: string): string {
+export interface EmailTemplateOptions {
+  // Overrides the "why you received this / unsubscribe" footer paragraph —
+  // needed for transactional emails (e.g. community reply notifications)
+  // where the default "you opted into clinical updates... Unsubscribe
+  // Instantly" copy would be actively misleading (that link unsubscribes
+  // from the marketing newsletter, not whatever transactional email it's
+  // attached to).
+  footerHtml?: string;
+  // The "what should we cover next" poll only makes sense in an actual
+  // newsletter — default true for backward compatibility with existing
+  // callers, set false for transactional emails.
+  includePoll?: boolean;
+}
+
+export function wrapNewsletterEmailTemplate(
+  subject: string,
+  contentHtml: string,
+  options: EmailTemplateOptions = {}
+): string {
+  const { footerHtml, includePoll = true } = options;
+
+  const defaultFooter = `
+    <p style="margin: 24px 0 0 0; font-size: 11px; color: #94a3b8; line-height: 1.5;">
+      You received this email because you opted into clinical updates from Lincolnshire Knee Clinic.
+      <br />
+      <a href="https://lincolnshirekneeclinic.co.uk/newsletter?unsubscribe=true&email={{RECIPIENT_EMAIL}}" style="color: #14b8a6; text-decoration: underline; font-weight: bold;">Unsubscribe Instantly</a>
+    </p>
+  `;
+
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 32px 16px; margin: 0; color: #334155;">
       <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
@@ -145,7 +173,7 @@ export function wrapNewsletterEmailTemplate(subject: string, contentHtml: string
           <td style="padding: 32px 24px;">
             <h2 style="font-family: Georgia, serif; color: #0f172a; font-size: 20px; font-weight: bold; margin-top: 0; margin-bottom: 16px; line-height: 1.4;">${subject}</h2>
             ${contentHtml}
-            ${buildNewsletterPollHtml("{{RECIPIENT_EMAIL}}")}
+            ${includePoll ? buildNewsletterPollHtml("{{RECIPIENT_EMAIL}}") : ""}
           </td>
         </tr>
         <tr>
@@ -156,11 +184,7 @@ export function wrapNewsletterEmailTemplate(subject: string, contentHtml: string
             <div style="margin: 16px 0;">
               <a href="https://lincolnshirekneeclinic.co.uk/book-appointment" style="background-color: #14b8a6; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: bold; display: inline-block;">Book a Consultation</a>
             </div>
-            <p style="margin: 24px 0 0 0; font-size: 11px; color: #94a3b8; line-height: 1.5;">
-              You received this email because you opted into clinical updates from Lincolnshire Knee Clinic.
-              <br />
-              <a href="https://lincolnshirekneeclinic.co.uk/newsletter?unsubscribe=true&email={{RECIPIENT_EMAIL}}" style="color: #14b8a6; text-decoration: underline; font-weight: bold;">Unsubscribe Instantly</a>
-            </p>
+            ${footerHtml || defaultFooter}
           </td>
         </tr>
       </table>

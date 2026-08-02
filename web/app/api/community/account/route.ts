@@ -16,13 +16,26 @@ export async function GET() {
       return NextResponse.json({ success: false, message: "Not logged in." }, { status: 401 });
     }
 
-    const { data: profile } = await supabase
+    // reply_notifications_opt_out may not exist yet if the migration in
+    // supabase_community_setup.sql (section 7) hasn't been run — retry
+    // without it rather than failing the whole account page load.
+    const { data: profile, error: profileError } = await supabase
       .from("community_profiles")
-      .select("display_name, newsletter_opt_in, status, created_at")
+      .select("display_name, newsletter_opt_in, reply_notifications_opt_out, status, created_at")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    return NextResponse.json({ success: true, email: user.email, profile });
+    let finalProfile: Record<string, unknown> | null = profile;
+    if (profileError) {
+      const fallback = await supabase
+        .from("community_profiles")
+        .select("display_name, newsletter_opt_in, status, created_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      finalProfile = fallback.data ? { ...fallback.data, reply_notifications_opt_out: false } : null;
+    }
+
+    return NextResponse.json({ success: true, email: user.email, profile: finalProfile });
   } catch (error) {
     console.error("Error fetching community account:", error);
     return NextResponse.json({ success: false, message: "An error occurred." }, { status: 500 });
@@ -91,6 +104,29 @@ export async function PATCH(request: Request) {
         if (isBrevoConfigured() && user.email) {
           await syncContactToBrevo({ email: user.email, name });
         }
+      }
+    }
+
+    // Handled as its own isolated update (not merged into `updates` above) so
+    // that if the reply_notifications_opt_out column doesn't exist yet (the
+    // migration in supabase_community_setup.sql section 7 hasn't been run),
+    // that failure can't also block an unrelated display-name/newsletter save
+    // bundled into the same request.
+    if (typeof body.replyNotificationsOptOut === "boolean") {
+      const { error: notifError } = await supabase
+        .from("community_profiles")
+        .update({ reply_notifications_opt_out: body.replyNotificationsOptOut })
+        .eq("user_id", user.id);
+
+      if (notifError) {
+        return NextResponse.json(
+          { success: false, message: "Reply notification preferences aren't available yet — please try again shortly." },
+          { status: 503 }
+        );
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return NextResponse.json({ success: true });
       }
     }
 

@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 interface AccountProfile {
   display_name: string;
   newsletter_opt_in: boolean;
+  reply_notifications_opt_out?: boolean;
   status: string;
   created_at: string;
 }
@@ -29,6 +30,10 @@ export default function CommunityAccountPage() {
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirmingDeactivate, setConfirmingDeactivate] = useState(false);
+  const [replyNotificationsOptOut, setReplyNotificationsOptOut] = useState(false);
+  const [notificationSaving, setNotificationSaving] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
+  const [notificationError, setNotificationError] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -43,6 +48,7 @@ export default function CommunityAccountPage() {
         setProfile(data.profile);
         setDisplayName(data.profile?.display_name || "");
         setNewsletterOptIn(Boolean(data.profile?.newsletter_opt_in));
+        setReplyNotificationsOptOut(Boolean(data.profile?.reply_notifications_opt_out));
       }
       setLoading(false);
     };
@@ -86,6 +92,35 @@ export default function CommunityAccountPage() {
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleNotificationPrefSave = async (newValue: boolean) => {
+    setNotificationError("");
+    setNotificationMessage("");
+    setNotificationSaving(true);
+    const previousValue = replyNotificationsOptOut;
+    setReplyNotificationsOptOut(newValue);
+
+    try {
+      const res = await fetch("/api/community/account", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ replyNotificationsOptOut: newValue }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setReplyNotificationsOptOut(previousValue);
+        setNotificationError(data.message || "Failed to save this preference.");
+        return;
+      }
+      setNotificationMessage("Preference saved.");
+    } catch (err) {
+      console.error(err);
+      setReplyNotificationsOptOut(previousValue);
+      setNotificationError("Network error. Please try again.");
+    } finally {
+      setNotificationSaving(false);
     }
   };
 
@@ -248,6 +283,26 @@ export default function CommunityAccountPage() {
               {passwordSaving ? "Updating..." : "Update Password"}
             </button>
           </form>
+        </div>
+
+        <div className="pt-4 border-t border-border-clinical">
+          <h3 className="text-sm font-bold text-deep-navy mb-3">Notifications</h3>
+          <label className="flex items-start gap-3 cursor-pointer text-xs leading-relaxed text-text-main p-3.5 bg-pale-clinical-blue border border-clinical-teal/20 rounded-xl">
+            <input
+              type="checkbox"
+              checked={!replyNotificationsOptOut}
+              disabled={notificationSaving}
+              onChange={(e) => handleNotificationPrefSave(!e.target.checked)}
+              className="mt-0.5 w-4 h-4 text-clinical-teal rounded border-border-clinical focus:ring-clinical-teal shrink-0"
+            />
+            <span>Email me when someone replies to my post.</span>
+          </label>
+          {notificationMessage && (
+            <p className="text-[11px] text-clinical-teal font-medium mt-2">{notificationMessage}</p>
+          )}
+          {notificationError && (
+            <p className="text-[11px] text-status-error font-medium mt-2">{notificationError}</p>
+          )}
         </div>
 
         <button
