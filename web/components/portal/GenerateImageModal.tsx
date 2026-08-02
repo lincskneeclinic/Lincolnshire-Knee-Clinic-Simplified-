@@ -19,7 +19,7 @@ export interface GeneratedImageResult {
   assetId: string;
 }
 
-type ImageFormat = "desktop" | "tablet" | "mobile-square" | "mobile-portrait";
+type ImageFormat = "desktop" | "tablet" | "mobile-square" | "mobile-portrait" | "instagram-portrait";
 type ImageStyle = "illustration" | "photo";
 
 const FORMAT_OPTIONS: { value: ImageFormat; label: string }[] = [
@@ -27,17 +27,22 @@ const FORMAT_OPTIONS: { value: ImageFormat; label: string }[] = [
   { value: "tablet", label: "Tablet (4:3)" },
   { value: "mobile-square", label: "Mobile Square (1:1)" },
   { value: "mobile-portrait", label: "Mobile Portrait (9:16)" },
+  { value: "instagram-portrait", label: "Instagram Feed Portrait (4:5)" },
 ];
 
 export type GenerateImageContentType = "blog" | "story" | "post" | "reel" | "carousel";
 
 // Sensible default aspect ratio per surface — still fully overridable via the
 // Format dropdown, this just saves re-selecting it every time for the common case.
+// Carousel defaults to Instagram's own recommended 4:5 feed portrait (more
+// vertical space in-feed than 1:1, better engagement). "post" is shared
+// across Instagram/Facebook/LinkedIn single-image posts, not Instagram-only,
+// so it keeps the safer cross-platform square default.
 const DEFAULT_FORMAT_BY_CONTENT_TYPE: Record<GenerateImageContentType, ImageFormat> = {
   blog: "desktop",
   story: "mobile-portrait",
   reel: "mobile-portrait",
-  carousel: "mobile-square",
+  carousel: "instagram-portrait",
   post: "mobile-square",
 };
 
@@ -63,6 +68,7 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
   const [format, setFormat] = useState<ImageFormat>("desktop");
   const [style, setStyle] = useState<ImageStyle>("photo");
   const [transparentBackground, setTransparentBackground] = useState(false);
+  const [addLogo, setAddLogo] = useState(false);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
@@ -106,6 +112,9 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
 
     const defaultFormat = DEFAULT_FORMAT_BY_CONTENT_TYPE[contentType];
     setFormat(defaultFormat);
+    // Logo watermark makes sense on social content (branding, anti-repost);
+    // less useful on blog images that already live on the clinic's own site.
+    setAddLogo(contentType !== "blog");
     fetchPrompt(defaultFormat);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -127,7 +136,7 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
         body: JSON.stringify({
           prompt,
           negativePrompt,
-          aspectRatio: { desktop: "16:9", tablet: "4:3", "mobile-square": "1:1", "mobile-portrait": "9:16" }[format],
+          aspectRatio: { desktop: "16:9", tablet: "4:3", "mobile-square": "1:1", "mobile-portrait": "9:16", "instagram-portrait": "4:5" }[format],
           category,
           subjectTitle,
           filename,
@@ -135,6 +144,7 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
           page: contextHints.page,
           section: contextHints.section,
           transparentBackground,
+          addLogo,
           confirmOverwrite,
         }),
       });
@@ -282,6 +292,16 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
                 className="w-4 h-4 accent-clinical-teal cursor-pointer"
               />
               <span className="text-xs text-white/90">Transparent background asset (best effort — not guaranteed by the model)</span>
+            </label>
+
+            <label className="flex items-center gap-2.5 cursor-pointer py-1 select-none">
+              <input
+                type="checkbox"
+                checked={addLogo}
+                onChange={(e) => setAddLogo(e.target.checked)}
+                className="w-4 h-4 accent-clinical-teal cursor-pointer"
+              />
+              <span className="text-xs text-white/90">Add Lincolnshire Knee Clinic logo (top-right)</span>
             </label>
 
             {overwriteInfo && (

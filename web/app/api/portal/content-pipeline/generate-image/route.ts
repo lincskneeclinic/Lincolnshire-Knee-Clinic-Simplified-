@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import sharp from "sharp";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 import { saveMedicalImageAsset } from "@/lib/medicalImageAssets";
 import type { ImageCategory } from "@/lib/medicalImagePrompts";
 
@@ -13,6 +15,43 @@ function getSupabaseConfig() {
 }
 
 export const maxDuration = 60;
+
+// public/ is a standard Next.js convention, always included in whatever gets
+// deployed (unlike the ad-hoc repo-root docs/ folder that caused the earlier
+// Hostinger path bug) — safe to read directly at runtime.
+const LOGO_PATH = path.join(process.cwd(), "public", "brand", "lkc-logo-k-transparent.png");
+let cachedLogoBuffer: Buffer | null = null;
+
+function getLogoBuffer(): Buffer {
+  if (!cachedLogoBuffer) {
+    cachedLogoBuffer = fs.readFileSync(LOGO_PATH);
+  }
+  return cachedLogoBuffer;
+}
+
+// Composites the clinic logo onto the top-right corner as a clean post-
+// processing step, rather than asking the AI model to draw one — AI-drawn
+// logos/text come out garbled (the exact problem the reference docs already
+// warn about for embedded labels). Sized relative to the image's shorter
+// dimension so it stays proportionate across square/portrait/landscape formats.
+async function compositeLogo(imageBuffer: Buffer): Promise<Buffer> {
+  const base = sharp(imageBuffer);
+  const metadata = await base.metadata();
+  const imgWidth = metadata.width || 1024;
+  const imgHeight = metadata.height || 1024;
+  const shorterSide = Math.min(imgWidth, imgHeight);
+
+  const logoTargetWidth = Math.round(shorterSide * 0.14);
+  const logoBuffer = await sharp(getLogoBuffer()).resize({ width: logoTargetWidth }).toBuffer();
+  const logoMetadata = await sharp(logoBuffer).metadata();
+  const logoWidth = logoMetadata.width || logoTargetWidth;
+
+  const margin = Math.round(shorterSide * 0.04);
+  const left = Math.max(0, imgWidth - logoWidth - margin);
+  const top = margin;
+
+  return base.composite([{ input: logoBuffer, left, top }]).webp({ quality: 90 }).toBuffer();
+}
 
 // Dedicated bucket for reusable, clinically-reviewed knee illustrations — kept
 // separate from "content-pipeline-images" (ad-hoc per-run blog/social images)
@@ -29,6 +68,7 @@ const FORMAT_HINT: Record<string, string> = {
   "1:1": "a square (1:1) composition",
   "3:4": "a portrait tablet (3:4) composition",
   "4:3": "a landscape tablet (4:3) composition",
+  "4:5": "a portrait Instagram feed (4:5) composition",
   "9:16": "a tall vertical mobile (9:16) composition",
   "16:9": "a wide landscape desktop (16:9) composition",
 };
@@ -95,6 +135,7 @@ export async function POST(request: Request) {
       page,
       section,
       transparentBackground,
+      addLogo,
       confirmOverwrite,
     } = await request.json();
 
@@ -148,7 +189,15 @@ export async function POST(request: Request) {
     }
 
     const sourceBuffer = Buffer.from(imageBytesBase64, "base64");
-    const webpBuffer = await sharp(sourceBuffer).webp({ quality: 90 }).toBuffer();
+    let webpBuffer: Buffer = await sharp(sourceBuffer).webp({ quality: 90 }).toBuffer();
+
+    if (addLogo) {
+      try {
+        webpBuffer = await compositeLogo(webpBuffer);
+      } catch (err) {
+        console.error("Logo overlay failed, continuing without it:", err);
+      }
+    }
 
     try {
       await fetch(`${config.url}/storage/v1/bucket`, {

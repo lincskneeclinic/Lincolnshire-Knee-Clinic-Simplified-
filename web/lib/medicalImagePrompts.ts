@@ -314,13 +314,14 @@ function slugify(text: string): string {
 // — the docs are the single source of truth for this, not this file.
 export type ImageStyle = "illustration" | "photo";
 
-export type ImageFormat = "desktop" | "tablet" | "mobile-square" | "mobile-portrait";
+export type ImageFormat = "desktop" | "tablet" | "mobile-square" | "mobile-portrait" | "instagram-portrait";
 
 export const FORMAT_ASPECT_RATIOS: Record<ImageFormat, string> = {
   desktop: "16:9",
   tablet: "4:3",
   "mobile-square": "1:1",
   "mobile-portrait": "9:16",
+  "instagram-portrait": "4:5",
 };
 
 export const FORMAT_LABELS: Record<ImageFormat, string> = {
@@ -328,6 +329,7 @@ export const FORMAT_LABELS: Record<ImageFormat, string> = {
   tablet: "Tablet (4:3)",
   "mobile-square": "Mobile Square (1:1)",
   "mobile-portrait": "Mobile Portrait (9:16)",
+  "instagram-portrait": "Instagram Feed Portrait (4:5)",
 };
 
 export interface BuiltPrompt {
