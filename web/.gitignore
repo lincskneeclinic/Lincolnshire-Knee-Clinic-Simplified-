@@ -40,8 +40,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# large media files
-/public/videos/
+# large media files — dev-only videos stay out of git by default, but
+# production-needed assets are explicitly allowlisted below (kept small
+# enough via ffmpeg compression to be reasonable to commit directly).
+/public/videos/*
+!/public/videos/arthrosamid-patient-video.mp4
 
 # runtime data files (never commit real subscriber/patient data)
 /data/dynamic-patients.json
