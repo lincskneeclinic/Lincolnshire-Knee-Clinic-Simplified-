@@ -1,4 +1,5 @@
 import { ContentPipelineRun } from "./contentPipeline";
+import { sendBrevoMail } from "./brevo";
 
 export interface GraphMailPayload {
   message: {
@@ -96,7 +97,10 @@ export async function sendGraphMail(subject: string, htmlBody: string, recipient
 }
 
 /**
- * Sends an email alert via Microsoft Graph Mail API when a content pipeline run requires clinician review.
+ * Sends an email alert when a content pipeline run requires clinician review.
+ * Prefers Brevo (already configured with a real API key) over MS Graph
+ * (credentials never actually filled in) — same provider-preference pattern
+ * already used in topicNotify.ts.
  */
 export async function sendContentPipelineNotificationEmail(
   run: ContentPipelineRun,
@@ -141,6 +145,11 @@ export async function sendContentPipelineNotificationEmail(
     </div>
   `;
 
+  const hasBrevo = Boolean(process.env.BREVO_API_KEY);
+  if (hasBrevo) {
+    const result = await sendBrevoMail(subject, htmlBody, recipientEmail);
+    return result.success;
+  }
   return sendGraphMail(subject, htmlBody, recipientEmail);
 }
 

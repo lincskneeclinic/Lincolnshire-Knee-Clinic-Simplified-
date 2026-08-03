@@ -101,7 +101,7 @@ export interface SendBrevoMailResult {
 export async function sendBrevoMail(
   subject: string,
   htmlContent: string,
-  toEmail: string,
+  toEmail: string | string[],
   toName?: string
 ): Promise<SendBrevoMailResult> {
   const apiKey = process.env.BREVO_API_KEY;
@@ -109,6 +109,8 @@ export async function sendBrevoMail(
     console.warn("[Brevo Smtp Mail] NOT SENT — BREVO_API_KEY not configured.");
     return { success: false, error: "BREVO_API_KEY is not configured." };
   }
+
+  const recipients = [...new Set(Array.isArray(toEmail) ? toEmail : [toEmail])].filter(Boolean);
 
   try {
     const res = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -123,14 +125,14 @@ export async function sendBrevoMail(
           name: process.env.BREVO_SENDER_NAME || "Lincolnshire Knee Clinic",
           email: process.env.BREVO_SENDER_EMAIL || "info@lincolnshirekneeclinic.co.uk",
         },
-        to: [{ email: toEmail, name: toName || "" }],
+        to: recipients.map((email) => ({ email, name: toName || "" })),
         subject,
         htmlContent,
       }),
     });
 
     if (res.ok) {
-      console.log(`[Brevo Smtp Mail] Email campaign sent successfully to ${toEmail}`);
+      console.log(`[Brevo Smtp Mail] Email campaign sent successfully to ${recipients.join(", ")}`);
       return { success: true };
     } else {
       const errorBody = await res.text();
