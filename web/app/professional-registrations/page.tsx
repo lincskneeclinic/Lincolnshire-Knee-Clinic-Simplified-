@@ -63,7 +63,7 @@ export default function ProfessionalRegistrations() {
 
         <p className="text-xs text-text-secondary">
           For verification of registrations or questions regarding specialist orthopaedic qualifications, 
-          please contact our office at admin@lincsknee.com.
+          please contact our office at info@lincsknee.com.
         </p>
       </div>
     </div>

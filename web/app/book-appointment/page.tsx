@@ -205,8 +205,8 @@ export default function BookAppointment() {
             Contact Page
           </a>{" "}
           or contact us directly at{" "}
-          <a href="mailto:admin@lincsknee.com" className="font-bold text-deep-navy hover:text-clinical-teal">
-            admin@lincsknee.com
+          <a href="mailto:info@lincsknee.com" className="font-bold text-deep-navy hover:text-clinical-teal">
+            info@lincsknee.com
           </a>.
         </p>
       </div>

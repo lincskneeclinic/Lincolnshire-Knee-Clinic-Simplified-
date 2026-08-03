@@ -80,7 +80,7 @@ export default function Contact() {
             "@type": "ContactPoint",
             "telephone": "+44-7770-473437",
             "contactType": "customer service",
-            "email": "admin@lincsknee.com",
+            "email": "info@lincsknee.com",
             "availableLanguage": "English"
           }
         ]
@@ -113,7 +113,7 @@ export default function Contact() {
               </p>
               <p>
                 <strong className="text-text-primary block">Email:</strong>
-                admin@lincsknee.com
+                info@lincsknee.com
               </p>
               <p>
                 <strong className="text-text-primary block">WhatsApp Business:</strong>

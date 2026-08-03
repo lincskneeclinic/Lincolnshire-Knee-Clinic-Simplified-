@@ -56,7 +56,7 @@ export default function HospitalAffiliations() {
 
         <p className="text-xs text-text-secondary">
           If you have questions regarding admitting privileges, or wish to schedule diagnostic imaging 
-          at a specific hospital partner, please contact booking support at admin@lincsknee.com.
+          at a specific hospital partner, please contact booking support at info@lincsknee.com.
         </p>
       </div>
     </div>

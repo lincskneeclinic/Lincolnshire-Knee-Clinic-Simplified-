@@ -192,7 +192,7 @@ export const Footer: React.FC = () => {
               <svg className="w-4 h-4 text-clinical-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              <span className="text-sm text-[#F0F6F8] font-semibold">admin@lincsknee.com</span>
+              <span className="text-sm text-[#F0F6F8] font-semibold">info@lincsknee.com</span>
             </div>
           </div>
           <div className="text-xs text-status-error bg-status-error-bg border border-status-error/10 p-3 rounded-lg mt-1">

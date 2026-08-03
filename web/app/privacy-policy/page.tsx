@@ -48,9 +48,9 @@ export default function PrivacyPolicy() {
             like to contact our Data Protection Officer, please contact us at:
           </p>
           <ul className="list-disc pl-5 mt-2 space-y-1">
-            <li>Email: <strong>admin@lincsknee.com</strong></li>
+            <li>Email: <strong>info@lincsknee.com</strong></li>
             <li>Telephone: <strong>07770 473437</strong></li>
-            <li>Data Protection Officer: <strong>Data Protection Officer (admin@lincsknee.com)</strong></li>
+            <li>Data Protection Officer: <strong>Data Protection Officer (info@lincsknee.com)</strong></li>
           </ul>
         </div>
 
@@ -225,7 +225,7 @@ export default function PrivacyPolicy() {
           </p>
           <ul className="list-disc pl-5 mt-2 space-y-1">
             <li>Click the unsubscribe link in any update email we send.</li>
-            <li>Contact us directly at <strong>admin@lincsknee.com</strong>.</li>
+            <li>Contact us directly at <strong>info@lincsknee.com</strong>.</li>
           </ul>
           <p className="mt-2">
             On receipt of your unsubscribe request, we will cease all marketing communications immediately.
@@ -292,7 +292,7 @@ export default function PrivacyPolicy() {
           </ul>
           <p className="mt-2">
             To exercise any of these rights, please contact us at{" "}
-            <strong>admin@lincsknee.com</strong>.
+            <strong>info@lincsknee.com</strong>.
           </p>
           <p className="mt-2 text-xs text-text-muted italic">
             You also have the right to lodge a complaint with the Information Commissioner's Office (ICO)

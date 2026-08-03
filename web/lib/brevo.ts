@@ -123,7 +123,7 @@ export async function sendBrevoMail(
       body: JSON.stringify({
         sender: {
           name: process.env.BREVO_SENDER_NAME || "Lincolnshire Knee Clinic",
-          email: process.env.BREVO_SENDER_EMAIL || "info@lincolnshirekneeclinic.co.uk",
+          email: process.env.BREVO_SENDER_EMAIL || "info@lincsknee.com",
         },
         to: recipients.map((email) => (toName ? { email, name: toName } : { email })),
         subject,

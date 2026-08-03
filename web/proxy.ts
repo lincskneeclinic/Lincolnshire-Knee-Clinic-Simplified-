@@ -33,7 +33,7 @@ export async function proxy(request: NextRequest) {
         <body>
           <div class="box">
             <h1>Lincolnshire Knee Clinic</h1>
-            <p>Our website is currently being updated. For appointments or enquiries, please call <a href="tel:07770473437">07770 473437</a> or email <a href="mailto:admin@lincsknee.com">admin@lincsknee.com</a>.</p>
+            <p>Our website is currently being updated. For appointments or enquiries, please call <a href="tel:07770473437">07770 473437</a> or email <a href="mailto:info@lincsknee.com">info@lincsknee.com</a>.</p>
           </div>
         </body>
         </html>

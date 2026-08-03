@@ -88,7 +88,7 @@ export const maintenanceHtmlString = `<!DOCTYPE html>
     <span class="badge">Notice</span>
     <h1>Lincolnshire Knee Clinic</h1>
     <p>
-      Lincolnshire Knee Clinic &mdash; our website is currently being updated. For appointments or enquiries, please call <a href="tel:07770473437">07770 473437</a> or email <a href="mailto:admin@lincsknee.com">admin@lincsknee.com</a>.
+      Lincolnshire Knee Clinic &mdash; our website is currently being updated. For appointments or enquiries, please call <a href="tel:07770473437">07770 473437</a> or email <a href="mailto:info@lincsknee.com">info@lincsknee.com</a>.
     </p>
   </div>
 </body>
@@ -111,8 +111,8 @@ export function MaintenancePage() {
             07770 473437
           </a>{" "}
           or email{" "}
-          <a href="mailto:admin@lincsknee.com" className="text-cyan-400 font-semibold hover:underline">
-            admin@lincsknee.com
+          <a href="mailto:info@lincsknee.com" className="text-cyan-400 font-semibold hover:underline">
+            info@lincsknee.com
           </a>
           .
         </p>

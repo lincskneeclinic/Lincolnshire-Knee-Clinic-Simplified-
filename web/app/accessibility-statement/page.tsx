@@ -61,7 +61,7 @@ export default function AccessibilityStatement() {
           have difficulty navigating schedules, or require information in alternative formats, please contact us at:
         </p>
         <ul className="list-disc pl-5 space-y-1 text-text-primary">
-          <li>Email: admin@lincsknee.com</li>
+          <li>Email: info@lincsknee.com</li>
           <li>Phone: 07770 473437</li>
           <li>Postal Address: Correspondence address available on request.</li>
         </ul>
