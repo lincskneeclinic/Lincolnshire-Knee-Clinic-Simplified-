@@ -21,7 +21,8 @@ export interface GraphMailPayload {
  * when Graph credentials are not configured, so callers still get a visible record
  * of the notification in local/dev environments.
  */
-export async function sendGraphMail(subject: string, htmlBody: string, recipientEmail: string): Promise<boolean> {
+export async function sendGraphMail(subject: string, htmlBody: string, recipientEmail: string | string[]): Promise<boolean> {
+  const recipients = [...new Set((Array.isArray(recipientEmail) ? recipientEmail : [recipientEmail]).filter(Boolean))];
   const tenantId = process.env.MS_GRAPH_TENANT_ID;
   const clientId = process.env.MS_GRAPH_CLIENT_ID;
   const clientSecret = process.env.MS_GRAPH_CLIENT_SECRET;
@@ -58,7 +59,7 @@ export async function sendGraphMail(subject: string, htmlBody: string, recipient
         message: {
           subject,
           body: { contentType: "HTML", content: htmlBody },
-          toRecipients: [{ emailAddress: { address: recipientEmail } }]
+          toRecipients: recipients.map((address) => ({ emailAddress: { address } }))
         },
         saveToSentItems: true
       };
@@ -73,7 +74,7 @@ export async function sendGraphMail(subject: string, htmlBody: string, recipient
       });
 
       if (mailRes.ok) {
-        console.log(`[Graph Mail] Notification email dispatched successfully to ${recipientEmail}`);
+        console.log(`[Graph Mail] Notification email dispatched successfully to ${recipients.join(", ")}`);
         return true;
       } else {
         console.error("[Graph Mail] Send mail HTTP error:", await mailRes.text());
@@ -89,7 +90,7 @@ export async function sendGraphMail(subject: string, htmlBody: string, recipient
   // Logged as a warning (not a success) so a missing config doesn't fail silently.
   console.warn(`[Graph Mail] NOT SENT — MS_GRAPH_TENANT_ID/CLIENT_ID/CLIENT_SECRET not configured. Would have sent:
     Subject: ${subject}
-    To: ${recipientEmail}`);
+    To: ${recipients.join(", ")}`);
 
   return false;
 }
@@ -101,7 +102,7 @@ export async function sendContentPipelineNotificationEmail(
   run: ContentPipelineRun,
   stage: "blog" | "social"
 ): Promise<boolean> {
-  const recipientEmail = process.env.CLINIC_ADMIN_EMAIL || "info@lincsknee.com";
+  const recipientEmail = [process.env.CLINIC_ADMIN_EMAIL || "info@lincsknee.com", "admin@lincsknee.com"];
   const stageTitle = stage === "blog" ? "Blog Article Draft" : "Multi-Platform Social Media Captions";
   const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/portal/business?tab=pipeline&runId=${run.run_id}`;
   const flagsCount = run.blog_drafts[0]?.flags?.length || 0;
