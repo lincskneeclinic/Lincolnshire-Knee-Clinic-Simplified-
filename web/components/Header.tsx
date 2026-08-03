@@ -10,6 +10,24 @@ export const Header: React.FC = () => {
   const [logoError, setLogoError] = useState(false);
   const pathname = usePathname();
 
+  // Lock page scroll behind the drawer while it's open — standard off-canvas
+  // nav behaviour, and also means the backdrop can't reveal a scrolled-away
+  // page underneath.
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = previousOverflow;
+      };
+    }
+  }, [mobileMenuOpen]);
+
+  // Close on route change — otherwise the drawer stays open behind the new page.
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [indicatorStyle, setIndicatorStyle] = useState<{
     left: number;
@@ -231,12 +249,47 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Drawer (Collapsed Layout) */}
-      {mobileMenuOpen && (
-        <div
-          id="mobile-menu"
-          className="xl:hidden absolute top-full left-0 right-0 w-full bg-white border-b border-border-clinical shadow-2xl py-5 px-5 flex flex-col gap-4 z-50 max-h-[85vh] overflow-y-auto"
-        >
+      {/* Backdrop — dims the rest of the page instead of covering it solid,
+          so the page is still visible behind the drawer. Clicking it closes
+          the menu. Always rendered (not conditionally mounted) so the
+          opacity transition can actually animate; pointer-events disabled
+          while hidden so it doesn't block clicks on the page underneath. */}
+      <div
+        className={`xl:hidden fixed inset-0 bg-deep-navy/50 transition-opacity duration-300 z-[45] ${
+          mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setMobileMenuOpen(false)}
+        aria-hidden="true"
+      />
+
+      {/* Mobile/Tablet Drawer — a left-side box over a dimmed page, not a
+          full-width opaque panel, so the rest of the page stays visible
+          behind it. Always rendered (off-screen via translate-x when
+          closed) so the slide-in/out can transition smoothly. */}
+      <div
+        id="mobile-menu"
+        className={`xl:hidden fixed inset-y-0 left-0 w-[82%] max-w-[320px] bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Site navigation"
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border-clinical shrink-0">
+          <span className="font-serif text-sm font-bold text-deep-navy">Menu</span>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="min-w-[40px] min-h-[40px] flex items-center justify-center text-text-secondary hover:text-deep-navy rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal"
+            aria-label="Close navigation menu"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto py-5 px-5 flex flex-col gap-4">
           <nav className="flex flex-col gap-2.5" aria-label="Mobile navigation">
             {mainNavigation.map((link, idx) => (
               <Link
@@ -283,7 +336,7 @@ export const Header: React.FC = () => {
             </Button>
           </div>
         </div>
-      )}
+      </div>
     </header>
   );
 };

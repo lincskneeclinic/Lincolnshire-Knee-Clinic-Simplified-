@@ -16,9 +16,22 @@ const LI_STYLE = "margin-bottom: 6px; font-size: 14px; color: #475569;";
 const UL_STYLE = "margin-top: 8px; margin-bottom: 8px; padding-left: 20px;";
 const A_STYLE = "color: #0d9488; font-weight: bold; text-decoration: underline;";
 
+/**
+ * A root-relative link like "/education/knee-arthritis/..." resolves fine
+ * when the same markdown is rendered on the /newsletter page (browser
+ * resolves it against the current origin), but breaks in an actual email —
+ * there's no "current page" to resolve against, so clients either fail to
+ * open it or resolve it against something unrelated. Absolutize anything
+ * that isn't already a full URL.
+ */
+function absolutizeUrl(url: string): string {
+  if (/^(https?:|mailto:|tel:)/i.test(url)) return url;
+  return `${SITE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
 function formatInline(text: string): string {
   return text
-    .replace(/\[(.*?)\]\((.*?)\)/g, `<a href="$2" style="${A_STYLE}">$1</a>`)
+    .replace(/\[(.*?)\]\((.*?)\)/g, (_match, label, url) => `<a href="${absolutizeUrl(url)}" style="${A_STYLE}">${label}</a>`)
     .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #0f172a;">$1</strong>');
 }
 

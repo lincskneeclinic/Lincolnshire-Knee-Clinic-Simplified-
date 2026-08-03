@@ -122,7 +122,7 @@ CLOSING:
     sections.push(`### New on the Blog\n\n${blogIntro}`);
     sections.push(
       recentArticles
-        .map((a) => `- [${a.title}](${SITE_URL}/clinical-knowledge-hub/${a.slug}) — ${a.description}`)
+        .map((a) => `- [${a.title}](${SITE_URL}/education/${a.category}/${a.slug}) — ${a.description}`)
         .join("\n")
     );
   }

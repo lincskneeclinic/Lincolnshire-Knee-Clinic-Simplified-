@@ -1155,7 +1155,12 @@ function BusinessDashboardPageInner() {
   };
 
   const handleDeleteNewsletter = async (editionId: string) => {
-    if (!(await confirmAction("Are you sure you want to permanently discard this newsletter draft?", { confirmLabel: "Discard", danger: true }))) return;
+    const edition = newsletterEditions.find((e) => e.id === editionId);
+    const confirmMessage =
+      edition?.status === "sent"
+        ? "Are you sure you want to permanently remove this newsletter? It will disappear from the public archive at lincsknee.com/newsletter immediately, and this cannot be undone."
+        : "Are you sure you want to permanently discard this newsletter draft?";
+    if (!(await confirmAction(confirmMessage, { confirmLabel: edition?.status === "sent" ? "Remove" : "Discard", danger: true }))) return;
     setIsDiscardingNewsletter(true);
     try {
       const res = await fetch("/api/portal/newsletter/delete", {

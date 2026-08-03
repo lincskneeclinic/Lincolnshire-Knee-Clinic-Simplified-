@@ -229,7 +229,7 @@ export function NewsletterCreatorTab({
                     onClick={() => onDeleteNewsletter(selectedNewsletter.id)}
                     className="text-white/60 hover:text-rose-400 text-xs px-3 py-1.5 rounded-lg border border-white/10 hover:border-rose-500/30 transition-all cursor-pointer"
                   >
-                    Discard Draft
+                    {selectedNewsletter.status === "sent" ? "🗑️ Remove from Website" : "Discard Draft"}
                   </button>
                   <button
                     type="button"
