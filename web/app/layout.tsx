@@ -28,6 +28,17 @@ const sourceSerif = Source_Serif_4({
   weight: ["600", "700"],
 });
 
+// Bounds how long a static page's cached HTML (and the CDN's copy of it) can
+// possibly stay stale after a deploy. Without this, Next.js's default for a
+// fully static page is "cache forever" (Cache-Control: s-maxage=31536000 —
+// one year), which let a CDN edge cache keep serving a page referencing a
+// previous build's now-deleted JS/CSS chunk hashes for hours after multiple
+// newer deploys had already shipped, breaking the page entirely for whoever
+// hit that cached copy. This does not retroactively fix an already-cached
+// stale response (that still needs an explicit CDN purge) — it only bounds
+// how long a *future* staleness window can last.
+export const revalidate = 3600;
+
 const DEFAULT_TITLE = "Lincolnshire Knee Clinic - Consultant-Led Knee Care";
 const DEFAULT_DESCRIPTION =
   "Specialist assessment and treatment for knee pain, knee arthritis, meniscus tears, sports knee injuries, knee injections, and knee replacement concerns in Lincolnshire.";
