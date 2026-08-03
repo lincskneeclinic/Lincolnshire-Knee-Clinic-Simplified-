@@ -11,5 +11,8 @@ export async function GET() {
     MS_GRAPH_CLIENT_SECRET: Boolean(process.env.MS_GRAPH_CLIENT_SECRET),
     MS_GRAPH_SENDER_EMAIL: process.env.MS_GRAPH_SENDER_EMAIL || null,
     CLINIC_ADMIN_EMAIL: process.env.CLINIC_ADMIN_EMAIL || null,
+    BREVO_API_KEY: Boolean(process.env.BREVO_API_KEY),
+    BREVO_SENDER_EMAIL: process.env.BREVO_SENDER_EMAIL || null,
+    BREVO_SENDER_NAME: process.env.BREVO_SENDER_NAME || null,
   });
 }
