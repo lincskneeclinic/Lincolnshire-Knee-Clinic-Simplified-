@@ -125,7 +125,7 @@ export async function sendBrevoMail(
           name: process.env.BREVO_SENDER_NAME || "Lincolnshire Knee Clinic",
           email: process.env.BREVO_SENDER_EMAIL || "info@lincolnshirekneeclinic.co.uk",
         },
-        to: recipients.map((email) => ({ email, name: toName || "" })),
+        to: recipients.map((email) => (toName ? { email, name: toName } : { email })),
         subject,
         htmlContent,
       }),
