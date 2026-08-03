@@ -16,8 +16,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ run
       return NextResponse.json({ success: false, error: `Run with ID '${runId}' not found.` }, { status: 404 });
     }
 
-    const sent = await sendContentPipelineNotificationEmail(run, stage);
-    return NextResponse.json({ success: true, sent });
+    const result = await sendContentPipelineNotificationEmail(run, stage);
+    return NextResponse.json({ success: true, sent: result.success, sendError: result.error });
   } catch (error: any) {
     console.error("Error in POST /api/portal/content-pipeline/runs/:runId/resend-notification:", error);
     return NextResponse.json({ success: false, error: error.message || "Failed to resend notification" }, { status: 500 });

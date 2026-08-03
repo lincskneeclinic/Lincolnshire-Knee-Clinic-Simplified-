@@ -105,7 +105,7 @@ export async function sendGraphMail(subject: string, htmlBody: string, recipient
 export async function sendContentPipelineNotificationEmail(
   run: ContentPipelineRun,
   stage: "blog" | "social"
-): Promise<boolean> {
+): Promise<{ success: boolean; error?: string }> {
   const recipientEmail = [process.env.CLINIC_ADMIN_EMAIL || "info@lincsknee.com", "admin@lincsknee.com"];
   const stageTitle = stage === "blog" ? "Blog Article Draft" : "Multi-Platform Social Media Captions";
   const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/portal/business?tab=pipeline&runId=${run.run_id}`;
@@ -147,10 +147,10 @@ export async function sendContentPipelineNotificationEmail(
 
   const hasBrevo = Boolean(process.env.BREVO_API_KEY);
   if (hasBrevo) {
-    const result = await sendBrevoMail(subject, htmlBody, recipientEmail);
-    return result.success;
+    return sendBrevoMail(subject, htmlBody, recipientEmail);
   }
-  return sendGraphMail(subject, htmlBody, recipientEmail);
+  const sent = await sendGraphMail(subject, htmlBody, recipientEmail);
+  return { success: sent };
 }
 
 export interface ContactEnquiry {
