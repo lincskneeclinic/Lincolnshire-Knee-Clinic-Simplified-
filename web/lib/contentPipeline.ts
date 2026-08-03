@@ -429,7 +429,7 @@ async function patchRunInStorage(run: ContentPipelineRun): Promise<void> {
 // AI pipeline never gets killed by the hosting platform's reverse-proxy request
 // timeout (Hostinger's Node.js hosting, unlike Vercel, enforces one regardless of
 // any in-app maxDuration config).
-export async function createPendingPipelineRun(customTopic?: string): Promise<ContentPipelineRun> {
+export async function createPendingPipelineRun(customTopic?: string, triggeredBy: string = "manual"): Promise<ContentPipelineRun> {
   let selectedTopic = customTopic?.trim();
   const topicSource = customTopic?.trim() ? "custom_user_input" : "trending_enquiry";
 
@@ -461,7 +461,7 @@ export async function createPendingPipelineRun(customTopic?: string): Promise<Co
     id: newRunId,
     run_id: newRunId,
     topic: selectedTopic,
-    triggered_by: "manual",
+    triggered_by: triggeredBy,
     topic_source: topicSource,
     status: "researching",
     research_brief: null,

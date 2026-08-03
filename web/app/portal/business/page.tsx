@@ -863,6 +863,14 @@ function BusinessDashboardPageInner() {
     }
   }, []);
 
+  // Fetch once on dashboard mount regardless of which tab is active — the
+  // Overview tab's "Content Runs Needing Action" count reads from this same
+  // pipelineRuns state, so without this it always shows 0 until the Pipeline
+  // tab has been opened at least once in the session.
+  useEffect(() => {
+    fetchPipelineRuns();
+  }, [fetchPipelineRuns]);
+
   // Permanently deletes a draft that isn't worth continuing — e.g. from the "Needs
   // Your Attention" list when you decide not to pursue it further.
   const handleDeletePipelineRun = async (runId: string, topic: string) => {
