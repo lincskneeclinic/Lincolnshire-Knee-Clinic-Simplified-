@@ -1,5 +1,6 @@
 import { ContentPipelineRun } from "./contentPipeline";
 import { sendBrevoMail } from "./brevo";
+import { SITE_URL } from "./site";
 
 export interface GraphMailPayload {
   message: {
@@ -108,7 +109,7 @@ export async function sendContentPipelineNotificationEmail(
 ): Promise<{ success: boolean; error?: string }> {
   const recipientEmail = [process.env.CLINIC_ADMIN_EMAIL || "info@lincsknee.com", "admin@lincsknee.com"];
   const stageTitle = stage === "blog" ? "Blog Article Draft" : "Multi-Platform Social Media Captions";
-  const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/portal/business?tab=pipeline&runId=${run.run_id}`;
+  const dashboardLink = `${SITE_URL}/portal/business?tab=pipeline&runId=${run.run_id}`;
   const flagsCount = run.blog_drafts[0]?.flags?.length || 0;
 
   const subject = `[Action Required] Content Pipeline Review: ${run.topic.substring(0, 60)} (${stageTitle})`;
