@@ -22,6 +22,7 @@ import { PipelineTab } from "@/components/portal/pipeline/PipelineTab";
 import { formatDateSafe } from "@/lib/formatDate";
 import { RunDetailTab, cleanHeadingBugs } from "@/lib/contentPipelineFormatting";
 import { createClient } from "@/lib/supabase/client";
+import { SITE_URL } from "@/lib/site";
 
 export default function BusinessDashboardPage() {
   return (
@@ -1062,11 +1063,11 @@ function BusinessDashboardPageInner() {
             <td style="background-color: #f1f5f9; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 11px; color: #64748b;">
               <p style="margin: 0 0 4px 0; font-weight: bold; color: #475569;">Lincolnshire Knee Clinic</p>
               <p style="margin: 0 0 12px 0;">Consultant-led orthopaedic care and joint preservation pathways across Lincolnshire.</p>
-              <a href="https://lincolnshirekneeclinic.co.uk/book-appointment" target="_blank" style="background-color: #14b8a6; color: #ffffff; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block;">Book a Consultation</a>
+              <a href="${SITE_URL}/book-appointment" target="_blank" style="background-color: #14b8a6; color: #ffffff; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block;">Book a Consultation</a>
               <p style="margin: 16px 0 0 0; color: #94a3b8;">
                 You received this email because you opted into updates from Lincolnshire Knee Clinic.
                 <br />
-                <a href="https://lincolnshirekneeclinic.co.uk/newsletter?unsubscribe=true&email=patient@example.com" target="_blank" style="color: #14b8a6; text-decoration: underline; font-weight: bold;">Unsubscribe Instantly</a>
+                <a href="${SITE_URL}/newsletter?unsubscribe=true&email=patient@example.com" target="_blank" style="color: #14b8a6; text-decoration: underline; font-weight: bold;">Unsubscribe Instantly</a>
               </p>
             </td>
           </tr>

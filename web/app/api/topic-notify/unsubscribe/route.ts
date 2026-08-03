@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { unsubscribeFromAllTopics } from "@/lib/topicNotify";
+import { SITE_URL } from "@/lib/site";
 
 // GET (not POST) because this is reached by clicking a plain <a> link inside
 // an email — same reasoning as app/api/newsletter/poll/vote/route.ts.
@@ -28,7 +29,7 @@ export async function GET(request: Request) {
   <div class="box">
     <h1>You've been unsubscribed</h1>
     <p>You won't receive any more topic-update emails from Lincolnshire Knee Clinic.</p>
-    <p><a href="https://lincolnshirekneeclinic.co.uk">Return to the site</a></p>
+    <p><a href="${SITE_URL}">Return to the site</a></p>
   </div>
 </body>
 </html>`;

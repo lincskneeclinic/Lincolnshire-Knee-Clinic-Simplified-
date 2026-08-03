@@ -3,9 +3,9 @@ import { blogArticles } from "@/data/articles";
 import { getStoreValue } from "./dataStore";
 import { convertNewsletterMarkdownToHtml } from "./newsletterMarkdown";
 import { getTrendingCommunityTopics } from "./communityDigest";
+import { SITE_URL } from "./site";
 
 const apiKey = process.env.GEMINI_API_KEY;
-const SITE_URL = "https://lincolnshirekneeclinic.co.uk";
 const RECENT_DAYS = 30;
 const MIN_ARTICLES = 3;
 

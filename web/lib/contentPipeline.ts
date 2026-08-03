@@ -10,6 +10,7 @@ import { writeSocialCaptions, rewriteSocialCaption, rewriteCarouselSlides } from
 import { syncPollTopicsIntoDynamicTopics } from "./pollTopicsSync";
 import { notifyTopicSubscribers } from "./topicNotify";
 import { blogArticles } from "@/data/articles";
+import { SITE_URL } from "./site";
 
 export type RunStatus =
   | "researching"
@@ -876,7 +877,7 @@ export async function submitPipelineReview(
         // Fire-and-forget: never blocks or fails the review submission.
         const sourceArticle = blogArticles[sourceArticleSlug];
         if (sourceArticle?.relatedTopicSlugs?.length) {
-          const articleUrl = `https://lincolnshirekneeclinic.co.uk/education/${sourceArticle.category}/${sourceArticleSlug}`;
+          const articleUrl = `${SITE_URL}/education/${sourceArticle.category}/${sourceArticleSlug}`;
           notifyTopicSubscribers(sourceArticle.relatedTopicSlugs, latestDraft.title, articleUrl).catch((err) =>
             console.error("Failed to notify topic subscribers:", err)
           );

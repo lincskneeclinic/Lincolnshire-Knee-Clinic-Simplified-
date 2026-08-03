@@ -2,8 +2,7 @@ import { createAdminClient } from "./supabase/admin";
 import { sendBrevoMail } from "./brevo";
 import { sendGraphMail } from "./graphMail";
 import { wrapNewsletterEmailTemplate, markdownToEmailHtml } from "./newsletterMarkdown";
-
-const SITE_URL = "https://lincolnshirekneeclinic.co.uk";
+import { SITE_URL } from "./site";
 
 /**
  * Emails a community post's author when someone else replies to it. This is a

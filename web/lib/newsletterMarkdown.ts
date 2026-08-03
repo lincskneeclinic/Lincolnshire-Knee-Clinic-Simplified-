@@ -1,3 +1,5 @@
+import { SITE_URL } from "@/lib/site";
+
 // Shared between the /newsletter page's interactive poll widget and the
 // clickable poll embedded in the sent email, so votes from either source
 // land on the same option keys in the newsletter-poll KV store.
@@ -7,8 +9,6 @@ export const NEWSLETTER_POLL_TOPICS = [
   "Cartilage Repair vs Microfracture Surgery",
   "Returning to Golf & Tennis After Knee Replacement",
 ];
-
-const SITE_URL = "https://lincolnshirekneeclinic.co.uk";
 
 const P_STYLE = "margin-top: 12px; margin-bottom: 12px; font-size: 15px; line-height: 1.6; color: #334155;";
 const H3_STYLE = "color: #0c4a6e; font-family: Georgia, serif; font-size: 18px; font-weight: bold; margin-top: 24px; margin-bottom: 12px;";
@@ -155,7 +155,7 @@ export function wrapNewsletterEmailTemplate(
     <p style="margin: 24px 0 0 0; font-size: 11px; color: #94a3b8; line-height: 1.5;">
       You received this email because you opted into clinical updates from Lincolnshire Knee Clinic.
       <br />
-      <a href="https://lincolnshirekneeclinic.co.uk/newsletter?unsubscribe=true&email={{RECIPIENT_EMAIL}}" style="color: #14b8a6; text-decoration: underline; font-weight: bold;">Unsubscribe Instantly</a>
+      <a href="${SITE_URL}/newsletter?unsubscribe=true&email={{RECIPIENT_EMAIL}}" style="color: #14b8a6; text-decoration: underline; font-weight: bold;">Unsubscribe Instantly</a>
     </p>
   `;
 
@@ -182,7 +182,7 @@ export function wrapNewsletterEmailTemplate(
             <p style="margin: 0 0 8px 0; font-size: 13px; color: #475569; font-weight: bold;">Lincolnshire Knee Clinic</p>
             <p style="margin: 0 0 16px 0; font-size: 12px; color: #64748b; line-height: 1.5;">Consultant-led orthopaedic care and joint preservation pathways across Lincolnshire.</p>
             <div style="margin: 16px 0;">
-              <a href="https://lincolnshirekneeclinic.co.uk/book-appointment" style="background-color: #14b8a6; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: bold; display: inline-block;">Book a Consultation</a>
+              <a href="${SITE_URL}/book-appointment" style="background-color: #14b8a6; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: bold; display: inline-block;">Book a Consultation</a>
             </div>
             ${footerHtml || defaultFooter}
           </td>

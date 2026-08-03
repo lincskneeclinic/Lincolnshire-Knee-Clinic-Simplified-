@@ -2,6 +2,7 @@ import { getStoreValue, setStoreValue } from "./dataStore";
 import { sendBrevoMail } from "./brevo";
 import { sendGraphMail } from "./graphMail";
 import { wrapNewsletterEmailTemplate, markdownToEmailHtml } from "./newsletterMarkdown";
+import { SITE_URL } from "./site";
 
 export interface TopicSubscriber {
   email: string;
@@ -9,7 +10,6 @@ export interface TopicSubscriber {
 }
 
 const TOPIC_SUBSCRIBERS_KEY = "topic-notify-subscribers";
-const SITE_URL = "https://lincolnshirekneeclinic.co.uk";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function readSubscribers(): Promise<Record<string, TopicSubscriber[]>> {

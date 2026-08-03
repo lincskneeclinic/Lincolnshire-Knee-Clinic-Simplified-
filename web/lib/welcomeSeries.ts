@@ -2,9 +2,9 @@ import { getStoreValue, setStoreValue } from "./dataStore";
 import { wrapNewsletterEmailTemplate, markdownToEmailHtml } from "./newsletterMarkdown";
 import { sendBrevoMail } from "./brevo";
 import { sendGraphMail } from "./graphMail";
+import { SITE_URL } from "./site";
 
 const QUEUE_KEY = "welcome-series-queue";
-const SITE_URL = "https://lincolnshirekneeclinic.co.uk";
 
 // Days after signup each step becomes due. Step 0 is sent synchronously at
 // signup time (see enqueueWelcomeSeries), so this only covers steps 1-2.
