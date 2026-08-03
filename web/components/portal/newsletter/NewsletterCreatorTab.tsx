@@ -231,15 +231,13 @@ export function NewsletterCreatorTab({
                   >
                     Discard Draft
                   </button>
-                  {selectedNewsletter.status === "draft" && (
-                    <button
-                      type="button"
-                      onClick={() => onShowSendConfirmChange(true)}
-                      className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-md transition-all cursor-pointer"
-                    >
-                      🚀 Send Newsletter
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => onShowSendConfirmChange(true)}
+                    className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-md transition-all cursor-pointer"
+                  >
+                    {selectedNewsletter.status === "draft" ? "🚀 Send Newsletter" : "🔁 Send Again"}
+                  </button>
                 </div>
               </div>
 
@@ -301,11 +299,21 @@ export function NewsletterCreatorTab({
           <>
             <div className="text-center space-y-2">
               <span className="text-4xl block">📣</span>
-              <h3 className="font-serif text-lg font-bold text-white">Confirm Campaign Distribution</h3>
+              <h3 className="font-serif text-lg font-bold text-white">
+                {selectedNewsletter.status === "sent" ? "Confirm Resend" : "Confirm Campaign Distribution"}
+              </h3>
               <p className="text-xs text-white/70">
                 You are about to distribute the newsletter **"{selectedNewsletter.subject}"** to all subscribed
                 patients.
               </p>
+              {selectedNewsletter.status === "sent" && (
+                <p className="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/25 rounded-lg p-2.5 mt-2">
+                  ⚠️ This was already sent to {selectedNewsletter.recipientsCount} patient
+                  {selectedNewsletter.recipientsCount === 1 ? "" : "s"} on{" "}
+                  {selectedNewsletter.dateSent ? new Date(selectedNewsletter.dateSent).toLocaleDateString() : "an earlier date"}.
+                  Sending again will email every currently active subscriber a second time.
+                </p>
+              )}
             </div>
 
             <div className="bg-dark-overlay-navy border border-white/5 rounded-xl p-4 space-y-3 mt-6">
