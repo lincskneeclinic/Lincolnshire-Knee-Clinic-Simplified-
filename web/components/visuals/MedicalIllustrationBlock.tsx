@@ -30,6 +30,7 @@ import kneeTendinopathyOverview from "@/public/images/conditions/knee-tendinopat
 import patellarInstabilityOverview from "@/public/images/conditions/patellar-instability-overview.png";
 import looseBodiesOverview from "@/public/images/conditions/loose-bodies-overview.png";
 import physiotherapyOverview from "@/public/images/treatments/physiotherapy-overview.jpg";
+import osteotomyOverview from "@/public/images/treatments/osteotomy-overview.png";
 
 const staticImages: Record<string, any> = {
   "symptoms/back-of-knee-pain-overview": backOfKneePain,
@@ -55,6 +56,7 @@ const staticImages: Record<string, any> = {
   "conditions/patellar-instability-overview": patellarInstabilityOverview,
   "conditions/loose-bodies-overview": looseBodiesOverview,
   "treatments/physiotherapy-overview": physiotherapyOverview,
+  "treatments/osteotomy-overview": osteotomyOverview,
 };
 
 interface MedicalIllustrationBlockProps {

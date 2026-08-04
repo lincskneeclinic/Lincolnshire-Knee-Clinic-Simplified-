@@ -271,28 +271,37 @@ export default async function ArticlePage({ params }: PageProps) {
                   <div className="space-y-4">
                     {paragraphs.map((para, pIdx) => {
                       const renderTextWithLinks = (text: string) => {
-                        const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
+                        // Matches markdown links [text](url) and **bold** — whichever comes first at each position.
+                        const regex = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*/g;
                         const parts = [];
                         let lastIndex = 0;
                         let match;
 
                         while ((match = regex.exec(text)) !== null) {
-                          const [fullMatch, linkText, url] = match;
+                          const [fullMatch, linkText, url, boldText] = match;
                           const index = match.index;
 
                           if (index > lastIndex) {
                             parts.push(text.substring(lastIndex, index));
                           }
 
-                          parts.push(
-                            <Link
-                              key={index}
-                              href={url}
-                              className="text-clinical-teal hover:underline font-bold"
-                            >
-                              {linkText}
-                            </Link>
-                          );
+                          if (boldText !== undefined) {
+                            parts.push(
+                              <strong key={index} className="font-bold text-deep-navy">
+                                {boldText}
+                              </strong>
+                            );
+                          } else {
+                            parts.push(
+                              <Link
+                                key={index}
+                                href={url}
+                                className="text-clinical-teal hover:underline font-bold"
+                              >
+                                {linkText}
+                              </Link>
+                            );
+                          }
 
                           lastIndex = index + fullMatch.length;
                         }

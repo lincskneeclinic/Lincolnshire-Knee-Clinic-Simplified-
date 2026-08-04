@@ -536,13 +536,14 @@ export function ClinicalReviewTab({
                           {page.review.reviewed && (
                             <button
                               type="button"
-                              title={isDismissed ? "Restore to list" : "Dismiss from list"}
+                              title={isDismissed ? "Restore and open this page" : "Dismiss from list"}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (isDismissed) {
                                   const next = new Set(dismissedIds);
                                   next.delete(page.pageId);
                                   persistDismissed(next);
+                                  onSelectPage(page);
                                 } else {
                                   dismissPage(page.pageId);
                                 }

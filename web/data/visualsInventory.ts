@@ -382,9 +382,9 @@ export const visualsInventory: VisualAsset[] = [
     altText: "Medical illustration of a high tibial osteotomy showing an angular bone wedge opened in the upper tibia and secured with a titanium locking plate and screws to correct varus knee alignment.",
     caption: "Opening-wedge high tibial osteotomy: the corrected mechanical axis is maintained by a titanium locking plate while the bone gap heals.",
     placeholderLabel: "Osteotomy procedure illustration pending",
-    status: "pending",
+    status: "approved",
     priority: "high",
-    clinicalReviewStatus: "pending-clinical-review",
+    clinicalReviewStatus: "clinically-approved",
     photographyOrIllustration: "illustration",
     requiredDimensions: { width: 800, height: 600 }
   },

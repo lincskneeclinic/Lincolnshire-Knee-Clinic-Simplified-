@@ -25,6 +25,22 @@ import { VisualSectionHeading } from "@/components/visuals/VisualSectionHeading"
 import { TreatmentPathway } from "@/components/visuals/TreatmentPathway";
 import { RecoveryPathway } from "@/components/visuals/RecoveryPathway";
 
+// Converts inline **bold** markdown to <strong> — treatment content
+// (e.g. data/treatments.ts's "whatIs" field) is occasionally authored with
+// it, but this page otherwise renders plain strings with no markdown support.
+function renderBold(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={i} className="font-bold text-deep-navy">
+        {part.slice(2, -2)}
+      </strong>
+    ) : (
+      part
+    )
+  );
+}
+
 // Dynamic metadata helper for individual routes
 export function getTreatmentMetadata(slug: string): Metadata {
   const treatment = treatmentsData[slug];
@@ -249,8 +265,8 @@ export const TreatmentPage = async ({ slug }: TreatmentPageProps) => {
               Overview
             </h2>
             <div className="space-y-4 text-sm md:text-base text-text-secondary leading-relaxed font-medium">
-              <p>{treatment.introduction}</p>
-              <p>{treatment.whatIs}</p>
+              <p>{renderBold(treatment.introduction)}</p>
+              <p>{renderBold(treatment.whatIs)}</p>
               <div className="bg-pale-clinical-blue/40 border border-border-clinical/30 px-4 py-3 rounded-lg text-xs italic text-text-muted mt-2">
                 This information is for general patient education and does not replace an individual clinical assessment. Suitability and outcomes depend on joint condition and physical health.
               </div>

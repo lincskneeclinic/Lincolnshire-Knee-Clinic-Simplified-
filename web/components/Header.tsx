@@ -128,7 +128,7 @@ export const Header: React.FC = () => {
         {/* Logo Lockup - Left Side */}
         <Link
           href="/"
-          className="flex items-center gap-2 sm:gap-3 min-w-0 shrink xl:shrink-0 group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clinical-teal"
+          className="flex items-center gap-2 sm:gap-3 shrink-0 group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clinical-teal"
           aria-label="Lincolnshire Knee Clinic — home"
         >
           <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden shrink-0">
@@ -212,20 +212,27 @@ export const Header: React.FC = () => {
 
         {/* Action Button & Hamburger Toggle - Far Right */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <Button
-            href="/book-appointment"
-            onClick={() => {
-              fetch("/api/events", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ eventType: "book_appointment" }),
-              }).catch(() => {});
-            }}
-            className="hidden xl:inline-flex text-xs 2xl:text-sm py-2 px-3.5 2xl:px-5 min-h-[40px] shadow-[0_2px_4px_rgba(0,175,200,0.08)] whitespace-nowrap"
-            variant="teal"
-          >
-            Book Appointment
-          </Button>
+          {/* Visibility is controlled by this wrapper, not a "hidden" class on
+              Button itself — Button's baseStyle hardcodes "inline-flex"
+              unconditionally, which wins the same-specificity conflict over
+              a "hidden" override passed via className regardless of source
+              order, silently keeping the button visible at every width. */}
+          <div className="hidden xl:block">
+            <Button
+              href="/book-appointment"
+              onClick={() => {
+                fetch("/api/events", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ eventType: "book_appointment" }),
+                }).catch(() => {});
+              }}
+              className="text-[11px] 2xl:text-sm py-1.5 px-3 2xl:px-5 min-h-[36px] 2xl:min-h-[40px] shadow-[0_2px_4px_rgba(0,175,200,0.08)] whitespace-nowrap"
+              variant="teal"
+            >
+              Book Appointment
+            </Button>
+          </div>
 
           {/* Mobile Menu Hamburger Button - collapses at xl:block to avoid text crowding */}
           <button
