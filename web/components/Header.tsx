@@ -157,7 +157,7 @@ export const Header: React.FC = () => {
               />
             )}
           </div>
-          <span className="font-serif text-sm min-[380px]:text-base sm:text-lg md:text-xl font-bold text-deep-navy tracking-tight leading-none truncate xl:truncate-none xl:whitespace-nowrap">
+          <span className="font-serif text-[11px] min-[380px]:text-sm sm:text-base md:text-lg xl:text-xl font-bold text-deep-navy tracking-tight leading-none whitespace-nowrap">
             Lincolnshire Knee Clinic
           </span>
         </Link>

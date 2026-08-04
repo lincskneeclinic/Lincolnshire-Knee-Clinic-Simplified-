@@ -371,6 +371,24 @@ export const visualsInventory: VisualAsset[] = [
     requiredDimensions: { width: 800, height: 600 }
   },
 
+  // Osteotomy (Realignment Procedures)
+  {
+    id: "treatment-osteotomy-overview",
+    page: "treatments/osteotomy",
+    section: "overview",
+    title: "Knee Realignment Osteotomy — Bone Cut and Plate Fixation",
+    type: "procedure",
+    imagePath: "/images/treatments/osteotomy-overview.png",
+    altText: "Medical illustration of a high tibial osteotomy showing an angular bone wedge opened in the upper tibia and secured with a titanium locking plate and screws to correct varus knee alignment.",
+    caption: "Opening-wedge high tibial osteotomy: the corrected mechanical axis is maintained by a titanium locking plate while the bone gap heals.",
+    placeholderLabel: "Osteotomy procedure illustration pending",
+    status: "pending",
+    priority: "high",
+    clinicalReviewStatus: "pending-clinical-review",
+    photographyOrIllustration: "illustration",
+    requiredDimensions: { width: 800, height: 600 }
+  },
+
   // Total Knee Replacement
   {
     id: "treatment-total-knee-replacement-overview",

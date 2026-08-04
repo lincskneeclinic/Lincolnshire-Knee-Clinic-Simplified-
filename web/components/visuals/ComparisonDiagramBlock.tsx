@@ -150,26 +150,28 @@ export const ComparisonDiagramBlock: React.FC<ComparisonDiagramBlockProps> = ({
       {/* Detailed Point-by-Point Table (WCAG Compliant Alternative) */}
       {comparisonPoints && comparisonPoints.length > 0 && (
         <div className="bg-white border border-border-clinical rounded-xl overflow-hidden shadow-xs">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-pale-clinical-blue/40 border-b border-border-clinical">
-                <th className="p-3 text-xs font-bold uppercase text-deep-navy w-1/4">Anatomical Feature</th>
-                <th className="p-3 text-xs font-bold uppercase text-[#003B5C] w-3/8 border-l border-border-clinical/60">{leftTitle}</th>
-                <th className="p-3 text-xs font-bold uppercase text-orange-800 w-3/8 border-l border-border-clinical/60">{rightTitle}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {comparisonPoints.map((item, idx) => (
-                <tr key={idx} className="border-b border-border-clinical/30 last:border-0 hover:bg-pale-clinical-blue/10">
-                  <td className="p-3 text-xs font-bold text-deep-navy">{item.feature}</td>
-                  <td className="p-3 text-xs text-text-secondary font-medium border-l border-border-clinical/60">{item.normal}</td>
-                  <td className="p-3 text-xs text-text-secondary font-medium border-l border-border-clinical/60 bg-orange-50/10">
-                    <span className="text-orange-900 font-semibold">{item.abnormal}</span>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] text-left border-collapse">
+              <thead>
+                <tr className="bg-pale-clinical-blue/40 border-b border-border-clinical">
+                  <th className="p-3 text-xs font-bold uppercase text-deep-navy w-1/4">Anatomical Feature</th>
+                  <th className="p-3 text-xs font-bold uppercase text-[#003B5C] w-3/8 border-l border-border-clinical/60">{leftTitle}</th>
+                  <th className="p-3 text-xs font-bold uppercase text-orange-800 w-3/8 border-l border-border-clinical/60">{rightTitle}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {comparisonPoints.map((item, idx) => (
+                  <tr key={idx} className="border-b border-border-clinical/30 last:border-0 hover:bg-pale-clinical-blue/10">
+                    <td className="p-3 text-xs font-bold text-deep-navy">{item.feature}</td>
+                    <td className="p-3 text-xs text-text-secondary font-medium border-l border-border-clinical/60">{item.normal}</td>
+                    <td className="p-3 text-xs text-text-secondary font-medium border-l border-border-clinical/60 bg-orange-50/10">
+                      <span className="text-orange-900 font-semibold">{item.abnormal}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

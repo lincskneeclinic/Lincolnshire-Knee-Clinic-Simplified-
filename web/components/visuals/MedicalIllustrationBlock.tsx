@@ -22,6 +22,13 @@ import unableToStraightenKnee from "@/public/images/symptoms/unable-to-straighte
 import kneeArthritisOverview from "@/public/images/conditions/knee-arthritis-overview.png";
 import meniscalTearOverview from "@/public/images/conditions/meniscal-tear-overview.png";
 import aclInjuryOverview from "@/public/images/conditions/acl-injury-overview.png";
+import patellofemoralPainOverview from "@/public/images/conditions/patellofemoral-pain-overview.png";
+import cartilageInjuryOverview from "@/public/images/conditions/cartilage-injury-overview.png";
+import kneeInstabilityOverview from "@/public/images/conditions/knee-instability-overview.png";
+import bakersCystOverview from "@/public/images/conditions/bakers-cyst-overview.png";
+import kneeTendinopathyOverview from "@/public/images/conditions/knee-tendinopathy-overview.png";
+import patellarInstabilityOverview from "@/public/images/conditions/patellar-instability-overview.png";
+import looseBodiesOverview from "@/public/images/conditions/loose-bodies-overview.png";
 import physiotherapyOverview from "@/public/images/treatments/physiotherapy-overview.jpg";
 
 const staticImages: Record<string, any> = {
@@ -40,6 +47,13 @@ const staticImages: Record<string, any> = {
   "conditions/knee-arthritis-overview": kneeArthritisOverview,
   "conditions/meniscal-tear-overview": meniscalTearOverview,
   "conditions/acl-injury-overview": aclInjuryOverview,
+  "conditions/patellofemoral-pain-overview": patellofemoralPainOverview,
+  "conditions/cartilage-injury-overview": cartilageInjuryOverview,
+  "conditions/knee-instability-overview": kneeInstabilityOverview,
+  "conditions/bakers-cyst-overview": bakersCystOverview,
+  "conditions/knee-tendinopathy-overview": kneeTendinopathyOverview,
+  "conditions/patellar-instability-overview": patellarInstabilityOverview,
+  "conditions/loose-bodies-overview": looseBodiesOverview,
   "treatments/physiotherapy-overview": physiotherapyOverview,
 };
 

@@ -678,6 +678,104 @@ export const treatmentsData: Record<string, TreatmentData> = {
     metadataDescription: "Learn about partial knee replacement (unicompartmental surgery), suitability criteria, preservation of ligaments, and recovery outcomes.",
     reviewStatus: "Draft - Awaiting clinical review"
   },
+  "osteotomy": {
+    slug: "osteotomy",
+    name: "Realignment Procedures (Osteotomy)",
+    category: "surgical",
+    shortDescription: "Bone-cutting procedures to correct knee alignment and shift load away from a damaged compartment, delaying or avoiding joint replacement.",
+    introduction: "Osteotomy (from the Greek for 'bone cutting') is a precision surgical procedure that corrects the mechanical axis of the leg. By carefully realigning the bones around the knee, the procedure offloads a damaged or arthritic compartment and transfers stress onto healthier cartilage. This page covers high tibial osteotomy (HTO), distal femoral osteotomy (DFO), and slope-changing osteotomy.",
+    whatIs: "An osteotomy involves making a precise angular cut through bone — either the upper tibia (shinbone) or lower femur (thighbone) — to correct the mechanical alignment of the leg. Rather than replacing the joint surface, the procedure redistributes the load across the knee so that a healthy compartment bears more of the body's weight, relieving pressure from the damaged side. The corrected position is held by a steel plate and screws. There are three main variants used at this clinic:\n\n**High Tibial Osteotomy (HTO):** The most common type. A wedge is opened or closed in the upper tibia to correct a bow-legged (varus) deformity, shifting load away from the worn medial (inner) compartment onto the healthy lateral (outer) side. Particularly suited to active, younger patients with medial knee arthritis or post-ligament-surgery malalignment.\n\n**Distal Femoral Osteotomy (DFO):** A cut through the lower femur to correct a knock-kneed (valgus) deformity, offloading the worn lateral compartment. This is indicated when the valgus deformity originates in the femur rather than the tibia.\n\n**Slope-Changing Osteotomy:** A modification of HTO or DFO that also changes the posterior slope of the tibial plateau (the angle of the top of the tibia). Reducing tibial slope is used to protect ACL grafts or treat specific ACL graft failure patterns by reducing anterior tibial translation forces.",
+    whatItInvolves: [
+      "Comprehensive pre-operative planning using full-leg weight-bearing X-rays to measure mechanical axis deviation and calculate the precise correction angle",
+      "Spinal or general anaesthetic and surgical preparation; tourniquet applied to the thigh",
+      "For HTO: a small incision below the kneecap on the inner side of the tibia; the bone is precisely cut and the wedge is opened to the calculated angle using spreader pins under X-ray guidance",
+      "For DFO: an incision on the outer lower thigh; a closing or opening wedge cut is made in the distal femur to correct valgus deformity",
+      "For slope-changing osteotomy: the tibial cut is angled to simultaneously alter the posterior tibial slope, reducing the resting forward pull on the ACL",
+      "Rigid fixation of the corrected position with a low-profile titanium locking plate and screws",
+      "The bone gap (in opening wedge osteotomies) may be filled with bone graft or a synthetic bone substitute",
+      "Wound closure, compression dressings, and a protective knee splint or brace"
+    ],
+    suitability: [
+      "Active patients under 60 (though age alone is not an absolute contraindication) with unicompartmental knee arthritis or early cartilage damage",
+      "Patients with medial compartment arthritis and a varus (bow-legged) deformity — candidates for HTO",
+      "Patients with lateral compartment arthritis and a valgus (knock-kneed) deformity — candidates for DFO",
+      "Patients with ACL graft failure or recurrent instability associated with an elevated posterior tibial slope — candidates for slope-changing osteotomy",
+      "Patients wishing to remain physically active and defer or avoid knee replacement",
+      "Patients with isolated compartment wear and healthy ligaments"
+    ],
+    notSuitable: [
+      "Patients with severe, widespread (tricompartmental) osteoarthritis affecting all three compartments",
+      "Inflammatory arthritis (e.g. rheumatoid arthritis) causing global joint destruction",
+      "Severe joint stiffness with reduced range of movement before surgery",
+      "Patients unable to comply with the post-operative non-weight-bearing or restricted weight-bearing period",
+      "Significant bone loss or poor bone quality that would not hold the fixation plate securely",
+      "Active smokers (impairs bone healing significantly)"
+    ],
+    alternatives: [
+      "Conservative management: physiotherapy, weight management, and unloading knee braces",
+      "Clinical joint injections (steroid, hyaluronic acid, or biological agents) for pain management",
+      "Partial knee replacement (unicompartmental), if the patient is older or less active",
+      "Total knee replacement (for more advanced, multi-compartment disease)"
+    ],
+    risks: [
+      "Under- or over-correction of the alignment — may require revision or alter the plan for future joint replacement",
+      "Non-union or delayed healing of the osteotomy site (risk increased by smoking)",
+      "Hardware irritation from the plate and screws — occasionally requires removal once healed (typically 12–18 months post-op)",
+      "Deep vein thrombosis (DVT) or pulmonary embolism — blood thinners are used to reduce this risk",
+      "Infection at the surgical site or around the metalwork",
+      "Peroneal nerve stretch injury (particularly DFO or lateral HTO), causing temporary foot weakness or numbness",
+      "Fracture propagation beyond the planned cut if bone quality is poor",
+      "Progression of arthritis in the offloaded or remaining compartments over time"
+    ],
+    recovery: [
+      "Weight-bearing is typically restricted for 6 weeks after opening-wedge osteotomy while the bone gap heals — crutches are required",
+      "Radiographic bone healing is confirmed by X-ray at 6–8 weeks before weight-bearing is progressed",
+      "Driving is typically possible at 6–8 weeks once crutch-free and safe muscle control is confirmed",
+      "Return to desk work is often possible at 6–8 weeks if crutch-independent",
+      "Return to manual work or sport takes 4–6 months; full recovery and confidence in the knee continues to improve for 12 months",
+      "The hardware plate is usually retained permanently unless symptomatic"
+    ],
+    rehabilitation: [
+      "Immediately post-operatively: quad activation, ankle pumps, and protected range of motion exercises in the brace",
+      "Weeks 1–6: restricted weight-bearing on crutches; daily physiotherapy for swelling control, range of motion, and isometric strengthening",
+      "Weeks 6–12: progressive weight-bearing once healing confirmed; focus on gait retraining and quadriceps strengthening",
+      "Months 3–6: functional strengthening, proprioception training, and progressive return to low-impact activity",
+      "Months 6–12: gradual return to sport-specific loading and higher-impact activities as directed by the surgeon"
+    ],
+    faqs: [
+      {
+        question: "What is the difference between a high tibial osteotomy and a distal femoral osteotomy?",
+        answer: "Both procedures realign the leg, but they target different bones. HTO corrects bow-leggedness (varus) originating in the tibia and is used for medial compartment arthritis. DFO corrects knock-knee (valgus) originating in the femur and is used for lateral compartment arthritis. The choice depends on where the deformity originates — determined by long-leg X-ray measurements."
+      },
+      {
+        question: "Can an osteotomy delay or avoid knee replacement?",
+        answer: "Yes. In appropriately selected younger, active patients, a well-performed osteotomy can delay the need for knee replacement by 10 to 15 years or more. It preserves the native knee joint and all its ligaments, which is particularly important for patients who wish to stay physically active."
+      },
+      {
+        question: "What is a slope-changing osteotomy and when is it used?",
+        answer: "A slope-changing osteotomy modifies the backwards tilt (posterior slope) of the top of the tibia during an HTO. Reducing this slope decreases the forward pull on the ACL, and is used specifically to protect a reconstructed ACL or to address recurrent ACL graft failures related to an excessively steep tibial slope."
+      },
+      {
+        question: "Will I need the plate and screws removed?",
+        answer: "Not necessarily. Many patients retain the hardware indefinitely without any problems. However, if the plate causes local irritation or discomfort, it can be removed once the bone has fully healed — usually 12 to 18 months after surgery."
+      },
+      {
+        question: "How long does the osteotomy take to heal?",
+        answer: "The bone cut typically shows X-ray evidence of bridging callus (early healing) by 6–8 weeks. Complete bone consolidation takes approximately 3–4 months, after which full weight-bearing and progressive activity are allowed."
+      }
+    ],
+    relatedConditions: ["knee-arthritis", "knee-instability", "cartilage-injury", "acl-injury"],
+    relatedSymptoms: ["knee-pain", "stiff-knee", "swollen-knee", "knee-giving-way"],
+    relatedTreatments: ["physiotherapy", "knee-bracing", "acl-reconstruction", "partial-knee-replacement", "total-knee-replacement", "preparing-for-surgery", "enhanced-recovery", "physiotherapy-after-surgery", "returning-to-driving", "returning-to-work", "returning-to-sport", "recovery-faqs"],
+    references: [
+      { text: "British Orthopaedic Association — High Tibial Osteotomy", url: "https://www.boa.ac.uk/" },
+      { text: "NICE — Osteotomy for knee osteoarthritis", url: "https://www.nice.org.uk/" },
+      { text: "Lobenhoffer P, Agneskirchner JD. Improvements in surgical technique of valgus high tibial osteotomy. Knee Surg Sports Traumatol Arthrosc. 2003;11(3):132–8.", url: "https://pubmed.ncbi.nlm.nih.gov/12774149/" }
+    ],
+    metadataTitle: "Realignment Procedures (Osteotomy) | Lincolnshire Knee Clinic",
+    metadataDescription: "Learn about knee osteotomy procedures including high tibial osteotomy (HTO), distal femoral osteotomy (DFO), and slope-changing osteotomy — bone realignment surgery to offload arthritis and delay knee replacement.",
+    reviewStatus: "Draft - Awaiting clinical review"
+  },
   "total-knee-replacement": {
     slug: "total-knee-replacement",
     name: "Total Knee Replacement",
