@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ReviewablePage, ClinicalReviewEntry } from "@/lib/clinicalReview";
 import { PortalCard, PortalEmptyState } from "@/components/portal/ui";
@@ -68,6 +68,7 @@ interface ClinicalReviewTabProps {
 }
 
 const CONTENT_TYPES = ["symptoms", "conditions", "treatments", "injections"] as const;
+const LS_KEY = "lkc_dismissed_review_pages";
 
 export function ClinicalReviewTab({
   loading,
@@ -121,10 +122,63 @@ export function ClinicalReviewTab({
 }: ClinicalReviewTabProps) {
   const selectedPage = selectedPageId ? pages.find((p) => p.pageId === selectedPageId) : null;
 
+  // ── Dismissed pages ──────────────────────────────────────────────────────
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [showDismissed, setShowDismissed] = useState(false);
+
+  // Hydrate from localStorage on mount (client only)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) setDismissedIds(new Set(JSON.parse(raw)));
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
+
+  // Persist any change to localStorage
+  const persistDismissed = useCallback((next: Set<string>) => {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(Array.from(next)));
+    } catch {
+      // ignore storage errors
+    }
+    setDismissedIds(next);
+  }, []);
+
+  const dismissPage = (pageId: string) => {
+    const next = new Set(dismissedIds);
+    next.add(pageId);
+    persistDismissed(next);
+    // Also deselect from bulk if it was selected
+    onBulkReviewSelectionChange((prev) => {
+      const s = new Set(prev);
+      s.delete(pageId);
+      return s;
+    });
+  };
+
+  const restoreAll = () => {
+    persistDismissed(new Set());
+    setShowDismissed(false);
+  };
+
+  // ── Filtering ────────────────────────────────────────────────────────────
   const searchTerm = search.trim().toLowerCase();
-  const visiblePages = searchTerm ? pages.filter((p) => p.name.toLowerCase().includes(searchTerm)) : pages;
+  const searchFiltered = searchTerm
+    ? pages.filter((p) => p.name.toLowerCase().includes(searchTerm))
+    : pages;
+
+  // Pages shown in the main list (respects dismiss + showDismissed)
+  const visiblePages = showDismissed
+    ? searchFiltered
+    : searchFiltered.filter((p) => !dismissedIds.has(p.pageId));
+
+  const dismissedCount = searchFiltered.filter((p) => dismissedIds.has(p.pageId)).length;
+
   const visibleIds = visiblePages.map((p) => p.pageId);
-  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => bulkReviewSelection.has(id));
+  const allVisibleSelected =
+    visibleIds.length > 0 && visibleIds.every((id) => bulkReviewSelection.has(id));
 
   const toggleSelectAllVisible = () => {
     onBulkReviewSelectionChange((prev) => {
@@ -326,6 +380,34 @@ export function ClinicalReviewTab({
               />
               Select all visible ({visiblePages.length})
             </label>
+
+            {/* Dismissed pages toggle */}
+            {dismissedCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowDismissed((v) => !v)}
+                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors cursor-pointer ${
+                  showDismissed
+                    ? "bg-white/10 border-white/30 text-white"
+                    : "bg-dark-overlay-navy border-white/10 text-white/50 hover:text-white/80 hover:border-white/20"
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={showDismissed ? "M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" : "M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"} />
+                </svg>
+                {showDismissed ? "Hide dismissed" : `Show dismissed (${dismissedCount})`}
+              </button>
+            )}
+            {showDismissed && dismissedCount > 0 && (
+              <button
+                type="button"
+                onClick={restoreAll}
+                className="text-xs text-amber-400 hover:text-amber-300 underline underline-offset-2 cursor-pointer"
+              >
+                Restore all
+              </button>
+            )}
+
             {bulkReviewSelection.size > 0 && (
               <div className="sm:ml-auto flex items-center gap-2">
                 <span className="text-xs text-clinical-teal font-semibold">{bulkReviewSelection.size} selected</span>
@@ -391,8 +473,19 @@ export function ClinicalReviewTab({
             </PortalCard>
           )}
 
-          {visiblePages.length === 0 ? (
+          {visiblePages.length === 0 && dismissedCount === 0 ? (
             <PortalEmptyState message={`No pages match "${search}".`} />
+          ) : visiblePages.length === 0 && dismissedCount > 0 ? (
+            <PortalCard className="text-center py-8 space-y-3">
+              <p className="text-white/50 text-sm">All reviewed pages have been dismissed.</p>
+              <button
+                type="button"
+                onClick={() => setShowDismissed(true)}
+                className="text-xs text-clinical-teal hover:underline cursor-pointer"
+              >
+                Show {dismissedCount} dismissed page{dismissedCount === 1 ? "" : "s"}
+              </button>
+            </PortalCard>
           ) : (
             CONTENT_TYPES.map((contentType) => {
               const pagesOfType = visiblePages.filter((p) => p.contentType === contentType);
@@ -401,39 +494,81 @@ export function ClinicalReviewTab({
                 <PortalCard key={contentType} className="space-y-3">
                   <h3 className="text-sm font-bold text-white uppercase tracking-wider capitalize">{contentType}</h3>
                   <div className="space-y-2">
-                    {pagesOfType.map((page) => (
-                      <div
-                        key={page.pageId}
-                        className="w-full bg-dark-overlay-navy border border-white/5 rounded-xl p-3.5 flex items-center gap-3 hover:border-clinical-teal/40 transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={bulkReviewSelection.has(page.pageId)}
-                          onChange={() => togglePageSelected(page.pageId)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-4 h-4 accent-clinical-teal cursor-pointer shrink-0"
-                        />
-                        <button
-                          onClick={() => onSelectPage(page)}
-                          className="flex-1 text-left flex items-center justify-between gap-4 cursor-pointer"
+                    {pagesOfType.map((page) => {
+                      const isDismissed = dismissedIds.has(page.pageId);
+                      return (
+                        <div
+                          key={page.pageId}
+                          className={`w-full bg-dark-overlay-navy border rounded-xl p-3.5 flex items-center gap-3 transition-colors ${
+                            isDismissed
+                              ? "border-white/5 opacity-50"
+                              : "border-white/5 hover:border-clinical-teal/40"
+                          }`}
                         >
-                          <span className="text-xs text-white/90 font-medium">{page.name}</span>
-                          {page.review.reviewed ? (
-                            <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-clinical-teal/10 text-clinical-teal border border-clinical-teal/30 shrink-0">
-                              Reviewed{page.review.lastReviewedDate ? ` — ${page.review.lastReviewedDate}` : ""}
-                            </span>
-                          ) : page.review.staleReview ? (
-                            <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/30 shrink-0">
-                              ⚠ Needs Re-Review{page.review.lastReviewedDate ? ` (was: ${page.review.lastReviewedDate})` : ""}
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0">
-                              Awaiting review
-                            </span>
+                          <input
+                            type="checkbox"
+                            checked={bulkReviewSelection.has(page.pageId)}
+                            onChange={() => togglePageSelected(page.pageId)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-4 h-4 accent-clinical-teal cursor-pointer shrink-0"
+                          />
+                          <button
+                            onClick={() => onSelectPage(page)}
+                            className="flex-1 text-left flex items-center justify-between gap-4 cursor-pointer min-w-0"
+                          >
+                            <span className="text-xs text-white/90 font-medium truncate">{page.name}</span>
+                            {page.review.reviewed ? (
+                              <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-clinical-teal/10 text-clinical-teal border border-clinical-teal/30 shrink-0">
+                                Reviewed{page.review.lastReviewedDate ? ` — ${page.review.lastReviewedDate}` : ""}
+                              </span>
+                            ) : page.review.staleReview ? (
+                              <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/30 shrink-0">
+                                ⚠ Needs Re-Review{page.review.lastReviewedDate ? ` (was: ${page.review.lastReviewedDate})` : ""}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0">
+                                Awaiting review
+                              </span>
+                            )}
+                          </button>
+
+                          {/* Dismiss / Restore button — only on reviewed pages */}
+                          {page.review.reviewed && (
+                            <button
+                              type="button"
+                              title={isDismissed ? "Restore to list" : "Dismiss from list"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isDismissed) {
+                                  const next = new Set(dismissedIds);
+                                  next.delete(page.pageId);
+                                  persistDismissed(next);
+                                } else {
+                                  dismissPage(page.pageId);
+                                }
+                              }}
+                              className={`shrink-0 w-6 h-6 flex items-center justify-center rounded-md transition-colors cursor-pointer ${
+                                isDismissed
+                                  ? "text-clinical-teal/60 hover:text-clinical-teal hover:bg-clinical-teal/10"
+                                  : "text-white/20 hover:text-white/60 hover:bg-white/5"
+                              }`}
+                            >
+                              {isDismissed ? (
+                                // Eye-slash → restore icon
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              ) : (
+                                // ✕ dismiss icon
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              )}
+                            </button>
                           )}
-                        </button>
-                      </div>
-                    ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 </PortalCard>
               );
