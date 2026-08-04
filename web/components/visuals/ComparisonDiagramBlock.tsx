@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import type { StaticImageData } from "next/image";
 import { PlaceholderVisual } from "./PlaceholderVisual";
 
 interface ComparisonItem {
@@ -19,9 +20,9 @@ interface ComparisonDiagramBlockProps {
   pathologyHighlightLabel?: string;
   dimensions?: { width: number; height: number };
   className?: string;
-  leftImageSrc?: any;
-  rightImageSrc?: any;
-  singleImageSrc?: any;
+  leftImageSrc?: StaticImageData;
+  rightImageSrc?: StaticImageData;
+  singleImageSrc?: StaticImageData;
   leftBadgeLabel?: string;
   rightBadgeLabel?: string;
 }
@@ -147,24 +148,51 @@ export const ComparisonDiagramBlock: React.FC<ComparisonDiagramBlockProps> = ({
         </div>
       )}
 
-      {/* Detailed Point-by-Point Table (WCAG Compliant Alternative) */}
+      {/* Detailed Point-by-Point Comparison (WCAG Compliant Alternative) */}
       {comparisonPoints && comparisonPoints.length > 0 && (
         <div className="bg-white border border-border-clinical rounded-xl overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[480px] text-left border-collapse">
+          <div className="sm:hidden divide-y divide-border-clinical/30">
+            {comparisonPoints.map((item, idx) => (
+              <article key={idx} className="p-3.5 space-y-3">
+                <h5 className="text-xs font-bold uppercase tracking-wide text-deep-navy break-words">
+                  {item.feature}
+                </h5>
+                <div className="space-y-2.5">
+                  <div className="rounded-lg border border-[#003B5C]/10 bg-[#003B5C]/5 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-[#003B5C] break-words">
+                      {leftTitle}
+                    </p>
+                    <p className="mt-1 text-xs font-medium leading-relaxed text-text-secondary break-words">
+                      {item.normal}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-orange-200/70 bg-orange-50/40 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-orange-800 break-words">
+                      {rightTitle}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold leading-relaxed text-orange-900 break-words">
+                      {item.abnormal}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full min-w-[560px] table-fixed text-left border-collapse">
               <thead>
                 <tr className="bg-pale-clinical-blue/40 border-b border-border-clinical">
-                  <th className="p-3 text-xs font-bold uppercase text-deep-navy w-1/4">Anatomical Feature</th>
-                  <th className="p-3 text-xs font-bold uppercase text-[#003B5C] w-3/8 border-l border-border-clinical/60">{leftTitle}</th>
-                  <th className="p-3 text-xs font-bold uppercase text-orange-800 w-3/8 border-l border-border-clinical/60">{rightTitle}</th>
+                  <th className="w-1/4 p-3 text-xs font-bold uppercase text-deep-navy break-words">Anatomical Feature</th>
+                  <th className="w-[37.5%] p-3 text-xs font-bold uppercase text-[#003B5C] border-l border-border-clinical/60 break-words">{leftTitle}</th>
+                  <th className="w-[37.5%] p-3 text-xs font-bold uppercase text-orange-800 border-l border-border-clinical/60 break-words">{rightTitle}</th>
                 </tr>
               </thead>
               <tbody>
                 {comparisonPoints.map((item, idx) => (
                   <tr key={idx} className="border-b border-border-clinical/30 last:border-0 hover:bg-pale-clinical-blue/10">
-                    <td className="p-3 text-xs font-bold text-deep-navy">{item.feature}</td>
-                    <td className="p-3 text-xs text-text-secondary font-medium border-l border-border-clinical/60">{item.normal}</td>
-                    <td className="p-3 text-xs text-text-secondary font-medium border-l border-border-clinical/60 bg-orange-50/10">
+                    <td className="p-3 text-xs font-bold text-deep-navy align-top break-words">{item.feature}</td>
+                    <td className="p-3 text-xs text-text-secondary font-medium border-l border-border-clinical/60 align-top break-words">{item.normal}</td>
+                    <td className="p-3 text-xs text-text-secondary font-medium border-l border-border-clinical/60 bg-orange-50/10 align-top break-words">
                       <span className="text-orange-900 font-semibold">{item.abnormal}</span>
                     </td>
                   </tr>
