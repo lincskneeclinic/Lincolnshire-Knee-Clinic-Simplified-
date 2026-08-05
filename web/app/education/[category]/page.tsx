@@ -24,6 +24,7 @@ interface Article {
   readTime: string;
   href: string;
   imageUrl?: string;
+  datePublished: string;
 }
 
 interface CategoryData {
@@ -89,9 +90,15 @@ function buildCategoriesData(
           description: override?.excerpt || a.description,
           readTime: a.readTime,
           href: `/education/${a.category}/${a.slug}`,
-          imageUrl: override?.featuredImage || a.image
+          imageUrl: override?.featuredImage || a.image,
+          datePublished: a.datePublished
         };
       });
+
+    // Sort by publication date descending (newest first)
+    articlesInCat.sort(
+      (a, b) => new Date(b.datePublished).getTime() - new Date(a.datePublished).getTime()
+    );
 
     categoriesData[catKey] = {
       title: meta.title,
@@ -168,6 +175,9 @@ export default async function CategoryPage({ params }: PageProps) {
     notFound();
   }
 
+  const activeArticles = data.articles.slice(0, 6);
+  const archivedArticles = data.articles.slice(6);
+
   const pageUrl = `${SITE_URL}/education/${category}`;
 
   const jsonLd = {
@@ -206,7 +216,7 @@ export default async function CategoryPage({ params }: PageProps) {
         
         {/* Grid of Articles */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.articles.map((article, index) => (
+          {activeArticles.map((article, index) => (
             <Card
               key={index}
               category={article.readTime}
@@ -219,6 +229,51 @@ export default async function CategoryPage({ params }: PageProps) {
           ))}
         </div>
       </div>
+
+      {/* Archived / Older Articles Section */}
+      {archivedArticles.length > 0 && (
+        <div className="mt-12 pt-8 border-t border-border-clinical/40">
+          <h3 className="text-sm font-bold uppercase text-clinical-teal tracking-wider mb-6 border-b border-border-clinical/30 pb-2">
+            Older & Archived Articles
+          </h3>
+          <div className="bg-white border border-border-clinical rounded-xl shadow-[0_2px_10px_rgba(8,47,73,0.01)] overflow-hidden">
+            <div className="divide-y divide-border-clinical/30">
+              {archivedArticles.map((article, index) => {
+                const formattedDate = new Date(article.datePublished).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                });
+                return (
+                  <div
+                    key={index}
+                    className="p-4 sm:px-6 hover:bg-warm-off-white/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  >
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                        {formattedDate} &bull; {article.readTime}
+                      </span>
+                      <h4 className="font-serif text-sm md:text-base font-bold text-deep-navy">
+                        {article.title}
+                      </h4>
+                      <p className="text-xs text-text-secondary line-clamp-1 font-medium">
+                        {article.description}
+                      </p>
+                    </div>
+                    <Button
+                      href={article.href}
+                      variant="secondary"
+                      className="py-1 px-3 text-xs self-start sm:self-auto shrink-0"
+                    >
+                      Read Article
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-pale-clinical-blue/20 border border-border-clinical/40 p-6 md:p-8 rounded-xl text-center max-w-3xl mx-auto my-12">
         <h4 className="font-serif text-lg md:text-xl font-bold text-deep-navy mb-2">
