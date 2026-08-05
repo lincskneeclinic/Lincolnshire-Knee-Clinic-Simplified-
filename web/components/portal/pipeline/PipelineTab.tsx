@@ -44,6 +44,7 @@ interface PipelineTabProps {
   onApproveDraft: () => void;
   isSubmittingReview: boolean;
   onOpenBlogRevision: () => void;
+  onPublishBlogOnly: () => void;
   onApproveAllSocial: () => void;
   onOpenSocialRevision: () => void;
   onRevertToBlog: () => void;
@@ -135,6 +136,7 @@ export function PipelineTab({
   onApproveDraft,
   isSubmittingReview,
   onOpenBlogRevision,
+  onPublishBlogOnly,
   onApproveAllSocial,
   onOpenSocialRevision,
   onRevertToBlog,
@@ -280,11 +282,18 @@ export function PipelineTab({
                     {isEditMode ? null : (
                       <>
                         <button
+                          onClick={onPublishBlogOnly}
+                          disabled={isSubmittingReview}
+                          className="bg-[#059669] hover:bg-[#047857] text-white text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer disabled:opacity-60"
+                        >
+                          Approve & Publish Blog
+                        </button>
+                        <button
                           onClick={onApproveDraft}
                           disabled={isSubmittingReview}
                           className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer disabled:opacity-60"
                         >
-                          Approve Draft
+                          Approve Draft (Internal)
                         </button>
                         <button
                           onClick={onStartEdit}
@@ -306,6 +315,15 @@ export function PipelineTab({
                 {selectedRun.status === "awaiting_social_approval" && (
                   <div className="space-y-3 lg:min-w-[420px]">
                     <div className="flex flex-wrap items-center justify-start lg:justify-end gap-2">
+                      {!selectedRun.published_urls?.blog_url && (
+                        <button
+                          onClick={onPublishBlogOnly}
+                          disabled={isSubmittingReview}
+                          className="bg-[#059669] hover:bg-[#047857] text-white text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer disabled:opacity-60"
+                        >
+                          Publish Blog to Website
+                        </button>
+                      )}
                       <button
                         onClick={onApproveAllSocial}
                         disabled={isSubmittingReview}
@@ -413,6 +431,7 @@ export function PipelineTab({
                   onDiscardChanges={onDiscardChanges}
                   onFinishEditing={onFinishEditing}
                   onApproveDraft={onApproveDraft}
+                  onPublishBlogOnly={onPublishBlogOnly}
                   onSaveProgress={onSaveProgress}
                   isSubmittingReview={isSubmittingReview}
                   generatingImagePlaceholderId={generatingImagePlaceholderId}

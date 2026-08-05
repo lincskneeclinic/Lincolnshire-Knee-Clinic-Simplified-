@@ -33,3 +33,8 @@ If a manually-placed static asset (not uploaded through the app) needs to go in 
 
 AI-generated newsletter drafts and monthly digests must not include captions or labels for images. When writing newsletters in markdown, images should be inserted cleanly without captions. Both the ReactMarkdown renderer for archived newsletters (`web/app/newsletter/archive/[id]/page.tsx`) and the inline HTML converter (`web/lib/newsletterMarkdown.ts`) are configured to suppress captions and render images cleanly. Always adhere to this standard when editing or creating newsletter templates or generation features.
 
+# Blog and Article images — standing product requirement
+
+Images in blog posts and educational articles must not include captions or labels unless the image is a clinical or anatomical diagram (e.g., MRI scans, X-rays, anatomical illustrations, or medical device component diagrams). Standard patient photos, exercise demonstrations, and general consultation photos must not have any text captions associated with them.
+
+

@@ -5,7 +5,7 @@ import { getStoreValue } from "./dataStore";
 import { sendContentPipelineNotificationEmail } from "./graphMail";
 import { performResearchProcess } from "./researchAgent";
 import { writeBlogDraft } from "./blogWriterAgent";
-import { linkRunToArticle, getArticleSlugForRun, setArticleOverride } from "./educationArticles";
+import { linkRunToArticle, getArticleSlugForRun, setArticleOverride, publishBlogDraftToWebsite, cleanClinicalReviewFlags } from "./educationArticles";
 import { writeSocialCaptions, rewriteSocialCaption, rewriteCarouselSlides } from "./socialWriterAgent";
 import { syncPollTopicsIntoDynamicTopics } from "./pollTopicsSync";
 import { notifyTopicSubscribers } from "./topicNotify";
@@ -108,7 +108,7 @@ export interface ContentPipelineReview {
   stage: "blog" | "social";
   platform?: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel";
   version?: number;
-  decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social" | "save_progress";
+  decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social" | "save_progress" | "publish_blog";
   edited_content?: any;
   revision_notes?: string;
   created_at: string;
@@ -708,7 +708,7 @@ export async function submitPipelineReview(
   payload: {
     stage: "blog" | "social";
     platform?: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel";
-    decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social" | "save_progress";
+    decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social" | "save_progress" | "publish_blog";
     editedContent?: any;
     revisionNotes?: string;
   }
@@ -794,10 +794,9 @@ export async function submitPipelineReview(
         }
       }
     }
-    run.updated_at = now;
   } else if (payload.stage === "blog") {
-    if (payload.decision === "approved" || payload.decision === "edited") {
-      if (payload.decision === "edited" && payload.editedContent) {
+    if (payload.decision === "approved" || payload.decision === "edited" || payload.decision === "publish_blog") {
+      if ((payload.decision === "edited" || payload.decision === "publish_blog") && payload.editedContent) {
         const latestVersionNumber = (run.blog_drafts?.[0]?.version || 1) + 1;
         const editedBody = payload.editedContent.body_markdown || payload.editedContent.body || "";
 
@@ -848,6 +847,15 @@ export async function submitPipelineReview(
           category: payload.editedContent.category !== undefined ? payload.editedContent.category : run.blog_drafts[0]?.category,
           created_at: now
         });
+      }
+
+      // Clean up clinical review flags upon approval
+      if (payload.decision === "approved" || payload.decision === "publish_blog") {
+        const latestDraft = run.blog_drafts[0];
+        if (latestDraft) {
+          latestDraft.body_markdown = cleanClinicalReviewFlags(latestDraft.body_markdown || latestDraft.body || "");
+          latestDraft.body = latestDraft.body_markdown;
+        }
       }
 
       // If this run was created via createRunFromArticle (an "Update" of an existing
@@ -951,8 +959,31 @@ export async function submitPipelineReview(
         ];
       }
 
+      const wasAwaitingSocial = run.status === "awaiting_social_approval";
+
+      if (payload.decision === "publish_blog") {
+        const latestDraft = run.blog_drafts[0];
+        const category = latestDraft.category || "knee-arthritis";
+        const slug = (latestDraft.title || run.topic)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "");
+
+        try {
+          await publishBlogDraftToWebsite(run);
+          run.published_urls = {
+            blog_url: `/education/${category}/${slug}`,
+            published_at: now
+          };
+        } catch (err) {
+          console.error("Failed to publish dynamic blog to website:", err);
+        }
+      }
+
       run.status = "awaiting_social_approval";
-      await sendContentPipelineNotificationEmail(run, "social");
+      if (!wasAwaitingSocial) {
+        await sendContentPipelineNotificationEmail(run, "social");
+      }
     } else if (payload.decision === "revision_requested") {
       run.status = "writing_blog";
       const latestVersionNumber = (run.blog_drafts?.[0]?.version || 1) + 1;
@@ -1140,8 +1171,16 @@ export async function submitPipelineReview(
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "");
 
+      const category = run.blog_drafts[0]?.category || "knee-arthritis";
+
+      try {
+        await publishBlogDraftToWebsite(run);
+      } catch (err) {
+        console.error("Failed to publish dynamic blog to website on final approval:", err);
+      }
+
       run.published_urls = {
-        blog_url: `/blog/${slug}`,
+        blog_url: `/education/${category}/${slug}`,
         published_at: now
       };
       run.social_media_assets = [

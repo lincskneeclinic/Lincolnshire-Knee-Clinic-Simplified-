@@ -8,7 +8,7 @@ import { blogArticles } from "@/data/articles";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import Link from "next/link";
 import { SITE_URL } from "@/lib/site";
-import { getRemovedArticleSlugs, getArticleOverride, getArticleViewCounts, ArticleOverride } from "@/lib/educationArticles";
+import { getRemovedArticleSlugs, getArticleOverride, getArticleViewCounts, ArticleOverride, getDynamicArticles } from "@/lib/educationArticles";
 import { ArticleViewCounter } from "@/components/ArticleViewCounter";
 import { ArticleFeedbackWidget } from "@/components/education/ArticleFeedbackWidget";
 import ReactMarkdown from "react-markdown";
@@ -42,7 +42,9 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category, article } = await params;
-  const data = blogArticles[article];
+  const dynamicArticles = await getDynamicArticles();
+  const allArticles = { ...blogArticles, ...dynamicArticles };
+  const data = allArticles[article];
 
   if (!data) {
     return {
@@ -92,7 +94,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ArticlePage({ params }: PageProps) {
   const { category, article } = await params;
-  const data = blogArticles[article];
+  const dynamicArticles = await getDynamicArticles();
+  const allArticles = { ...blogArticles, ...dynamicArticles };
+  const data = allArticles[article];
 
   // Protect route and ensure it belongs to the correct category
   if (!data || data.category !== category) {
@@ -104,7 +108,19 @@ export default async function ArticlePage({ params }: PageProps) {
     notFound();
   }
 
-  const override = await getArticleOverride(article);
+  let override = await getArticleOverride(article);
+  if (!override && dynamicArticles[article]) {
+    override = {
+      title: data.title,
+      excerpt: data.description,
+      body_markdown: (data as any).body_markdown || "",
+      references: data.references || [],
+      featuredImage: data.image,
+      category: data.category,
+      updatedAt: data.datePublished,
+    };
+  }
+
   const displayTitle = override?.title || data.title;
   const displayDescription = override?.excerpt || data.description;
   const displayImage = override?.featuredImage || data.image;

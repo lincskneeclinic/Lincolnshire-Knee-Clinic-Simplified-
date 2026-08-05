@@ -84,7 +84,8 @@ export function FormattedContent({
   onGenerateImage,
   onResetPlaceholder,
   onRemovePlaceholder,
-  onRemoveResolvedImage
+  onRemoveResolvedImage,
+  lightMode = false
 }: {
   body?: string;
   body_markdown?: string;
@@ -97,6 +98,7 @@ export function FormattedContent({
   onResetPlaceholder?: (altText: string, srcUrl: string) => void;
   onRemovePlaceholder?: (placeholderId: string, label: string, isFeatured?: boolean) => void;
   onRemoveResolvedImage?: (altText: string, srcUrl: string) => void;
+  lightMode?: boolean;
 }) {
   const [activeGeneratePlaceholder, setActiveGeneratePlaceholder] = useState<
     { placeholderId: string; label: string; isFeatured?: boolean } | null
@@ -121,29 +123,29 @@ export function FormattedContent({
         rehypePlugins={[rehypeRaw]}
         components={{
           table: ({ children }) => (
-            <div className="overflow-x-auto my-4 rounded-lg border border-white/10">
-              <table className="min-w-full divide-y divide-white/10 text-[9.5px] text-white/80 leading-normal">
+            <div className={`overflow-x-auto my-4 rounded-lg border ${lightMode ? "border-border-clinical/30" : "border-white/10"}`}>
+              <table className={`min-w-full divide-y text-[9.5px] leading-normal ${lightMode ? "divide-border-clinical/30 text-text-secondary" : "divide-white/10 text-white/80"}`}>
                 {children}
               </table>
             </div>
           ),
-          thead: ({ children }) => <thead className="bg-primary-navy">{children}</thead>,
-          tbody: ({ children }) => <tbody className="divide-y divide-white/5 bg-dark-overlay-navy/40">{children}</tbody>,
+          thead: ({ children }) => <thead className={lightMode ? "bg-[#f0f9ff]" : "bg-primary-navy"}>{children}</thead>,
+          tbody: ({ children }) => <tbody className={`divide-y ${lightMode ? "divide-border-clinical/20 bg-white" : "divide-white/5 bg-dark-overlay-navy/40"}`}>{children}</tbody>,
           tr: ({ children }) => <tr>{children}</tr>,
           th: ({ children }) => (
-            <th className="px-3 py-2 text-left font-serif font-bold text-white tracking-wider border-r border-white/10 last:border-r-0">
+            <th className={`px-3 py-2 text-left font-serif font-bold tracking-wider border-r last:border-r-0 ${lightMode ? "text-deep-navy border-border-clinical/20" : "text-white border-white/10"}`}>
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="px-3 py-2 whitespace-normal border-r border-white/5 last:border-r-0 text-white/80">
+            <td className={`px-3 py-2 whitespace-normal border-r last:border-r-0 ${lightMode ? "text-text-secondary border-border-clinical/10" : "text-white/80 border-white/5"}`}>
               {children}
             </td>
           ),
-          h1: ({ children }) => <h1 className="font-serif text-base font-bold text-white pt-3 border-b border-white/10 pb-1 mb-2">{children}</h1>,
-          h2: ({ children }) => <h2 className="font-serif text-sm font-bold text-white pt-3 border-b border-white/10 pb-1 mb-2">{children}</h2>,
-          h3: ({ children }) => <h3 className="font-serif text-xs font-bold text-white pt-2 border-b border-white/10 pb-1 mb-2">{children}</h3>,
-          h4: ({ children }) => <h4 className="font-serif text-[11px] font-bold text-white pt-2 pb-1 mb-1">{children}</h4>,
+          h1: ({ children }) => <h1 className={`font-serif font-bold pt-3 border-b pb-1 mb-2 ${lightMode ? "text-xl md:text-2xl text-deep-navy border-border-clinical/30" : "text-base text-white border-white/10"}`}>{children}</h1>,
+          h2: ({ children }) => <h2 className={`font-serif font-bold pt-3 border-b pb-1 mb-2 ${lightMode ? "text-lg md:text-xl text-deep-navy border-border-clinical/30" : "text-sm text-white border-white/10"}`}>{children}</h2>,
+          h3: ({ children }) => <h3 className={`font-serif font-bold pt-2 border-b pb-1 mb-2 ${lightMode ? "text-base md:text-lg text-deep-navy border-border-clinical/30" : "text-xs text-white border-white/10"}`}>{children}</h3>,
+          h4: ({ children }) => <h4 className={`font-serif font-bold pt-2 pb-1 mb-1 ${lightMode ? "text-sm text-deep-navy" : "text-[11px] text-white"}`}>{children}</h4>,
           p: ({ children }) => {
             const text = extractPlainText(children);
 
@@ -291,16 +293,18 @@ export function FormattedContent({
               );
             }
 
-            return <p className="leading-relaxed mb-3">{children}</p>;
+            return <p className={lightMode ? "font-medium text-text-secondary leading-relaxed text-sm md:text-base my-4" : "leading-relaxed mb-3 text-white/80"}>{children}</p>;
           },
-          ul: ({ children }) => <ul className="list-disc pl-5 space-y-1.5 mb-3">{children}</ul>,
-          ol: ({ children }) => <ol className="list-decimal pl-5 space-y-1.5 mb-3">{children}</ol>,
-          li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-          hr: () => <hr className="border-white/10 my-4" />,
-          strong: ({ children }) => <strong className="font-bold text-white">{children}</strong>,
-          em: ({ children }) => <em className="italic text-white/80">{children}</em>,
+          ul: ({ children }) => <ul className={lightMode ? "space-y-2 bg-soft-blue/30 p-5 rounded-xl border border-border-clinical/30 my-4 text-xs md:text-sm list-disc list-inside" : "list-disc pl-5 space-y-1.5 mb-3 text-white/80"}>{children}</ul>,
+          ol: ({ children }) => <ol className={lightMode ? "space-y-2 bg-soft-blue/30 p-5 rounded-xl border border-border-clinical/30 my-4 text-xs md:text-sm list-decimal list-inside" : "list-decimal pl-5 space-y-1.5 mb-3 text-white/80"}>{children}</ol>,
+          li: ({ children }) => <li className={lightMode ? "font-medium text-text-secondary leading-relaxed" : "leading-relaxed"}>{children}</li>,
+          hr: () => <hr className={lightMode ? "border-border-clinical/30 my-6" : "border-white/10 my-4"} />,
+          strong: ({ children }) => <strong className={lightMode ? "font-bold text-deep-navy" : "font-bold text-white"}>{children}</strong>,
+          em: ({ children }) => <em className={lightMode ? "italic text-text-secondary" : "italic text-white/80"}>{children}</em>,
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-clinical-teal bg-dark-overlay-navy pl-4 py-2 italic text-white/80 my-3 rounded-r">
+            <blockquote className={lightMode 
+              ? "border-l-4 border-clinical-teal pl-6 my-8 italic text-deep-navy font-medium text-base md:text-lg bg-pale-clinical-blue/20 py-5 pr-6 rounded-r-xl shadow-sm"
+              : "border-l-4 border-clinical-teal bg-dark-overlay-navy pl-4 py-2 italic text-white/80 my-3 rounded-r"}>
               {children}
             </blockquote>
           ),
@@ -345,18 +349,18 @@ export function FormattedContent({
         {content}
       </ReactMarkdown>
       {references && references.length > 0 && (
-        <div className="mt-6 border-t border-white/10 pt-4">
-          <span className="block text-[10px] font-bold uppercase tracking-wider text-white/50 mb-2">
+        <div className={`mt-6 border-t pt-4 ${lightMode ? "border-border-clinical/30" : "border-white/10"}`}>
+          <span className={`block mb-2 ${lightMode ? "font-serif text-base font-bold text-deep-navy border-b border-border-clinical/20 pb-1" : "text-[10px] font-bold uppercase tracking-wider text-white/50"}`}>
             References
           </span>
-          <ol className="list-decimal pl-5 space-y-1 text-[11px] text-white/70 leading-relaxed">
+          <ol className={`list-decimal pl-5 space-y-1 text-[11px] leading-relaxed ${lightMode ? "text-text-secondary" : "text-white/70"}`}>
             {references.map((ref, idx) => (
               <li key={idx}>{ref}</li>
             ))}
           </ol>
         </div>
       )}
-      <ArticleFooterTemplate />
+      {!lightMode && <ArticleFooterTemplate />}
 
       <GenerateImageModal
         isOpen={!!activeGeneratePlaceholder}

@@ -297,8 +297,36 @@ function BusinessDashboardPageInner() {
       );
       if (!proceed) return;
       handleReviewSubmission("blog", "edited");
+    }
+  };
+
+  // Publish Blog Only: publish the blog draft to the website directly.
+  const handlePublishBlogOnly = async () => {
+    const serverDraft = selectedRun?.blog_drafts?.[0];
+    const hasLocalEdits =
+      editTitle !== (serverDraft?.title || "") ||
+      editExcerpt !== (serverDraft?.excerpt || "") ||
+      editBody !== (serverDraft?.body_markdown || serverDraft?.body || "");
+    if (hasLocalEdits) {
+      if (editBody.trim().length < MIN_BLOG_BODY_LENGTH) {
+        toast.error(
+          `The article body is too short to publish (minimum ${MIN_BLOG_BODY_LENGTH} characters). Please write or restore the full article content before publishing.`
+        );
+        return;
+      }
+      const proceed = await confirmAction(
+        "You have unsaved edits in the editor. Save and publish your edited version to the live website?",
+        { confirmLabel: "Save & Publish" }
+      );
+      if (!proceed) return;
+      handleReviewSubmission("blog", "publish_blog");
     } else {
-      handleReviewSubmission("blog", "approved");
+      const proceed = await confirmAction(
+        "Are you sure you want to publish this blog post to the live website?",
+        { confirmLabel: "Publish Now" }
+      );
+      if (!proceed) return;
+      handleReviewSubmission("blog", "publish_blog");
     }
   };
 
@@ -1831,7 +1859,7 @@ function BusinessDashboardPageInner() {
   // Submit review decision (approved | edited | revision_requested | revert_to_blog | revert_to_social)
   const handleReviewSubmission = async (
     stage: "blog" | "social",
-    decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social" | "save_progress",
+    decision: "approved" | "edited" | "revision_requested" | "revert_to_blog" | "revert_to_social" | "save_progress" | "publish_blog",
     customPayload?: any,
     platform?: "instagram" | "facebook" | "linkedin" | "instagramStory" | "instagramCarousel" | "instagramReel",
     keepEditMode?: boolean
@@ -1846,7 +1874,7 @@ function BusinessDashboardPageInner() {
         platform,
       };
 
-      if (decision === "edited" || decision === "save_progress") {
+      if (decision === "edited" || decision === "save_progress" || decision === "publish_blog") {
         if (stage === "blog") {
           // Prefer an explicitly passed payload (e.g. from an image attach that just
           // computed a fresh body) over component state — state setters like
@@ -2746,6 +2774,7 @@ function BusinessDashboardPageInner() {
                   setIsEditMode(true);
                 }}
                 onApproveDraft={handleApproveDraft}
+                onPublishBlogOnly={handlePublishBlogOnly}
                 isSubmittingReview={isSubmittingReview}
                 onOpenBlogRevision={() => {
                   setRevisionStage("blog");

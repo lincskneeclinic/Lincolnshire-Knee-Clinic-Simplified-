@@ -1,5 +1,6 @@
 import { getStoreValue, setStoreValue } from "./dataStore";
 import { createAdminClient } from "./supabase/admin";
+import { type ArticleContent } from "@/data/articles";
 
 // Articles live as static entries in data/articles.ts (title, body, images, etc. are
 // authored/edited via code changes and a redeploy, same as the rest of the site).
@@ -160,3 +161,76 @@ export async function incrementArticleView(slug: string): Promise<number> {
   await setStoreValue(ARTICLE_VIEWS_KEY, counts);
   return next;
 }
+
+export const DYNAMIC_ARTICLES_KEY = "education-dynamic-articles";
+
+export async function getDynamicArticles(): Promise<Record<string, ArticleContent>> {
+  return getStoreValue<Record<string, ArticleContent>>(DYNAMIC_ARTICLES_KEY, {});
+}
+
+export async function saveDynamicArticle(slug: string, article: ArticleContent): Promise<void> {
+  const articles = await getDynamicArticles();
+  articles[slug] = article;
+  await setStoreValue(DYNAMIC_ARTICLES_KEY, articles);
+}
+
+export async function publishBlogDraftToWebsite(run: any): Promise<string> {
+  const draft = run.blog_drafts?.[0];
+  if (!draft) {
+    throw new Error("No blog draft found in the run to publish");
+  }
+
+  const slug = (draft.title || run.topic)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+  const category = draft.category || "knee-arthritis";
+  
+  // Format category label
+  let categoryLabel = "Knee Arthritis";
+  if (category === "knee-replacement") categoryLabel = "Knee Replacement";
+  else if (category === "sports-knee-injuries") categoryLabel = "Sports Knee Injuries";
+  else if (category === "injections") categoryLabel = "Injections";
+  else if (category === "recovery-and-rehabilitation") categoryLabel = "Recovery & Rehab";
+  else if (category === "patient-guides") categoryLabel = "Patient Guides";
+  else if (category === "faqs") categoryLabel = "FAQs";
+
+  const featuredImage = (draft.suggested_images || []).find(
+    (img: any) => typeof img === "object" && img !== null && img.isFeatured
+  ) as any;
+  const imageUrl = featuredImage?.url || (typeof draft.suggested_images?.[0] === "string" ? draft.suggested_images[0] : "") || "/brand/lkc-logo-k-transparent.png";
+
+  const cleanBody = cleanClinicalReviewFlags(draft.body_markdown || draft.body || "");
+
+  const newArticle: ArticleContent = {
+    id: slug,
+    slug,
+    category,
+    categoryLabel,
+    title: draft.title || run.topic,
+    description: draft.excerpt || "",
+    readTime: "8 min read",
+    datePublished: new Date().toISOString().split("T")[0],
+    author: "Mr Ricardo J Pacheco",
+    authorTitle: "Consultant Orthopedic Surgeon",
+    image: imageUrl,
+    takeaways: [],
+    sections: [],
+    faqs: [],
+    references: draft.references || [],
+    relatedTopicSlugs: []
+  };
+
+  // Attach the markdown body as property so we can easily retrieve/render it
+  (newArticle as any).body_markdown = cleanBody;
+
+  await saveDynamicArticle(slug, newArticle);
+  return slug;
+}
+
+export function cleanClinicalReviewFlags(text: string): string {
+  // Removes any line containing [NEEDS CLINICAL REVIEW] (gim handles global, case-insensitive, multiline)
+  return text.replace(/^.*\[NEEDS CLINICAL REVIEW\].*$/gim, "").trim();
+}
+
