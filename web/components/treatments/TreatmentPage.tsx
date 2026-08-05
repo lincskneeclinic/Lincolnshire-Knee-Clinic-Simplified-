@@ -28,6 +28,8 @@ import physiotherapyConservative from "@/public/images/treatments/physiotherapy-
 import physiotherapyInterventional from "@/public/images/treatments/physiotherapy-interventional.png";
 import activityModificationConservative from "@/public/images/treatments/activity-modification-conservative.png";
 import activityModificationInterventional from "@/public/images/treatments/activity-modification-interventional.png";
+import painManagementConservative from "@/public/images/treatments/pain-management-conservative.png";
+import painManagementInterventional from "@/public/images/treatments/pain-management-interventional.png";
 
 // Converts inline **bold** markdown to <strong> — treatment content
 // (e.g. data/treatments.ts's "whatIs" field) is occasionally authored with
@@ -815,8 +817,8 @@ export const TreatmentPage = async ({ slug }: TreatmentPageProps) => {
                 pathologyHighlightLabel="Intervention Options"
                 leftBadgeLabel="Conservative Path"
                 rightBadgeLabel="Interventional Path"
-                leftImageSrc={slug === "physiotherapy" ? physiotherapyConservative : slug === "activity-modification" ? activityModificationConservative : undefined}
-                rightImageSrc={slug === "physiotherapy" ? physiotherapyInterventional : slug === "activity-modification" ? activityModificationInterventional : undefined}
+                leftImageSrc={slug === "physiotherapy" ? physiotherapyConservative : slug === "activity-modification" ? activityModificationConservative : slug === "pain-management" ? painManagementConservative : undefined}
+                rightImageSrc={slug === "physiotherapy" ? physiotherapyInterventional : slug === "activity-modification" ? activityModificationInterventional : slug === "pain-management" ? painManagementInterventional : undefined}
               />
             </div>
               </section>
