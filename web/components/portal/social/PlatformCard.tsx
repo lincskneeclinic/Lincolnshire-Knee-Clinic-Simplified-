@@ -913,7 +913,7 @@ export function PlatformCard({
                 }}
                 className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-[11px] px-3 py-1 rounded-lg cursor-pointer"
               >
-                Save &amp; Approve
+                {status === "approved" || isPublished ? "Save" : "Save & Approve"}
               </button>
             </div>
           </div>
@@ -927,9 +927,9 @@ export function PlatformCard({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10">
-        {!isPublished && !isCardEditing && (
+        {!isCardEditing && (
           <div className="flex items-center gap-1.5">
-            {status !== "approved" ? (
+            {status !== "approved" && !isPublished ? (
               <>
                 <button
                   onClick={() => setIsEditing(true)}
@@ -955,7 +955,7 @@ export function PlatformCard({
                 onClick={() => setIsEditing(true)}
                 className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
               >
-                ✏️ Edit Approved Post
+                ✏️ Edit {isPublished ? "Published" : "Approved"} Post
               </button>
             )}
           </div>
