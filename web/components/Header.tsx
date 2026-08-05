@@ -275,7 +275,7 @@ export const Header: React.FC = () => {
           closed) so the slide-in/out can transition smoothly. */}
       <div
         id="mobile-menu"
-        className={`lg:hidden fixed top-0 left-0 w-[82%] max-w-[320px] h-[66.67vh] max-h-[66.67vh] rounded-br-2xl bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
+        className={`lg:hidden fixed top-0 left-0 w-[35%] min-w-[165px] h-[66.67vh] max-h-[66.67vh] rounded-br-2xl bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         role="dialog"
@@ -296,14 +296,14 @@ export const Header: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-3 px-4 flex flex-col gap-3">
-          <nav className="flex flex-col gap-1" aria-label="Mobile navigation">
+        <div className="flex-1 overflow-y-auto py-2.5 px-3 flex flex-col gap-2">
+          <nav className="flex flex-col gap-0.5" aria-label="Mobile navigation">
             {mainNavigation.map((link, idx) => (
               <Link
                 key={idx}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`font-sans text-[13px] sm:text-sm font-semibold py-1.5 px-3 rounded-lg transition-colors flex items-center ${
+                className={`font-sans text-[11px] sm:text-xs font-semibold py-1 px-2 rounded-md transition-colors flex items-center ${
                   isActive(link.href)
                     ? "bg-soft-blue text-deep-navy font-bold"
                     : "text-text-secondary hover:bg-warm-off-white hover:text-deep-navy"
@@ -316,30 +316,33 @@ export const Header: React.FC = () => {
 
           <hr className="border-border-clinical my-0.5" />
 
-          {/* Mobile Utility Navigation (Horizontal layout to save space) */}
-          <div className="flex flex-row flex-wrap gap-x-4 gap-y-1 px-3 justify-center">
-            {utilityNavigation.map((link, idx) => (
-              <Link
-                key={idx}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`font-sans text-xs font-bold transition-colors ${
-                  link.urgent ? "text-status-error" : "text-text-secondary hover:text-deep-navy"
-                }`}
-              >
-                {link.name}
+          {/* Mobile Utility Navigation */}
+          <div className="flex flex-col gap-1.5 items-center">
+            <Link
+              href="/urgent-advice"
+              onClick={() => setMobileMenuOpen(false)}
+              className="font-sans text-[10px] font-bold text-status-error transition-colors"
+            >
+              Urgent Advice
+            </Link>
+            <div className="flex flex-row gap-3 text-[10px] font-bold text-text-secondary">
+              <Link href="/community" onClick={() => setMobileMenuOpen(false)} className="hover:text-deep-navy">
+                Community
               </Link>
-            ))}
+              <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="hover:text-deep-navy">
+                Contact
+              </Link>
+            </div>
           </div>
 
           <div className="pt-1">
             <Button
               href="/book-appointment"
-              className="w-full justify-center py-2 text-xs sm:text-sm shadow-md"
+              className="w-full justify-center py-1.5 text-[11px] sm:text-xs shadow-md"
               variant="teal"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Book Appointment
+              Book Now
             </Button>
           </div>
         </div>
