@@ -157,7 +157,7 @@ export const Header: React.FC = () => {
               />
             )}
           </div>
-          <span className="font-serif text-[11px] min-[380px]:text-sm sm:text-base md:text-lg xl:text-xl font-bold text-deep-navy tracking-tight leading-none whitespace-nowrap">
+          <span className="font-serif text-[11px] min-[380px]:text-sm sm:text-base md:text-lg lg:text-base xl:text-lg 2xl:text-xl font-bold text-deep-navy tracking-tight leading-none whitespace-nowrap">
             Lincolnshire Knee Clinic
           </span>
         </Link>
@@ -166,7 +166,7 @@ export const Header: React.FC = () => {
         <nav
           ref={navRef}
           onMouseLeave={() => setHoveredIndex(null)}
-          className="hidden xl:flex items-center justify-center flex-1 gap-1.5 xl:gap-2.5 2xl:gap-5 px-1 relative py-1.5"
+          className="hidden lg:flex items-center justify-center flex-1 gap-1 lg:gap-1.5 xl:gap-2.5 2xl:gap-5 px-1 relative py-1.5 min-w-0"
           aria-label="Main navigation"
         >
           {mainNavigation.map((link, idx) => {
@@ -188,7 +188,7 @@ export const Header: React.FC = () => {
                   setHoveredIndex(idx);
                   updateIndicator(idx);
                 }}
-                className={`font-sans text-[11px] xl:text-xs 2xl:text-sm font-semibold py-1.5 transition-colors whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-clinical-teal ${
+                className={`font-sans text-[10px] xl:text-xs 2xl:text-sm font-semibold py-1.5 transition-colors whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-clinical-teal ${
                   isHighlighted
                     ? "text-deep-navy font-bold"
                     : "text-text-secondary hover:text-deep-navy"
@@ -234,10 +234,10 @@ export const Header: React.FC = () => {
             </Button>
           </div>
 
-          {/* Mobile Menu Hamburger Button - collapses at xl:block to avoid text crowding */}
+          {/* Mobile Menu Hamburger Button */}
           <button
             type="button"
-            className="xl:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-deep-navy rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal"
+            className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-deep-navy rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-menu"
@@ -262,7 +262,7 @@ export const Header: React.FC = () => {
           opacity transition can actually animate; pointer-events disabled
           while hidden so it doesn't block clicks on the page underneath. */}
       <div
-        className={`xl:hidden fixed inset-0 bg-deep-navy/50 transition-opacity duration-300 z-[45] ${
+        className={`lg:hidden fixed inset-0 bg-deep-navy/50 transition-opacity duration-300 z-[45] ${
           mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setMobileMenuOpen(false)}
@@ -275,7 +275,7 @@ export const Header: React.FC = () => {
           closed) so the slide-in/out can transition smoothly. */}
       <div
         id="mobile-menu"
-        className={`xl:hidden fixed inset-y-0 left-0 w-[82%] max-w-[320px] bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
+        className={`lg:hidden fixed top-0 left-0 w-[82%] max-w-[320px] h-[66.67vh] max-h-[66.67vh] rounded-br-2xl bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         role="dialog"

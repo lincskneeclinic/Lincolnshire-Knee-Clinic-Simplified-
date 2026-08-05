@@ -210,6 +210,27 @@ export const visualsInventory: VisualAsset[] = [
     photographyOrIllustration: "illustration",
     requiredDimensions: { width: 800, height: 600 }
   },
+  {
+    id: "patellofemoral-pain-imaging",
+    page: "conditions/patellofemoral-pain",
+    section: "imaging",
+    title: "Axial MRI: Patellofemoral Joint",
+    type: "imaging",
+    imagePath: "/images/imaging/patellofemoral-pain-imaging.png",
+    altText: "Axial T2-weighted MRI scan of the patellofemoral joint showing the patella seated within the trochlear groove of the femur.",
+    caption: "Axial T2 MRI scan demonstrating the patellofemoral joint cartilage and tracking path.",
+    placeholderLabel: "Radiology example pending clinical review",
+    status: "approved",
+    priority: "medium",
+    clinicalReviewStatus: "clinically-approved",
+    photographyOrIllustration: "photography",
+    requiredDimensions: { width: 800, height: 600 },
+    annotations: [
+      { id: "patella", x: 50, y: 25, label: "Patella (Kneecap)", description: "The kneecap protects the front of the joint and slides within the femoral groove." },
+      { id: "trochlea", x: 50, y: 60, label: "Trochlear Groove", description: "The groove on the thigh bone (femur) that guides the kneecap during bending." },
+      { id: "cartilage", x: 65, y: 38, label: "Subpatellar Cartilage", description: "Articular cartilage lining the back of the kneecap, which can experience increased stress or wear.", highlightColor: "coral" }
+    ]
+  },
 
   // Cartilage Injury
   {

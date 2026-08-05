@@ -31,6 +31,7 @@ function absolutizeUrl(url: string): string {
 
 function formatInline(text: string): string {
   return text
+    .replace(/!\[(.*?)\]\((.*?)\)/g, (_match, alt, url) => `<img src="${absolutizeUrl(url)}" alt="${alt}" style="max-width: 100%; height: auto; display: block; margin: 16px auto; border-radius: 8px;" />`)
     .replace(/\[(.*?)\]\((.*?)\)/g, (_match, label, url) => `<a href="${absolutizeUrl(url)}" style="${A_STYLE}">${label}</a>`)
     .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #0f172a;">$1</strong>');
 }

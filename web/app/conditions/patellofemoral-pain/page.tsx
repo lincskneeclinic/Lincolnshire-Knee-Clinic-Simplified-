@@ -9,5 +9,6 @@ export function generateMetadata(): Metadata {
 }
 
 export default function Page() {
+  // Force hot reload revalidation for new visual assets
   return <ConditionPage slug={SLUG} />;
 }

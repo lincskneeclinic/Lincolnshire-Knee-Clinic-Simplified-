@@ -28,3 +28,8 @@ Two easy-to-miss config requirements this depends on, both in `web/next.config.t
 - `experimental.proxyClientMaxBodySize` — `proxy.ts`'s matcher covers nearly every route, and this Next.js version buffers every request body passing through it, silently truncating anything over the default 10MB with no error (the route handler just gets a corrupted partial body). Any new large-upload feature needs this raised to cover it.
 
 If a manually-placed static asset (not uploaded through the app) needs to go in git despite `/public/videos/*` being gitignored by default, allowlist that one file explicitly in `.gitignore` (see the existing `!/public/videos/arthrosamid-patient-video.mp4` line) rather than removing the directory-level ignore — keep future dev-only video dumps out of git by default.
+
+# Newsletter images — standing product requirement
+
+AI-generated newsletter drafts and monthly digests must not include captions or labels for images. When writing newsletters in markdown, images should be inserted cleanly without captions. Both the ReactMarkdown renderer for archived newsletters (`web/app/newsletter/archive/[id]/page.tsx`) and the inline HTML converter (`web/lib/newsletterMarkdown.ts`) are configured to suppress captions and render images cleanly. Always adhere to this standard when editing or creating newsletter templates or generation features.
+

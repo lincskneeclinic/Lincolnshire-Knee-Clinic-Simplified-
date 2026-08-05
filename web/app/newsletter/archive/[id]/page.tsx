@@ -83,11 +83,6 @@ export default async function NewsletterArchiveDetailPage({ params }: PageProps)
             img: ({ src, alt }) => (
               <figure className="my-8 rounded-2xl overflow-hidden border border-border-clinical/30 shadow-md bg-pale-clinical-blue/10">
                 <img src={src || ""} alt={alt || ""} className="w-full h-auto object-contain max-h-[380px] bg-white" />
-                {alt && (
-                  <figcaption className="text-center text-xs text-text-muted italic p-3 bg-white/90 border-t border-border-clinical/20 font-medium">
-                    {alt}
-                  </figcaption>
-                )}
               </figure>
             ),
           }}
