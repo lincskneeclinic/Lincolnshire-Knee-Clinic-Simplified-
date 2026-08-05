@@ -24,6 +24,8 @@ import { VisualPathwayBlock } from "@/components/visuals/VisualPathwayBlock";
 import { VisualSectionHeading } from "@/components/visuals/VisualSectionHeading";
 import { TreatmentPathway } from "@/components/visuals/TreatmentPathway";
 import { RecoveryPathway } from "@/components/visuals/RecoveryPathway";
+import physiotherapyConservative from "@/public/images/treatments/physiotherapy-conservative.png";
+import physiotherapyInterventional from "@/public/images/treatments/physiotherapy-interventional.png";
 
 // Converts inline **bold** markdown to <strong> — treatment content
 // (e.g. data/treatments.ts's "whatIs" field) is occasionally authored with
@@ -809,6 +811,10 @@ export const TreatmentPage = async ({ slug }: TreatmentPageProps) => {
                   { feature: "Expected Outcome", normal: "Improved function and pain control, preserved anatomy", abnormal: "Restored mechanical stability, reconstructed tissue" }
                 ]}
                 pathologyHighlightLabel="Intervention Options"
+                leftBadgeLabel="Conservative Path"
+                rightBadgeLabel="Interventional Path"
+                leftImageSrc={slug === "physiotherapy" ? physiotherapyConservative : undefined}
+                rightImageSrc={slug === "physiotherapy" ? physiotherapyInterventional : undefined}
               />
             </div>
               </section>
