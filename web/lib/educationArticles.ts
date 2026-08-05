@@ -230,7 +230,7 @@ export async function publishBlogDraftToWebsite(run: any): Promise<string> {
 }
 
 export function cleanClinicalReviewFlags(text: string): string {
-  // Removes any line containing [NEEDS CLINICAL REVIEW] (gim handles global, case-insensitive, multiline)
-  return text.replace(/^.*\[NEEDS CLINICAL REVIEW\].*$/gim, "").trim();
+  // Removes any line containing [NEEDS CLINICAL REVIEW] (gi handles global, case-insensitive)
+  return text.replace(/\[NEEDS CLINICAL REVIEW[^\n\r]*/gi, "").trim();
 }
 

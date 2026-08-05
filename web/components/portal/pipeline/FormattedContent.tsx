@@ -122,7 +122,7 @@ export function FormattedContent({
 
   let content = cleanHeadingBugs(body_markdown || body || "");
   if (stripClinicalFlags) {
-    content = content.replace(/^.*\[NEEDS CLINICAL REVIEW\].*$/gim, "").trim();
+    content = content.replace(/\[NEEDS CLINICAL REVIEW[^\n\r]*/gi, "").trim();
   }
   if (!content) return null;
 
@@ -194,11 +194,6 @@ export function FormattedContent({
                       className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-contain bg-white/5"
                       style={{ aspectRatio: "16 / 9", width: "100%" }}
                     />
-                    {shouldShowCaption(label) && (
-                      <span className="text-[10px] text-white/50 italic block">
-                        {isFeatured ? "🖼️ Featured Image (Education Hub card)" : "📷 Inline Image"}: {label}
-                      </span>
-                    )}
                   </div>
                 );
               }
@@ -337,11 +332,6 @@ export function FormattedContent({
                   className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-contain bg-white/5"
                   style={{ aspectRatio: "16 / 9", width: "100%" }}
                 />
-                {alt && shouldShowCaption(alt) && (
-                  <span className="text-[10px] text-white/50 italic block">
-                    {alt}
-                  </span>
-                )}
                 {hasChangePermission && onResetPlaceholder && src && typeof src === "string" && (
                   <div className="mt-2 flex justify-center gap-2">
                     <button
