@@ -26,6 +26,8 @@ import { TreatmentPathway } from "@/components/visuals/TreatmentPathway";
 import { RecoveryPathway } from "@/components/visuals/RecoveryPathway";
 import physiotherapyConservative from "@/public/images/treatments/physiotherapy-conservative.png";
 import physiotherapyInterventional from "@/public/images/treatments/physiotherapy-interventional.png";
+import activityModificationConservative from "@/public/images/treatments/activity-modification-conservative.png";
+import activityModificationInterventional from "@/public/images/treatments/activity-modification-interventional.png";
 
 // Converts inline **bold** markdown to <strong> — treatment content
 // (e.g. data/treatments.ts's "whatIs" field) is occasionally authored with
@@ -813,8 +815,8 @@ export const TreatmentPage = async ({ slug }: TreatmentPageProps) => {
                 pathologyHighlightLabel="Intervention Options"
                 leftBadgeLabel="Conservative Path"
                 rightBadgeLabel="Interventional Path"
-                leftImageSrc={slug === "physiotherapy" ? physiotherapyConservative : undefined}
-                rightImageSrc={slug === "physiotherapy" ? physiotherapyInterventional : undefined}
+                leftImageSrc={slug === "physiotherapy" ? physiotherapyConservative : slug === "activity-modification" ? activityModificationConservative : undefined}
+                rightImageSrc={slug === "physiotherapy" ? physiotherapyInterventional : slug === "activity-modification" ? activityModificationInterventional : undefined}
               />
             </div>
               </section>
