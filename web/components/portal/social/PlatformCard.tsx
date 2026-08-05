@@ -927,26 +927,37 @@ export function PlatformCard({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10">
-        {status !== "approved" && !isPublished && !isCardEditing && (
+        {!isPublished && !isCardEditing && (
           <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setIsEditing(true)}
-              className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
-            >
-              ✏️ Edit
-            </button>
-            <button
-              onClick={onRequestRevision}
-              className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
-            >
-              🔄 Revision
-            </button>
-            <button
-              onClick={onApprove}
-              className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-[11px] px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-            >
-              ✓ Approve
-            </button>
+            {status !== "approved" ? (
+              <>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                >
+                  ✏️ Edit
+                </button>
+                <button
+                  onClick={onRequestRevision}
+                  className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                >
+                  🔄 Revision
+                </button>
+                <button
+                  onClick={onApprove}
+                  className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-[11px] px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                >
+                  ✓ Approve
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+              >
+                ✏️ Edit Approved Post
+              </button>
+            )}
           </div>
         )}
 
