@@ -148,15 +148,26 @@ export function PipelineListView({
                       minute: "2-digit",
                     })}
                   </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteRun(run.run_id, run.topic);
-                    }}
-                    className="text-[10px] text-status-error/80 hover:text-status-error cursor-pointer"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectRun(run.run_id);
+                      }}
+                      className="text-[10px] text-clinical-teal hover:underline cursor-pointer font-semibold"
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteRun(run.run_id, run.topic);
+                      }}
+                      className="text-[10px] text-status-error/80 hover:text-status-error cursor-pointer"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
