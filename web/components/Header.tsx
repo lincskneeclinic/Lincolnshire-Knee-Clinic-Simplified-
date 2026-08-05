@@ -296,14 +296,14 @@ export const Header: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-5 px-5 flex flex-col gap-4">
-          <nav className="flex flex-col gap-2.5" aria-label="Mobile navigation">
+        <div className="flex-1 overflow-y-auto py-3 px-4 flex flex-col gap-3">
+          <nav className="flex flex-col gap-1" aria-label="Mobile navigation">
             {mainNavigation.map((link, idx) => (
               <Link
                 key={idx}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`font-sans text-base font-semibold py-3 px-3.5 rounded-lg transition-colors min-h-[44px] flex items-center ${
+                className={`font-sans text-[13px] sm:text-sm font-semibold py-1.5 px-3 rounded-lg transition-colors flex items-center ${
                   isActive(link.href)
                     ? "bg-soft-blue text-deep-navy font-bold"
                     : "text-text-secondary hover:bg-warm-off-white hover:text-deep-navy"
@@ -314,17 +314,17 @@ export const Header: React.FC = () => {
             ))}
           </nav>
 
-          <hr className="border-border-clinical my-1" />
+          <hr className="border-border-clinical my-0.5" />
 
-          {/* Mobile Utility Navigation */}
-          <div className="flex flex-col gap-3 px-3.5">
+          {/* Mobile Utility Navigation (Horizontal layout to save space) */}
+          <div className="flex flex-row flex-wrap gap-x-4 gap-y-1 px-3 justify-center">
             {utilityNavigation.map((link, idx) => (
               <Link
                 key={idx}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`font-sans text-sm font-semibold transition-colors ${
-                  link.urgent ? "text-status-error font-bold" : "text-text-secondary hover:text-deep-navy"
+                className={`font-sans text-xs font-bold transition-colors ${
+                  link.urgent ? "text-status-error" : "text-text-secondary hover:text-deep-navy"
                 }`}
               >
                 {link.name}
@@ -332,10 +332,10 @@ export const Header: React.FC = () => {
             ))}
           </div>
 
-          <div className="pt-2">
+          <div className="pt-1">
             <Button
               href="/book-appointment"
-              className="w-full justify-center py-3 text-base shadow-md"
+              className="w-full justify-center py-2 text-xs sm:text-sm shadow-md"
               variant="teal"
               onClick={() => setMobileMenuOpen(false)}
             >
