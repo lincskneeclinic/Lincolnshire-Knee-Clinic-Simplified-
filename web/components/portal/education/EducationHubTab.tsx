@@ -25,7 +25,9 @@ interface EducationHubTabProps {
   search: string;
   onSearchChange: (value: string) => void;
   isStartingUpdateSlug: string | null;
+  isStartingRunSlug: string | null;
   onStartUpdate: (article: EducationArticleSummary) => void;
+  onStartRun: (article: EducationArticleSummary) => void;
   onRequestRemoval: (article: EducationArticleSummary) => void;
 }
 
@@ -35,7 +37,9 @@ export function EducationHubTab({
   search,
   onSearchChange,
   isStartingUpdateSlug,
+  isStartingRunSlug,
   onStartUpdate,
+  onStartRun,
   onRequestRemoval,
 }: EducationHubTabProps) {
   const searchTerm = search.trim().toLowerCase();
@@ -107,13 +111,22 @@ export function EducationHubTab({
               </div>
               <div className="flex justify-end items-center gap-2 pt-1 flex-wrap">
                 {!article.removed && (
-                  <button
-                    onClick={() => onStartUpdate(article)}
-                    disabled={isStartingUpdateSlug === article.slug}
-                    className="border border-white/20 text-white/80 hover:bg-white/5 text-[11px] px-3 py-1.5 rounded-lg transition-all cursor-pointer font-medium disabled:opacity-50 flex items-center gap-1"
-                  >
-                    {isStartingUpdateSlug === article.slug ? "Opening Editor…" : "✏️ Edit"}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => onStartUpdate(article)}
+                      disabled={isStartingUpdateSlug === article.slug || isStartingRunSlug === article.slug}
+                      className="border border-white/20 text-white/80 hover:bg-white/5 text-[11px] px-3 py-1.5 rounded-lg transition-all cursor-pointer font-medium disabled:opacity-50 flex items-center gap-1"
+                    >
+                      {isStartingUpdateSlug === article.slug ? "Opening Editor…" : "✏️ Edit"}
+                    </button>
+                    <button
+                      onClick={() => onStartRun(article)}
+                      disabled={isStartingUpdateSlug === article.slug || isStartingRunSlug === article.slug}
+                      className="border border-clinical-teal/30 text-clinical-teal hover:bg-clinical-teal/5 text-[11px] px-3 py-1.5 rounded-lg transition-all cursor-pointer font-medium disabled:opacity-50 flex items-center gap-1"
+                    >
+                      {isStartingRunSlug === article.slug ? "Starting Run…" : "🚀 Start Run"}
+                    </button>
+                  </>
                 )}
                 {article.removed ? (
                   <button

@@ -143,7 +143,7 @@ export function PipelineSocialTab({
                     const res = await fetch("/api/portal/content-pipeline/generate-image", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ prompt, runId: selectedRun.run_id }),
+                      body: JSON.stringify({ prompt, runId: selectedRun.run_id, format: "png" }),
                     });
                     const data = await res.json();
                     if (data.success && data.url) {
@@ -204,7 +204,7 @@ export function PipelineSocialTab({
                     const res = await fetch("/api/portal/content-pipeline/generate-image", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ prompt, runId: selectedRun.run_id }),
+                      body: JSON.stringify({ prompt, runId: selectedRun.run_id, format: "png" }),
                     });
                     const data = await res.json();
                     if (data.success && data.url) {
@@ -265,7 +265,7 @@ export function PipelineSocialTab({
                     const res = await fetch("/api/portal/content-pipeline/generate-image", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ prompt, runId: selectedRun.run_id }),
+                      body: JSON.stringify({ prompt, runId: selectedRun.run_id, format: "png" }),
                     });
                     const data = await res.json();
                     if (data.success && data.url) {
@@ -334,7 +334,7 @@ export function PipelineSocialTab({
                     const res = await fetch("/api/portal/content-pipeline/generate-image", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ prompt, runId: selectedRun.run_id, aspectRatio: "9:16" }),
+                      body: JSON.stringify({ prompt, runId: selectedRun.run_id, aspectRatio: "9:16", format: "png" }),
                     });
                     const data = await res.json();
                     if (data.success && data.url) {
@@ -421,7 +421,7 @@ export function PipelineSocialTab({
                     const res = await fetch("/api/portal/content-pipeline/generate-image", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ prompt, runId: selectedRun.run_id }),
+                      body: JSON.stringify({ prompt, runId: selectedRun.run_id, format: "png" }),
                     });
                     const data = await res.json();
                     if (data.success && data.url) {

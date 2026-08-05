@@ -1397,7 +1397,8 @@ function BusinessDashboardPageInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: promptText,
-          aspectRatio: platform === "instagramStory" ? "9:16" : undefined
+          aspectRatio: platform === "instagramStory" ? "9:16" : undefined,
+          format: "png"
         }),
       });
       const data = await res.json();
@@ -1474,6 +1475,37 @@ function BusinessDashboardPageInner() {
     setRunDetailTab("draft");
     setEditingPlatform(null);
     setActiveTab("pipeline");
+  };
+
+  const [isStartingArticleRun, setIsStartingArticleRun] = useState<string | null>(null);
+  const handleStartArticleRun = async (article: EducationArticleSummary) => {
+    setIsStartingArticleRun(article.slug);
+    try {
+      const res = await fetch("/api/portal/education-articles/update-run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: article.slug }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to start update run.");
+      }
+
+      await fetchPipelineRuns();
+      
+      setSelectedRun(data.run);
+      setPipelineSearch("");
+      setRunDetailTab("draft");
+      setEditingPlatform(null);
+      setActiveTab("pipeline");
+      
+      toast.success(`Started an update run for "${article.title}"!`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to start run.");
+    } finally {
+      setIsStartingArticleRun(null);
+    }
   };
 
   const handleCommunityReportAction = async (
@@ -2657,7 +2689,9 @@ function BusinessDashboardPageInner() {
                 search={educationSearch}
                 onSearchChange={setEducationSearch}
                 isStartingUpdateSlug={isStartingArticleUpdate}
+                isStartingRunSlug={isStartingArticleRun}
                 onStartUpdate={handleStartArticleUpdate}
+                onStartRun={handleStartArticleRun}
                 onRequestRemoval={setArticlePendingRemoval}
               />
             )}

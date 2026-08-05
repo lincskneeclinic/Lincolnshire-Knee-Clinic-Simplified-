@@ -34,14 +34,14 @@ function getLogoBuffer(): Buffer {
 // logos/text come out garbled (the exact problem the reference docs already
 // warn about for embedded labels). Sized relative to the image's shorter
 // dimension so it stays proportionate across square/portrait/landscape formats.
-async function compositeLogo(imageBuffer: Buffer): Promise<Buffer> {
+async function compositeLogo(imageBuffer: Buffer, format: string): Promise<Buffer> {
   const base = sharp(imageBuffer);
   const metadata = await base.metadata();
   const imgWidth = metadata.width || 1024;
   const imgHeight = metadata.height || 1024;
   const shorterSide = Math.min(imgWidth, imgHeight);
 
-  const logoTargetWidth = Math.round(shorterSide * 0.14);
+  const logoTargetWidth = Math.round(shorterSide * 0.07);
   const logoBuffer = await sharp(getLogoBuffer()).resize({ width: logoTargetWidth }).toBuffer();
   const logoMetadata = await sharp(logoBuffer).metadata();
   const logoWidth = logoMetadata.width || logoTargetWidth;
@@ -50,7 +50,14 @@ async function compositeLogo(imageBuffer: Buffer): Promise<Buffer> {
   const left = Math.max(0, imgWidth - logoWidth - margin);
   const top = margin;
 
-  return base.composite([{ input: logoBuffer, left, top }]).webp({ quality: 90 }).toBuffer();
+  const baseWithComposite = base.composite([{ input: logoBuffer, left, top }]);
+  if (format === "png") {
+    return baseWithComposite.png().toBuffer();
+  } else if (format === "jpeg" || format === "jpg") {
+    return baseWithComposite.jpeg({ quality: 90 }).toBuffer();
+  } else {
+    return baseWithComposite.webp({ quality: 90 }).toBuffer();
+  }
 }
 
 // Dedicated bucket for reusable, clinically-reviewed knee illustrations — kept
@@ -137,6 +144,7 @@ export async function POST(request: Request) {
       transparentBackground,
       addLogo,
       confirmOverwrite,
+      format,
     } = await request.json();
 
     if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
@@ -155,7 +163,16 @@ export async function POST(request: Request) {
 
     const safeCategory: ImageCategory = category || "anatomy";
     const rawFilename = (typeof filename === "string" && filename.trim()) || `${safeCategory}-generated-${Date.now()}`;
-    const safeFilename = rawFilename.endsWith(".webp") ? rawFilename : `${rawFilename}.webp`;
+    const outputFormat = format || "webp";
+    const extension = outputFormat === "png" ? ".png" : (outputFormat === "jpeg" || outputFormat === "jpg") ? ".jpg" : ".webp";
+    
+    let baseName = rawFilename;
+    if (baseName.endsWith(".webp")) baseName = baseName.slice(0, -5);
+    else if (baseName.endsWith(".png")) baseName = baseName.slice(0, -4);
+    else if (baseName.endsWith(".jpg")) baseName = baseName.slice(0, -4);
+    else if (baseName.endsWith(".jpeg")) baseName = baseName.slice(0, -5);
+    
+    const safeFilename = `${baseName}${extension}`;
     const storagePath = `${safeCategory}/${safeFilename}`;
     const publicUrl = `${config.url}/storage/v1/object/public/${BUCKET}/${encodeURIComponent(storagePath)}`;
 
@@ -189,11 +206,18 @@ export async function POST(request: Request) {
     }
 
     const sourceBuffer = Buffer.from(imageBytesBase64, "base64");
-    let webpBuffer: Buffer = await sharp(sourceBuffer).webp({ quality: 90 }).toBuffer();
+    let processedBuffer: Buffer;
+    if (outputFormat === "png") {
+      processedBuffer = await sharp(sourceBuffer).png().toBuffer();
+    } else if (outputFormat === "jpeg" || outputFormat === "jpg") {
+      processedBuffer = await sharp(sourceBuffer).jpeg({ quality: 90 }).toBuffer();
+    } else {
+      processedBuffer = await sharp(sourceBuffer).webp({ quality: 90 }).toBuffer();
+    }
 
     if (addLogo) {
       try {
-        webpBuffer = await compositeLogo(webpBuffer);
+        processedBuffer = await compositeLogo(processedBuffer, outputFormat);
       } catch (err) {
         console.error("Logo overlay failed, continuing without it:", err);
       }
@@ -219,10 +243,10 @@ export async function POST(request: Request) {
       headers: {
         apikey: config.key,
         Authorization: `Bearer ${config.key}`,
-        "Content-Type": "image/webp",
+        "Content-Type": outputFormat === "png" ? "image/png" : (outputFormat === "jpeg" || outputFormat === "jpg") ? "image/jpeg" : "image/webp",
         "x-upsert": "true",
       },
-      body: new Uint8Array(webpBuffer),
+      body: new Uint8Array(processedBuffer),
     });
 
     if (!uploadRes.ok) {
