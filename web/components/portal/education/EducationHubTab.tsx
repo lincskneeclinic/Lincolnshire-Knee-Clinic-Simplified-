@@ -17,6 +17,7 @@ export interface EducationArticleSummary {
   views: number;
   feedbackUp: number;
   feedbackDown: number;
+  archived: boolean;
 }
 
 interface EducationHubTabProps {
@@ -42,12 +43,22 @@ export function EducationHubTab({
   onStartRun,
   onRequestRemoval,
 }: EducationHubTabProps) {
+  const [showArchived, setShowArchived] = React.useState(false);
   const searchTerm = search.trim().toLowerCase();
-  const visibleArticles = searchTerm
-    ? articles.filter(
-        (a) => a.title.toLowerCase().includes(searchTerm) || (a.category || "").toLowerCase().includes(searchTerm)
-      )
-    : articles;
+  
+  const visibleArticles = articles.filter((a) => {
+    // If searching, show everything that matches search query
+    if (searchTerm) {
+      return a.title.toLowerCase().includes(searchTerm) || (a.category || "").toLowerCase().includes(searchTerm);
+    }
+    // If not searching, filter out archived articles unless showArchived toggle is checked
+    if (a.archived && !showArchived) {
+      return false;
+    }
+    return true;
+  });
+
+  const archivedCount = articles.filter(a => a.archived).length;
 
   return (
     <PortalCard className="space-y-4">
@@ -60,6 +71,19 @@ export function EducationHubTab({
             an article's content through the normal draft editor (references, images, wording) — approving it
             publishes the changes live the same way.
           </p>
+          {archivedCount > 0 && (
+            <div className="flex items-center gap-2 mt-3">
+              <label className="inline-flex items-center gap-2 text-xs text-white/80 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={showArchived}
+                  onChange={(e) => setShowArchived(e.target.checked)}
+                  className="rounded border-white/20 bg-dark-overlay-navy text-clinical-teal focus:ring-0 cursor-pointer"
+                />
+                Show Older & Archived Articles ({archivedCount})
+              </label>
+            </div>
+          )}
         </div>
         <input
           type="text"
@@ -75,25 +99,33 @@ export function EducationHubTab({
       ) : articles.length === 0 ? (
         <PortalEmptyState message="No Education Hub articles found." />
       ) : visibleArticles.length === 0 ? (
-        <PortalEmptyState message={`No articles match "${search}".`} />
+        <PortalEmptyState message={searchTerm ? `No articles match "${search}".` : "No active articles found."} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {visibleArticles.map((article) => (
             <div
               key={article.slug}
               className={`p-4 rounded-xl border space-y-2 ${
-                article.removed ? "bg-dark-overlay-navy border-white/10 opacity-60" : "bg-dark-overlay-navy border-white/10"
+                article.removed
+                  ? "bg-dark-overlay-navy border-white/10 opacity-60"
+                  : article.archived
+                  ? "bg-dark-overlay-navy border-white/10 opacity-75"
+                  : "bg-dark-overlay-navy border-white/10"
               }`}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[10px] uppercase tracking-wider text-clinical-teal font-semibold">
                   {article.categoryLabel}
                 </span>
-                {article.removed && (
+                {article.removed ? (
                   <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-status-error/40 text-status-error">
                     Removed
                   </span>
-                )}
+                ) : article.archived ? (
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-white/20 text-white/60 bg-white/5">
+                    Archived (Older)
+                  </span>
+                ) : null}
               </div>
               <h4 className="text-xs font-bold text-white leading-snug">{article.title}</h4>
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-white/50 font-medium">
