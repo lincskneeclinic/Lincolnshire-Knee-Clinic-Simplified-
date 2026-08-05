@@ -30,6 +30,26 @@ import activityModificationConservative from "@/public/images/treatments/activit
 import activityModificationInterventional from "@/public/images/treatments/activity-modification-interventional.png";
 import painManagementConservative from "@/public/images/treatments/pain-management-conservative.png";
 import painManagementInterventional from "@/public/images/treatments/pain-management-interventional.png";
+import kneeBracingConservative from "@/public/images/treatments/knee-bracing-conservative.png";
+import kneeBracingInterventional from "@/public/images/treatments/knee-bracing-interventional.png";
+import kneeArthroscopyConservative from "@/public/images/treatments/knee-arthroscopy-conservative.png";
+import kneeArthroscopyInterventional from "@/public/images/treatments/knee-arthroscopy-interventional.png";
+import meniscalSurgeryConservative from "@/public/images/treatments/meniscal-surgery-conservative.png";
+import meniscalSurgeryInterventional from "@/public/images/treatments/meniscal-surgery-interventional.png";
+import aclReconstructionConservative from "@/public/images/treatments/acl-reconstruction-conservative.png";
+import aclReconstructionInterventional from "@/public/images/treatments/acl-reconstruction-interventional.png";
+import cartilageProceduresConservative from "@/public/images/treatments/cartilage-procedures-conservative.png";
+import cartilageProceduresInterventional from "@/public/images/treatments/cartilage-procedures-interventional.png";
+import patellarStabilisationConservative from "@/public/images/treatments/patellar-stabilisation-conservative.png";
+import patellarStabilisationInterventional from "@/public/images/treatments/patellar-stabilisation-interventional.png";
+import partialKneeReplacementConservative from "@/public/images/treatments/partial-knee-replacement-conservative.png";
+import partialKneeReplacementInterventional from "@/public/images/treatments/partial-knee-replacement-interventional.png";
+import osteotomyConservative from "@/public/images/treatments/osteotomy-conservative.png";
+import osteotomyInterventional from "@/public/images/treatments/osteotomy-interventional.png";
+import totalKneeReplacementConservative from "@/public/images/treatments/total-knee-replacement-conservative.png";
+import totalKneeReplacementInterventional from "@/public/images/treatments/total-knee-replacement-interventional.png";
+import revisionKneeReplacementConservative from "@/public/images/treatments/revision-knee-replacement-conservative.png";
+import revisionKneeReplacementInterventional from "@/public/images/treatments/revision-knee-replacement-interventional.png";
 
 // Converts inline **bold** markdown to <strong> — treatment content
 // (e.g. data/treatments.ts's "whatIs" field) is occasionally authored with
@@ -817,8 +837,38 @@ export const TreatmentPage = async ({ slug }: TreatmentPageProps) => {
                 pathologyHighlightLabel="Intervention Options"
                 leftBadgeLabel="Conservative Path"
                 rightBadgeLabel="Interventional Path"
-                leftImageSrc={slug === "physiotherapy" ? physiotherapyConservative : slug === "activity-modification" ? activityModificationConservative : slug === "pain-management" ? painManagementConservative : undefined}
-                rightImageSrc={slug === "physiotherapy" ? physiotherapyInterventional : slug === "activity-modification" ? activityModificationInterventional : slug === "pain-management" ? painManagementInterventional : undefined}
+                leftImageSrc={
+                  slug === "physiotherapy" ? physiotherapyConservative :
+                  slug === "activity-modification" ? activityModificationConservative :
+                  slug === "pain-management" ? painManagementConservative :
+                  slug === "knee-bracing" ? kneeBracingConservative :
+                  slug === "knee-arthroscopy" ? kneeArthroscopyConservative :
+                  slug === "meniscal-surgery" ? meniscalSurgeryConservative :
+                  slug === "acl-reconstruction" ? aclReconstructionConservative :
+                  slug === "cartilage-procedures" ? cartilageProceduresConservative :
+                  slug === "patellar-stabilisation" ? patellarStabilisationConservative :
+                  slug === "partial-knee-replacement" ? partialKneeReplacementConservative :
+                  slug === "osteotomy" ? osteotomyConservative :
+                  slug === "total-knee-replacement" ? totalKneeReplacementConservative :
+                  slug === "revision-knee-replacement" ? revisionKneeReplacementConservative :
+                  undefined
+                }
+                rightImageSrc={
+                  slug === "physiotherapy" ? physiotherapyInterventional :
+                  slug === "activity-modification" ? activityModificationInterventional :
+                  slug === "pain-management" ? painManagementInterventional :
+                  slug === "knee-bracing" ? kneeBracingInterventional :
+                  slug === "knee-arthroscopy" ? kneeArthroscopyInterventional :
+                  slug === "meniscal-surgery" ? meniscalSurgeryInterventional :
+                  slug === "acl-reconstruction" ? aclReconstructionInterventional :
+                  slug === "cartilage-procedures" ? cartilageProceduresInterventional :
+                  slug === "patellar-stabilisation" ? patellarStabilisationInterventional :
+                  slug === "partial-knee-replacement" ? partialKneeReplacementInterventional :
+                  slug === "osteotomy" ? osteotomyInterventional :
+                  slug === "total-knee-replacement" ? totalKneeReplacementInterventional :
+                  slug === "revision-knee-replacement" ? revisionKneeReplacementInterventional :
+                  undefined
+                }
               />
             </div>
               </section>
