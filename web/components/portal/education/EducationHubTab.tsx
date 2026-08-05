@@ -52,7 +52,7 @@ export function EducationHubTab({
           <h3 className="text-sm font-bold text-white uppercase tracking-wider">Education Hub Articles</h3>
           <p className="text-xs text-white/60 mt-1">
             Remove an article if it's outdated or the underlying evidence has changed — it disappears from the live
-            site within a few minutes, no code deploy needed. Restoring it is just as instant. Use Update to revise
+            site within a few minutes, no code deploy needed. Restoring it is just as instant. Use Edit to revise
             an article's content through the normal draft editor (references, images, wording) — approving it
             publishes the changes live the same way.
           </p>
@@ -110,9 +110,9 @@ export function EducationHubTab({
                   <button
                     onClick={() => onStartUpdate(article)}
                     disabled={isStartingUpdateSlug === article.slug}
-                    className="border border-white/20 text-white/80 hover:bg-white/5 text-[11px] px-3 py-1.5 rounded-lg cursor-pointer font-medium disabled:opacity-50"
+                    className="border border-white/20 text-white/80 hover:bg-white/5 text-[11px] px-3 py-1.5 rounded-lg transition-all cursor-pointer font-medium disabled:opacity-50 flex items-center gap-1"
                   >
-                    {isStartingUpdateSlug === article.slug ? "Starting…" : "✎ Update"}
+                    {isStartingUpdateSlug === article.slug ? "Opening Editor…" : "✏️ Edit"}
                   </button>
                 )}
                 {article.removed ? (
