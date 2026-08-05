@@ -226,9 +226,9 @@ export const visualsInventory: VisualAsset[] = [
     photographyOrIllustration: "photography",
     requiredDimensions: { width: 800, height: 600 },
     annotations: [
-      { id: "patella", x: 50, y: 25, label: "Patella (Kneecap)", description: "The kneecap protects the front of the joint and slides within the femoral groove." },
-      { id: "trochlea", x: 50, y: 60, label: "Trochlear Groove", description: "The groove on the thigh bone (femur) that guides the kneecap during bending." },
-      { id: "cartilage", x: 65, y: 38, label: "Subpatellar Cartilage", description: "Articular cartilage lining the back of the kneecap, which can experience increased stress or wear.", highlightColor: "coral" }
+      { id: "patella", x: 50, y: 20, label: "Patella (Kneecap)", description: "The kneecap protects the front of the joint and slides within the femoral groove." },
+      { id: "cartilage", x: 50, y: 40, label: "Subpatellar Cartilage", description: "Articular cartilage lining the back of the kneecap, which can experience increased stress or wear.", highlightColor: "coral" },
+      { id: "trochlea", x: 50, y: 60, label: "Trochlear Groove", description: "The groove on the thigh bone (femur) that guides the kneecap during bending." }
     ]
   },
 
