@@ -1467,25 +1467,13 @@ function BusinessDashboardPageInner() {
   // Approving its blog draft writes the changes back as a live article update.
   const [isStartingArticleUpdate, setIsStartingArticleUpdate] = useState<string | null>(null);
   const handleStartArticleUpdate = async (article: EducationArticleSummary) => {
-    setIsStartingArticleUpdate(article.slug);
-    try {
-      const res = await fetch("/api/portal/education-articles/update-run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: article.slug }),
-      });
-      const data = await res.json();
-      if (!data.success || !data.run) {
-        throw new Error(data.error || "Failed to start an update run for this article.");
-      }
-      setActiveTab("pipeline");
-      await fetchPipelineRuns();
-      await fetchRunDetail(data.run.run_id);
-    } catch (err: any) {
-      toast.error(err?.message || "An error occurred while starting the update.");
-    } finally {
-      setIsStartingArticleUpdate(null);
-    }
+    // Navigate to Pipeline tab, clear run selection (forcing the list view),
+    // and pre-fill search with the article's title to find existing runs.
+    setPipelineSearch(article.title);
+    setSelectedRun(null);
+    setRunDetailTab("draft");
+    setEditingPlatform(null);
+    setActiveTab("pipeline");
   };
 
   const handleCommunityReportAction = async (

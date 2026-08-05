@@ -756,7 +756,7 @@ export function PlatformCard({
                     📷 Attached Media Asset
                   </div>
                 </div>
-                {!isPublished && (
+                {(!isPublished || isCardEditing) && (
                   <div className="flex justify-end gap-1.5">
                     <label className="bg-white/10 hover:bg-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors cursor-pointer font-medium border border-white/10">
                       Change Image
@@ -819,7 +819,7 @@ export function PlatformCard({
             ) : (
               <div className="bg-primary-navy/70 border border-dashed border-white/20 rounded-lg p-4 text-center space-y-2">
                 <div className="text-[10px] text-white/50">No platform-specific image attached</div>
-                {!isPublished && (
+                {(!isPublished || isCardEditing) && (
                   <div className="flex items-center justify-center gap-1.5">
                     <label className="bg-clinical-teal hover:bg-clinical-teal-hover text-deep-navy text-[9px] px-2.5 py-1 rounded-lg cursor-pointer transition-colors font-medium">
                       Upload Image
