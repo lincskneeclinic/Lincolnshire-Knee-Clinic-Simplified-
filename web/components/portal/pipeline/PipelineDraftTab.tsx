@@ -406,6 +406,7 @@ export function PipelineDraftTab({
                     onRemovePlaceholder={onRemovePlaceholder}
                     onRemoveResolvedImage={onRemoveResolvedImage}
                     lightMode={true}
+                    stripClinicalFlags={selectedRun.status === "awaiting_social_approval" || selectedRun.status === "published" || selectedRun.status === "writing_social"}
                   />
                 </article>
 
@@ -469,6 +470,7 @@ export function PipelineDraftTab({
                   onRemovePlaceholder={onRemovePlaceholder}
                   onRemoveResolvedImage={onRemoveResolvedImage}
                   lightMode={false}
+                  stripClinicalFlags={selectedRun.status === "awaiting_social_approval" || selectedRun.status === "published" || selectedRun.status === "writing_social"}
                 />
               </div>
             </div>

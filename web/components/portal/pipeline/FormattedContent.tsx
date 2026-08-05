@@ -72,6 +72,18 @@ function ArticleFooterTemplate() {
   );
 }
 
+function shouldShowCaption(caption: string): boolean {
+  if (!caption) return false;
+  const lower = caption.toLowerCase();
+  return lower.includes('diagram') || 
+         lower.includes('mri') || 
+         lower.includes('x-ray') || 
+         lower.includes('anatomy') || 
+         lower.includes('components') || 
+         lower.includes('illustration') || 
+         lower.includes('pathway');
+}
+
 // Subcomponent: Formatted Content Preview
 export function FormattedContent({
   body,
@@ -85,7 +97,8 @@ export function FormattedContent({
   onResetPlaceholder,
   onRemovePlaceholder,
   onRemoveResolvedImage,
-  lightMode = false
+  lightMode = false,
+  stripClinicalFlags = false
 }: {
   body?: string;
   body_markdown?: string;
@@ -99,6 +112,7 @@ export function FormattedContent({
   onRemovePlaceholder?: (placeholderId: string, label: string, isFeatured?: boolean) => void;
   onRemoveResolvedImage?: (altText: string, srcUrl: string) => void;
   lightMode?: boolean;
+  stripClinicalFlags?: boolean;
 }) {
   const [activeGeneratePlaceholder, setActiveGeneratePlaceholder] = useState<
     { placeholderId: string; label: string; isFeatured?: boolean } | null
@@ -106,7 +120,10 @@ export function FormattedContent({
   const toast = useToast();
   const promptAction = usePrompt();
 
-  const content = cleanHeadingBugs(body_markdown || body || "");
+  let content = cleanHeadingBugs(body_markdown || body || "");
+  if (stripClinicalFlags) {
+    content = content.replace(/^.*\[NEEDS CLINICAL REVIEW\].*$/gim, "").trim();
+  }
   if (!content) return null;
 
   // Assigns a stable, position-based id to each inline placeholder as it's
@@ -177,9 +194,11 @@ export function FormattedContent({
                       className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-contain bg-white/5"
                       style={{ aspectRatio: "16 / 9", width: "100%" }}
                     />
-                    <span className="text-[10px] text-white/50 italic block">
-                      {isFeatured ? "🖼️ Featured Image (Education Hub card)" : "📷 Inline Image"}: {label}
-                    </span>
+                    {shouldShowCaption(label) && (
+                      <span className="text-[10px] text-white/50 italic block">
+                        {isFeatured ? "🖼️ Featured Image (Education Hub card)" : "📷 Inline Image"}: {label}
+                      </span>
+                    )}
                   </div>
                 );
               }
@@ -318,7 +337,7 @@ export function FormattedContent({
                   className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-contain bg-white/5"
                   style={{ aspectRatio: "16 / 9", width: "100%" }}
                 />
-                {alt && (
+                {alt && shouldShowCaption(alt) && (
                   <span className="text-[10px] text-white/50 italic block">
                     {alt}
                   </span>
