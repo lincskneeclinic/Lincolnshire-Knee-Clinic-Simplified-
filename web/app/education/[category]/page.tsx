@@ -14,6 +14,7 @@ import { getRemovedArticleSlugs, getArticleOverrides, ArticleOverride } from "@/
 // Articles can be removed from the Education Hub via the business dashboard without a
 // redeploy — this page re-checks the removed-article list every `revalidate` seconds
 // (ISR) instead of being purely static forever, so a removal actually takes effect.
+// Force cache refresh for updated article illustrations.
 export const revalidate = 300;
 
 // Definition of categories data
