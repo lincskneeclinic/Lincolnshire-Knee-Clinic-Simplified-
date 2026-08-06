@@ -18,7 +18,9 @@ import remarkGfm from "remark-gfm";
 // isn't in a format Date can parse — falls back to showing the raw string instead.
 function formatDateSafe(value: string): string {
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString();
+  return Number.isNaN(parsed.getTime())
+    ? value
+    : parsed.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 function isDiagram(caption: string): boolean {

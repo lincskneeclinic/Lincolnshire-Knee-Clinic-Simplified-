@@ -200,7 +200,7 @@ export function NewsletterCreatorTab({
                       >
                         {item.status}
                       </span>
-                      <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                      <span>{new Date(item.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })}</span>
                     </div>
                     <h4 className="font-bold text-white text-xs truncate">{item.subject}</h4>
                     <p className="text-[10px] text-white/60 truncate mt-1">Topic: {item.topic}</p>
@@ -310,7 +310,7 @@ export function NewsletterCreatorTab({
                 <p className="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/25 rounded-lg p-2.5 mt-2">
                   ⚠️ This was already sent to {selectedNewsletter.recipientsCount} patient
                   {selectedNewsletter.recipientsCount === 1 ? "" : "s"} on{" "}
-                  {selectedNewsletter.dateSent ? new Date(selectedNewsletter.dateSent).toLocaleDateString() : "an earlier date"}.
+                  {selectedNewsletter.dateSent ? new Date(selectedNewsletter.dateSent).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }) : "an earlier date"}.
                   Sending again will email every currently active subscriber a second time.
                 </p>
               )}

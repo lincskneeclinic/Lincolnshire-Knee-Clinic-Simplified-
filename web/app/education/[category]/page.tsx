@@ -248,7 +248,7 @@ export default async function CategoryPage({ params }: PageProps) {
               {archivedArticles.map((article, index) => {
                 const formattedDate = new Date(article.datePublished).toLocaleDateString("en-GB", {
                   day: "2-digit",
-                  month: "short",
+                  month: "2-digit",
                   year: "numeric",
                 });
                 return (
