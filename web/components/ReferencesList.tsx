@@ -18,6 +18,28 @@ export const ReferencesList: React.FC<ReferencesListProps> = ({
   defaultReferences = [],
   title = "References",
 }) => {
+  // Helper to turn inline URLs into clickable links
+  const renderClickableText = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s)]+)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, i) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-clinical-teal hover:underline break-all"
+          >
+            {part}
+          </a>
+        );
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
   // Parse evidenceSource into { text, url } items (splitting on " — ")
   const parsedEvidence: StaticReference[] = [];
   if (evidenceSource) {
@@ -73,7 +95,7 @@ export const ReferencesList: React.FC<ReferencesListProps> = ({
                 {ref.text}
               </a>
             ) : (
-              <span>{ref.text}</span>
+              <>{renderClickableText(ref.text)}</>
             )}
           </li>
         ))}
@@ -89,14 +111,14 @@ export const ReferencesList: React.FC<ReferencesListProps> = ({
                 {ref.text}
               </a>
             ) : (
-              <span>{ref.text}</span>
+              <>{renderClickableText(ref.text)}</>
             )}
           </li>
         ))}
         {!hasReferences &&
           defaultReferences.map((ref, idx) => (
             <li key={`default-${idx}`}>
-              <span>{ref}</span>
+              <>{renderClickableText(ref)}</>
             </li>
           ))}
       </ol>

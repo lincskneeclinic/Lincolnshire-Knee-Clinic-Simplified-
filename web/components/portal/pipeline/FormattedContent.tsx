@@ -363,9 +363,30 @@ export function FormattedContent({
             References
           </span>
           <ol className={`list-decimal pl-5 space-y-1 text-[11px] leading-relaxed ${lightMode ? "text-text-secondary" : "text-white/70"}`}>
-            {references.map((ref, idx) => (
-              <li key={idx}>{ref}</li>
-            ))}
+            {references.map((ref, idx) => {
+              const urlRegex = /(https?:\/\/[^\s)]+)/g;
+              const parts = ref.split(urlRegex);
+              return (
+                <li key={idx}>
+                  {parts.map((part, i) => {
+                    if (part.match(urlRegex)) {
+                      return (
+                        <a
+                          key={i}
+                          href={part}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-clinical-teal hover:underline break-all font-medium"
+                        >
+                          {part}
+                        </a>
+                      );
+                    }
+                    return <span key={i}>{part}</span>;
+                  })}
+                </li>
+              );
+            })}
           </ol>
         </div>
       )}

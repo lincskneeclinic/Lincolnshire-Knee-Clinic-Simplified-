@@ -102,9 +102,30 @@ export function PipelineImagesTab({
         <div className="bg-dark-overlay-navy p-4 rounded-xl border border-white/10 space-y-2">
           <span className="text-clinical-teal uppercase tracking-wider text-[10px] block">References &amp; Citations</span>
           <ul className="list-disc pl-4 text-white/70 space-y-1 font-mono text-[11px]">
-            {selectedRun.blog_drafts[0]?.references?.map((ref, i) => (
-              <li key={i}>{ref}</li>
-            ))}
+            {selectedRun.blog_drafts[0]?.references?.map((ref, i) => {
+              const urlRegex = /(https?:\/\/[^\s)]+)/g;
+              const parts = ref.split(urlRegex);
+              return (
+                <li key={i}>
+                  {parts.map((part, idx) => {
+                    if (part.match(urlRegex)) {
+                      return (
+                        <a
+                          key={idx}
+                          href={part}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-clinical-teal hover:underline break-all"
+                        >
+                          {part}
+                        </a>
+                      );
+                    }
+                    return <span key={idx}>{part}</span>;
+                  })}
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>
