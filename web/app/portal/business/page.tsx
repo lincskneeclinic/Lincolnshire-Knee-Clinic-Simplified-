@@ -1478,34 +1478,12 @@ function BusinessDashboardPageInner() {
   };
 
   const [isStartingArticleRun, setIsStartingArticleRun] = useState<string | null>(null);
-  const handleStartArticleRun = async (article: EducationArticleSummary) => {
-    setIsStartingArticleRun(article.slug);
-    try {
-      const res = await fetch("/api/portal/education-articles/update-run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: article.slug }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to start update run.");
-      }
-
-      await fetchPipelineRuns();
-      
-      setSelectedRun(data.run);
-      setPipelineSearch("");
-      setRunDetailTab("draft");
-      setEditingPlatform(null);
-      setActiveTab("pipeline");
-      
-      toast.success(`Started an update run for "${article.title}"!`);
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Failed to start run.");
-    } finally {
-      setIsStartingArticleRun(null);
-    }
+  const handleStartArticleRun = (article: EducationArticleSummary) => {
+    // Pre-fill the topic with the article title and open the standard new-run
+    // modal so the user can review/adjust the topic before starting the run.
+    setNewRunTopic(article.title);
+    setActiveTab("pipeline");
+    setIsTriggerModalOpen(true);
   };
 
   const handleCommunityReportAction = async (
