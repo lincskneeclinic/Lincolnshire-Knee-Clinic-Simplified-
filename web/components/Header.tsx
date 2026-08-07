@@ -176,7 +176,7 @@ export const Header: React.FC = () => {
         <nav
           ref={navRef}
           onMouseLeave={() => setHoveredIndex(null)}
-          className="hidden lg:flex items-center justify-center flex-1 gap-1 lg:gap-1.5 xl:gap-2.5 2xl:gap-5 px-1 relative py-1.5 min-w-0"
+          className="hidden xl:flex items-center justify-center flex-1 gap-1 lg:gap-1.5 xl:gap-2.5 2xl:gap-5 px-1 relative py-1.5 min-w-0"
           aria-label="Main navigation"
         >
           {desktopNavigation.map((link, idx) => {
@@ -247,7 +247,7 @@ export const Header: React.FC = () => {
           {/* Mobile Menu Hamburger Button */}
           <button
             type="button"
-            className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-deep-navy rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal"
+            className="xl:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-deep-navy rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-clinical-teal"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-menu"
@@ -272,7 +272,7 @@ export const Header: React.FC = () => {
           opacity transition can actually animate; pointer-events disabled
           while hidden so it doesn't block clicks on the page underneath. */}
       <div
-        className={`lg:hidden fixed inset-0 bg-deep-navy/50 transition-opacity duration-300 z-[45] ${
+        className={`xl:hidden fixed inset-0 bg-deep-navy/50 transition-opacity duration-300 z-[45] ${
           mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setMobileMenuOpen(false)}
@@ -285,7 +285,7 @@ export const Header: React.FC = () => {
           closed) so the slide-in/out can transition smoothly. */}
       <div
         id="mobile-menu"
-        className={`lg:hidden fixed top-0 left-0 w-[35%] min-w-[165px] h-[66.67vh] max-h-[66.67vh] rounded-br-2xl bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
+        className={`xl:hidden fixed top-0 left-0 w-[35%] min-w-[165px] h-[66.67vh] max-h-[66.67vh] rounded-br-2xl bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         role="dialog"
