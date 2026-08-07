@@ -188,18 +188,13 @@ export async function sendNewsletterCampaign(
     };
   }
 
-  // If sending to a single patient, we probably don't want to lock the template as permanently "sent"
-  const isIndividualSend = Boolean(targetEmail);
-
-  if (!isIndividualSend) {
-    editions[index] = {
-      ...edition,
-      status: "sent",
-      dateSent: new Date().toISOString(),
-      recipientsCount: sentCount
-    };
-    await saveNewsletterEditions(editions);
-  }
+  editions[index] = {
+    ...edition,
+    status: "sent",
+    dateSent: new Date().toISOString(),
+    recipientsCount: (edition.recipientsCount || 0) + sentCount
+  };
+  await saveNewsletterEditions(editions);
 
   return {
     success: true,
