@@ -285,7 +285,7 @@ export const Header: React.FC = () => {
           closed) so the slide-in/out can transition smoothly. */}
       <div
         id="mobile-menu"
-        className={`xl:hidden fixed top-0 left-0 w-[35%] min-w-[165px] h-[66.67vh] max-h-[66.67vh] rounded-br-2xl bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
+        className={`xl:hidden fixed top-0 left-0 w-[75%] sm:w-[50%] md:w-[35%] min-w-[240px] max-w-[320px] h-[66.67vh] max-h-[66.67vh] rounded-br-2xl bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         role="dialog"
