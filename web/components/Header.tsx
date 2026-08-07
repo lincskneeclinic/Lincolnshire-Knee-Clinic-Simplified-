@@ -54,6 +54,16 @@ export const Header: React.FC = () => {
     { name: "Contact", href: "/contact" },
   ];
 
+  const desktopNavigation = [
+    { name: "Symptoms", href: "/symptoms" },
+    { name: "Conditions", href: "/conditions" },
+    { name: "Treatments", href: "/treatments" },
+    { name: "Injections", href: "/injections" },
+    { name: "Diagnostics", href: "/diagnostics" },
+    { name: "Education & Blog", href: "/education" },
+    { name: "Clinics", href: "/clinics" },
+  ];
+
   const utilityNavigation = [
     { name: "Urgent Advice", href: "/urgent-advice", urgent: true },
     { name: "Community", href: "/community" },
@@ -70,7 +80,7 @@ export const Header: React.FC = () => {
     [pathname]
   );
 
-  const activeIndex = mainNavigation.findIndex((link) => isActive(link.href));
+  const activeIndex = desktopNavigation.findIndex((link) => isActive(link.href));
 
   const updateIndicator = useCallback(
     (targetIndex: number | null) => {
@@ -169,7 +179,7 @@ export const Header: React.FC = () => {
           className="hidden lg:flex items-center justify-center flex-1 gap-1 lg:gap-1.5 xl:gap-2.5 2xl:gap-5 px-1 relative py-1.5 min-w-0"
           aria-label="Main navigation"
         >
-          {mainNavigation.map((link, idx) => {
+          {desktopNavigation.map((link, idx) => {
             const active = isActive(link.href);
             const isHighlighted =
               hoveredIndex === idx || (hoveredIndex === null && active);
