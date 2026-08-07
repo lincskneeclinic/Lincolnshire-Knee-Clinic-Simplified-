@@ -167,16 +167,16 @@ export const Header: React.FC = () => {
               />
             )}
           </div>
-          <span className="font-serif text-[11px] min-[380px]:text-sm sm:text-base md:text-lg lg:text-base xl:text-lg 2xl:text-xl font-bold text-deep-navy tracking-tight leading-none whitespace-nowrap">
+          <div className="font-serif text-[11px] min-[380px]:text-sm sm:text-base md:text-lg lg:text-base xl:text-lg 2xl:text-xl font-bold text-deep-navy tracking-tight leading-none whitespace-nowrap">
             Lincolnshire Knee Clinic
-          </span>
+          </div>
         </Link>
 
         {/* Main Navigation Links with Mouse-Following Sliding Underscore Indicator */}
         <nav
           ref={navRef}
           onMouseLeave={() => setHoveredIndex(null)}
-          className="hidden xl:flex items-center justify-center flex-1 gap-1 lg:gap-1.5 xl:gap-2.5 2xl:gap-5 px-1 relative py-1.5 min-w-0"
+          className="hidden xl:flex items-center justify-center gap-1.5 xl:gap-2.5 2xl:gap-4 px-1 relative py-1.5"
           aria-label="Main navigation"
         >
           {desktopNavigation.map((link, idx) => {

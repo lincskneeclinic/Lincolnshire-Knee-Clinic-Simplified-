@@ -76,6 +76,13 @@ html {
   }
 }
 
+/* Header container padding override to prevent navigation links from squishing */
+header .max-w-7xl {
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+}
+
+
 html,
 body {
   width: 100%;
