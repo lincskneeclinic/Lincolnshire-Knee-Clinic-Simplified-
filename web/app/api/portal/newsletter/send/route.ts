@@ -4,7 +4,7 @@ import { sendNewsletterCampaign } from "@/lib/newsletterDistribution";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { editionId } = body;
+    const { editionId, targetTopic, targetEmail } = body;
 
     if (!editionId || typeof editionId !== "string" || !editionId.trim()) {
       return NextResponse.json(
@@ -14,9 +14,9 @@ export async function POST(request: Request) {
     }
 
     const campaignId = editionId.trim();
-    console.log(`[Newsletter API] Distributing newsletter campaign: ${campaignId}`);
+    console.log(`[Newsletter API] Distributing newsletter campaign: ${campaignId} to topic: ${targetTopic || "all"}, patient: ${targetEmail || "all"}`);
 
-    const result = await sendNewsletterCampaign(campaignId);
+    const result = await sendNewsletterCampaign(campaignId, targetTopic, targetEmail);
 
     if (!result.success) {
       return NextResponse.json(

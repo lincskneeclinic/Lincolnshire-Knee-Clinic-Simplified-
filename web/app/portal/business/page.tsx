@@ -65,6 +65,9 @@ function BusinessDashboardPageInner() {
   const [newsletterEditSubject, setNewsletterEditSubject] = useState("");
   const [newsletterEditMarkdown, setNewsletterEditMarkdown] = useState("");
   const [newsletterHtmlPreview, setNewsletterHtmlPreview] = useState("");
+  const [subscribers, setSubscribers] = useState<any[]>([]);
+  const [selectedSendTopic, setSelectedSendTopic] = useState("all");
+  const [selectedSendPatient, setSelectedSendPatient] = useState("all");
 
 
   // Content Pipeline State
@@ -1054,6 +1057,7 @@ function BusinessDashboardPageInner() {
       if (data.success) {
         setNewsletterEditions(data.editions || []);
         setActiveSubscribersCount(data.activeSubscribersCount || 0);
+        setSubscribers(data.subscribers || []);
       }
     } catch (err) {
       console.error("Failed to fetch newsletters:", err);
@@ -1164,11 +1168,19 @@ function BusinessDashboardPageInner() {
       const res = await fetch("/api/portal/newsletter/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ editionId: selectedNewsletter.id }),
+        body: JSON.stringify({
+          editionId: selectedNewsletter.id,
+          targetTopic: selectedSendTopic,
+          targetEmail: selectedSendPatient === "all" ? undefined : selectedSendPatient,
+        }),
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(`Newsletter successfully distributed to ${data.sentCount} subscribed patients via ${data.mode}!`);
+        toast.success(
+          selectedSendPatient !== "all"
+            ? `Newsletter successfully sent to ${selectedSendPatient}!`
+            : `Newsletter successfully distributed to ${data.sentCount} subscribed patients!`
+        );
         setShowNewsletterSendConfirm(false);
         fetchNewsletterEditions();
       } else {
@@ -2592,6 +2604,11 @@ function BusinessDashboardPageInner() {
                 onShowSendConfirmChange={setShowNewsletterSendConfirm}
                 isSending={isSendingNewsletter}
                 onSendNewsletter={handleSendNewsletter}
+                subscribers={subscribers}
+                selectedSendTopic={selectedSendTopic}
+                onSelectedSendTopicChange={setSelectedSendTopic}
+                selectedSendPatient={selectedSendPatient}
+                onSelectedSendPatientChange={setSelectedSendPatient}
               />
             )}
 

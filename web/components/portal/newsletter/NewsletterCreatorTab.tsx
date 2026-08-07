@@ -35,6 +35,11 @@ interface NewsletterCreatorTabProps {
   onShowSendConfirmChange: (value: boolean) => void;
   isSending: boolean;
   onSendNewsletter: () => void;
+  subscribers?: any[];
+  selectedSendTopic?: string;
+  onSelectedSendTopicChange?: (value: string) => void;
+  selectedSendPatient?: string;
+  onSelectedSendPatientChange?: (value: string) => void;
 }
 
 export function NewsletterCreatorTab({
@@ -60,6 +65,11 @@ export function NewsletterCreatorTab({
   onShowSendConfirmChange,
   isSending,
   onSendNewsletter,
+  subscribers = [],
+  selectedSendTopic = "all",
+  onSelectedSendTopicChange = () => {},
+  selectedSendPatient = "all",
+  onSelectedSendPatientChange = () => {},
 }: NewsletterCreatorTabProps) {
   return (
     <div className="space-y-6">
@@ -300,11 +310,10 @@ export function NewsletterCreatorTab({
             <div className="text-center space-y-2">
               <span className="text-4xl block">📣</span>
               <h3 className="font-serif text-lg font-bold text-white">
-                {selectedNewsletter.status === "sent" ? "Confirm Resend" : "Confirm Campaign Distribution"}
+                {selectedNewsletter.status === "sent" ? "Confirm Resend" : "Confirm Distribution"}
               </h3>
               <p className="text-xs text-white/70">
-                You are about to distribute the newsletter **"{selectedNewsletter.subject}"** to all subscribed
-                patients.
+                You are about to distribute the newsletter **"{selectedNewsletter.subject}"**.
               </p>
               {selectedNewsletter.status === "sent" && (
                 <p className="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/25 rounded-lg p-2.5 mt-2">
@@ -316,19 +325,110 @@ export function NewsletterCreatorTab({
               )}
             </div>
 
-            <div className="bg-dark-overlay-navy border border-white/5 rounded-xl p-4 space-y-3 mt-6">
+            {/* Target Selection Selectors */}
+            <div className="space-y-4 mt-6 text-left border border-white/10 rounded-xl p-4 bg-dark-overlay-navy">
+              <h4 className="text-xs uppercase font-bold text-clinical-teal tracking-wider">Target Recipients</h4>
+              
+              {/* Send Mode Selection */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-semibold text-white/80">Recipient Segment</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectedSendPatientChange("all");
+                    }}
+                    className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                      selectedSendPatient === "all"
+                        ? "bg-clinical-teal border-clinical-teal text-white font-bold"
+                        : "bg-white/5 border-white/15 text-white/70 hover:bg-white/10"
+                    }`}
+                  >
+                    Group Segment
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (subscribers.length > 0) {
+                        onSelectedSendPatientChange(subscribers[0].email);
+                      } else {
+                        onSelectedSendPatientChange("none");
+                      }
+                    }}
+                    className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                      selectedSendPatient !== "all"
+                        ? "bg-clinical-teal border-clinical-teal text-white font-bold"
+                        : "bg-white/5 border-white/15 text-white/70 hover:bg-white/10"
+                    }`}
+                  >
+                    Individual Patient
+                  </button>
+                </div>
+              </div>
+
+              {selectedSendPatient === "all" ? (
+                /* Segment Dropdown Selector */
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-semibold text-white/80">Filter by Topic Interest</label>
+                  <select
+                    value={selectedSendTopic}
+                    onChange={(e) => onSelectedSendTopicChange(e.target.value)}
+                    className="w-full bg-primary-navy border border-white/15 text-white text-xs rounded-lg p-2 focus:outline-none focus:border-clinical-teal"
+                  >
+                    <option value="all">All Subscribed Patients ({activeSubscribersCount})</option>
+                    {Array.from(new Set(subscribers.map(s => s.primary_interest || "General Knee Health"))).map((interest) => (
+                      <option key={interest} value={interest}>
+                        Interested in: {interest} ({subscribers.filter(s => s.primary_interest === interest).length})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                /* Patient Dropdown Selector */
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-semibold text-white/80">Select Patient</label>
+                  <select
+                    value={selectedSendPatient}
+                    onChange={(e) => onSelectedSendPatientChange(e.target.value)}
+                    className="w-full bg-primary-navy border border-white/15 text-white text-xs rounded-lg p-2 focus:outline-none focus:border-clinical-teal"
+                  >
+                    {subscribers.map((sub) => (
+                      <option key={sub.email} value={sub.email}>
+                        {sub.name} &lt;{sub.email}&gt; (Pref: {sub.primary_interest || "General Knee Health"})
+                      </option>
+                    ))}
+                    {subscribers.length === 0 && (
+                      <option value="none" disabled>No subscribers found</option>
+                    )}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Campaign Summary */}
+            <div className="bg-dark-overlay-navy border border-white/5 rounded-xl p-4 space-y-3 mt-4 text-left">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-white/60">Campaign Topic:</span>
                 <span className="text-white font-bold">{selectedNewsletter.topic}</span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-white/60">Recipient Count:</span>
-                <span className="text-clinical-teal font-mono font-bold">{activeSubscribersCount} active subscribers</span>
+                <span className="text-white/60">Target:</span>
+                <span className="text-clinical-teal font-bold">
+                  {selectedSendPatient !== "all"
+                    ? `Patient: ${subscribers.find(s => s.email === selectedSendPatient)?.name || "Selected Patient"}`
+                    : selectedSendTopic === "all"
+                    ? "All Subscribed Patients"
+                    : `Topic: ${selectedSendTopic}`}
+                </span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-white/60">Includes PubMed citations:</span>
-                <span className="text-white font-semibold">
-                  {selectedNewsletter.includeResearch ? "Yes (Stage 1 scan)" : "No (Lay update)"}
+                <span className="text-white/60">Recipient Count:</span>
+                <span className="text-clinical-teal font-mono font-bold">
+                  {selectedSendPatient !== "all"
+                    ? "1 patient"
+                    : selectedSendTopic === "all"
+                    ? `${activeSubscribersCount} active subscribers`
+                    : `${subscribers.filter(s => s.primary_interest === selectedSendTopic).length} active subscribers`}
                 </span>
               </div>
             </div>

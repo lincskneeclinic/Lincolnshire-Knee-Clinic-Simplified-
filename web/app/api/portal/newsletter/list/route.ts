@@ -10,6 +10,7 @@ export async function GET() {
       success: true,
       editions,
       activeSubscribersCount: subscribers.length,
+      subscribers,
     });
   } catch (error: any) {
     console.error("Error in GET /api/portal/newsletter/list:", error);

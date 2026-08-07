@@ -59,15 +59,25 @@ export async function deleteNewsletterEdition(id: string): Promise<boolean> {
   return true;
 }
 
-export async function getNewsletterSubscribers(): Promise<Array<{ name: string; email: string }>> {
-  let subscribers: Array<{ name: string; email: string }> = [];
+export interface Subscriber {
+  name: string;
+  email: string;
+  primary_interest?: string;
+}
+
+export async function getNewsletterSubscribers(): Promise<Subscriber[]> {
+  let subscribers: Subscriber[] = [];
 
   if (isSupabaseConfigured()) {
     const supabaseContacts = await fetchContactsFromSupabase();
     if (supabaseContacts && supabaseContacts.length > 0) {
       subscribers = supabaseContacts
         .filter(c => c.marketing_consent === true)
-        .map(c => ({ name: c.name || "Patient", email: c.email }));
+        .map(c => ({
+          name: c.name || "Patient",
+          email: c.email,
+          primary_interest: c.primary_interest || "General Knee Health"
+        }));
     }
   }
 
@@ -77,7 +87,11 @@ export async function getNewsletterSubscribers(): Promise<Array<{ name: string; 
       const list = JSON.parse(raw || "[]");
       subscribers = list
         .filter((c: any) => c.marketingConsent === true || c.marketing_consent === true)
-        .map((c: any) => ({ name: c.name || "Patient", email: c.email }));
+        .map((c: any) => ({
+          name: c.name || "Patient",
+          email: c.email,
+          primary_interest: c.primaryInterest || c.primary_interest || "General Knee Health"
+        }));
     } catch (err) {
       console.error("Error reading local subscribers JSON:", err);
     }
@@ -86,7 +100,11 @@ export async function getNewsletterSubscribers(): Promise<Array<{ name: string; 
   return subscribers;
 }
 
-export async function sendNewsletterCampaign(id: string): Promise<{ success: boolean; sentCount: number; mode: string; error?: string }> {
+export async function sendNewsletterCampaign(
+  id: string,
+  targetTopic?: string,
+  targetEmail?: string
+): Promise<{ success: boolean; sentCount: number; mode: string; error?: string }> {
   const editions = await getNewsletterEditions();
   const index = editions.findIndex(e => e.id === id);
   if (index === -1) {
@@ -94,7 +112,19 @@ export async function sendNewsletterCampaign(id: string): Promise<{ success: boo
   }
 
   const edition = editions[index];
-  const subscribers = await getNewsletterSubscribers();
+  let subscribers = await getNewsletterSubscribers();
+
+  if (targetEmail) {
+    subscribers = subscribers.filter(sub => sub.email.trim().toLowerCase() === targetEmail.trim().toLowerCase());
+    if (subscribers.length === 0) {
+      return { success: false, sentCount: 0, mode: "error", error: `No active subscriber found with email: ${targetEmail}` };
+    }
+  } else if (targetTopic && targetTopic !== "all") {
+    subscribers = subscribers.filter(sub => sub.primary_interest === targetTopic);
+    if (subscribers.length === 0) {
+      return { success: false, sentCount: 0, mode: "error", error: `No active subscribers found interested in: ${targetTopic}` };
+    }
+  }
 
   if (subscribers.length === 0) {
     return { success: false, sentCount: 0, mode: "error", error: "No active subscribed contacts found to distribute to." };
@@ -158,14 +188,18 @@ export async function sendNewsletterCampaign(id: string): Promise<{ success: boo
     };
   }
 
-  editions[index] = {
-    ...edition,
-    status: "sent",
-    dateSent: new Date().toISOString(),
-    recipientsCount: sentCount
-  };
+  // If sending to a single patient, we probably don't want to lock the template as permanently "sent"
+  const isIndividualSend = Boolean(targetEmail);
 
-  await saveNewsletterEditions(editions);
+  if (!isIndividualSend) {
+    editions[index] = {
+      ...edition,
+      status: "sent",
+      dateSent: new Date().toISOString(),
+      recipientsCount: sentCount
+    };
+    await saveNewsletterEditions(editions);
+  }
 
   return {
     success: true,
@@ -174,3 +208,4 @@ export async function sendNewsletterCampaign(id: string): Promise<{ success: boo
     ...(failures.length > 0 ? { error: `${failures.length} of ${subscribers.length} recipients failed: ${failures.join(", ")}` } : {}),
   };
 }
+
