@@ -66,14 +66,17 @@ export const AnnotatedImagingViewer: React.FC<AnnotatedImagingViewerProps> = ({
                 alt={imagingAsset.altText}
                 fill
                 sizes="(max-width: 768px) 100vw, 800px"
-                className="object-contain filter grayscale"
+                className={`object-contain ${imagingAsset.modality !== "Arthroscopy" ? "filter grayscale" : ""}`}
                 loading="lazy"
               />
 
               {/* Annotation markers overlay */}
               {showAnnotations && imagingAsset.annotationLabels.map((label, idx) => {
-                // Distribute markers evenly in a column on the right side as a basic layout
-                const markerY = 20 + idx * 20;
+                // Marker sits at the finding's actual location in the image.
+                // Falls back to a right-side column if no position is defined.
+                const position = imagingAsset.annotationPositions?.[idx];
+                const markerX = position?.x ?? 92;
+                const markerY = position?.y ?? 20 + idx * 20;
                 return (
                   <button
                     key={idx}
@@ -81,7 +84,7 @@ export const AnnotatedImagingViewer: React.FC<AnnotatedImagingViewerProps> = ({
                     aria-label={`Annotation ${idx + 1}: ${label}`}
                     aria-pressed={activeAnnotation === idx}
                     onClick={() => setActiveAnnotation(activeAnnotation === idx ? null : idx)}
-                    style={{ top: `${markerY}%`, right: "8%" }}
+                    style={{ top: `${markerY}%`, left: `${markerX}%`, transform: "translate(-50%, -50%)" }}
                     className="absolute w-7 h-7 rounded-full bg-clinical-teal text-white text-[11px] font-bold flex items-center justify-center shadow-lg border-2 border-white hover:scale-110 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
                   >
                     {idx + 1}
@@ -139,7 +142,7 @@ export const AnnotatedImagingViewer: React.FC<AnnotatedImagingViewerProps> = ({
             </div>
             <div className="space-y-1">
               <p className="text-orange-300 text-xs font-bold uppercase tracking-wider">
-                Annotated X-ray / MRI example pending clinical approval
+                Annotated {imagingAsset.modality} example pending clinical approval
               </p>
               <p className="text-gray-500 text-[11px] max-w-sm leading-relaxed">
                 {imagingAsset.modality} · {imagingAsset.viewOrSequence}

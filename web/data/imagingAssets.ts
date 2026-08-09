@@ -43,6 +43,11 @@ export const imagingAssets: ImagingAsset[] = [
       "Subchondral Sclerosis",
       "Lateral Compartment (Preserved)",
     ],
+    annotationPositions: [
+      { x: 62, y: 55 },
+      { x: 64, y: 63 },
+      { x: 30, y: 53 },
+    ],
     anonymisationConfirmed: true,
     publicationApprovalConfirmed: true,
     clinicalReviewStatus: "clinically-approved",
@@ -67,6 +72,11 @@ export const imagingAssets: ImagingAsset[] = [
       "Bone Bruising (Lateral Femoral Condyle)",
       "PCL — Intact",
     ],
+    annotationPositions: [
+      { x: 38, y: 40 },
+      { x: 62, y: 20 },
+      { x: 48, y: 48 },
+    ],
     anonymisationConfirmed: true,
     publicationApprovalConfirmed: true,
     clinicalReviewStatus: "clinically-approved",
@@ -83,21 +93,22 @@ export const imagingAssets: ImagingAsset[] = [
   {
     id: "imaging-meniscal-tear-mri-coronal",
     modality: "MRI",
-    bodyRegion: "Knee — coronal plane",
-    viewOrSequence: "Coronal PD fat-saturated",
+    bodyRegion: "Knee — sagittal plane",
+    viewOrSequence: "Sagittal MRI",
     educationalFinding: "Medial meniscal tear — posterior horn",
     annotationLabels: [
       "Medial Meniscal Tear Signal",
-      "Medial Joint Space",
-      "Lateral Meniscus — Intact",
+    ],
+    annotationPositions: [
+      { x: 48, y: 65 },
     ],
     anonymisationConfirmed: true,
     publicationApprovalConfirmed: true,
     clinicalReviewStatus: "clinically-approved",
     source: "Provided by consultant — Mr R J Pacheco",
-    caption: "Coronal fat-saturated MRI demonstrating a posterior horn medial meniscal tear. Educational example only.",
-    altText: "Coronal MRI of the knee demonstrating bright signal within the medial meniscus consistent with a tear of the posterior horn. Annotated for educational use.",
-    filePath: "/images/imaging/meniscal-tear-mri.png",
+    caption: "Sagittal MRI demonstrating a posterior horn medial meniscal tear. Educational example only.",
+    altText: "Sagittal MRI of the knee demonstrating signal change within the meniscus consistent with a posterior horn tear. Annotated for educational use.",
+    filePath: "/images/imaging/meniscal-tear-mri-sagittal.png",
     status: "Published",
   },
 
@@ -122,6 +133,165 @@ export const imagingAssets: ImagingAsset[] = [
     caption: "MRI demonstrating a focal cartilage defect on the medial femoral condyle. Educational example only.",
     altText: "Axial MRI of the knee showing a focal area of cartilage loss on the medial femoral condyle with underlying bone exposed. Annotated for educational use only.",
     filePath: "/images/imaging/cartilage-injury-mri.png",
+    status: "Published",
+  },
+  {
+    id: "imaging-cartilage-injury-arthroscopy",
+    modality: "Arthroscopy",
+    bodyRegion: "Knee — femoral condyle",
+    viewOrSequence: "Intra-operative arthroscopic view",
+    educationalFinding: "Grade III focal cartilage defect (chondral pothole) exposing subchondral bone",
+    annotationLabels: [
+      "Focal Cartilage Defect (Chondral Defect)",
+      "Exposed Yellowish Subchondral Bone",
+      "Surrounding White Articular Cartilage Edge",
+    ],
+    annotationPositions: [
+      { x: 38, y: 42 },
+      { x: 48, y: 58 },
+      { x: 68, y: 20 },
+    ],
+    anonymisationConfirmed: true,
+    publicationApprovalConfirmed: true,
+    clinicalReviewStatus: "clinically-approved",
+    source: "Provided by consultant — Mr R J Pacheco",
+    caption: "Intra-operative arthroscopic view demonstrating a localized Grade III cartilage defect (pothole) on the femoral condyle, showing exposed bone. Educational example only.",
+    altText: "Arthroscopic camera image of the knee joint showing a focal area of cartilage wear on the femoral condyle exposing the subchondral bone.",
+    filePath: "/images/imaging/cartilage-injury-arthroscopy.png",
+    status: "Published",
+  },
+
+  // ──────────────────────────────────────────────────────────────
+  // KNEE INSTABILITY — awaiting consultant-supplied imaging
+  // ──────────────────────────────────────────────────────────────
+  {
+    id: "imaging-knee-instability-mri",
+    modality: "MRI",
+    bodyRegion: "Knee — ligamentous complex",
+    viewOrSequence: "Sagittal / Coronal MRI",
+    educationalFinding: "Ligamentous laxity pattern associated with chronic knee instability",
+    annotationLabels: [
+      "Primary Restraint Ligament",
+      "Secondary Stabilisers",
+      "Joint Line Reference",
+    ],
+    anonymisationConfirmed: false,
+    publicationApprovalConfirmed: false,
+    clinicalReviewStatus: "pending-clinical-review",
+    source: "Awaiting consultant-supplied anonymised imaging",
+    caption: "Example imaging illustrating chronic knee instability will appear here once a consultant-supplied, anonymised scan has been clinically approved.",
+    altText: "MRI of the knee demonstrating the ligamentous structures relevant to chronic knee instability, annotated for educational use.",
+    filePath: "/images/imaging/knee-instability-mri.png",
+    status: "Awaiting clinical review",
+  },
+
+  // ──────────────────────────────────────────────────────────────
+  // BAKER'S CYST — awaiting consultant-supplied imaging
+  // ──────────────────────────────────────────────────────────────
+  {
+    id: "imaging-bakers-cyst-ultrasound",
+    modality: "MRI",
+    bodyRegion: "Knee — popliteal fossa",
+    viewOrSequence: "Axial MRI",
+    educationalFinding: "Large, well-defined fluid-filled popliteal (Baker's) cyst",
+    annotationLabels: [
+      "Cyst Fluid Collection",
+      "Gastrocnemius–Semimembranosus Bursa",
+      "Adjacent Joint Recess",
+    ],
+    annotationPositions: [
+      { x: 34, y: 78 },
+      { x: 27, y: 60 },
+      { x: 45, y: 30 },
+    ],
+    anonymisationConfirmed: true,
+    publicationApprovalConfirmed: true,
+    clinicalReviewStatus: "clinically-approved",
+    source: "Provided by consultant — Mr R J Pacheco",
+    caption: "Axial MRI demonstrating a large popliteal (Baker's) cyst. Educational example only.",
+    altText: "Axial MRI of the knee showing a large fluid-filled Baker's cyst in the popliteal fossa, annotated for educational use.",
+    filePath: "/images/imaging/bakers-cyst-mri-axial.png",
+    status: "Published",
+  },
+
+  // ──────────────────────────────────────────────────────────────
+  // KNEE TENDINOPATHY — awaiting consultant-supplied imaging
+  // ──────────────────────────────────────────────────────────────
+  {
+    id: "imaging-knee-tendinopathy-ultrasound",
+    modality: "MRI",
+    bodyRegion: "Knee — sagittal plane",
+    viewOrSequence: "Sagittal MRI",
+    educationalFinding: "Patellar tendinopathy at the tendon origin, inferior pole of the patella",
+    annotationLabels: [
+      "Patellar Tendinopathy",
+    ],
+    annotationPositions: [
+      { x: 30, y: 70 },
+    ],
+    anonymisationConfirmed: true,
+    publicationApprovalConfirmed: true,
+    clinicalReviewStatus: "clinically-approved",
+    source: "Provided by consultant — Mr R J Pacheco",
+    caption: "Sagittal MRI of the knee demonstrating patellar tendinopathy at the tendon's origin from the inferior pole of the patella. Educational example only.",
+    altText: "Sagittal MRI of the knee showing the joint and surrounding soft tissue, annotated for educational use.",
+    filePath: "/images/imaging/knee-tendinopathy-mri-sagittal.png",
+    status: "Published",
+  },
+
+  // ──────────────────────────────────────────────────────────────
+  // PATELLAR INSTABILITY — awaiting consultant-supplied imaging
+  // ──────────────────────────────────────────────────────────────
+  {
+    id: "imaging-patellar-instability-mri",
+    modality: "MRI",
+    bodyRegion: "Knee — patellofemoral joint",
+    viewOrSequence: "Axial MRI",
+    educationalFinding: "Patellar tracking within the trochlear groove",
+    annotationLabels: [
+      "Patellar Tilt / Position",
+      "Trochlear Groove Contour",
+      "Medial Patellofemoral Ligament (MPFL) Region",
+    ],
+    annotationPositions: [
+      { x: 50, y: 14 },
+      { x: 40, y: 26 },
+      { x: 62, y: 20 },
+    ],
+    anonymisationConfirmed: true,
+    publicationApprovalConfirmed: true,
+    clinicalReviewStatus: "clinically-approved",
+    source: "Provided by consultant — Mr R J Pacheco",
+    caption: "Axial MRI demonstrating patellar position within the trochlear groove. Educational example only — not for diagnostic use.",
+    altText: "Axial MRI of the patellofemoral joint showing patellar tracking and trochlear groove anatomy, annotated for educational use.",
+    filePath: "/images/imaging/patellar-instability-mri-axial.png",
+    status: "Published",
+  },
+
+  // ──────────────────────────────────────────────────────────────
+  // LOOSE BODIES — awaiting consultant-supplied imaging
+  // ──────────────────────────────────────────────────────────────
+  {
+    id: "imaging-loose-bodies-xray",
+    modality: "X-ray",
+    bodyRegion: "Knee — intra-articular",
+    viewOrSequence: "AP",
+    educationalFinding: "Radio-opaque intra-articular loose body within the intercondylar notch",
+    annotationLabels: [
+      "Loose Body",
+      "Joint Space",
+    ],
+    annotationPositions: [
+      { x: 49, y: 46 },
+      { x: 50, y: 58 },
+    ],
+    anonymisationConfirmed: true,
+    publicationApprovalConfirmed: true,
+    clinicalReviewStatus: "clinically-approved",
+    source: "Provided by consultant — Mr R J Pacheco",
+    caption: "AP X-ray demonstrating a radio-opaque loose body within the knee joint. Educational example only.",
+    altText: "AP X-ray of the knee showing a small round radio-opaque loose body within the intercondylar notch, annotated for educational use.",
+    filePath: "/images/imaging/loose-bodies-xray.png",
     status: "Published",
   },
 

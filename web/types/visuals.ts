@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // Lincolnshire Knee Clinic — Visual Asset Type Definitions
 // Pass 1 types preserved; Pass 2 types appended below.
 // ============================================================
@@ -123,11 +123,18 @@ export interface LicensingRecord {
  */
 export interface ImagingAsset {
   id: string;
-  modality: "X-ray" | "MRI" | "CT" | "Ultrasound";
+  modality: "X-ray" | "MRI" | "CT" | "Ultrasound" | "Arthroscopy";
   bodyRegion: string;
   viewOrSequence: string;
   educationalFinding: string;
   annotationLabels: string[];
+  /**
+   * Marker position for each entry in annotationLabels, as a percentage
+   * (0-100) of the rendered image's width/height. Index-matched to
+   * annotationLabels. Optional — falls back to a right-side column if
+   * omitted for a given index.
+   */
+  annotationPositions?: { x: number; y: number }[];
   anonymisationConfirmed: boolean;
   publicationApprovalConfirmed: boolean;
   clinicalReviewStatus: ClinicalReviewStatus;

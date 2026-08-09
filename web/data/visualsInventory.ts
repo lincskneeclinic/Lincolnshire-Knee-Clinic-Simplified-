@@ -121,7 +121,7 @@ export const visualsInventory: VisualAsset[] = [
     section: "imaging",
     title: "MRI Scan: Posterior Horn Medial Meniscal Tear",
     type: "imaging",
-    imagePath: "/images/imaging/meniscal-tear-mri.png",
+    imagePath: "/images/imaging/meniscal-tear-mri-sagittal.png",
     altText: "Sagittal MRI view of a knee demonstrating high signal intensity extending to the inferior articular surface of the medial meniscus posterior horn.",
     caption: "Sagittal T2-weighted MRI scan showing a high-signal tear line in the posterior horn of the medial meniscus.",
     placeholderLabel: "Annotated MRI example pending clinical approval",
@@ -131,7 +131,7 @@ export const visualsInventory: VisualAsset[] = [
     photographyOrIllustration: "photography",
     requiredDimensions: { width: 800, height: 800 },
     annotations: [
-      { id: "mri-tear-line", x: 48, y: 62, label: "Tear Line", description: "White linear signal extending to the joint surface indicating a tear.", highlightColor: "coral" }
+      { id: "mri-tear-line", x: 48, y: 65, label: "Tear Line", description: "White linear signal extending to the joint surface indicating a tear.", highlightColor: "coral" }
     ]
   },
   {
@@ -286,6 +286,25 @@ export const visualsInventory: VisualAsset[] = [
     clinicalReviewStatus: "clinically-approved",
     requiredDimensions: { width: 800, height: 600 }
   },
+  {
+    id: "bakers-cyst-imaging",
+    page: "conditions/bakers-cyst",
+    section: "imaging",
+    title: "MRI Scan: Popliteal (Baker's) Cyst",
+    type: "imaging",
+    imagePath: "/images/imaging/bakers-cyst-mri-axial.png",
+    altText: "Axial MRI of the knee showing a large fluid-filled Baker's cyst in the popliteal fossa.",
+    caption: "Axial MRI scan showing a large, well-defined popliteal (Baker's) cyst.",
+    placeholderLabel: "Annotated MRI example pending clinical approval",
+    status: "approved",
+    priority: "high",
+    clinicalReviewStatus: "clinically-approved",
+    photographyOrIllustration: "photography",
+    requiredDimensions: { width: 800, height: 800 },
+    annotations: [
+      { id: "cyst-fluid", x: 34, y: 78, label: "Cyst Fluid Collection", description: "Well-defined, fluid-filled popliteal cyst.", highlightColor: "coral" }
+    ]
+  },
 
   // Knee Tendinopathy
   {
@@ -302,6 +321,25 @@ export const visualsInventory: VisualAsset[] = [
     priority: "medium",
     clinicalReviewStatus: "clinically-approved",
     requiredDimensions: { width: 800, height: 600 }
+  },
+  {
+    id: "knee-tendinopathy-imaging",
+    page: "conditions/knee-tendinopathy",
+    section: "imaging",
+    title: "MRI Scan: Patellar Tendinopathy",
+    type: "imaging",
+    imagePath: "/images/imaging/knee-tendinopathy-mri-sagittal.png",
+    altText: "Sagittal MRI of the knee showing the patellar tendon origin at the inferior pole of the patella.",
+    caption: "Sagittal MRI of the knee demonstrating patellar tendinopathy at the tendon's origin from the inferior pole of the patella.",
+    placeholderLabel: "Annotated MRI example pending clinical approval",
+    status: "approved",
+    priority: "high",
+    clinicalReviewStatus: "clinically-approved",
+    photographyOrIllustration: "photography",
+    requiredDimensions: { width: 800, height: 800 },
+    annotations: [
+      { id: "patellar-tendinopathy", x: 30, y: 70, label: "Patellar Tendinopathy", description: "Tendon origin at the inferior pole of the patella, where degenerative change occurs.", highlightColor: "coral" }
+    ]
   },
 
   // Patellar Instability
@@ -320,6 +358,27 @@ export const visualsInventory: VisualAsset[] = [
     clinicalReviewStatus: "clinically-approved",
     requiredDimensions: { width: 800, height: 600 }
   },
+  {
+    id: "patellar-instability-imaging",
+    page: "conditions/patellar-instability",
+    section: "imaging",
+    title: "MRI Scan: Patellofemoral Tracking",
+    type: "imaging",
+    imagePath: "/images/imaging/patellar-instability-mri-axial.png",
+    altText: "Axial MRI of the patellofemoral joint showing patellar tracking and trochlear groove anatomy.",
+    caption: "Axial MRI demonstrating patellar position within the trochlear groove. Educational example only — not for diagnostic use.",
+    placeholderLabel: "Annotated MRI example pending clinical approval",
+    status: "approved",
+    priority: "high",
+    clinicalReviewStatus: "clinically-approved",
+    photographyOrIllustration: "photography",
+    requiredDimensions: { width: 800, height: 800 },
+    annotations: [
+      { id: "patellar-position", x: 50, y: 14, label: "Patellar Tilt / Position", description: "Position of the patella relative to the trochlear groove.", highlightColor: "coral" },
+      { id: "trochlear-groove", x: 40, y: 26, label: "Trochlear Groove Contour", description: "Cartilage-lined groove the patella tracks within.", highlightColor: "navy" },
+      { id: "mpfl-region", x: 62, y: 20, label: "Medial Patellofemoral Ligament (MPFL) Region", description: "Medial soft tissue restraint adjacent to the medial border of the patella.", highlightColor: "navy" }
+    ]
+  },
 
   // Loose Bodies
   {
@@ -337,6 +396,26 @@ export const visualsInventory: VisualAsset[] = [
     clinicalReviewStatus: "clinically-approved",
     photographyOrIllustration: "illustration",
     requiredDimensions: { width: 800, height: 600 }
+  },
+  {
+    id: "loose-bodies-imaging",
+    page: "conditions/loose-bodies",
+    section: "imaging",
+    title: "X-ray: Intra-articular Loose Body",
+    type: "imaging",
+    imagePath: "/images/imaging/loose-bodies-xray.png",
+    altText: "AP X-ray of the knee showing a small round radio-opaque loose body within the intercondylar notch.",
+    caption: "AP X-ray demonstrating a radio-opaque loose body within the knee joint.",
+    placeholderLabel: "Annotated X-ray example pending clinical approval",
+    status: "approved",
+    priority: "high",
+    clinicalReviewStatus: "clinically-approved",
+    photographyOrIllustration: "photography",
+    requiredDimensions: { width: 800, height: 800 },
+    annotations: [
+      { id: "loose-body", x: 49, y: 46, label: "Loose Body", description: "Small round radio-opaque fragment within the intercondylar notch.", highlightColor: "coral" },
+      { id: "joint-space", x: 50, y: 58, label: "Joint Space", description: "Space between the femoral condyles and tibial plateau.", highlightColor: "navy" }
+    ]
   },
 
 

@@ -159,7 +159,7 @@ export const licensingRegister: LicensingRecord[] = [
   },
   {
     id: "consultant-supplied-meniscal-mri",
-    assetFilename: "meniscal-tear-mri.png",
+    assetFilename: "meniscal-tear-mri-sagittal.png",
     creator: "Mr R J Pacheco — Lincolnshire Knee Clinic",
     source: "Consultant-supplied clinical practice image",
     sourceUrl: "",

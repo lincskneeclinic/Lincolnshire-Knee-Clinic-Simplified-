@@ -405,12 +405,28 @@ export const ConditionPage = async ({ slug }: ConditionPageProps) => {
             </section>
           )}
 
-          {/* Pass 2 — Annotated Imaging Viewer (arthritis, ACL, meniscus) */}
-          {["knee-arthritis", "acl-injury", "meniscal-tear"].includes(slug) && (() => {
+          {/* Pass 2 — Annotated Imaging Viewer (arthritis, ACL, meniscus, cartilage injury) */}
+          {[
+            "knee-arthritis",
+            "acl-injury",
+            "meniscal-tear",
+            "cartilage-injury",
+            "knee-instability",
+            "bakers-cyst",
+            "knee-tendinopathy",
+            "patellar-instability",
+            "loose-bodies",
+          ].includes(slug) && (() => {
             const imagingAssetMap: Record<string, string> = {
               "knee-arthritis": "imaging-knee-arthritis-ap-xray",
               "acl-injury": "imaging-acl-injury-mri-sagittal",
               "meniscal-tear": "imaging-meniscal-tear-mri-coronal",
+              "cartilage-injury": "imaging-cartilage-injury-arthroscopy",
+              "knee-instability": "imaging-knee-instability-mri",
+              "bakers-cyst": "imaging-bakers-cyst-ultrasound",
+              "knee-tendinopathy": "imaging-knee-tendinopathy-ultrasound",
+              "patellar-instability": "imaging-patellar-instability-mri",
+              "loose-bodies": "imaging-loose-bodies-xray",
             };
             const assetId = imagingAssetMap[slug];
             if (!assetId) return null;
