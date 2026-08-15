@@ -36,6 +36,10 @@ interface SocialPostsTabProps {
   onNewTopicChange: (value: string) => void;
   isGenerating: boolean;
   onGenerateSubmit: (e: React.FormEvent) => void;
+  batchMode: boolean;
+  onBatchModeChange: (value: boolean) => void;
+  batchTopics: string;
+  onBatchTopicsChange: (value: string) => void;
 }
 
 const SUB_TABS: SocialOnlySubTab[] = ["feed", "story", "carousel", "reel", "brandkit"];
@@ -70,8 +74,13 @@ export function SocialPostsTab({
   onNewTopicChange,
   isGenerating,
   onGenerateSubmit,
+  batchMode,
+  onBatchModeChange,
+  batchTopics,
+  onBatchTopicsChange,
 }: SocialPostsTabProps) {
   const toast = useToast();
+  const batchTopicCount = batchTopics.split("\n").map((t) => t.trim()).filter(Boolean).length;
 
   return (
     <>
@@ -398,22 +407,68 @@ export function SocialPostsTab({
         }
       >
         <form onSubmit={onGenerateSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs text-white/80 mb-1">Topic / Patient Question</label>
-            <input
-              type="text"
-              value={newTopic}
-              onChange={(e) => onNewTopicChange(e.target.value)}
+          <div className="flex border-b border-white/10 gap-1">
+            <button
+              type="button"
+              onClick={() => onBatchModeChange(false)}
               disabled={isGenerating}
-              placeholder="e.g. 5 signs your knee pain needs a specialist"
-              className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none disabled:opacity-50"
-              autoFocus
-            />
-            <p className="text-[11px] text-white/60 mt-1.5">
-              Generates an Instagram, Facebook, and LinkedIn post — each written for that platform's tone, length,
-              and hashtag conventions.
-            </p>
+              className={`text-xs font-semibold px-3 py-2 border-b-2 transition-all cursor-pointer disabled:opacity-50 ${
+                !batchMode ? "border-clinical-teal text-clinical-teal" : "border-transparent text-white/60 hover:text-white"
+              }`}
+            >
+              Single Topic
+            </button>
+            <button
+              type="button"
+              onClick={() => onBatchModeChange(true)}
+              disabled={isGenerating}
+              className={`text-xs font-semibold px-3 py-2 border-b-2 transition-all cursor-pointer disabled:opacity-50 ${
+                batchMode ? "border-clinical-teal text-clinical-teal" : "border-transparent text-white/60 hover:text-white"
+              }`}
+            >
+              Batch (Week's Worth)
+            </button>
           </div>
+
+          {!batchMode ? (
+            <div>
+              <label className="block text-xs text-white/80 mb-1">Topic / Patient Question</label>
+              <input
+                type="text"
+                value={newTopic}
+                onChange={(e) => onNewTopicChange(e.target.value)}
+                disabled={isGenerating}
+                placeholder="e.g. 5 signs your knee pain needs a specialist"
+                className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none disabled:opacity-50"
+                autoFocus
+              />
+              <p className="text-[11px] text-white/60 mt-1.5">
+                Generates an Instagram, Facebook, and LinkedIn post — each written for that platform's tone, length,
+                and hashtag conventions.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-xs text-white/80 mb-1">Topics — one per line</label>
+              <textarea
+                value={batchTopics}
+                onChange={(e) => onBatchTopicsChange(e.target.value)}
+                disabled={isGenerating}
+                rows={6}
+                placeholder={
+                  "e.g.\n5 signs your knee pain needs a specialist\nIs running bad for your knees?\nWhat to expect after a knee replacement\nStretches to do before a 5k"
+                }
+                className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none disabled:opacity-50 resize-y"
+                autoFocus
+              />
+              <p className="text-[11px] text-white/60 mt-1.5">
+                {batchTopicCount > 0
+                  ? `Will generate ${batchTopicCount} full post${batchTopicCount === 1 ? "" : "s"} (Instagram, Facebook, LinkedIn, Story, Carousel, Reel script each) — this can take a few minutes.`
+                  : "Add one topic per line — a week's cadence is usually 3-4 topics."}
+              </p>
+            </div>
+          )}
+
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
@@ -425,7 +480,7 @@ export function SocialPostsTab({
             </button>
             <button
               type="submit"
-              disabled={isGenerating || !newTopic.trim()}
+              disabled={isGenerating || (batchMode ? batchTopicCount === 0 : !newTopic.trim())}
               className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-5 py-2 rounded-xl cursor-pointer disabled:opacity-50 flex items-center gap-2"
             >
               {isGenerating && (
@@ -434,7 +489,13 @@ export function SocialPostsTab({
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               )}
-              {isGenerating ? "Generating…" : "Generate Posts"}
+              {isGenerating
+                ? batchMode
+                  ? `Generating ${batchTopicCount}…`
+                  : "Generating…"
+                : batchMode
+                  ? `Generate ${batchTopicCount || ""} Post${batchTopicCount === 1 ? "" : "s"}`
+                  : "Generate Posts"}
             </button>
           </div>
         </form>

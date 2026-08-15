@@ -180,6 +180,8 @@ function BusinessDashboardPageInner() {
   const [isSocialOnlyModalOpen, setIsSocialOnlyModalOpen] = useState(false);
   const [newSocialOnlyTopic, setNewSocialOnlyTopic] = useState("");
   const [isGeneratingSocialOnly, setIsGeneratingSocialOnly] = useState(false);
+  const [socialOnlyBatchMode, setSocialOnlyBatchMode] = useState(false);
+  const [newSocialOnlyBatchTopics, setNewSocialOnlyBatchTopics] = useState("");
   const [generatingSocialImageKey, setGeneratingSocialImageKey] = useState<string | null>(null);
   const [isBackfillingFormats, setIsBackfillingFormats] = useState(false);
   const [socialOnlyCopiedKey, setSocialOnlyCopiedKey] = useState<string | null>(null);
@@ -1363,22 +1365,39 @@ function BusinessDashboardPageInner() {
 
   const handleGenerateSocialOnly = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSocialOnlyTopic.trim()) return;
+    const batchTopics = newSocialOnlyBatchTopics
+      .split("\n")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    const isBatch = socialOnlyBatchMode && batchTopics.length > 0;
+    if (!isBatch && !newSocialOnlyTopic.trim()) return;
+
     setIsGeneratingSocialOnly(true);
     try {
       const res = await fetch("/api/portal/social-only/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: newSocialOnlyTopic.trim() }),
+        body: JSON.stringify(isBatch ? { topics: batchTopics } : { topic: newSocialOnlyTopic.trim() }),
       });
       const data = await res.json();
       if (!data.success || !data.post) {
         throw new Error(data.error || "Failed to generate social posts.");
       }
-      setSocialOnlyPosts((prev) => [data.post, ...prev]);
-      setSelectedSocialOnlyPost(data.post);
+      const newPosts: SocialOnlyPost[] = Array.isArray(data.posts) ? data.posts : [data.post];
+      setSocialOnlyPosts((prev) => [...newPosts, ...prev]);
+      setSelectedSocialOnlyPost(isBatch ? null : newPosts[0]);
       setIsSocialOnlyModalOpen(false);
       setNewSocialOnlyTopic("");
+      setNewSocialOnlyBatchTopics("");
+      setSocialOnlyBatchMode(false);
+
+      const failures: Array<{ topic: string; error: string }> = Array.isArray(data.failures) ? data.failures : [];
+      if (isBatch) {
+        toast.success(`Generated ${newPosts.length} of ${batchTopics.length} post${batchTopics.length === 1 ? "" : "s"}.`);
+      }
+      if (failures.length > 0) {
+        toast.error(`${failures.length} topic${failures.length === 1 ? "" : "s"} failed: ${failures.map((f) => f.topic).join(", ")}`);
+      }
     } catch (err: any) {
       toast.error(err?.message || "An error occurred while generating the social posts.");
     } finally {
@@ -2912,6 +2931,10 @@ function BusinessDashboardPageInner() {
                 onNewTopicChange={setNewSocialOnlyTopic}
                 isGenerating={isGeneratingSocialOnly}
                 onGenerateSubmit={handleGenerateSocialOnly}
+                batchMode={socialOnlyBatchMode}
+                onBatchModeChange={setSocialOnlyBatchMode}
+                batchTopics={newSocialOnlyBatchTopics}
+                onBatchTopicsChange={setNewSocialOnlyBatchTopics}
               />
             )}
 
