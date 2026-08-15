@@ -32,7 +32,7 @@ Every caption must be optimized for TWO things at once, not just brand-safe copy
 
 Platform-specific rules you MUST follow:
 
-INSTAGRAM: Open with a scroll-stopping, high-impact hook in the very first line (this is crucial because Instagram truncates the caption in the user feed after the first two lines, so the hook must immediately capture attention). Use short line breaks for scannability and tasteful emoji (not excessive). Structure the copy to earn saves and shares specifically — e.g. frame it as a checklist, a "save this for later" reference, or a clear before/after or step-by-step — since Instagram's own ranking signals weight saves and shares more heavily than likes, and posts with high save/share rates are what Instagram pushes into non-followers' Explore and Reels feeds. If the caption promises a save-worthy payoff (a checklist, a list of signs/steps, a comparison), that payoff must actually be visible in the image itself — only use "save this" framing on a Standard Post if the image is a compact text-overlay reference graphic; otherwise this topic should be built as a Carousel instead, so the save button has something real to bookmark. End with a block of 8 to 15 relevant hashtags mixing broad terms (#KneeHealth, #JointCare) with niche/specific ones related to the topic, at least 1-2 long-tail search-style hashtags matching how a patient would actually search (e.g. #KneePainAfterRunning), AND at least 1-2 hyper-local/community hashtags (a Lincolnshire running club, parkrun, sports league, or town/area name relevant to the topic) — broad clinical tags compete with huge national accounts, while hyper-local tags put the post in front of a smaller, much more convertible nearby audience. Include EXACTLY ONE call-to-action — never stack a "save this" ask and a "book now" ask in the same caption, since asking for two different actions reduces both. Pick the single action that fits this post's stage (top-of-funnel education → "save this"; clear symptom/pain point → "Send a WhatsApp message to book") and phrase it as one direct step. Keep it under roughly 150 words before the hashtags.
+INSTAGRAM: Open with a scroll-stopping, high-impact hook in the very first line (this is crucial because Instagram truncates the caption in the user feed after the first two lines, so the hook must immediately capture attention). Use short line breaks for scannability and tasteful emoji (not excessive). Structure the copy to earn saves and shares specifically — e.g. frame it as a checklist, a "save this for later" reference, or a clear before/after or step-by-step — since Instagram's own ranking signals weight saves and shares more heavily than likes, and posts with high save/share rates are what Instagram pushes into non-followers' Explore and Reels feeds. If the caption promises a save-worthy payoff (a checklist, a list of signs/steps, a comparison), that payoff must actually be visible in the image itself — only use "save this" framing on a Standard Post if the image is a compact text-overlay reference graphic; otherwise this topic should be built as a Carousel instead, so the save button has something real to bookmark. End with a block of 8 to 15 relevant hashtags mixing broad terms (#KneeHealth, #JointCare) with niche/specific ones related to the topic, at least 1-2 long-tail search-style hashtags matching how a patient would actually search (e.g. #KneePainAfterRunning), AND at least 1-2 hyper-local/community hashtags (a Lincolnshire running club, parkrun, sports league, or town/area name relevant to the topic) — broad clinical tags compete with huge national accounts, while hyper-local tags put the post in front of a smaller, much more convertible nearby audience. Every single caption MUST end with EXACTLY ONE explicit call-to-action sentence, with no exceptions — never stack a "save this" ask and a "book now" ask together (asking for two different actions reduces both), but also never end the caption with neither. Pick the single action that fits this post's stage (top-of-funnel education → "save this"; clear symptom/pain point → "Send a WhatsApp message on 07770473437 to book") and phrase it as one direct step, placed right before the hashtag block. Keep it under roughly 150 words before the hashtags.
 
 INSTAGRAM_STORY: Generate a very short, high-impact text overlay script (maximum 15 words) suitable to be put directly on a vertical 9:16 story background image. Keep it punchy and call-to-action driven. Suggest a vertical 9:16 image prompt description.
 
@@ -149,6 +149,51 @@ function parseCarouselSlides(rawText: string): CarouselSlide[] {
   return slides;
 }
 
+// Code-side safety net: the prompt requires a CTA on every format, but an LLM
+// following a compound instruction (algorithm-optimize + exactly-one-CTA +
+// conditional save-vs-book logic) won't comply 100% of the time, and a post
+// with zero call to action is a real, patient-facing failure worth guarding
+// against in code rather than trusting the prompt alone — same reasoning as
+// the citation-verification safety nets in researchAgent.ts.
+const CTA_KEYWORDS = [
+  "book", "whatsapp", "message us", "message our", "dm us", "dm our",
+  "link in bio", "save this", "save it", "visit our website", "visit www",
+  "get in touch", "contact us", "swipe up", "comment below", "send us a",
+  "reach out", "call us",
+];
+
+function hasCallToAction(text: string): boolean {
+  const lower = text.toLowerCase();
+  return CTA_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+const DEFAULT_CTA: Record<string, string> = {
+  instagram: "📲 Send us a WhatsApp message on 07770473437 to book a consultation.",
+  instagramStory: "📲 Message us to book a consultation!",
+  instagramCarousel: "📲 Send us a WhatsApp message on 07770473437 to book a consultation.",
+  instagramReel: "📲 Send us a WhatsApp message on 07770473437 to book a consultation.",
+  facebook: "💬 Send us a message to find out more, or book a consultation via WhatsApp on 07770473437.",
+  linkedin: "Interested in referring a patient or learning more? Send us a message — the link to our website is in the comments below.",
+};
+
+// Inserts the fallback CTA before a trailing hashtag block (Instagram/LinkedIn
+// both end with hashtags per the prompt) rather than after it, so it isn't
+// buried below the tags where it's least likely to be read.
+function ensureCallToAction(caption: string, platform: keyof typeof DEFAULT_CTA): string {
+  const trimmed = caption.trim();
+  if (!trimmed || hasCallToAction(trimmed)) return caption;
+  const cta = DEFAULT_CTA[platform];
+  if (!cta) return caption;
+
+  const hashtagBlockMatch = trimmed.match(/\n*((?:#[\p{L}\p{N}_]+[ \t]*\n*)+)$/u);
+  if (hashtagBlockMatch && typeof hashtagBlockMatch.index === "number") {
+    const before = trimmed.slice(0, hashtagBlockMatch.index).trimEnd();
+    const hashtagBlock = hashtagBlockMatch[1].trim();
+    return `${before}\n\n${cta}\n\n${hashtagBlock}`;
+  }
+  return `${trimmed}\n\n${cta}`;
+}
+
 function getModel() {
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is missing from environment variables.");
@@ -184,30 +229,30 @@ export async function writeSocialCaptions(topic: string): Promise<SocialCaptions
 
   return {
     instagram: {
-      caption: instagramCaption,
+      caption: ensureCallToAction(instagramCaption, "instagram"),
       imagePromptSuggestion: instagramImage || `A representative image for "${topic}"`
     },
     facebook: {
-      caption: facebookCaption,
+      caption: ensureCallToAction(facebookCaption, "facebook"),
       imagePromptSuggestion: facebookImage || `A representative image for "${topic}"`
     },
     linkedin: {
-      caption: linkedinCaption,
+      caption: ensureCallToAction(linkedinCaption, "linkedin"),
       imagePromptSuggestion: linkedinImage || `A representative image for "${topic}"`
     },
     instagramStory: {
-      caption: instagramStoryCaption || `New update on "${topic}"!`,
+      caption: ensureCallToAction(instagramStoryCaption || `New update on "${topic}"!`, "instagramStory"),
       imagePromptSuggestion: instagramStoryImage || `A vertical image for "${topic}"`
     },
     instagramCarousel: {
-      caption: `Swipe through to learn about "${topic}"!`,
+      caption: ensureCallToAction(`Swipe through to learn about "${topic}"!`, "instagramCarousel"),
       imagePromptSuggestion: `Carousel deck about "${topic}"`,
       slides: slides.length > 0 ? slides : [
         { slideNumber: 1, text: topic, imagePromptSuggestion: `Cover slide for "${topic}"` }
       ]
     },
     instagramReel: {
-      caption: `Watch our quick guide on "${topic}"!`,
+      caption: ensureCallToAction(`Watch our quick guide on "${topic}"!`, "instagramReel"),
       imagePromptSuggestion: `Reel visual thumbnail for "${topic}"`,
       script: instagramReelRaw || `Hook: Let's talk about ${topic}!\n\nVoiceover: Here is what you need to know...`
     }
@@ -261,7 +306,7 @@ IMAGE:
   }
 
   return {
-    caption,
+    caption: ensureCallToAction(caption, platform),
     imagePromptSuggestion: image || `A representative visual description for "${topic}"`
   };
 }
@@ -304,7 +349,7 @@ Slide 3 Text: <text overlay for slide 3>
   }
 
   return {
-    caption: `Swipe through to learn about "${topic}"!`,
+    caption: ensureCallToAction(`Swipe through to learn about "${topic}"!`, "instagramCarousel"),
     imagePromptSuggestion: `Carousel deck about "${topic}"`,
     slides
   };
