@@ -329,6 +329,201 @@ function PerformancePanel({
   );
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function loadImageElement(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Failed to load the image for repositioning."));
+    img.src = src;
+  });
+}
+
+// Caps the exported crop's longer edge so a reposition doesn't balloon file size
+// beyond what the source image already was.
+const MAX_CROP_DIMENSION = 1600;
+
+// Replicates CSS `object-fit: cover; object-position: x% y%` as real pixel
+// cropping, so the reposition is baked into the actual file (what gets
+// downloaded or right-click-saved) rather than only a CSS preview trick.
+async function cropImageToBlob(
+  src: string,
+  targetAspect: number,
+  position: { x: number; y: number }
+): Promise<Blob> {
+  const img = await loadImageElement(src);
+  const sw = img.naturalWidth;
+  const sh = img.naturalHeight;
+  const sourceAspect = sw / sh;
+
+  let cropWidth: number;
+  let cropHeight: number;
+  if (sourceAspect > targetAspect) {
+    cropHeight = sh;
+    cropWidth = sh * targetAspect;
+  } else {
+    cropWidth = sw;
+    cropHeight = sw / targetAspect;
+  }
+
+  const offsetX = clamp((sw - cropWidth) * (position.x / 100), 0, Math.max(0, sw - cropWidth));
+  const offsetY = clamp((sh - cropHeight) * (position.y / 100), 0, Math.max(0, sh - cropHeight));
+
+  let outW = cropWidth;
+  let outH = cropHeight;
+  if (Math.max(outW, outH) > MAX_CROP_DIMENSION) {
+    const scale = MAX_CROP_DIMENSION / Math.max(outW, outH);
+    outW = Math.round(outW * scale);
+    outH = Math.round(outH * scale);
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(outW));
+  canvas.height = Math.max(1, Math.round(outH));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D context unavailable.");
+  ctx.drawImage(img, offsetX, offsetY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("Failed to export the repositioned image."))),
+      "image/jpeg",
+      0.92
+    );
+  });
+}
+
+// Drag-to-reposition (same interaction as Facebook/Instagram cover photo
+// repositioning) for any image shown through a fixed-aspect object-cover crop.
+// Dragging previews live via CSS objectPosition; "Save Position" bakes the
+// same crop into a real re-uploaded file via cropImageToBlob, so downloads and
+// right-click-saves match what was previewed — not just the on-screen preview.
+function RepositionableImage({
+  src,
+  alt,
+  targetAspect,
+  containerClassName,
+  imgClassName = "",
+  onCropped,
+  disabled,
+}: {
+  src: string;
+  alt: string;
+  targetAspect: number;
+  containerClassName: string;
+  imgClassName?: string;
+  onCropped: (newUrl: string) => void;
+  disabled?: boolean;
+}) {
+  const toast = useToast();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ x: 50, y: 50 });
+  const [hasMoved, setHasMoved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const draggingRef = useRef<{ startX: number; startY: number; startPos: { x: number; y: number } } | null>(null);
+
+  useEffect(() => {
+    setPosition({ x: 50, y: 50 });
+    setHasMoved(false);
+  }, [src]);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (disabled) return;
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+    draggingRef.current = { startX: e.clientX, startY: e.clientY, startPos: position };
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const deltaX = e.clientX - draggingRef.current.startX;
+    const deltaY = e.clientY - draggingRef.current.startY;
+    // Drag right -> reveal more of the image's left side (grab-the-photo metaphor).
+    const newX = clamp(draggingRef.current.startPos.x - (deltaX / rect.width) * 100, 0, 100);
+    const newY = clamp(draggingRef.current.startPos.y - (deltaY / rect.height) * 100, 0, 100);
+    setPosition({ x: newX, y: newY });
+    if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) setHasMoved(true);
+  };
+
+  const handlePointerUp = () => {
+    draggingRef.current = null;
+  };
+
+  const handleReset = () => {
+    setPosition({ x: 50, y: 50 });
+    setHasMoved(false);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const blob = await cropImageToBlob(src, targetAspect, position);
+      const formData = new FormData();
+      formData.append("file", blob, "repositioned.jpg");
+      const res = await fetch("/api/portal/content-pipeline/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!data.success || !data.url) throw new Error(data.error || "Failed to save the new position.");
+      onCropped(data.url);
+      setHasMoved(false);
+      toast.success("Image repositioned.");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to save the repositioned image.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className={`${containerClassName} ${disabled ? "" : "cursor-grab active:cursor-grabbing touch-none"}`}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+    >
+      <img
+        src={src}
+        alt={alt}
+        draggable={false}
+        className={`absolute inset-0 w-full h-full object-cover select-none ${imgClassName}`}
+        style={{ objectPosition: `${position.x}% ${position.y}%` }}
+      />
+      {!disabled && hasMoved && (
+        <div className="absolute bottom-1.5 left-1.5 flex gap-1.5 bg-deep-navy/90 backdrop-blur px-1.5 py-1 rounded-md border border-white/10">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleReset();
+            }}
+            disabled={isSaving}
+            className="text-[9px] text-white/70 hover:text-white cursor-pointer disabled:opacity-50"
+          >
+            Reset
+          </button>
+          <span className="text-white/20">|</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSave();
+            }}
+            disabled={isSaving}
+            className="text-[9px] text-clinical-teal hover:underline font-semibold cursor-pointer disabled:opacity-50"
+          >
+            {isSaving ? "Saving…" : "✓ Save Position"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function PlatformCard({
   platformKey,
   platformLabel,
@@ -511,12 +706,16 @@ export function PlatformCard({
         {/* Custom Formats Renders */}
         {isStory && (
           <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md bg-gradient-to-b from-slate-900 to-slate-950 w-full aspect-[9/16] max-w-[210px] mx-auto group">
-            <img
+            <RepositionableImage
               src={attachedImageUrl || "/images/templates/vertical-story-template.png"}
               alt="Story Preview Background"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              targetAspect={9 / 16}
+              containerClassName="absolute inset-0 w-full h-full"
+              imgClassName="group-hover:scale-105 transition-transform duration-300"
+              onCropped={(url) => onAttachImage?.(url)}
+              disabled={isPublished || !attachedImageUrl}
             />
-            <div className="absolute inset-0 bg-black/40" />
+            <div className="absolute inset-0 bg-black/40 pointer-events-none" />
             <div className="absolute bottom-6 left-2 right-2 bg-black/70 backdrop-blur-md border border-white/10 p-2.5 rounded-lg text-center shadow-lg">
               <p className="text-[10px] font-sans text-white/90 font-medium leading-relaxed">
                 {caption || "New update from Lincolnshire Knee Clinic"}
@@ -556,11 +755,15 @@ export function PlatformCard({
             </div>
 
             {currentSlide.imageUrl ? (
-              <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md group">
-                <img
+              <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md group aspect-[4/5] max-w-[220px] mx-auto">
+                <RepositionableImage
                   src={currentSlide.imageUrl}
                   alt={`Slide ${activeSlide + 1} Visual`}
-                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                  targetAspect={4 / 5}
+                  containerClassName="absolute inset-0 w-full h-full"
+                  imgClassName="group-hover:scale-105 transition-transform duration-300"
+                  onCropped={(url) => onAttachImage?.(url, activeSlide)}
+                  disabled={isPublished}
                 />
               </div>
             ) : (
@@ -675,8 +878,15 @@ export function PlatformCard({
               </span>
 
               {attachedImageUrl ? (
-                <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md max-w-[210px] mx-auto">
-                  <img src={attachedImageUrl} alt="Reel cover" className="w-full aspect-[9/16] object-cover" />
+                <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md aspect-[9/16] max-w-[210px] mx-auto">
+                  <RepositionableImage
+                    src={attachedImageUrl}
+                    alt="Reel cover"
+                    targetAspect={9 / 16}
+                    containerClassName="absolute inset-0 w-full h-full"
+                    onCropped={(url) => onAttachImage?.(url)}
+                    disabled={isPublished}
+                  />
                 </div>
               ) : (
                 <div className="bg-primary-navy/70 border border-dashed border-white/20 rounded-lg p-3 text-center text-[10px] text-white/40 italic">
@@ -824,13 +1034,17 @@ export function PlatformCard({
           <>
             {attachedImageUrl ? (
               <div className="space-y-2">
-                <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md group">
-                  <img
+                <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md group aspect-[4/5] max-w-[260px] mx-auto">
+                  <RepositionableImage
                     src={attachedImageUrl}
                     alt={`${platformLabel} Visual Asset`}
-                    className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300 animate-fadeIn"
+                    targetAspect={4 / 5}
+                    containerClassName="absolute inset-0 w-full h-full"
+                    imgClassName="group-hover:scale-105 transition-transform duration-300 animate-fadeIn"
+                    onCropped={(url) => onAttachImage?.(url)}
+                    disabled={isPublished && !isCardEditing}
                   />
-                  <div className="absolute bottom-2 right-2 bg-primary-navy/90 backdrop-blur text-[10px] text-clinical-teal font-mono px-2 py-0.5 rounded border border-white/10">
+                  <div className="absolute top-2 right-2 bg-primary-navy/90 backdrop-blur text-[10px] text-clinical-teal font-mono px-2 py-0.5 rounded border border-white/10 pointer-events-none">
                     📷 Attached Media Asset
                   </div>
                 </div>
