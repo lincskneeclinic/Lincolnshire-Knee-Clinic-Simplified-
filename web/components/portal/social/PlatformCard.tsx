@@ -346,29 +346,37 @@ function loadImageElement(src: string): Promise<HTMLImageElement> {
 // Caps the exported crop's longer edge so a reposition doesn't balloon file size
 // beyond what the source image already was.
 const MAX_CROP_DIMENSION = 1600;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 3;
+const ZOOM_STEP = 0.25;
 
-// Replicates CSS `object-fit: cover; object-position: x% y%` as real pixel
-// cropping, so the reposition is baked into the actual file (what gets
-// downloaded or right-click-saved) rather than only a CSS preview trick.
+// The crop window at zoom=1 fills targetAspect exactly (same as plain
+// object-fit: cover); zooming in samples a smaller region of the source,
+// scaled up to the same output frame, so the output stays targetAspect at
+// every zoom level.
+function computeBaseCropSize(sw: number, sh: number, targetAspect: number): { width: number; height: number } {
+  const sourceAspect = sw / sh;
+  if (sourceAspect > targetAspect) {
+    return { width: sh * targetAspect, height: sh };
+  }
+  return { width: sw, height: sw / targetAspect };
+}
+
+// Replicates the live drag/zoom preview as real pixel cropping, so the
+// reposition is baked into the actual file (what gets downloaded or
+// right-click-saved) rather than only a CSS preview trick.
 async function cropImageToBlob(
   src: string,
   targetAspect: number,
-  position: { x: number; y: number }
+  position: { x: number; y: number },
+  zoom: number
 ): Promise<Blob> {
   const img = await loadImageElement(src);
   const sw = img.naturalWidth;
   const sh = img.naturalHeight;
-  const sourceAspect = sw / sh;
-
-  let cropWidth: number;
-  let cropHeight: number;
-  if (sourceAspect > targetAspect) {
-    cropHeight = sh;
-    cropWidth = sh * targetAspect;
-  } else {
-    cropWidth = sw;
-    cropHeight = sw / targetAspect;
-  }
+  const base = computeBaseCropSize(sw, sh, targetAspect);
+  const cropWidth = base.width / zoom;
+  const cropHeight = base.height / zoom;
 
   const offsetX = clamp((sw - cropWidth) * (position.x / 100), 0, Math.max(0, sw - cropWidth));
   const offsetY = clamp((sh - cropHeight) * (position.y / 100), 0, Math.max(0, sh - cropHeight));
@@ -397,11 +405,12 @@ async function cropImageToBlob(
   });
 }
 
-// Drag-to-reposition (same interaction as Facebook/Instagram cover photo
-// repositioning) for any image shown through a fixed-aspect object-cover crop.
-// Dragging previews live via CSS objectPosition; "Save Position" bakes the
-// same crop into a real re-uploaded file via cropImageToBlob, so downloads and
-// right-click-saves match what was previewed — not just the on-screen preview.
+// Drag-to-reposition plus zoom (same interaction as Facebook/Instagram cover
+// photo repositioning) for any image shown through a fixed-aspect crop. The
+// image is positioned with explicit pixel width/height/offset (not CSS
+// object-fit) so the on-screen preview is pixel-identical to what
+// cropImageToBlob later bakes into the saved file — a mismatch there was
+// exactly what made an earlier version look like repositioning "didn't save".
 function RepositionableImage({
   src,
   alt,
@@ -421,15 +430,44 @@ function RepositionableImage({
 }) {
   const toast = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+  const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
   const [position, setPosition] = useState({ x: 50, y: 50 });
-  const [hasMoved, setHasMoved] = useState(false);
+  const [zoom, setZoom] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
   const draggingRef = useRef<{ startX: number; startY: number; startPos: { x: number; y: number } } | null>(null);
 
   useEffect(() => {
     setPosition({ x: 50, y: 50 });
-    setHasMoved(false);
+    setZoom(1);
+    setNaturalSize(null);
   }, [src]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const el = containerRef.current;
+    const update = () => setContainerSize({ w: el.clientWidth, h: el.clientHeight });
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const hasChanged = zoom !== 1 || position.x !== 50 || position.y !== 50;
+
+  // Base "cover" scale — the minimum zoom needed to fully fill the container
+  // with no gaps, matching plain object-fit: cover at zoom 1.
+  const baseScale =
+    naturalSize && containerSize.w > 0 && containerSize.h > 0
+      ? Math.max(containerSize.w / naturalSize.w, containerSize.h / naturalSize.h)
+      : 0;
+  const effectiveScale = baseScale * zoom;
+  const dispW = naturalSize ? naturalSize.w * effectiveScale : 0;
+  const dispH = naturalSize ? naturalSize.h * effectiveScale : 0;
+  const maxOffsetX = Math.max(0, dispW - containerSize.w);
+  const maxOffsetY = Math.max(0, dispH - containerSize.h);
+  const left = -(maxOffsetX * position.x) / 100;
+  const top = -(maxOffsetY * position.y) / 100;
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (disabled) return;
@@ -438,37 +476,43 @@ function RepositionableImage({
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!draggingRef.current || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
+    if (!draggingRef.current) return;
     const deltaX = e.clientX - draggingRef.current.startX;
     const deltaY = e.clientY - draggingRef.current.startY;
     // Drag right -> reveal more of the image's left side (grab-the-photo metaphor).
-    const newX = clamp(draggingRef.current.startPos.x - (deltaX / rect.width) * 100, 0, 100);
-    const newY = clamp(draggingRef.current.startPos.y - (deltaY / rect.height) * 100, 0, 100);
+    const deltaPctX = maxOffsetX > 0 ? (deltaX / maxOffsetX) * 100 : 0;
+    const deltaPctY = maxOffsetY > 0 ? (deltaY / maxOffsetY) * 100 : 0;
+    const newX = clamp(draggingRef.current.startPos.x - deltaPctX, 0, 100);
+    const newY = clamp(draggingRef.current.startPos.y - deltaPctY, 0, 100);
     setPosition({ x: newX, y: newY });
-    if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) setHasMoved(true);
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (draggingRef.current) {
+      (e.currentTarget as Element).releasePointerCapture?.(e.pointerId);
+    }
     draggingRef.current = null;
   };
 
   const handleReset = () => {
     setPosition({ x: 50, y: 50 });
-    setHasMoved(false);
+    setZoom(1);
+  };
+
+  const handleZoom = (delta: number) => {
+    setZoom((z) => clamp(Math.round((z + delta) * 100) / 100, MIN_ZOOM, MAX_ZOOM));
   };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const blob = await cropImageToBlob(src, targetAspect, position);
+      const blob = await cropImageToBlob(src, targetAspect, position, zoom);
       const formData = new FormData();
       formData.append("file", blob, "repositioned.jpg");
       const res = await fetch("/api/portal/content-pipeline/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!data.success || !data.url) throw new Error(data.error || "Failed to save the new position.");
       onCropped(data.url);
-      setHasMoved(false);
       toast.success("Image repositioned.");
     } catch (err: any) {
       toast.error(err?.message || "Failed to save the repositioned image.");
@@ -484,40 +528,86 @@ function RepositionableImage({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
+      onPointerCancel={handlePointerUp}
     >
       <img
         src={src}
         alt={alt}
         draggable={false}
-        className={`absolute inset-0 w-full h-full object-cover select-none ${imgClassName}`}
-        style={{ objectPosition: `${position.x}% ${position.y}%` }}
+        onLoad={(e) => {
+          const el = e.currentTarget;
+          setNaturalSize({ w: el.naturalWidth, h: el.naturalHeight });
+        }}
+        className={`absolute select-none pointer-events-none ${imgClassName}`}
+        style={
+          naturalSize && containerSize.w > 0
+            ? { width: dispW, height: dispH, left, top }
+            : // Before natural size/container measurements are ready, fall back
+              // to plain cover so there's no flash of an unpositioned image.
+              { inset: 0, width: "100%", height: "100%", objectFit: "cover" }
+        }
       />
-      {!disabled && hasMoved && (
-        <div className="absolute bottom-1.5 left-1.5 flex gap-1.5 bg-deep-navy/90 backdrop-blur px-1.5 py-1 rounded-md border border-white/10">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleReset();
-            }}
-            disabled={isSaving}
-            className="text-[9px] text-white/70 hover:text-white cursor-pointer disabled:opacity-50"
-          >
-            Reset
-          </button>
-          <span className="text-white/20">|</span>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleSave();
-            }}
-            disabled={isSaving}
-            className="text-[9px] text-clinical-teal hover:underline font-semibold cursor-pointer disabled:opacity-50"
-          >
-            {isSaving ? "Saving…" : "✓ Save Position"}
-          </button>
+      {!disabled && (
+        <div className="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between gap-1.5 bg-deep-navy/90 backdrop-blur px-1.5 py-1 rounded-md border border-white/10">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleZoom(-ZOOM_STEP);
+              }}
+              disabled={isSaving || zoom <= MIN_ZOOM}
+              className="w-4 h-4 flex items-center justify-center text-[10px] text-white/80 hover:text-white cursor-pointer disabled:opacity-30 leading-none"
+              aria-label="Zoom out"
+            >
+              −
+            </button>
+            <span className="text-[8px] text-white/50 font-mono w-7 text-center">{Math.round(zoom * 100)}%</span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleZoom(ZOOM_STEP);
+              }}
+              disabled={isSaving || zoom >= MAX_ZOOM}
+              className="w-4 h-4 flex items-center justify-center text-[10px] text-white/80 hover:text-white cursor-pointer disabled:opacity-30 leading-none"
+              aria-label="Zoom in"
+            >
+              +
+            </button>
+          </div>
+          {hasChanged && (
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleReset();
+                }}
+                disabled={isSaving}
+                className="text-[9px] text-white/70 hover:text-white cursor-pointer disabled:opacity-50"
+              >
+                Reset
+              </button>
+              <span className="text-white/20">|</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSave();
+                }}
+                disabled={isSaving}
+                className="text-[9px] text-clinical-teal hover:underline font-semibold cursor-pointer disabled:opacity-50"
+              >
+                {isSaving ? "Saving…" : "✓ Save"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      {!disabled && !hasChanged && (
+        <div className="absolute top-1.5 right-1.5 bg-deep-navy/80 backdrop-blur text-[8px] text-white/60 px-1.5 py-0.5 rounded pointer-events-none">
+          Drag to reposition
         </div>
       )}
     </div>
@@ -1044,8 +1134,8 @@ export function PlatformCard({
                     onCropped={(url) => onAttachImage?.(url)}
                     disabled={isPublished && !isCardEditing}
                   />
-                  <div className="absolute top-2 right-2 bg-primary-navy/90 backdrop-blur text-[10px] text-clinical-teal font-mono px-2 py-0.5 rounded border border-white/10 pointer-events-none">
-                    📷 Attached Media Asset
+                  <div className="absolute top-1.5 left-1.5 bg-primary-navy/90 backdrop-blur text-[9px] text-clinical-teal font-mono px-1.5 py-0.5 rounded border border-white/10 pointer-events-none">
+                    📷 Attached
                   </div>
                 </div>
                 {(!isPublished || isCardEditing) && (
