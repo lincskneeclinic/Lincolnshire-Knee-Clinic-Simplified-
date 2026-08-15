@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { generateContentWithRetry } from "./geminiRetry";
 
 const apiKey = process.env.GEMINI_API_KEY;
 
@@ -154,14 +155,14 @@ function getModel() {
   }
   const genAI = new GoogleGenerativeAI(apiKey);
   return genAI.getGenerativeModel({
-    model: "gemini-flash-latest",
+    model: "gemini-3.5-flash",
     systemInstruction: SYSTEM_INSTRUCTION,
   });
 }
 
 export async function writeSocialCaptions(topic: string): Promise<SocialCaptionsBundle> {
   const model = getModel();
-  const result = await model.generateContent(buildGenerationPrompt(topic));
+  const result = await generateContentWithRetry(model, buildGenerationPrompt(topic));
   const output = result.response.text() || "";
 
   const instagramCaption = extractSection(output, "INSTAGRAM_CAPTION:", "INSTAGRAM_IMAGE:");
@@ -249,7 +250,7 @@ CAPTION:
 IMAGE:
 <one-sentence image/visual description>`;
 
-  const result = await model.generateContent(prompt);
+  const result = await generateContentWithRetry(model, prompt);
   const output = result.response.text() || "";
 
   const caption = extractSection(output, "CAPTION:", "IMAGE:");
@@ -294,7 +295,7 @@ Slide 3 Visual: <visual description for slide 3>
 Slide 3 Text: <text overlay for slide 3>
 (continue up to Slide 5 if needed)`;
 
-  const result = await model.generateContent(prompt);
+  const result = await generateContentWithRetry(model, prompt);
   const output = result.response.text() || "";
   const slides = parseCarouselSlides(output);
 

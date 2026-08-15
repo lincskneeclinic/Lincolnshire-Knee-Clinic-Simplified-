@@ -130,6 +130,15 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
     setIsGenerating(true);
     setGenerateError(null);
     try {
+      // Blog images stay WebP (good for site performance, never leave the
+      // site). Everything social-bound (post/story/carousel/reel) needs a
+      // format Instagram/Facebook/LinkedIn's manual upload flows and any
+      // future Meta Graph API auto-posting will actually accept — WebP isn't
+      // reliably supported there, so those default to JPEG instead. PNG is
+      // still used whenever transparency is requested, since JPEG has no
+      // alpha channel.
+      const outputFormat = transparentBackground ? "png" : contentType !== "blog" ? "jpeg" : "webp";
+
       const res = await fetch("/api/portal/content-pipeline/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -146,6 +155,7 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
           transparentBackground,
           addLogo,
           confirmOverwrite,
+          format: outputFormat,
         }),
       });
       const data = await res.json();

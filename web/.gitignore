@@ -40,6 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# scratch standalone-compile output used to test lib/ modules outside Next.js
+/.tmp-*/
+
 # large media files — dev-only videos stay out of git by default, but
 # production-needed assets are explicitly allowlisted below (kept small
 # enough via ffmpeg compression to be reasonable to commit directly).

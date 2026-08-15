@@ -10,6 +10,8 @@ type MarkdownInsertType = "bold" | "italic" | "underline" | "h1" | "h2" | "h3" |
 interface PipelineDraftTabProps {
   selectedRun: ContentPipelineRun;
   isEditMode: boolean;
+  activeDraftSubTab: "layman" | "technical";
+  onActiveDraftSubTabChange: (value: "layman" | "technical") => void;
   editTitle: string;
   onEditTitleChange: (value: string) => void;
   editExcerpt: string;
@@ -18,6 +20,12 @@ interface PipelineDraftTabProps {
   onEditCategoryChange: (value: string) => void;
   editBody: string;
   editSuggestedImages: any[];
+  editArticleTitle: string;
+  onEditArticleTitleChange: (value: string) => void;
+  editArticleExcerpt: string;
+  onEditArticleExcerptChange: (value: string) => void;
+  editArticleBody: string;
+  editArticleSuggestedImages: any[];
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   livePreviewRef: React.RefObject<HTMLDivElement | null>;
   onTextareaChange: (value: string) => void;
@@ -45,6 +53,8 @@ interface PipelineDraftTabProps {
 export function PipelineDraftTab({
   selectedRun,
   isEditMode,
+  activeDraftSubTab,
+  onActiveDraftSubTabChange,
   editTitle,
   onEditTitleChange,
   editExcerpt,
@@ -53,6 +63,12 @@ export function PipelineDraftTab({
   onEditCategoryChange,
   editBody,
   editSuggestedImages,
+  editArticleTitle,
+  onEditArticleTitleChange,
+  editArticleExcerpt,
+  onEditArticleExcerptChange,
+  editArticleBody,
+  editArticleSuggestedImages,
   textareaRef,
   livePreviewRef,
   onTextareaChange,
@@ -78,27 +94,85 @@ export function PipelineDraftTab({
 }: PipelineDraftTabProps) {
   const [previewTheme, setPreviewTheme] = useState<"dashboard" | "website">("dashboard");
 
+  const isArticle = activeDraftSubTab === "technical";
+  const draftTitle = isArticle ? editArticleTitle : editTitle;
+  const onTitleChange = isArticle ? onEditArticleTitleChange : onEditTitleChange;
+  const draftExcerpt = isArticle ? editArticleExcerpt : editExcerpt;
+  const onExcerptChange = isArticle ? onEditArticleExcerptChange : onEditExcerptChange;
+  const draftBody = isArticle ? editArticleBody : editBody;
+
+  // Fallbacks for read-only view
+  const dbDraft = selectedRun.blog_drafts?.[0] || {} as any;
+  const fallbackTitle = isArticle 
+    ? (dbDraft.article_title || `${dbDraft.title || selectedRun.topic} (Clinical Depth)`) 
+    : (dbDraft.title || selectedRun.topic);
+  const fallbackExcerpt = isArticle 
+    ? (dbDraft.article_excerpt || dbDraft.excerpt || "") 
+    : (dbDraft.excerpt || "");
+  const fallbackBody = isArticle 
+    ? (dbDraft.article_body_markdown || dbDraft.article_body || "") 
+    : (dbDraft.body_markdown || dbDraft.body || "");
+  const fallbackImages = isArticle 
+    ? (dbDraft.article_suggested_images || []) 
+    : (dbDraft.suggested_images || []);
+  const fallbackReferences = isArticle 
+    ? (dbDraft.article_references || dbDraft.references || []) 
+    : (dbDraft.references || []);
+  const flags = isArticle
+    ? (dbDraft.article_flags || [])
+    : (dbDraft.flags || []);
+  const faqs: Array<{ question: string; answer: string }> = isArticle
+    ? (dbDraft.article_faqs || [])
+    : (dbDraft.faqs || []);
+  const readTimeLabel = isArticle ? "15 min read" : "8 min read";
+
   return (
     <div className="space-y-6">
+      {/* Sub-tab Navigation for Layman Blog vs Technical Article */}
+      <div className="flex border-b border-white/10 gap-6 mb-2">
+        <button
+          onClick={() => onActiveDraftSubTabChange("layman")}
+          className={`pb-2.5 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
+            activeDraftSubTab === "layman"
+              ? "border-clinical-teal text-clinical-teal"
+              : "border-transparent text-white/60 hover:text-white"
+          }`}
+        >
+          Layman Blog (8-10 min read)
+        </button>
+        <button
+          onClick={() => onActiveDraftSubTabChange("technical")}
+          className={`pb-2.5 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
+            activeDraftSubTab === "technical"
+              ? "border-clinical-teal text-clinical-teal"
+              : "border-transparent text-white/60 hover:text-white"
+          }`}
+        >
+          Technical Article (12-15 min read)
+        </button>
+      </div>
+
       {isEditMode ? (
         <div className="space-y-4 bg-dark-overlay-navy p-5 rounded-xl border border-clinical-teal/30 animate-fadeIn">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column: Markdown editor fields */}
             <div className="space-y-4">
               <div>
-                <label className="block text-xs text-clinical-teal mb-1 font-semibold">Article Title</label>
+                <label className="block text-xs text-clinical-teal mb-1 font-semibold">
+                  {isArticle ? "Technical Article Title" : "Layman Blog Title"}
+                </label>
                 <input
                   type="text"
-                  value={editTitle}
-                  onChange={(e) => onEditTitleChange(e.target.value)}
+                  value={draftTitle}
+                  onChange={(e) => onTitleChange(e.target.value)}
                   className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
                 />
               </div>
               <div>
                 <label className="block text-xs text-clinical-teal mb-1 font-semibold">Excerpt / Meta Summary</label>
                 <textarea
-                  value={editExcerpt}
-                  onChange={(e) => onEditExcerptChange(e.target.value)}
+                  value={draftExcerpt}
+                  onChange={(e) => onExcerptChange(e.target.value)}
                   rows={2}
                   className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
                 />
@@ -191,18 +265,18 @@ export function PipelineDraftTab({
                   <button
                     type="button"
                     onClick={onUndo}
-                    disabled={historyIndex <= 0}
+                    disabled={isArticle || historyIndex <= 0}
                     className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-white/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed"
-                    title="Undo (Ctrl+Z)"
+                    title="Undo (Ctrl+Z) - Layman Blog Only"
                   >
                     ↩ Undo
                   </button>
                   <button
                     type="button"
                     onClick={onRedo}
-                    disabled={historyIndex >= history.length - 1}
+                    disabled={isArticle || historyIndex >= history.length - 1}
                     className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-white/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed"
-                    title="Redo (Ctrl+Shift+Z)"
+                    title="Redo (Ctrl+Shift+Z) - Layman Blog Only"
                   >
                     ↪ Redo
                   </button>
@@ -210,7 +284,7 @@ export function PipelineDraftTab({
 
                 <textarea
                   ref={textareaRef}
-                  value={editBody}
+                  value={draftBody}
                   onChange={(e) => onTextareaChange(e.target.value)}
                   onKeyDown={onTextareaKeyDown}
                   className="w-full bg-primary-navy border border-white/20 text-white rounded-b-lg p-3 text-xs font-mono focus:border-clinical-teal focus:outline-none leading-relaxed custom-scrollbar"
@@ -228,19 +302,19 @@ export function PipelineDraftTab({
                 style={{ maxHeight: "480px" }}
               >
                 <h1 className="font-serif text-xl font-bold text-white tracking-tight">
-                  {editTitle || selectedRun.blog_drafts[0]?.title}
+                  {draftTitle || fallbackTitle}
                 </h1>
-                {editExcerpt && (
-                  <p className="text-[9px] text-white/70 italic border-l-2 border-clinical-teal pl-3 py-1">{editExcerpt}</p>
+                {draftExcerpt && (
+                  <p className="text-[9px] text-white/70 italic border-l-2 border-clinical-teal pl-3 py-1">{draftExcerpt}</p>
                 )}
                 <div className="border-t border-white/10 pt-4">
                   <FormattedContent
-                    body={editBody}
-                    suggestedImages={editSuggestedImages}
+                    body={draftBody}
+                    suggestedImages={isArticle ? editArticleSuggestedImages : editSuggestedImages}
                     onAttachPlaceholder={(placeholderId, label, url, isFeatured) =>
                       onAttachPlaceholderImage(placeholderId, label, url, isFeatured)
                     }
-                    references={selectedRun.blog_drafts[0]?.references}
+                    references={fallbackReferences}
                     generatingPlaceholderId={generatingImagePlaceholderId}
                     pendingPreview={generatedImagePreview}
                     onGenerateImage={(placeholderId, label, isFeatured) => onGenerateImage(placeholderId, label, isFeatured)}
@@ -295,16 +369,32 @@ export function PipelineDraftTab({
         </div>
       ) : (
         <>
-          {selectedRun.blog_drafts[0]?.flags && selectedRun.blog_drafts[0].flags.length > 0 && (
+          {flags && flags.length > 0 && (
             <div className="bg-dark-overlay-navy border border-amber-500/50 text-amber-200/90 p-4 rounded-xl shadow-md space-y-2">
               <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-400/90 font-normal">
                 <span>Action Required: Clinical Items Highlighted</span>
               </div>
               <ul className="list-disc pl-5 text-xs space-y-1 text-white/80 font-normal">
-                {selectedRun.blog_drafts[0].flags.map((flag, idx) => (
+                {flags.map((flag: any, idx: number) => (
                   <li key={idx}>{flag}</li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {faqs.length > 0 && (
+            <div className="bg-dark-overlay-navy border border-white/10 p-4 rounded-xl shadow-md space-y-2">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-clinical-teal font-normal">
+                <span>Generated FAQs (published on the page &amp; FAQ rich-result schema — review before approving)</span>
+              </div>
+              <div className="space-y-2">
+                {faqs.map((faq, idx) => (
+                  <div key={idx} className="text-xs text-white/80 font-normal">
+                    <p className="font-semibold text-white">Q: {faq.question}</p>
+                    <p className="text-white/70">A: {faq.answer}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -353,13 +443,13 @@ export function PipelineDraftTab({
                   <span>Education & Blog</span>
                   <span>&bull;</span>
                   <span className="text-clinical-teal">
-                    {ARTICLE_CATEGORIES.find((c) => c.value === (editCategory || selectedRun.blog_drafts[0]?.category))?.label || "General"}
+                    {ARTICLE_CATEGORIES.find((c) => c.value === (editCategory || dbDraft.category))?.label || "General"}
                   </span>
                 </div>
 
                 <header className="mt-4 mb-6">
                   <h1 className="font-serif text-3xl md:text-4xl font-bold text-deep-navy leading-tight mb-4">
-                    {editTitle || selectedRun.blog_drafts[0]?.title}
+                    {draftTitle || fallbackTitle}
                   </h1>
 
                   {/* Meta Bar */}
@@ -379,7 +469,7 @@ export function PipelineDraftTab({
                     </div>
                     <span>&bull;</span>
                     <div>
-                      <span className="text-text-muted">Read Time:</span> 8 min read
+                      <span className="text-text-muted">Read Time:</span> {readTimeLabel}
                     </div>
                     <span>&bull;</span>
                     <div className="text-status-success uppercase tracking-wider text-[8px] bg-status-success/5 px-2 py-0.5 rounded-full font-bold">
@@ -391,14 +481,16 @@ export function PipelineDraftTab({
                 {/* Main Body content with clean light mode styling */}
                 <article className="prose max-w-none text-text-secondary text-sm md:text-base leading-relaxed space-y-6">
                   <FormattedContent
-                    body={editBody || selectedRun.blog_drafts[0]?.body_markdown || selectedRun.blog_drafts[0]?.body || ""}
+                    body={draftBody || fallbackBody}
                     suggestedImages={
-                      editSuggestedImages.length > 0 ? editSuggestedImages : selectedRun.blog_drafts[0]?.suggested_images
+                      (isArticle ? editArticleSuggestedImages : editSuggestedImages).length > 0
+                        ? (isArticle ? editArticleSuggestedImages : editSuggestedImages)
+                        : fallbackImages
                     }
                     onAttachPlaceholder={(placeholderId, label, url, isFeatured) =>
                       onAttachPlaceholderImage(placeholderId, label, url, isFeatured)
                     }
-                    references={selectedRun.blog_drafts[0]?.references}
+                    references={fallbackReferences}
                     generatingPlaceholderId={generatingImagePlaceholderId}
                     pendingPreview={generatedImagePreview}
                     onGenerateImage={(placeholderId, label, isFeatured) => onGenerateImage(placeholderId, label, isFeatured)}
@@ -437,10 +529,10 @@ export function PipelineDraftTab({
               style={{ maxHeight: "620px", overflowY: "auto" }}
             >
               <h1 className="font-serif text-xl font-bold text-white tracking-tight">
-                {editTitle || selectedRun.blog_drafts[0]?.title}
+                {draftTitle || fallbackTitle}
               </h1>
               {(() => {
-                const categoryValue = editCategory || selectedRun.blog_drafts[0]?.category;
+                const categoryValue = editCategory || dbDraft.category;
                 const categoryLabel = ARTICLE_CATEGORIES.find((c) => c.value === categoryValue)?.label;
                 return categoryLabel ? (
                   <span className="inline-block text-[9px] font-semibold uppercase tracking-wider text-clinical-teal bg-clinical-teal/10 border border-clinical-teal/30 rounded-full px-2.5 py-1">
@@ -448,21 +540,23 @@ export function PipelineDraftTab({
                   </span>
                 ) : null;
               })()}
-              {(editExcerpt || selectedRun.blog_drafts[0]?.excerpt) && (
+              {(draftExcerpt || fallbackExcerpt) && (
                 <p className="text-[9px] text-white/70 italic border-l-2 border-clinical-teal pl-3 py-1">
-                  {editExcerpt || selectedRun.blog_drafts[0]?.excerpt}
+                  {draftExcerpt || fallbackExcerpt}
                 </p>
               )}
               <div className="text-white/80 space-y-4 leading-relaxed font-sans border-t border-white/10 pt-4">
                 <FormattedContent
-                  body={editBody || selectedRun.blog_drafts[0]?.body_markdown || selectedRun.blog_drafts[0]?.body || ""}
+                  body={draftBody || fallbackBody}
                   suggestedImages={
-                    editSuggestedImages.length > 0 ? editSuggestedImages : selectedRun.blog_drafts[0]?.suggested_images
+                    (isArticle ? editArticleSuggestedImages : editSuggestedImages).length > 0
+                      ? (isArticle ? editArticleSuggestedImages : editSuggestedImages)
+                      : fallbackImages
                   }
                   onAttachPlaceholder={(placeholderId, label, url, isFeatured) =>
                     onAttachPlaceholderImage(placeholderId, label, url, isFeatured)
                   }
-                  references={selectedRun.blog_drafts[0]?.references}
+                  references={fallbackReferences}
                   generatingPlaceholderId={generatingImagePlaceholderId}
                   pendingPreview={generatedImagePreview}
                   onGenerateImage={(placeholderId, label, isFeatured) => onGenerateImage(placeholderId, label, isFeatured)}

@@ -5,13 +5,13 @@ import { symptomsData } from "@/data/symptoms";
 import { treatmentsData } from "@/data/treatments";
 import { injectionsData } from "@/data/injections";
 import { SITE_URL } from "@/lib/site";
-import { getRemovedArticleSlugs } from "@/lib/educationArticles";
+import { getRemovedArticleSlugs, getDynamicArticles } from "@/lib/educationArticles";
 
 export const revalidate = 300;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = SITE_URL;
-  const removedSlugs = await getRemovedArticleSlugs();
+  const [removedSlugs, dynamicArticles] = await Promise.all([getRemovedArticleSlugs(), getDynamicArticles()]);
 
   const staticPages = [
     "",
@@ -83,6 +83,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter((article) => !removedSlugs.includes(article.slug))
       .map((article) => ({
         url: `${baseUrl}/education/${article.category}/${article.slug}`,
+        changeFrequency: "monthly" as const,
+        priority: 0.6,
+      })),
+    // AI-published articles (content pipeline) live in the KV-backed dynamic
+    // store, not data/articles.ts, so they need their own sitemap entries or
+    // they're invisible to crawlers beyond internal links. These do have a
+    // real per-article datePublished (set at publish time), so lastModified
+    // is included here — unlike the static sources above, this isn't a fake
+    // "always fresh" signal.
+    ...Object.values(dynamicArticles)
+      .filter((article) => !removedSlugs.includes(article.slug))
+      .map((article) => ({
+        url: `${baseUrl}/education/${article.category}/${article.slug}`,
+        lastModified: article.datePublished,
         changeFrequency: "monthly" as const,
         priority: 0.6,
       })),

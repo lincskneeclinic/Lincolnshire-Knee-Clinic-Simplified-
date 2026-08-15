@@ -17,6 +17,7 @@ import { ClinicalContentReviewResult, ClinicalContentReviewFinding } from "@/lib
 import { SocialPostsTab } from "@/components/portal/social/SocialPostsTab";
 import { NewsletterCreatorTab } from "@/components/portal/newsletter/NewsletterCreatorTab";
 import { PipelineTriggerModal } from "@/components/portal/pipeline/PipelineTriggerModal";
+import { PipelineImportResearchModal } from "@/components/portal/pipeline/PipelineImportResearchModal";
 import { PipelineRevisionModal } from "@/components/portal/pipeline/PipelineRevisionModal";
 import { PipelineTab } from "@/components/portal/pipeline/PipelineTab";
 import { formatDateSafe } from "@/lib/formatDate";
@@ -88,13 +89,27 @@ function BusinessDashboardPageInner() {
   const [triggerStep, setTriggerStep] = useState("");
   const triggerBackgroundedRef = React.useRef(false);
 
+  // Import Researched Brief Form State (lincoln-knee-clinic-blog-research skill output)
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importTopic, setImportTopic] = useState("");
+  const [importBriefJson, setImportBriefJson] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importStep, setImportStep] = useState("");
+  const importBackgroundedRef = React.useRef(false);
+
   // Review Actions State
   const [isEditMode, setIsEditMode] = useState(false);
+  const [activeDraftSubTab, setActiveDraftSubTab] = useState<"layman" | "technical">("layman");
   const [editTitle, setEditTitle] = useState("");
   const [editExcerpt, setEditExcerpt] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [editBody, setEditBody] = useState("");
   const [editSuggestedImages, setEditSuggestedImages] = useState<any[]>([]);
+  const [editArticleTitle, setEditArticleTitle] = useState("");
+  const [editArticleExcerpt, setEditArticleExcerpt] = useState("");
+  const [editArticleBody, setEditArticleBody] = useState("");
+  const [editArticleSuggestedImages, setEditArticleSuggestedImages] = useState<any[]>([]);
   const [generatingImagePlaceholderId, setGeneratingImagePlaceholderId] = useState<string | null>(null);
   const [generatedImagePreview, setGeneratedImagePreview] = useState<{ placeholderId: string; url: string } | null>(null);
   const [history, setHistory] = useState<string[]>([]);
@@ -228,15 +243,19 @@ function BusinessDashboardPageInner() {
   }, [historyIndex]);
 
   const handleTextareaChange = (newVal: string) => {
-    setEditBody(newVal);
+    if (activeDraftSubTab === "technical") {
+      setEditArticleBody(newVal);
+    } else {
+      setEditBody(newVal);
 
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      typingTimeoutRef.current = setTimeout(() => {
+        pushHistory(newVal);
+      }, 500);
     }
-
-    typingTimeoutRef.current = setTimeout(() => {
-      pushHistory(newVal);
-    }, 500);
   };
 
   const handleUndo = useCallback(() => {
@@ -342,6 +361,11 @@ function BusinessDashboardPageInner() {
         setEditBody(cleanHeadingBugs(blogDraft.body_markdown || blogDraft.body || ""));
         setEditSuggestedImages(blogDraft.suggested_images || []);
         setEditCategory(blogDraft.category || "");
+
+        setEditArticleTitle(blogDraft.article_title || "");
+        setEditArticleExcerpt(blogDraft.article_excerpt || "");
+        setEditArticleBody(cleanHeadingBugs(blogDraft.article_body_markdown || blogDraft.article_body || ""));
+        setEditArticleSuggestedImages(blogDraft.article_suggested_images || []);
       }
       setIsEditMode(false);
     }
@@ -449,8 +473,12 @@ function BusinessDashboardPageInner() {
       }
       
       const newText = text.substring(0, lineStart) + newLineText + text.substring(lineEnd);
-      setEditBody(newText);
-      pushHistory(newText);
+      if (activeDraftSubTab === "technical") {
+        setEditArticleBody(newText);
+      } else {
+        setEditBody(newText);
+        pushHistory(newText);
+      }
       
       setTimeout(() => {
         textarea.focus();
@@ -543,8 +571,12 @@ function BusinessDashboardPageInner() {
       }
       
       const newText = text.substring(0, lineStart) + newLineText + text.substring(lineEnd);
-      setEditBody(newText);
-      pushHistory(newText);
+      if (activeDraftSubTab === "technical") {
+        setEditArticleBody(newText);
+      } else {
+        setEditBody(newText);
+        pushHistory(newText);
+      }
       
       setTimeout(() => {
         textarea.focus();
@@ -555,8 +587,12 @@ function BusinessDashboardPageInner() {
 
     if (type === "bold" || type === "italic" || type === "underline") {
       const newText = text.substring(0, start) + replacement + text.substring(end);
-      setEditBody(newText);
-      pushHistory(newText);
+      if (activeDraftSubTab === "technical") {
+        setEditArticleBody(newText);
+      } else {
+        setEditBody(newText);
+        pushHistory(newText);
+      }
       
       setTimeout(() => {
         textarea.focus();
@@ -570,48 +606,33 @@ function BusinessDashboardPageInner() {
     }
   };
 
-
   const handleAttachPlaceholderImage = (placeholderId: string, label: string, url: string, isFeatured?: boolean) => {
-    // Replace the [IMAGE PLACEHOLDER: label] (or [FEATURED IMAGE PLACEHOLDER: label])
-    // marker in the body with real Markdown image syntax. This makes the image a
-    // permanent part of body_markdown — no separate side-channel lookup needed.
-    // ReactMarkdown's standard <img> renderer then displays it automatically.
+    const isArticle = placeholderId.startsWith("article-");
     const imageMarkdown = `![${label}](${url})`;
-    let newBody = editBody;
+    const currentBody = isArticle ? editArticleBody : editBody;
+    let newBody = currentBody;
 
-    // Try an exact match on this placeholder's own label text first. Image
-    // generation can take 10-30+ seconds with the modal open the whole time, and
-    // nothing stops the user resolving a *different* placeholder (or editing the
-    // body) while it's in flight — placeholderId ("placeholder-2") is just "the
-    // Nth still-unresolved marker" at the moment the button was clicked, and that
-    // numbering shifts every time an earlier placeholder gets resolved out from
-    // under it. An exact label match is immune to reordering; only fall back to
-    // positional counting if the label text itself no longer matches verbatim
-    // (e.g. it was hand-edited in the meantime).
     const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const exactPattern = new RegExp(
       `\\[${isFeatured ? "FEATURED IMAGE PLACEHOLDER" : "IMAGE PLACEHOLDER"}:\\s*${escapedLabel}\\s*\\]`,
       "i"
     );
-    if (exactPattern.test(editBody)) {
-      newBody = editBody.replace(exactPattern, imageMarkdown);
+    if (exactPattern.test(currentBody)) {
+      newBody = currentBody.replace(exactPattern, imageMarkdown);
     } else if (isFeatured) {
       const featuredPattern = /\[FEATURED IMAGE PLACEHOLDER:[^\]]*\]/i;
-      newBody = editBody.replace(featuredPattern, imageMarkdown);
+      newBody = currentBody.replace(featuredPattern, imageMarkdown);
     } else {
       const targetIndex = parseInt(placeholderId.replace(/[^0-9]/g, ""), 10) || 1;
       const inlinePattern = /\[IMAGE PLACEHOLDER:[^\]]*\]/gi;
       let occurrence = 0;
-      newBody = editBody.replace(inlinePattern, (matchText) => {
+      newBody = currentBody.replace(inlinePattern, (matchText) => {
         occurrence += 1;
         return occurrence === targetIndex ? imageMarkdown : matchText;
       });
     }
 
-    if (newBody === editBody) {
-      // Nothing matched — surface this clearly rather than silently discarding the
-      // upload. The image itself uploaded fine (it has a real URL); only the
-      // automatic placement into the draft text failed.
+    if (newBody === currentBody) {
       toast.error(
         `The image uploaded successfully, but couldn't be automatically placed in the draft (the placeholder marker may have been removed from the text). You can paste this URL manually where you want the image: ${url}`
       );
@@ -621,76 +642,93 @@ function BusinessDashboardPageInner() {
     if (livePreviewRef.current) {
       pendingScrollRestoreRef.current = livePreviewRef.current.scrollTop;
     }
-    setEditBody(newBody);
-    pushHistory(newBody);
 
-    // Remove the resolved placeholder entry. If this was the FEATURED image, also
-    // add its URL as a plain string entry — the same shape the "Attached Media
-    // Asset" panel and social media cards use — so uploading the featured image
-    // once here automatically becomes the article's featured/hub-card image too.
-    const withoutPlaceholder = editSuggestedImages.filter(
+    if (isArticle) {
+      setEditArticleBody(newBody);
+    } else {
+      setEditBody(newBody);
+      pushHistory(newBody);
+    }
+
+    const currentImages = isArticle ? editArticleSuggestedImages : editSuggestedImages;
+    const withoutPlaceholder = currentImages.filter(
       (img: any) => !(typeof img === "object" && img !== null && img.placeholderId === placeholderId)
     );
     const updatedImages = isFeatured ? [url, ...withoutPlaceholder.filter((img: any) => img !== url)] : withoutPlaceholder;
-    setEditSuggestedImages(updatedImages);
+
+    if (isArticle) {
+      setEditArticleSuggestedImages(updatedImages);
+    } else {
+      setEditSuggestedImages(updatedImages);
+    }
+
     setGeneratedImagePreview((prev) => (prev?.placeholderId === placeholderId ? null : prev));
 
-    // If we're NOT in edit mode (read-only view), save the image attachment to the server
-    // immediately as progress — NOT as "edited", which would prematurely advance the run
-    // past blog review into social-caption stage just because an image was attached.
     if (!isEditMode && selectedRun) {
       const currentDraft = selectedRun.blog_drafts[0];
-      // keepEditMode=true here isn't about edit mode at all — it tells
-      // handleReviewSubmission to update selectedRun in place rather than calling
-      // fetchRunDetail(), which would reset editBody/editSuggestedImages from the
-      // server response and force a second re-render (and a second scroll jump)
-      // immediately after the one we just restored from.
       handleReviewSubmission("blog", "save_progress", {
         title: editTitle || currentDraft?.title,
         excerpt: editExcerpt || currentDraft?.excerpt,
-        body_markdown: newBody,
-        body: newBody,
-        suggestedImages: updatedImages,
-        references: currentDraft?.references,
+        body_markdown: isArticle ? editBody : newBody,
+        body: isArticle ? editBody : newBody,
+        suggestedImages: isArticle ? editSuggestedImages : updatedImages,
         category: editCategory || currentDraft?.category,
+
+        article_title: editArticleTitle || currentDraft?.article_title,
+        article_excerpt: editArticleExcerpt || currentDraft?.article_excerpt,
+        article_body_markdown: isArticle ? newBody : editArticleBody,
+        article_body: isArticle ? newBody : editArticleBody,
+        article_suggested_images: isArticle ? updatedImages : editArticleSuggestedImages,
       }, undefined, true);
     }
   };
 
+
   const handleResetPlaceholderImage = (altText: string, srcUrl: string) => {
+    const isArticle = activeDraftSubTab === "technical";
+    const currentBody = isArticle ? editArticleBody : editBody;
+    const currentImages = isArticle ? editArticleSuggestedImages : editSuggestedImages;
+    const setBody = isArticle ? setEditArticleBody : setEditBody;
+    const setImages = isArticle ? setEditArticleSuggestedImages : setEditSuggestedImages;
+
     const targetPattern = `![${altText}](${srcUrl})`;
-    const targetIndex = editBody.indexOf(targetPattern);
+    const targetIndex = currentBody.indexOf(targetPattern);
     
     if (targetIndex === -1) {
       const fallbackRegex = new RegExp(`!\\[(.*?)\\]\\(${srcUrl.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\)`, "i");
-      const match = editBody.match(fallbackRegex);
+      const match = currentBody.match(fallbackRegex);
       if (match) {
         const matchedAlt = match[1];
-        const isFeatured = editBody.indexOf(match[0]) === editBody.indexOf("![");
+        const isFeatured = currentBody.indexOf(match[0]) === currentBody.indexOf("![");
         const replacementPlaceholder = isFeatured
           ? `[FEATURED IMAGE PLACEHOLDER: ${matchedAlt}]`
           : `[IMAGE PLACEHOLDER: ${matchedAlt}]`;
         
-        const newBody = editBody.replace(match[0], replacementPlaceholder);
+        const newBody = currentBody.replace(match[0], replacementPlaceholder);
         if (livePreviewRef.current) {
           pendingScrollRestoreRef.current = livePreviewRef.current.scrollTop;
         }
-        setEditBody(newBody);
-        pushHistory(newBody);
+        setBody(newBody);
+        if (!isArticle) pushHistory(newBody);
         
         if (isFeatured) {
-          const updatedImages = editSuggestedImages.filter((img: any) => img !== srcUrl);
-          setEditSuggestedImages(updatedImages);
+          const updatedImages = currentImages.filter((img: any) => img !== srcUrl);
+          setImages(updatedImages);
           if (!isEditMode && selectedRun) {
             const currentDraft = selectedRun.blog_drafts[0];
             handleReviewSubmission("blog", "save_progress", {
               title: editTitle || currentDraft?.title,
               excerpt: editExcerpt || currentDraft?.excerpt,
-              body_markdown: newBody,
-              body: newBody,
-              suggestedImages: updatedImages,
-              references: currentDraft?.references,
+              body_markdown: isArticle ? editBody : newBody,
+              body: isArticle ? editBody : newBody,
+              suggestedImages: isArticle ? editSuggestedImages : updatedImages,
               category: editCategory || currentDraft?.category,
+
+              article_title: editArticleTitle || currentDraft?.article_title,
+              article_excerpt: editArticleExcerpt || currentDraft?.article_excerpt,
+              article_body_markdown: isArticle ? newBody : editArticleBody,
+              article_body: isArticle ? newBody : editArticleBody,
+              article_suggested_images: isArticle ? updatedImages : editArticleSuggestedImages,
             }, undefined, true);
           }
         } else if (!isEditMode && selectedRun) {
@@ -698,11 +736,16 @@ function BusinessDashboardPageInner() {
           handleReviewSubmission("blog", "save_progress", {
             title: editTitle || currentDraft?.title,
             excerpt: editExcerpt || currentDraft?.excerpt,
-            body_markdown: newBody,
-            body: newBody,
+            body_markdown: isArticle ? editBody : newBody,
+            body: isArticle ? editBody : newBody,
             suggestedImages: editSuggestedImages,
-            references: currentDraft?.references,
             category: editCategory || currentDraft?.category,
+
+            article_title: editArticleTitle || currentDraft?.article_title,
+            article_excerpt: editArticleExcerpt || currentDraft?.article_excerpt,
+            article_body_markdown: isArticle ? newBody : editArticleBody,
+            article_body: isArticle ? newBody : editArticleBody,
+            article_suggested_images: editArticleSuggestedImages,
           }, undefined, true);
         }
         return;
@@ -711,27 +754,27 @@ function BusinessDashboardPageInner() {
       return;
     }
 
-    const firstImageIndex = editBody.indexOf("![");
+    const firstImageIndex = currentBody.indexOf("![");
     const isFeatured = (firstImageIndex !== -1 && targetIndex === firstImageIndex);
     const replacementPlaceholder = isFeatured
       ? `[FEATURED IMAGE PLACEHOLDER: ${altText}]`
       : `[IMAGE PLACEHOLDER: ${altText}]`;
 
-    const newBody = editBody.replace(targetPattern, replacementPlaceholder);
+    const newBody = currentBody.replace(targetPattern, replacementPlaceholder);
     
     if (livePreviewRef.current) {
       pendingScrollRestoreRef.current = livePreviewRef.current.scrollTop;
     }
     
-    setEditBody(newBody);
-    pushHistory(newBody);
+    setBody(newBody);
+    if (!isArticle) pushHistory(newBody);
 
     const updatedImages = isFeatured
-      ? editSuggestedImages.filter((img: any) => img !== srcUrl)
-      : editSuggestedImages;
+      ? currentImages.filter((img: any) => img !== srcUrl)
+      : currentImages;
 
     if (isFeatured) {
-      setEditSuggestedImages(updatedImages);
+      setImages(updatedImages);
     }
 
     if (!isEditMode && selectedRun) {
@@ -739,18 +782,30 @@ function BusinessDashboardPageInner() {
       handleReviewSubmission("blog", "save_progress", {
         title: editTitle || currentDraft?.title,
         excerpt: editExcerpt || currentDraft?.excerpt,
-        body_markdown: newBody,
-        body: newBody,
-        suggestedImages: updatedImages,
-        references: currentDraft?.references,
+        body_markdown: isArticle ? editBody : newBody,
+        body: isArticle ? editBody : newBody,
+        suggestedImages: isArticle ? editSuggestedImages : updatedImages,
         category: editCategory || currentDraft?.category,
+
+        article_title: editArticleTitle || currentDraft?.article_title,
+        article_excerpt: editArticleExcerpt || currentDraft?.article_excerpt,
+        article_body_markdown: isArticle ? newBody : editArticleBody,
+        article_body: isArticle ? newBody : editArticleBody,
+        article_suggested_images: isArticle ? updatedImages : editArticleSuggestedImages,
       }, undefined, true);
     }
   };
 
+
   const handleRemovePlaceholder = async (placeholderId: string, label: string, isFeatured?: boolean) => {
     if (!(await confirmAction("Are you sure you want to permanently delete this image placeholder from the article?", { confirmLabel: "Delete", danger: true }))) return;
     
+    const isArticle = activeDraftSubTab === "technical";
+    const currentBody = isArticle ? editArticleBody : editBody;
+    const currentImages = isArticle ? editArticleSuggestedImages : editSuggestedImages;
+    const setBody = isArticle ? setEditArticleBody : setEditBody;
+    const setImages = isArticle ? setEditArticleSuggestedImages : setEditSuggestedImages;
+
     const target = isFeatured
       ? `[FEATURED IMAGE PLACEHOLDER: ${label}]`
       : `[IMAGE PLACEHOLDER: ${label}]`;
@@ -758,18 +813,18 @@ function BusinessDashboardPageInner() {
     const escapedTarget = target.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     const regex = new RegExp(`\\s*${escapedTarget}\\s*`, "i");
     
-    const newBody = editBody.replace(regex, "\n\n").trim();
+    const newBody = currentBody.replace(regex, "\n\n").trim();
     
     if (livePreviewRef.current) {
       pendingScrollRestoreRef.current = livePreviewRef.current.scrollTop;
     }
-    setEditBody(newBody);
-    pushHistory(newBody);
+    setBody(newBody);
+    if (!isArticle) pushHistory(newBody);
     
-    const updatedImages = editSuggestedImages.filter(
+    const updatedImages = currentImages.filter(
       (img: any) => !(typeof img === "object" && img !== null && img.placeholderId === placeholderId)
     );
-    setEditSuggestedImages(updatedImages);
+    setImages(updatedImages);
     setGeneratedImagePreview((prev) => (prev?.placeholderId === placeholderId ? null : prev));
     
     if (!isEditMode && selectedRun) {
@@ -777,53 +832,77 @@ function BusinessDashboardPageInner() {
       handleReviewSubmission("blog", "save_progress", {
         title: editTitle || currentDraft?.title,
         excerpt: editExcerpt || currentDraft?.excerpt,
-        body_markdown: newBody,
-        body: newBody,
-        suggestedImages: updatedImages,
-        references: currentDraft?.references,
+        body_markdown: isArticle ? editBody : newBody,
+        body: isArticle ? editBody : newBody,
+        suggestedImages: isArticle ? editSuggestedImages : updatedImages,
         category: editCategory || currentDraft?.category,
+
+        article_title: editArticleTitle || currentDraft?.article_title,
+        article_excerpt: editArticleExcerpt || currentDraft?.article_excerpt,
+        article_body_markdown: isArticle ? newBody : editArticleBody,
+        article_body: isArticle ? newBody : editArticleBody,
+        article_suggested_images: isArticle ? updatedImages : editArticleSuggestedImages,
       }, undefined, true);
     }
   };
 
+
   const handleRemoveResolvedImage = async (altText: string, srcUrl: string) => {
     if (!(await confirmAction("Are you sure you want to permanently delete this image from the article?", { confirmLabel: "Delete", danger: true }))) return;
+
+    const isArticle = activeDraftSubTab === "technical";
+    const currentBody = isArticle ? editArticleBody : editBody;
+    const currentImages = isArticle ? editArticleSuggestedImages : editSuggestedImages;
+    const setBody = isArticle ? setEditArticleBody : setEditBody;
+    const setImages = isArticle ? setEditArticleSuggestedImages : setEditSuggestedImages;
 
     const escapedSrc = srcUrl.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     const escapedAlt = altText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     const pattern = new RegExp(`\\s*!\\[${escapedAlt}\\]\\(${escapedSrc}\\)\\s*`, "i");
     
-    let newBody = editBody.replace(pattern, "\n\n").trim();
+    let newBody = currentBody.replace(pattern, "\n\n").trim();
     
-    if (newBody === editBody) {
+    if (newBody === currentBody) {
       const fallbackRegex = new RegExp(`\\s*!\\[(.*?)\\]\\(${escapedSrc}\\)\\s*`, "i");
-      newBody = editBody.replace(fallbackRegex, "\n\n").trim();
+      newBody = currentBody.replace(fallbackRegex, "\n\n").trim();
     }
     
     if (livePreviewRef.current) {
       pendingScrollRestoreRef.current = livePreviewRef.current.scrollTop;
     }
-    setEditBody(newBody);
-    pushHistory(newBody);
+    setBody(newBody);
+    if (!isArticle) pushHistory(newBody);
+
+    const firstImageIndex = currentBody.indexOf("![");
+    const targetIndex = currentBody.indexOf(`![${altText}](${srcUrl})`);
+    const isFeatured = (firstImageIndex !== -1 && targetIndex === firstImageIndex);
     
-    const updatedImages = editSuggestedImages.filter(
+    const updatedImages = currentImages.filter(
       (img: any) => {
         if (typeof img === "string") return img !== srcUrl;
         return img.url !== srcUrl;
       }
     );
-    setEditSuggestedImages(updatedImages);
-    
+
+    if (isFeatured) {
+      setImages(updatedImages);
+    }
+
     if (!isEditMode && selectedRun) {
       const currentDraft = selectedRun.blog_drafts[0];
       handleReviewSubmission("blog", "save_progress", {
         title: editTitle || currentDraft?.title,
         excerpt: editExcerpt || currentDraft?.excerpt,
-        body_markdown: newBody,
-        body: newBody,
-        suggestedImages: updatedImages,
-        references: currentDraft?.references,
+        body_markdown: isArticle ? editBody : newBody,
+        body: isArticle ? editBody : newBody,
+        suggestedImages: isArticle ? editSuggestedImages : updatedImages,
         category: editCategory || currentDraft?.category,
+
+        article_title: editArticleTitle || currentDraft?.article_title,
+        article_excerpt: editArticleExcerpt || currentDraft?.article_excerpt,
+        article_body_markdown: isArticle ? newBody : editArticleBody,
+        article_body: isArticle ? newBody : editArticleBody,
+        article_suggested_images: isArticle ? updatedImages : editArticleSuggestedImages,
       }, undefined, true);
     }
   };
@@ -942,6 +1021,11 @@ function BusinessDashboardPageInner() {
           setEditBody(cleanHeadingBugs(blogDraft.body_markdown || blogDraft.body || ""));
           setEditSuggestedImages(blogDraft.suggested_images || []);
           setEditCategory(blogDraft.category || "");
+
+          setEditArticleTitle(blogDraft.article_title || "");
+          setEditArticleExcerpt(blogDraft.article_excerpt || "");
+          setEditArticleBody(cleanHeadingBugs(blogDraft.article_body_markdown || blogDraft.article_body || ""));
+          setEditArticleSuggestedImages(blogDraft.article_suggested_images || []);
         }
         const socialDraft = data.run.social_drafts?.[0];
         if (socialDraft) {
@@ -1798,7 +1882,7 @@ function BusinessDashboardPageInner() {
 
       const runId = data.run.run_id;
       setTriggerProgress(12);
-      setTriggerStep("Stage 1: Searching PubMed & orthopaedic literature journals...");
+      setTriggerStep("Stage 1: Searching PubMed, NICE, Cochrane & orthopaedic literature...");
       await fetchPipelineRuns();
 
       const POLL_INTERVAL_MS = 3000;
@@ -1866,6 +1950,113 @@ function BusinessDashboardPageInner() {
     fetchPipelineRuns();
   };
 
+  // Submit an externally-researched brief (e.g. from the lincoln-knee-clinic-blog-research
+  // skill) — skips Stage 1 (PubMed/Gemini research) and drafts straight from the pasted
+  // brief. Mirrors handleTriggerRun's fetch-then-poll pattern since both hand off to the
+  // same background runPipelineGeneration() work and status contract.
+  const handleImportResearchBrief = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    let parsedBrief: any;
+    try {
+      parsedBrief = JSON.parse(importBriefJson);
+    } catch {
+      toast.error("That's not valid JSON — paste the exact contents of research-brief.json.");
+      return;
+    }
+
+    setIsImporting(true);
+    setImportProgress(10);
+    setImportStep("Submitting researched brief...");
+    importBackgroundedRef.current = false;
+
+    try {
+      const res = await fetch("/api/portal/content-pipeline/research/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: importTopic.trim(), researchBrief: parsedBrief }),
+      });
+
+      let data;
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        console.error("Non-JSON response from server:", res.status, text);
+        throw new Error(`Server error (${res.status}): ${text.slice(0, 100)}`);
+      }
+
+      if (!res.ok || !data.success || !data.run) {
+        throw new Error(data.error || data.message || "Failed to import research brief.");
+      }
+
+      const runId = data.run.run_id;
+      setImportProgress(30);
+      setImportStep("Stage 2: AI Medical Writer drafting from your researched brief...");
+      await fetchPipelineRuns();
+
+      const POLL_INTERVAL_MS = 3000;
+      const MAX_POLLS = 100; // ~5 minutes
+      let finished = false;
+
+      for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+        if (importBackgroundedRef.current) return; // user chose to keep it running and close the modal
+
+        const pollRes = await fetch(`/api/portal/content-pipeline/runs/${encodeURIComponent(runId)}`);
+        const pollData = await pollRes.json().catch(() => null);
+        if (!pollData?.success || !pollData.run) continue;
+
+        if (pollData.run.status !== "researching" && pollData.run.status !== "writing_blog") {
+          finished = true;
+          break;
+        }
+        setImportProgress((p) => Math.min(p + 3, 90));
+      }
+
+      if (importBackgroundedRef.current) return;
+
+      if (!finished) {
+        throw new Error(
+          "This is taking longer than expected. The run is still generating in the background — check back in the run list shortly."
+        );
+      }
+
+      setImportProgress(100);
+      setImportStep("Draft ready! Loading review workspace...");
+      await new Promise((r) => setTimeout(r, 400));
+      setIsImportModalOpen(false);
+      setImportTopic("");
+      setImportBriefJson("");
+      await fetchPipelineRuns();
+      await fetchRunDetail(runId);
+      setActionFeedback("🚀 Research imported and blog draft generated successfully!");
+      setTimeout(() => setActionFeedback(null), 4000);
+    } catch (err: any) {
+      if (importBackgroundedRef.current) return;
+      console.error("Error importing research brief:", err);
+      toast.error(err?.message || "An error occurred while importing the research brief.");
+    } finally {
+      if (!importBackgroundedRef.current) {
+        setIsImporting(false);
+        setImportProgress(0);
+        setImportStep("");
+      }
+    }
+  };
+
+  // Closes the "Import Research" modal while generation is in progress without
+  // cancelling the actual server-side work — mirrors handleBackgroundTriggerRun.
+  const handleBackgroundImportRun = () => {
+    importBackgroundedRef.current = true;
+    setIsImporting(false);
+    setImportProgress(0);
+    setImportStep("");
+    setIsImportModalOpen(false);
+    fetchPipelineRuns();
+  };
+
   // Submit review decision (approved | edited | revision_requested | revert_to_blog | revert_to_social)
   const handleReviewSubmission = async (
     stage: "blog" | "social",
@@ -1897,6 +2088,11 @@ function BusinessDashboardPageInner() {
             body: editBody,
             suggestedImages: editSuggestedImages,
             category: editCategory,
+            article_title: editArticleTitle,
+            article_excerpt: editArticleExcerpt,
+            article_body_markdown: editArticleBody,
+            article_body: editArticleBody,
+            article_suggested_images: editArticleSuggestedImages,
           };
         } else if (customPayload) {
           bodyData.editedContent = customPayload;
@@ -2778,6 +2974,7 @@ function BusinessDashboardPageInner() {
                   setEditingPlatform(null);
                 }}
                 onOpenTriggerModal={() => setIsTriggerModalOpen(true)}
+                onOpenImportModal={() => setIsImportModalOpen(true)}
                 isEditMode={isEditMode}
                 onStartEdit={() => {
                   const latestDraft = selectedRun?.blog_drafts?.[0];
@@ -2786,7 +2983,13 @@ function BusinessDashboardPageInner() {
                     setEditExcerpt(latestDraft.excerpt || "");
                     setEditBody(cleanHeadingBugs(latestDraft.body_markdown || latestDraft.body || ""));
                     setEditCategory(latestDraft.category || "");
+
+                    setEditArticleTitle(latestDraft.article_title || "");
+                    setEditArticleExcerpt(latestDraft.article_excerpt || "");
+                    setEditArticleBody(cleanHeadingBugs(latestDraft.article_body_markdown || latestDraft.article_body || ""));
+                    setEditArticleSuggestedImages(latestDraft.article_suggested_images || []);
                   }
+                  setActiveDraftSubTab("layman");
                   setRunDetailTab("draft");
                   setIsEditMode(true);
                 }}
@@ -2816,6 +3019,8 @@ function BusinessDashboardPageInner() {
                 }}
                 runDetailTab={runDetailTab}
                 onRunDetailTabChange={setRunDetailTab}
+                activeDraftSubTab={activeDraftSubTab}
+                onActiveDraftSubTabChange={setActiveDraftSubTab}
                 editTitle={editTitle}
                 onEditTitleChange={setEditTitle}
                 editExcerpt={editExcerpt}
@@ -2824,6 +3029,12 @@ function BusinessDashboardPageInner() {
                 onEditCategoryChange={setEditCategory}
                 editBody={editBody}
                 editSuggestedImages={editSuggestedImages}
+                editArticleTitle={editArticleTitle}
+                onEditArticleTitleChange={setEditArticleTitle}
+                editArticleExcerpt={editArticleExcerpt}
+                onEditArticleExcerptChange={setEditArticleExcerpt}
+                editArticleBody={editArticleBody}
+                editArticleSuggestedImages={editArticleSuggestedImages}
                 textareaRef={textareaRef}
                 livePreviewRef={livePreviewRef}
                 onTextareaChange={handleTextareaChange}
@@ -2883,6 +3094,21 @@ function BusinessDashboardPageInner() {
           triggerProgress={triggerProgress}
           triggerStep={triggerStep}
           onSubmit={handleTriggerRun}
+        />
+
+        {/* IMPORT RESEARCHED BRIEF MODAL */}
+        <PipelineImportResearchModal
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+          onBackground={handleBackgroundImportRun}
+          topic={importTopic}
+          onTopicChange={setImportTopic}
+          researchBriefJson={importBriefJson}
+          onResearchBriefJsonChange={setImportBriefJson}
+          isImporting={isImporting}
+          importProgress={importProgress}
+          importStep={importStep}
+          onSubmit={handleImportResearchBrief}
         />
 
         {/* REQUEST REVISION MODAL */}

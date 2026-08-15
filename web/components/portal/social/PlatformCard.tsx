@@ -608,6 +608,17 @@ export function PlatformCard({
               </div>
             )}
 
+            {showManualUploadGuide && currentSlide.imageUrl && (
+              <div className="flex justify-end">
+                <button
+                  onClick={() => downloadImageFile(currentSlide.imageUrl!, `instagramCarousel-slide-${activeSlide + 1}`, toast.error)}
+                  className="text-[9px] text-clinical-teal hover:underline cursor-pointer font-medium"
+                >
+                  ⬇ Download Slide Image
+                </button>
+              </div>
+            )}
+
             <div className="text-[10px] text-white/60 italic bg-primary-navy/80 p-2 rounded border border-white/5 leading-relaxed">
               <strong>Visual Concept:</strong> {currentSlide.imagePromptSuggestion}
             </div>
@@ -655,6 +666,73 @@ export function PlatformCard({
 
             <div className="bg-primary-navy p-3 rounded-lg border border-white/10 text-[11px] text-white/80 leading-relaxed font-sans whitespace-pre-wrap max-h-60 overflow-y-auto font-mono">
               {script || caption || "No script outline available."}
+            </div>
+
+            <div className="space-y-2 pt-1 border-t border-white/5">
+              <span className="flex items-center gap-1.5 text-clinical-teal uppercase tracking-wider text-[10px] font-bold">
+                <span>🖼️</span>
+                <span>Reel Cover Image</span>
+              </span>
+
+              {attachedImageUrl ? (
+                <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md max-w-[210px] mx-auto">
+                  <img src={attachedImageUrl} alt="Reel cover" className="w-full aspect-[9/16] object-cover" />
+                </div>
+              ) : (
+                <div className="bg-primary-navy/70 border border-dashed border-white/20 rounded-lg p-3 text-center text-[10px] text-white/40 italic">
+                  No cover image attached
+                </div>
+              )}
+
+              {!isPublished && (
+                <div className="flex justify-center gap-1.5">
+                  <label className="bg-white/10 hover:bg-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1.5 rounded transition-colors cursor-pointer font-medium border border-white/10">
+                    {attachedImageUrl ? "Change Cover" : "Upload Cover"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const formData = new FormData();
+                          formData.append("file", file);
+                          const res = await fetch("/api/portal/content-pipeline/upload", {
+                            method: "POST",
+                            body: formData,
+                          });
+                          const data = await res.json();
+                          if (data.success && data.url) {
+                            onAttachImage?.(data.url);
+                          }
+                        } catch (err) {
+                          console.error("Reel cover image upload failed:", err);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                  {onGenerateImage && (
+                    <button
+                      onClick={() => setIsGenerateModalOpen(true)}
+                      className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1.5 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
+                    >
+                      ✨ Generate
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {showManualUploadGuide && attachedImageUrl && (
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => downloadImageFile(attachedImageUrl, "instagramReel-cover-image", toast.error)}
+                    className="text-[9px] text-clinical-teal hover:underline cursor-pointer font-medium"
+                  >
+                    ⬇ Download Cover Image
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2 pt-1 border-t border-white/5">
@@ -1018,6 +1096,10 @@ export function PlatformCard({
           imageTitle: (isCarousel ? currentSlide?.imagePromptSuggestion : imagePromptSuggestion) || undefined,
           altText: caption || undefined,
           section: platformLabel,
+          // Falls back to the blog topic when there's no more specific
+          // imagePromptSuggestion (e.g. Stage 2 AI generation failed for this
+          // run) — "Detected Context" should never show nothing at all.
+          topic: topic || undefined,
         }}
         onGenerated={(result) => {
           onAttachImage?.(result.url, isCarousel ? activeSlide : undefined);

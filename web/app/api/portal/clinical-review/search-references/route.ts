@@ -1,136 +1,11 @@
 import { NextResponse } from "next/server";
 import { getAllReviewablePages, ContentType } from "@/lib/clinicalReview";
+import { fetchEnrichedSummary, getHostname, isSerperKeyConfigured, type SerperSearchResult } from "@/lib/webSourceFetch";
 
-export interface SearchReferenceResult {
-  title: string;
-  url: string;
-  source: string;
-  summary: string;
-}
+export type SearchReferenceResult = SerperSearchResult;
 
 const MAX_RESULTS = 15;
 const MAX_PAGE_CURSOR = 3;
-// Targets roughly 4-5 lines of wrapped text in the dashboard's result panel.
-const MAX_SUMMARY_LENGTH = 650;
-
-function getHostname(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return "";
-  }
-}
-
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
-    .trim();
-}
-
-function extractMetaDescription(html: string): string | null {
-  const patterns = [
-    /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i,
-    /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i,
-    /<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i,
-    /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i,
-  ];
-  for (const pattern of patterns) {
-    const match = html.match(pattern);
-    if (match?.[1]) return match[1];
-  }
-  return null;
-}
-
-/**
- * Pulls the first few substantial <p> blocks from the page body (skipping short
- * nav/caption fragments) to add real body content on top of the meta description,
- * since meta descriptions alone (~150-160 chars by SEO convention) are too short
- * to fill 4-5 lines in the review panel.
- */
-function extractBodyParagraphText(html: string): string {
-  // Strip script/style plus common chrome regions (nav/header/footer/aside) so
-  // breadcrumb and menu text ("Home Health A to Z Conditions A to Z Back...")
-  // doesn't get mistaken for real article content.
-  const cleaned = html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<nav[\s\S]*?<\/nav>/gi, " ")
-    .replace(/<header[\s\S]*?<\/header>/gi, " ")
-    .replace(/<footer[\s\S]*?<\/footer>/gi, " ")
-    .replace(/<aside[\s\S]*?<\/aside>/gi, " ");
-  const paragraphs = [...cleaned.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)];
-  const texts: string[] = [];
-  let combinedLength = 0;
-  for (const match of paragraphs) {
-    const text = match[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-    if (text.length > 60) {
-      texts.push(text);
-      combinedLength += text.length;
-    }
-    if (combinedLength > MAX_SUMMARY_LENGTH) break;
-  }
-  return texts.join(" ");
-}
-
-/**
- * Best-effort enrichment: fetch the page itself and combine its meta description
- * with real body-paragraph text, giving a fuller summary than the short Serper
- * snippet alone so a reviewer has enough context to judge relevance without
- * opening every link. Falls back to the Serper snippet on any failure, timeout,
- * non-HTML response, or PDF (leaflets are often PDFs).
- */
-async function fetchEnrichedSummary(url: string, fallback: string): Promise<string> {
-  if (/\.pdf($|\?)/i.test(url)) return fallback;
-  try {
-    const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; LincolnshireKneeClinicBot/1.0)" },
-      signal: AbortSignal.timeout(5000),
-    });
-    const contentType = res.headers.get("content-type") || "";
-    if (!res.ok || !contentType.includes("html") || !res.body) return fallback;
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let html = "";
-    let bytesRead = 0;
-    const MAX_BYTES = 300_000;
-    while (bytesRead < MAX_BYTES) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      html += decoder.decode(value, { stream: true });
-      bytesRead += value.length;
-    }
-    reader.cancel().catch(() => {});
-
-    const metaDescription = extractMetaDescription(html);
-    const bodyText = extractBodyParagraphText(html);
-
-    const parts: string[] = [];
-    if (metaDescription) parts.push(decodeHtmlEntities(metaDescription));
-    if (bodyText) {
-      const decodedBody = decodeHtmlEntities(bodyText);
-      const alreadyCovered = parts[0] && decodedBody.toLowerCase().startsWith(parts[0].toLowerCase().slice(0, 40));
-      if (!alreadyCovered) parts.push(decodedBody);
-    }
-
-    let combined = parts.join(" ").replace(/\s+/g, " ").trim();
-    if (!combined || combined.length < fallback.length) combined = fallback;
-
-    if (combined.length > MAX_SUMMARY_LENGTH) {
-      combined = combined.slice(0, MAX_SUMMARY_LENGTH).replace(/\s+\S*$/, "") + "…";
-    }
-    return combined;
-  } catch {
-    return fallback;
-  }
-}
 
 // Tailors the search terms to the page's content type instead of one fixed
 // generic suffix for every page — a treatment page needs NICE/orthopaedic
@@ -167,7 +42,7 @@ export async function POST(request: Request) {
     }
 
     const apiKey = process.env.SERPER_API_KEY;
-    if (!apiKey || apiKey.startsWith("replace-with-") || apiKey.startsWith("your-")) {
+    if (!isSerperKeyConfigured(apiKey)) {
       return NextResponse.json(
         { success: false, error: "SERPER_API_KEY is not configured. Add a real key from serper.dev to .env.local." },
         { status: 200 }

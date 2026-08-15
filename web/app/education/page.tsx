@@ -124,6 +124,28 @@ export default function EducationHub() {
         subtitle="Access clear, consultant-reviewed patient resources, orthopedic blog articles, and clinical guides designed to help you understand your knee health."
       />
 
+      {/* Explains the two content types so patients can pick the right depth before
+          clicking into a category — each category page below has its content split
+          into these same two tabs. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 my-8">
+        <div className="bg-soft-blue border border-border-clinical/40 rounded-xl p-6">
+          <span className="text-xs font-bold uppercase tracking-widest text-clinical-teal mb-2 block">
+            Patient Blogs
+          </span>
+          <p className="text-sm text-text-secondary leading-relaxed font-medium">
+            8-10 minute reads written in plain, everyday language — no medical background needed. Best if you want a clear, empathetic explanation of a condition or treatment.
+          </p>
+        </div>
+        <div className="bg-soft-blue border border-border-clinical/40 rounded-xl p-6">
+          <span className="text-xs font-bold uppercase tracking-widest text-clinical-teal mb-2 block">
+            In-Depth Articles
+          </span>
+          <p className="text-sm text-text-secondary leading-relaxed font-medium">
+            12-15 minute, evidence-based deep dives citing clinical research and guidelines. Best if you want the full scientific detail behind a topic, not just the summary.
+          </p>
+        </div>
+      </div>
+
       {/* Grid of categories */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-8">
         {categories.map((category, index) => (
@@ -134,7 +156,7 @@ export default function EducationHub() {
             description={category.description}
             href={category.href}
             imageUrl={category.imageUrl}
-            linkText="Explore articles"
+            linkText="Explore topic"
           />
         ))}
       </div>

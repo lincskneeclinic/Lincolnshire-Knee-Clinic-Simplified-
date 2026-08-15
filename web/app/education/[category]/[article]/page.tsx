@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { Button } from "@/components/Button";
+import { Card } from "@/components/Card";
 import { blogArticles } from "@/data/articles";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import Link from "next/link";
@@ -153,6 +154,7 @@ export default async function ArticlePage({ params }: PageProps) {
       body_markdown: (data as any).body_markdown || "",
       references: data.references || [],
       featuredImage: data.image,
+      imageAlt: data.imageAlt,
       category: data.category,
       updatedAt: data.datePublished,
     };
@@ -161,9 +163,21 @@ export default async function ArticlePage({ params }: PageProps) {
   const displayTitle = override?.title || data.title;
   const displayDescription = override?.excerpt || data.description;
   const displayImage = override?.featuredImage || data.image;
+  // Prefer the AI writer's own image description over the page title — a real
+  // description of what's in the image, not just a repeat of the headline.
+  const displayImageAlt = override?.imageAlt || data.imageAlt || displayTitle;
 
   const viewCounts = await getArticleViewCounts();
   const initialViews = viewCounts[article] || 0;
+
+  // Deterministic same-category internal linking (not AI-chosen, so there's no
+  // risk of a hallucinated URL) — excludes this article and its paired blog/
+  // technical counterpart, which is already linked via the "Deep Dive" CTA.
+  const pairedSlug = article.endsWith("-technical") ? article.replace(/-technical$/, "") : `${article}-technical`;
+  const relatedArticles = Object.values(allArticles)
+    .filter((a) => a.category === data.category && a.slug !== article && a.slug !== pairedSlug && !removedSlugs.includes(a.slug))
+    .sort((a, b) => new Date(b.datePublished).getTime() - new Date(a.datePublished).getTime())
+    .slice(0, 3);
 
   const pageUrl = `${SITE_URL}/education/${category}/${article}`;
 
@@ -211,7 +225,27 @@ export default async function ArticlePage({ params }: PageProps) {
           "jobTitle": data.authorTitle
         },
         "lastReviewed": override?.updatedAt || data.datePublished
-      }
+      },
+      // data.faqs is populated for both static articles and AI-generated
+      // content (publishBlogDraftToWebsite writes real FAQs from the AI
+      // writer's FAQS: output) — not gated on the override branch, since
+      // AI content always has a synthetic override for markdown rendering.
+      ...(data.faqs && data.faqs.length > 0
+        ? [
+            {
+              "@type": "FAQPage",
+              "@id": `${pageUrl}#faq`,
+              "mainEntity": data.faqs.map((faq) => ({
+                "@type": "Question",
+                "name": faq.question,
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": faq.answer
+                }
+              }))
+            }
+          ]
+        : [])
     ]
   };
 
@@ -230,9 +264,20 @@ export default async function ArticlePage({ params }: PageProps) {
 
       {/* Article Header (Blog Style) */}
       <header className="mt-6 mb-10">
-        <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-clinical-teal/10 text-clinical-teal mb-4 uppercase tracking-wider">
-          {data.categoryLabel}
-        </span>
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-clinical-teal/10 text-clinical-teal uppercase tracking-wider">
+            {data.categoryLabel}
+          </span>
+          <span
+            className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+              data.contentType === "article"
+                ? "bg-deep-navy/10 text-deep-navy"
+                : "bg-status-success/10 text-status-success"
+            }`}
+          >
+            {data.contentType === "article" ? "Article" : "Blog"}
+          </span>
+        </div>
         <h1 className="font-serif text-3xl md:text-5xl font-bold text-deep-navy leading-tight mb-6">
           {displayTitle}
         </h1>
@@ -270,7 +315,7 @@ export default async function ArticlePage({ params }: PageProps) {
       {/* Article Banner Image */}
       {displayImage && (
         <div className="w-full h-60 sm:h-80 md:h-[400px] relative rounded-2xl overflow-hidden mb-10 border border-border-clinical/30 bg-pale-clinical-blue/10">
-          <img src={displayImage} alt={displayTitle} className="object-contain w-full h-full bg-white" />
+          <img src={displayImage} alt={displayImageAlt} className="object-contain w-full h-full bg-white" />
         </div>
       )}
 
@@ -428,16 +473,6 @@ export default async function ArticlePage({ params }: PageProps) {
           </section>
         )}
 
-        {/* FAQs Accordion (Rendered after References) */}
-        {data.faqs && data.faqs.length > 0 && (
-          <section className="border-t border-border-clinical/30 pt-10">
-            <h3 className="font-serif text-xl md:text-2xl font-bold text-deep-navy mb-6">
-              Frequently Asked Questions
-            </h3>
-            <FaqAccordion items={data.faqs} />
-          </section>
-        )}
-
         {/* Clinical Warning Box (Rendered after References) */}
         {data.sections
           .filter((section) => section.isWarning)
@@ -453,6 +488,42 @@ export default async function ArticlePage({ params }: PageProps) {
             </div>
           ))}
         </>
+        )}
+
+        {/* FAQs Accordion — rendered for both static and AI-generated content,
+            since data.faqs is populated on the shared ArticleContent shape either
+            way (see publishBlogDraftToWebsite in lib/educationArticles.ts). */}
+        {data.faqs && data.faqs.length > 0 && (
+          <section className="border-t border-border-clinical/30 pt-10">
+            <h3 className="font-serif text-xl md:text-2xl font-bold text-deep-navy mb-6">
+              Frequently Asked Questions
+            </h3>
+            <FaqAccordion items={data.faqs} />
+          </section>
+        )}
+
+        {/* Related Reading — same-category internal links, boosts topical
+            authority and gives crawlers/readers another path into the section. */}
+        {relatedArticles.length > 0 && (
+          <section className="border-t border-border-clinical/30 pt-8">
+            <h3 className="font-serif text-lg md:text-xl font-bold text-deep-navy mb-4">
+              Related Reading in {data.categoryLabel}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {relatedArticles.map((related) => (
+                <Card
+                  key={related.slug}
+                  category={related.readTime}
+                  title={related.title}
+                  description={related.description}
+                  href={`/education/${related.category}/${related.slug}`}
+                  imageUrl={related.image}
+                  linkText="Read more"
+                  className="p-4"
+                />
+              ))}
+            </div>
+          </section>
         )}
 
         {/* Was this helpful? feedback */}

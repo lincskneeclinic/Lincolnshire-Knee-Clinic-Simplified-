@@ -37,6 +37,7 @@ interface PipelineTabProps {
   selectedRun: ContentPipelineRun | null;
   onBackToList: () => void;
   onOpenTriggerModal: () => void;
+  onOpenImportModal: () => void;
 
   // Sticky action bar
   isEditMode: boolean;
@@ -57,6 +58,8 @@ interface PipelineTabProps {
   onRunDetailTabChange: (tab: RunDetailTab) => void;
 
   // Draft sub-tab
+  activeDraftSubTab: "layman" | "technical";
+  onActiveDraftSubTabChange: (value: "layman" | "technical") => void;
   editTitle: string;
   onEditTitleChange: (value: string) => void;
   editExcerpt: string;
@@ -65,6 +68,12 @@ interface PipelineTabProps {
   onEditCategoryChange: (value: string) => void;
   editBody: string;
   editSuggestedImages: any[];
+  editArticleTitle: string;
+  onEditArticleTitleChange: (value: string) => void;
+  editArticleExcerpt: string;
+  onEditArticleExcerptChange: (value: string) => void;
+  editArticleBody: string;
+  editArticleSuggestedImages: any[];
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   livePreviewRef: React.RefObject<HTMLDivElement | null>;
   onTextareaChange: (value: string) => void;
@@ -131,6 +140,7 @@ export function PipelineTab({
   selectedRun,
   onBackToList,
   onOpenTriggerModal,
+  onOpenImportModal,
   isEditMode,
   onStartEdit,
   onApproveDraft,
@@ -145,6 +155,8 @@ export function PipelineTab({
   onOpenPlatformRevision,
   runDetailTab,
   onRunDetailTabChange,
+  activeDraftSubTab,
+  onActiveDraftSubTabChange,
   editTitle,
   onEditTitleChange,
   editExcerpt,
@@ -153,6 +165,12 @@ export function PipelineTab({
   onEditCategoryChange,
   editBody,
   editSuggestedImages,
+  editArticleTitle,
+  onEditArticleTitleChange,
+  editArticleExcerpt,
+  onEditArticleExcerptChange,
+  editArticleBody,
+  editArticleSuggestedImages,
   textareaRef,
   livePreviewRef,
   onTextareaChange,
@@ -231,6 +249,13 @@ export function PipelineTab({
               ← Back to List
             </button>
           )}
+          <button
+            onClick={onOpenImportModal}
+            className="bg-dark-overlay-navy hover:bg-white/5 text-white/80 border border-white/20 text-xs px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>📋</span>
+            <span>Import Research</span>
+          </button>
           <button
             onClick={onOpenTriggerModal}
             className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
@@ -411,6 +436,8 @@ export function PipelineTab({
                 <PipelineDraftTab
                   selectedRun={selectedRun}
                   isEditMode={isEditMode}
+                  activeDraftSubTab={activeDraftSubTab}
+                  onActiveDraftSubTabChange={onActiveDraftSubTabChange}
                   editTitle={editTitle}
                   onEditTitleChange={onEditTitleChange}
                   editExcerpt={editExcerpt}
@@ -419,6 +446,12 @@ export function PipelineTab({
                   onEditCategoryChange={onEditCategoryChange}
                   editBody={editBody}
                   editSuggestedImages={editSuggestedImages}
+                  editArticleTitle={editArticleTitle}
+                  onEditArticleTitleChange={onEditArticleTitleChange}
+                  editArticleExcerpt={editArticleExcerpt}
+                  onEditArticleExcerptChange={onEditArticleExcerptChange}
+                  editArticleBody={editArticleBody}
+                  editArticleSuggestedImages={editArticleSuggestedImages}
                   textareaRef={textareaRef}
                   livePreviewRef={livePreviewRef}
                   onTextareaChange={onTextareaChange}

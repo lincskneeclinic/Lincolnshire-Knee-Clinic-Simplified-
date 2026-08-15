@@ -163,7 +163,13 @@ export async function POST(request: Request) {
 
     const safeCategory: ImageCategory = category || "anatomy";
     const rawFilename = (typeof filename === "string" && filename.trim()) || `${safeCategory}-generated-${Date.now()}`;
-    const outputFormat = format || "webp";
+    // Callers should pass an explicit format (GenerateImageModal picks WebP for
+    // blog images, JPEG for anything social-bound — see its handleGenerate).
+    // This fallback only fires if one doesn't; JPEG is the safer unknown-intent
+    // default since Instagram/Facebook/LinkedIn's manual upload flows and any
+    // future Meta Graph API auto-posting don't reliably accept WebP, while a
+    // blog page still renders a JPEG fine (just a bit larger than WebP).
+    const outputFormat = format || "jpeg";
     const extension = outputFormat === "png" ? ".png" : (outputFormat === "jpeg" || outputFormat === "jpg") ? ".jpg" : ".webp";
     
     let baseName = rawFilename;

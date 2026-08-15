@@ -14,6 +14,15 @@ const nextConfig: NextConfig = {
     BUILD_COMMIT: getBuildCommit(),
     BUILD_TIME: new Date().toISOString(),
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "oshoqzcuvxmzyjbocovr.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
+  },
   experimental: {
     // proxy.ts's matcher covers nearly every route, and this version of
     // Next.js buffers every request body that passes through it in memory,

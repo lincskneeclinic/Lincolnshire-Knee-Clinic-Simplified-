@@ -167,6 +167,7 @@ export function PipelineSocialTab({
                 showManualUploadGuide
                 sourceType="pipeline"
                 sourceId={selectedRun.run_id}
+                topic={selectedRun.topic}
               />
 
               <PlatformCard
@@ -228,6 +229,7 @@ export function PipelineSocialTab({
                 showManualUploadGuide
                 sourceType="pipeline"
                 sourceId={selectedRun.run_id}
+                topic={selectedRun.topic}
               />
 
               <PlatformCard
@@ -287,6 +289,7 @@ export function PipelineSocialTab({
                 }}
                 isGeneratingImage={generatingSocialImageKey === `${selectedRun.id}-linkedin`}
                 showManualUploadGuide
+                topic={selectedRun.topic}
               />
             </div>
           )}
@@ -358,6 +361,7 @@ export function PipelineSocialTab({
                 showManualUploadGuide
                 sourceType="pipeline"
                 sourceId={selectedRun.run_id}
+                topic={selectedRun.topic}
               />
             </div>
           )}
@@ -454,6 +458,7 @@ export function PipelineSocialTab({
                 showManualUploadGuide
                 sourceType="pipeline"
                 sourceId={selectedRun.run_id}
+                topic={selectedRun.topic}
               />
             </div>
           )}
@@ -491,6 +496,28 @@ export function PipelineSocialTab({
                 onAttachVideo={(url, source) =>
                   onReviewSubmission("social", "edited", { videoUrl: url, videoSource: source }, "instagramReel")
                 }
+                attachedImageUrl={selectedRun.social_drafts[0]?.instagramReel?.coverImageUrl}
+                onAttachImage={(url) => onReviewSubmission("social", "edited", { coverImageUrl: url }, "instagramReel")}
+                imagePromptSuggestion={selectedRun.social_drafts[0]?.instagramReel?.imagePromptSuggestion}
+                onGenerateImage={async (prompt) => {
+                  onGeneratingSocialImageKeyChange(`${selectedRun.id}-instagramReel`);
+                  try {
+                    const res = await fetch("/api/portal/content-pipeline/generate-image", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ prompt, runId: selectedRun.run_id, format: "png" }),
+                    });
+                    const data = await res.json();
+                    if (data.success && data.url) {
+                      await onReviewSubmission("social", "edited", { coverImageUrl: data.url }, "instagramReel");
+                    }
+                  } catch (err) {
+                    console.error(err);
+                  } finally {
+                    onGeneratingSocialImageKeyChange("");
+                  }
+                }}
+                isGeneratingImage={generatingSocialImageKey === `${selectedRun.id}-instagramReel`}
                 showManualUploadGuide
                 sourceType="pipeline"
                 sourceId={selectedRun.run_id}

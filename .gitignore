@@ -155,3 +155,6 @@ vite.config.ts.timestamp-*
 
 # Scratch directory
 /scratch/
+
+# Claude Code session lock (ephemeral, not project content)
+.claude/scheduled_tasks.lock

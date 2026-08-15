@@ -3,8 +3,9 @@ import path from "path";
 import crypto from "crypto";
 import { getStoreValue } from "./dataStore";
 import { sendContentPipelineNotificationEmail } from "./graphMail";
-import { performResearchProcess } from "./researchAgent";
-import { writeBlogDraft } from "./blogWriterAgent";
+import { performResearchProcess, ResearchBrief } from "./researchAgent";
+export type { ResearchBrief } from "./researchAgent";
+import { writeBlogDraft, writeTechnicalArticleDraft } from "./blogWriterAgent";
 import { linkRunToArticle, getArticleSlugForRun, setArticleOverride, publishBlogDraftToWebsite, cleanClinicalReviewFlags } from "./educationArticles";
 import { writeSocialCaptions, rewriteSocialCaption, rewriteCarouselSlides } from "./socialWriterAgent";
 import { syncPollTopicsIntoDynamicTopics } from "./pollTopicsSync";
@@ -21,25 +22,9 @@ export type RunStatus =
   | "published"
   | "abandoned";
 
-export interface ResearchBrief {
-  summary: string;
-  key_points: string[];
-  sources: string[];
-  target_audience: string;
-  conflicting_findings?: string[];
-  clinical_indications?: string[];
-  pubmed_articles?: Array<{
-    pmid: string;
-    title: string;
-    authors: string;
-    journal: string;
-    pubdate: string;
-    url: string;
-  }>;
-}
-
 export interface BlogDraftVersion {
   version: number;
+  // Layman blog fields
   title: string;
   excerpt: string;
   body_markdown?: string;
@@ -49,6 +34,19 @@ export interface BlogDraftVersion {
   flags: string[];
   category?: string;
   created_at: string;
+  // AI-generated FAQs — drives both the on-page FAQ accordion and FAQPage
+  // structured data (see educationArticles.ts's publishBlogDraftToWebsite).
+  faqs?: Array<{ question: string; answer: string }>;
+
+  // Technical article fields
+  article_title?: string;
+  article_excerpt?: string;
+  article_body_markdown?: string;
+  article_body?: string;
+  article_suggested_images?: Array<string | { placeholderId?: string; label: string; url?: string; isFeatured?: boolean }>;
+  article_references?: string[];
+  article_flags?: string[];
+  article_faqs?: Array<{ question: string; answer: string }>;
 }
 
 export interface SocialCaptionPlatform {
@@ -78,6 +76,10 @@ export interface SocialDraftVersion {
     status: "pending" | "approved";
     videoUrl?: string;
     videoSource?: "upload" | "ai-broll";
+    // Static cover/thumbnail image shown before the video plays — distinct
+    // from videoUrl. Defaults to the blog's hero image (see run.social_drafts
+    // initialization below) so there's something to review immediately.
+    coverImageUrl?: string;
   };
   created_at: string;
 }
@@ -613,10 +615,12 @@ export async function createRunFromArticle(article: {
 // Runs the slow Stage 1 (PubMed research) + Stage 2 (Gemini blog draft) work for a run
 // already created via createPendingPipelineRun, patching progress into storage as it
 // goes. Intended to be started without awaiting so it survives past the HTTP response.
-export async function runPipelineGeneration(run: ContentPipelineRun): Promise<void> {
+export async function runPipelineGeneration(run: ContentPipelineRun, providedBrief?: ResearchBrief): Promise<void> {
   try {
-    // Execute Stage 1 PubMed Literature & Evidence Scan
-    const researchBrief = await performResearchProcess(run.topic);
+    // Execute Stage 1 PubMed Literature & Evidence Scan — unless a brief was already
+    // researched externally (e.g. via the lincoln-knee-clinic-blog-research skill) and
+    // handed in directly, in which case skip straight to drafting with it.
+    const researchBrief = providedBrief || await performResearchProcess(run.topic);
     run.research_brief = researchBrief as any;
     run.status = "writing_blog";
     run.updated_at = new Date().toISOString();
@@ -626,18 +630,52 @@ export async function runPipelineGeneration(run: ContentPipelineRun): Promise<vo
       ? researchBrief.sources
       : ["NICE Clinical Guidelines on Knee Care", "Journal of Bone and Joint Surgery"];
 
-    // Execute Stage 2: AI Blog Writer
-    let blogDraftData;
+    // Execute Stage 2: AI Blog Writer & Technical Article Writer in parallel
+    let blogDraftData: any;
+    let articleDraftData: any;
+    
     try {
-      blogDraftData = await writeBlogDraft(run.topic, researchBrief as any);
+      const [blogRes, articleRes] = await Promise.all([
+        writeBlogDraft(run.topic, researchBrief as any).catch((err) => {
+          console.error("Stage 2 Blog Writer failed:", err);
+          const errorMessage = err?.message || String(err);
+          return {
+            title: `[GENERATION ERROR] ${run.topic}`,
+            excerpt: `The AI Blog Writer encountered an error: ${errorMessage}`,
+            body: `### ⚠️ Stage 2 AI Generation Failed\n\nThe content pipeline attempted to generate a layman blog using Gemini AI, but encountered a system error:\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\n[NEEDS CLINICAL REVIEW] This is an error placeholder, do not publish.`,
+            suggestedImages: [] as any[],
+            flags: [`[NEEDS CLINICAL REVIEW] AI generation failed with error: ${errorMessage}`],
+          };
+        }),
+        writeTechnicalArticleDraft(run.topic, researchBrief as any).catch((err) => {
+          console.error("Stage 2 Technical Article Writer failed:", err);
+          const errorMessage = err?.message || String(err);
+          return {
+            title: `[GENERATION ERROR] ${run.topic} (Clinical Depth)`,
+            excerpt: `The AI Technical Article Writer encountered an error: ${errorMessage}`,
+            body: `### ⚠️ Stage 2 AI Generation Failed\n\nThe content pipeline attempted to generate a technical deep dive using Gemini AI, but encountered a system error:\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\n[NEEDS CLINICAL REVIEW] This is an error placeholder, do not publish.`,
+            suggestedImages: [] as any[],
+            flags: [`[NEEDS CLINICAL REVIEW] AI generation failed with error: ${errorMessage}`],
+          };
+        })
+      ]);
+      blogDraftData = blogRes;
+      articleDraftData = articleRes;
     } catch (err: any) {
-      console.error("Stage 2 Blog Writer failed:", err);
+      console.error("Stage 2 parallel drafting failed:", err);
       const errorMessage = err?.message || String(err);
       blogDraftData = {
         title: `[GENERATION ERROR] ${run.topic}`,
-        excerpt: `The AI Blog Writer encountered an error: ${errorMessage}`,
-        body: `### ⚠️ Stage 2 AI Generation Failed\n\nThe content pipeline attempted to generate a full-length article using Gemini AI, but encountered a system error:\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\n[NEEDS CLINICAL REVIEW] This is an error placeholder, do not publish.`,
-        suggestedImages: ["Error icon placeholder"],
+        excerpt: `The drafting process encountered an error: ${errorMessage}`,
+        body: `### ⚠️ Stage 2 AI Generation Failed\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\n[NEEDS CLINICAL REVIEW] AI generation failed with error: ${errorMessage}`,
+        suggestedImages: [] as any[],
+        flags: [`[NEEDS CLINICAL REVIEW] AI generation failed with error: ${errorMessage}`],
+      };
+      articleDraftData = {
+        title: `[GENERATION ERROR] ${run.topic} (Clinical Depth)`,
+        excerpt: `The drafting process encountered an error: ${errorMessage}`,
+        body: `### ⚠️ Stage 2 AI Generation Failed\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\n[NEEDS CLINICAL REVIEW] AI generation failed with error: ${errorMessage}`,
+        suggestedImages: [] as any[],
         flags: [`[NEEDS CLINICAL REVIEW] AI generation failed with error: ${errorMessage}`],
       };
     }
@@ -654,7 +692,18 @@ export async function runPipelineGeneration(run: ContentPipelineRun): Promise<vo
         references: realReferences,
         flags: blogDraftData.flags,
         category: undefined,
-        created_at: now
+        created_at: now,
+        faqs: blogDraftData.faqs || [],
+
+        // Technical article fields
+        article_title: articleDraftData.title,
+        article_excerpt: articleDraftData.excerpt,
+        article_body_markdown: articleDraftData.body_markdown || articleDraftData.body,
+        article_body: articleDraftData.body_markdown || articleDraftData.body,
+        article_suggested_images: articleDraftData.suggestedImages,
+        article_references: articleDraftData.references || realReferences,
+        article_flags: articleDraftData.flags,
+        article_faqs: articleDraftData.faqs || [],
       }
     ];
     run.status = "awaiting_blog_approval";
@@ -779,6 +828,17 @@ export async function submitPipelineReview(
         latestDraft.references = payload.editedContent.references || latestDraft.references;
         latestDraft.flags = payload.editedContent.flags || latestDraft.flags;
         latestDraft.category = payload.editedContent.category !== undefined ? payload.editedContent.category : latestDraft.category;
+        latestDraft.faqs = payload.editedContent.faqs || latestDraft.faqs;
+
+        // Also save technical article edits if provided
+        latestDraft.article_title = payload.editedContent.article_title || latestDraft.article_title;
+        latestDraft.article_excerpt = payload.editedContent.article_excerpt || latestDraft.article_excerpt;
+        latestDraft.article_body_markdown = payload.editedContent.article_body_markdown || payload.editedContent.article_body || latestDraft.article_body_markdown;
+        latestDraft.article_body = latestDraft.article_body_markdown;
+        latestDraft.article_suggested_images = payload.editedContent.article_suggested_images || latestDraft.article_suggested_images;
+        latestDraft.article_references = payload.editedContent.article_references || latestDraft.article_references;
+        latestDraft.article_flags = payload.editedContent.article_flags || latestDraft.article_flags;
+        latestDraft.article_faqs = payload.editedContent.article_faqs || latestDraft.article_faqs;
       }
     } else if (payload.stage === "social" && payload.editedContent) {
       if (run.social_drafts && run.social_drafts.length > 0) {
@@ -799,6 +859,7 @@ export async function submitPipelineReview(
       if ((payload.decision === "edited" || payload.decision === "publish_blog") && payload.editedContent) {
         const latestVersionNumber = (run.blog_drafts?.[0]?.version || 1) + 1;
         const editedBody = payload.editedContent.body_markdown || payload.editedContent.body || "";
+        const editedArticleBody = payload.editedContent.article_body_markdown || payload.editedContent.article_body || "";
 
         // Scan body for any remaining [IMAGE PLACEHOLDER: ...] markers (i.e. ones not yet replaced
         // with real ![alt](url) syntax). Build suggested_images from these, preserving any URLs that
@@ -835,6 +896,36 @@ export async function submitPipelineReview(
           });
         }
 
+        // Scan article body for any remaining [IMAGE PLACEHOLDER: ...] markers
+        const articlePlaceholderRegex = /\[IMAGE PLACEHOLDER:\s*(.*?)\]/gi;
+        let articleMatch;
+        const payloadArticleImages: any[] = payload.editedContent.article_suggested_images || [];
+        const previousArticleImages: any[] = run.blog_drafts[0]?.article_suggested_images || [];
+        const articleSuggestedImages: any[] = payloadArticleImages.filter((img: any) => typeof img === "string");
+        let articleCount = 1;
+
+        while ((articleMatch = articlePlaceholderRegex.exec(editedArticleBody)) !== null) {
+          const label = articleMatch[1].trim();
+          const payloadResolved = payloadArticleImages.find(
+            (img: any) =>
+              typeof img === "object" &&
+              img !== null &&
+              img.label?.trim().toLowerCase() === label.toLowerCase()
+          ) as any;
+          const previousResolved = previousArticleImages.find(
+            (img: any) =>
+              typeof img === "object" &&
+              img !== null &&
+              img.label?.trim().toLowerCase() === label.toLowerCase()
+          ) as any;
+          const resolved = payloadResolved || previousResolved;
+          articleSuggestedImages.push({
+            placeholderId: resolved?.placeholderId || `article-placeholder-${articleCount++}`,
+            label,
+            url: resolved?.url || ""
+          });
+        }
+
         run.blog_drafts.unshift({
           version: latestVersionNumber,
           title: payload.editedContent.title || run.blog_drafts[0]?.title || run.topic,
@@ -845,7 +936,18 @@ export async function submitPipelineReview(
           references: payload.editedContent.references || run.blog_drafts[0]?.references || [],
           flags: payload.editedContent.flags || [],
           category: payload.editedContent.category !== undefined ? payload.editedContent.category : run.blog_drafts[0]?.category,
-          created_at: now
+          created_at: now,
+          faqs: payload.editedContent.faqs || run.blog_drafts[0]?.faqs || [],
+
+          // Technical article fields
+          article_title: payload.editedContent.article_title || run.blog_drafts[0]?.article_title || "",
+          article_excerpt: payload.editedContent.article_excerpt || run.blog_drafts[0]?.article_excerpt || "",
+          article_body_markdown: editedArticleBody,
+          article_body: editedArticleBody,
+          article_suggested_images: articleSuggestedImages,
+          article_references: payload.editedContent.article_references || run.blog_drafts[0]?.article_references || [],
+          article_flags: payload.editedContent.article_flags || [],
+          article_faqs: payload.editedContent.article_faqs || run.blog_drafts[0]?.article_faqs || [],
         });
       }
 
@@ -855,6 +957,10 @@ export async function submitPipelineReview(
         if (latestDraft) {
           latestDraft.body_markdown = cleanClinicalReviewFlags(latestDraft.body_markdown || latestDraft.body || "");
           latestDraft.body = latestDraft.body_markdown;
+          if (latestDraft.article_body_markdown || latestDraft.article_body) {
+            latestDraft.article_body_markdown = cleanClinicalReviewFlags(latestDraft.article_body_markdown || latestDraft.article_body || "");
+            latestDraft.article_body = latestDraft.article_body_markdown;
+          }
         }
       }
 
@@ -893,6 +999,17 @@ export async function submitPipelineReview(
       }
 
       if (!run.social_drafts || run.social_drafts.length === 0) {
+        // Reuse the blog's hero/featured image (from Stage 2 drafting or the
+        // reviewer's own upload) as the starting image for the single-image
+        // social formats, so the reviewer isn't looking at a blank image slot
+        // for a photo the clinic already has. Story/Carousel/Reel are left
+        // alone — those are vertical/multi-slide formats with their own
+        // format-specific imagePromptSuggestion, which a horizontal hero
+        // image wouldn't fit anyway.
+        const heroImage = (run.blog_drafts[0]?.suggested_images || []).find(
+          (img: any) => typeof img === "object" && img !== null && img.isFeatured && img.url
+        ) as { url: string } | undefined;
+
         // Instagram/Facebook/LinkedIn stay as quick editable templates (matches existing
         // reviewed behavior). Story/Carousel/Reel need real AI-generated content — they
         // used to be a single hardcoded placeholder slide/script, which made those tabs
@@ -900,6 +1017,14 @@ export async function submitPipelineReview(
         // carousel or script). Reuse the same writer the standalone Social Posts feature
         // already calls for these three formats.
         let aiFormats: Pick<SocialDraftVersion, "instagramStory" | "instagramCarousel" | "instagramReel"> | null = null;
+        // writeSocialCaptions() already writes real, topic-specific, algorithm-optimized
+        // captions (correct hashtag counts, save/share framing, keyword phrasing — see
+        // SYSTEM_INSTRUCTION in socialWriterAgent.ts) for instagram/facebook/linkedin too,
+        // not just Story/Carousel/Reel. These used to be discarded in favor of a generic
+        // hardcoded template with far fewer hashtags than the platform targets (e.g.
+        // Instagram needs 8-15, the template only ever had 3; Facebook/LinkedIn had none
+        // at all) — now used directly, with the old copy kept only as a failure fallback.
+        let feedAiFormats: { instagram?: SocialCaptionPlatform; facebook?: SocialCaptionPlatform; linkedin?: SocialCaptionPlatform } = {};
         try {
           const generated = await writeSocialCaptions(run.topic);
           aiFormats = {
@@ -917,43 +1042,62 @@ export async function submitPipelineReview(
               status: "pending"
             },
           };
+          feedAiFormats = {
+            instagram: { caption: generated.instagram.caption, status: "pending", imagePromptSuggestion: generated.instagram.imagePromptSuggestion },
+            facebook: { caption: generated.facebook.caption, status: "pending", imagePromptSuggestion: generated.facebook.imagePromptSuggestion },
+            linkedin: { caption: generated.linkedin.caption, status: "pending", imagePromptSuggestion: generated.linkedin.imagePromptSuggestion },
+          };
         } catch (err) {
-          console.error("Failed to AI-generate Story/Carousel/Reel content, falling back to a single placeholder slide:", err);
+          console.error("Failed to AI-generate social captions, falling back to generic templates:", err);
         }
+
+        // Apply the same hero-image default to Story/Carousel/Reel, computed
+        // once here so the literal below stays readable.
+        const storyDraft = aiFormats?.instagramStory || {
+          caption: `✨ New Article: ${run.blog_drafts[0]?.title || run.topic}! Tap to read the full guide.`,
+          status: "pending" as const,
+        };
+        const carouselDraft = aiFormats?.instagramCarousel || {
+          caption: `Swipe through to learn about "${run.topic}"!`,
+          imagePromptSuggestion: `Carousel slides summarizing ${run.topic}`,
+          slides: [
+            { slideNumber: 1, text: run.blog_drafts[0]?.title || run.topic, imagePromptSuggestion: `Cover slide for "${run.topic}"` }
+          ],
+          status: "pending" as const,
+        };
+        const reelDraft = aiFormats?.instagramReel || {
+          caption: `Watch our quick guide on "${run.topic}"!`,
+          imagePromptSuggestion: `Reel visual thumbnail for "${run.topic}"`,
+          script: `Hook: Let's talk about ${run.topic}!\n\nVoiceover: Here is what you need to know...`,
+          status: "pending" as const,
+        };
+        const instagramDraft = feedAiFormats.instagram || {
+          caption: `✨ New Blog Article: ${run.blog_drafts[0]?.title || run.topic}!\n\nDiscover patient guidance and non-surgical joint care tips from Lincolnshire Knee Clinic specialists. Link in bio! #KneeHealth #LincolnshireKneeClinic #JointCare`,
+          status: "pending" as const,
+        };
+        const facebookDraft = feedAiFormats.facebook || {
+          caption: `Our medical team has published a comprehensive new guide: "${run.blog_drafts[0]?.title || run.topic}". Read the full breakdown on our clinic site today.`,
+          status: "pending" as const,
+        };
+        const linkedinDraft = feedAiFormats.linkedin || {
+          caption: `Read our latest clinical update for patients and general practitioners: "${run.blog_drafts[0]?.title || run.topic}". Highlighting evidence-based treatment pathways and rehabilitation protocols.`,
+          status: "pending" as const,
+        };
 
         run.social_drafts = [
           {
             version: 1,
-            instagram: {
-              caption: `✨ New Blog Article: ${run.blog_drafts[0]?.title || run.topic}!\n\nDiscover patient guidance and non-surgical joint care tips from Lincolnshire Knee Clinic specialists. Link in bio! #KneeHealth #LincolnshireKneeClinic #JointCare`,
-              status: "pending"
+            instagram: { ...instagramDraft, imageUrl: heroImage?.url },
+            facebook: { ...facebookDraft, imageUrl: heroImage?.url },
+            linkedin: { ...linkedinDraft, imageUrl: heroImage?.url },
+            instagramStory: { ...storyDraft, imageUrl: heroImage?.url },
+            instagramCarousel: {
+              ...carouselDraft,
+              slides: carouselDraft.slides.length > 0
+                ? [{ ...carouselDraft.slides[0], imageUrl: heroImage?.url }, ...carouselDraft.slides.slice(1)]
+                : carouselDraft.slides,
             },
-            facebook: {
-              caption: `Our medical team has published a comprehensive new guide: "${run.blog_drafts[0]?.title || run.topic}". Read the full breakdown on our clinic site today.`,
-              status: "pending"
-            },
-            linkedin: {
-              caption: `Read our latest clinical update for patients and general practitioners: "${run.blog_drafts[0]?.title || run.topic}". Highlighting evidence-based treatment pathways and rehabilitation protocols.`,
-              status: "pending"
-            },
-            instagramStory: aiFormats?.instagramStory || {
-              caption: `✨ New Article: ${run.blog_drafts[0]?.title || run.topic}! Tap to read the full guide.`,
-              status: "pending"
-            },
-            instagramCarousel: aiFormats?.instagramCarousel || {
-              caption: `Swipe through to learn about "${run.topic}"!`,
-              imagePromptSuggestion: `Carousel slides summarizing ${run.topic}`,
-              slides: [
-                { slideNumber: 1, text: run.blog_drafts[0]?.title || run.topic, imagePromptSuggestion: `Cover slide for "${run.topic}"` }
-              ],
-              status: "pending"
-            },
-            instagramReel: aiFormats?.instagramReel || {
-              caption: `Watch our quick guide on "${run.topic}"!`,
-              imagePromptSuggestion: `Reel visual thumbnail for "${run.topic}"`,
-              script: `Hook: Let's talk about ${run.topic}!\n\nVoiceover: Here is what you need to know...`,
-              status: "pending"
-            },
+            instagramReel: { ...reelDraft, coverImageUrl: heroImage?.url },
             created_at: now
           }
         ];
@@ -989,22 +1133,42 @@ export async function submitPipelineReview(
       const latestVersionNumber = (run.blog_drafts?.[0]?.version || 1) + 1;
       const previousDraft = run.blog_drafts?.[0] || null;
       let blogDraftData;
+      let articleDraftData;
       try {
-        blogDraftData = await writeBlogDraft(
-          run.topic,
-          run.research_brief as any,
-          previousDraft,
-          payload.revisionNotes
-        );
+        const [blogRes, articleRes] = await Promise.all([
+          writeBlogDraft(
+            run.topic,
+            run.research_brief as any,
+            previousDraft,
+            payload.revisionNotes
+          ),
+          writeTechnicalArticleDraft(
+            run.topic,
+            run.research_brief as any,
+            previousDraft,
+            payload.revisionNotes
+          )
+        ]);
+        blogDraftData = blogRes;
+        articleDraftData = articleRes;
       } catch (err: any) {
-        console.error("Stage 2 Blog Writer revision failed:", err);
+        console.error("Stage 2 Blog/Article Writer revision failed:", err);
         const errorMessage = err?.message || String(err);
         blogDraftData = {
-          title: `[GENERATION ERROR] ${run.topic} (V${latestVersionNumber})`,
+          title: previousDraft?.title || `[GENERATION ERROR] ${run.topic} (V${latestVersionNumber})`,
           excerpt: `The AI Blog Writer encountered an error during revision: ${errorMessage}`,
-          body: `### ⚠️ Stage 2 AI Generation Failed during Revision\n\nThe content pipeline attempted to generate a revised article using Gemini AI, but encountered a system error:\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\n[NEEDS CLINICAL REVIEW] This is an error placeholder, do not publish.`,
-          suggestedImages: previousDraft?.suggested_images || ["Error icon placeholder"],
+          body: `### ⚠️ Stage 2 AI Generation Failed during Revision\n\nThe content pipeline attempted to generate a revised layman blog using Gemini AI, but encountered a system error:\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\n[NEEDS CLINICAL REVIEW] This is an error placeholder, do not publish.`,
+          suggestedImages: previousDraft?.suggested_images || [],
           flags: [`[NEEDS CLINICAL REVIEW] AI revision failed with error: ${errorMessage}`],
+          faqs: previousDraft?.faqs || [],
+        };
+        articleDraftData = {
+          title: previousDraft?.article_title || `[GENERATION ERROR] ${run.topic} (Clinical Depth) (V${latestVersionNumber})`,
+          excerpt: `The AI Technical Article Writer encountered an error during revision: ${errorMessage}`,
+          body: `### ⚠️ Stage 2 AI Generation Failed during Revision\n\nThe content pipeline attempted to generate a revised technical article using Gemini AI, but encountered a system error:\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\n[NEEDS CLINICAL REVIEW] This is an error placeholder, do not publish.`,
+          suggestedImages: previousDraft?.article_suggested_images || [],
+          flags: [`[NEEDS CLINICAL REVIEW] AI revision failed with error: ${errorMessage}`],
+          faqs: previousDraft?.article_faqs || [],
         };
       }
 
@@ -1017,7 +1181,18 @@ export async function submitPipelineReview(
         suggested_images: blogDraftData.suggestedImages || [],
         references: previousDraft?.references || ["NICE Clinical Guidelines on Knee Care", "Journal of Bone and Joint Surgery"],
         flags: blogDraftData.flags || [],
-        created_at: now
+        created_at: now,
+        faqs: blogDraftData.faqs || previousDraft?.faqs || [],
+
+        // Technical article fields
+        article_title: articleDraftData.title,
+        article_excerpt: articleDraftData.excerpt,
+        article_body_markdown: articleDraftData.body_markdown || articleDraftData.body,
+        article_body: articleDraftData.body_markdown || articleDraftData.body,
+        article_suggested_images: articleDraftData.suggestedImages || [],
+        article_references: previousDraft?.article_references || previousDraft?.references || ["NICE Clinical Guidelines on Knee Care", "Journal of Bone and Joint Surgery"],
+        article_flags: articleDraftData.flags || [],
+        article_faqs: articleDraftData.faqs || previousDraft?.article_faqs || [],
       });
 
       run.status = "awaiting_blog_approval";
@@ -1052,10 +1227,20 @@ export async function submitPipelineReview(
           } else if (payload.decision === "edited" && payload.editedContent) {
             draft.caption = payload.editedContent.caption || draft.caption;
             draft.script = payload.editedContent.script || draft.script;
+            // Attaching/replacing the video or cover image is a media update, not
+            // a content approval — don't auto-approve the whole reel just because
+            // its cover image was swapped, same as the video-attach case below.
+            let mediaUpdated = false;
             if (payload.editedContent.videoUrl !== undefined) {
               draft.videoUrl = payload.editedContent.videoUrl;
               draft.videoSource = payload.editedContent.videoSource;
-            } else {
+              mediaUpdated = true;
+            }
+            if (payload.editedContent.coverImageUrl !== undefined) {
+              draft.coverImageUrl = payload.editedContent.coverImageUrl;
+              mediaUpdated = true;
+            }
+            if (!mediaUpdated) {
               draft.status = "approved";
             }
           } else if (payload.decision === "revision_requested") {
@@ -1286,15 +1471,20 @@ export async function backfillMissingSocialFormats(runId: string): Promise<Conte
     return run;
   }
 
+  const heroImage = (run.blog_drafts[0]?.suggested_images || []).find(
+    (img: any) => typeof img === "object" && img !== null && img.isFeatured && img.url
+  ) as { url: string } | undefined;
+
   const generated = await writeSocialCaptions(run.topic);
   if (missing.instagramStory) {
-    draft.instagramStory = { caption: generated.instagramStory.caption, status: "pending" };
+    draft.instagramStory = { caption: generated.instagramStory.caption, status: "pending", imageUrl: heroImage?.url };
   }
   if (missing.instagramCarousel) {
+    const slides = generated.instagramCarousel.slides || [];
     draft.instagramCarousel = {
       caption: generated.instagramCarousel.caption,
       imagePromptSuggestion: generated.instagramCarousel.imagePromptSuggestion,
-      slides: generated.instagramCarousel.slides || [],
+      slides: slides.length > 0 ? [{ ...slides[0], imageUrl: heroImage?.url }, ...slides.slice(1)] : slides,
       status: "pending"
     };
   }
@@ -1303,6 +1493,7 @@ export async function backfillMissingSocialFormats(runId: string): Promise<Conte
       caption: generated.instagramReel.caption,
       imagePromptSuggestion: generated.instagramReel.imagePromptSuggestion,
       script: generated.instagramReel.script || "",
+      coverImageUrl: heroImage?.url,
       status: "pending"
     };
   }

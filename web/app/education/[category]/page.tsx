@@ -2,10 +2,10 @@ import React from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { Card } from "@/components/Card";
 import { MedicalDisclaimerBlock } from "@/components/MedicalDisclaimerBlock";
 import { Button } from "@/components/Button";
 import { PageHeader } from "@/components/PageHeader";
+import { EducationCategoryTabs } from "@/components/education/EducationCategoryTabs";
 import { SITE_URL } from "@/lib/site";
 
 import { blogArticles } from "@/data/articles";
@@ -25,6 +25,7 @@ interface Article {
   href: string;
   imageUrl?: string;
   datePublished: string;
+  contentType: "blog" | "article";
 }
 
 interface CategoryData {
@@ -94,7 +95,8 @@ function buildCategoriesData(
           readTime: a.readTime,
           href: `/education/${a.category}/${a.slug}`,
           imageUrl: override?.featuredImage || a.image,
-          datePublished: a.datePublished
+          datePublished: a.datePublished,
+          contentType: a.contentType || "blog"
         };
       });
 
@@ -182,8 +184,8 @@ export default async function CategoryPage({ params }: PageProps) {
     notFound();
   }
 
-  const activeArticles = data.articles.slice(0, 6);
-  const archivedArticles = data.articles.slice(6);
+  const blogs = data.articles.filter((a) => a.contentType === "blog");
+  const technicalArticles = data.articles.filter((a) => a.contentType === "article");
 
   const pageUrl = `${SITE_URL}/education/${category}`;
 
@@ -216,71 +218,12 @@ export default async function CategoryPage({ params }: PageProps) {
         subtitle={data.description}
       />
 
-      <div className="my-8">
-        <h3 className="text-sm font-bold uppercase text-clinical-teal tracking-wider mb-6 border-b border-border-clinical/30 pb-2">
+      <div className="mt-8">
+        <h3 className="text-sm font-bold uppercase text-clinical-teal tracking-wider mb-2">
           Articles & Resources in this Category
         </h3>
-        
-        {/* Grid of Articles */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {activeArticles.map((article, index) => (
-            <Card
-              key={index}
-              category={article.readTime}
-              title={article.title}
-              description={article.description}
-              href={article.href}
-              imageUrl={article.imageUrl}
-              linkText="Read article"
-            />
-          ))}
-        </div>
+        <EducationCategoryTabs blogs={blogs} articles={technicalArticles} />
       </div>
-
-      {/* Archived / Older Articles Section */}
-      {archivedArticles.length > 0 && (
-        <div className="mt-12 pt-8 border-t border-border-clinical/40">
-          <h3 className="text-sm font-bold uppercase text-clinical-teal tracking-wider mb-6 border-b border-border-clinical/30 pb-2">
-            Older & Archived Articles
-          </h3>
-          <div className="bg-white border border-border-clinical rounded-xl shadow-[0_2px_10px_rgba(8,47,73,0.01)] overflow-hidden">
-            <div className="divide-y divide-border-clinical/30">
-              {archivedArticles.map((article, index) => {
-                const formattedDate = new Date(article.datePublished).toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                });
-                return (
-                  <div
-                    key={index}
-                    className="p-4 sm:px-6 hover:bg-warm-off-white/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                  >
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
-                        {formattedDate} &bull; {article.readTime}
-                      </span>
-                      <h4 className="font-serif text-sm md:text-base font-bold text-deep-navy">
-                        {article.title}
-                      </h4>
-                      <p className="text-xs text-text-secondary line-clamp-1 font-medium">
-                        {article.description}
-                      </p>
-                    </div>
-                    <Button
-                      href={article.href}
-                      variant="secondary"
-                      className="py-1 px-3 text-xs self-start sm:self-auto shrink-0"
-                    >
-                      Read Article
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="bg-pale-clinical-blue/20 border border-border-clinical/40 p-6 md:p-8 rounded-xl text-center max-w-3xl mx-auto my-12">
         <h4 className="font-serif text-lg md:text-xl font-bold text-deep-navy mb-2">

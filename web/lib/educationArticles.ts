@@ -47,6 +47,7 @@ export interface ArticleOverride {
   body_markdown: string;
   references: string[];
   featuredImage?: string;
+  imageAlt?: string;
   category?: string;
   updatedAt: string;
 }
@@ -196,12 +197,50 @@ export async function publishBlogDraftToWebsite(run: any): Promise<string> {
   else if (category === "patient-guides") categoryLabel = "Patient Guides";
   else if (category === "faqs") categoryLabel = "FAQs";
 
+  // 1. Publish the Technical Deep-Dive Article first
+  const technicalSlug = `${slug}-technical`;
+  const technicalTitle = draft.article_title || `${draft.title || run.topic} (Clinical Depth)`;
+  const technicalExcerpt = draft.article_excerpt || draft.excerpt || "";
+  const technicalCleanBody = cleanClinicalReviewFlags(draft.article_body_markdown || draft.article_body || "");
+
+  const technicalFeaturedImage = (draft.article_suggested_images || []).find(
+    (img: any) => typeof img === "object" && img !== null && img.isFeatured
+  ) as any;
+  const technicalImageUrl = technicalFeaturedImage?.url || (typeof draft.article_suggested_images?.[0] === "string" ? draft.article_suggested_images[0] : "") || "/brand/lkc-logo-k-transparent.png";
+
+  const technicalArticle: ArticleContent = {
+    id: technicalSlug,
+    slug: technicalSlug,
+    category,
+    categoryLabel,
+    title: technicalTitle,
+    description: technicalExcerpt,
+    readTime: "15 min read", // Technical deep dive is 12-15 min read
+    datePublished: new Date().toISOString().split("T")[0],
+    author: "Mr Ricardo J Pacheco",
+    authorTitle: "Consultant Orthopedic Surgeon",
+    image: technicalImageUrl,
+    imageAlt: technicalFeaturedImage?.label || technicalTitle,
+    takeaways: [],
+    sections: [],
+    faqs: draft.article_faqs || [],
+    references: draft.article_references || draft.references || [],
+    relatedTopicSlugs: [],
+    contentType: "article"
+  };
+
+  (technicalArticle as any).body_markdown = technicalCleanBody;
+  await saveDynamicArticle(technicalSlug, technicalArticle);
+
+  // 2. Format Layman Blog body and append link to technical article
+  const cleanBody = cleanClinicalReviewFlags(draft.body_markdown || draft.body || "");
+  const readMoreBlock = `\n\n---\n\n### 📖 Deep Dive & Scientific Evidence\nIf you want to know more about the clinical evidence, surgical techniques, and research on this topic, read our in-depth, technical article: **[${technicalTitle}](/education/${category}/${technicalSlug})** (12-15 min read).`;
+  const blogBodyWithLink = `${cleanBody}${readMoreBlock}`;
+
   const featuredImage = (draft.suggested_images || []).find(
     (img: any) => typeof img === "object" && img !== null && img.isFeatured
   ) as any;
   const imageUrl = featuredImage?.url || (typeof draft.suggested_images?.[0] === "string" ? draft.suggested_images[0] : "") || "/brand/lkc-logo-k-transparent.png";
-
-  const cleanBody = cleanClinicalReviewFlags(draft.body_markdown || draft.body || "");
 
   const newArticle: ArticleContent = {
     id: slug,
@@ -210,22 +249,24 @@ export async function publishBlogDraftToWebsite(run: any): Promise<string> {
     categoryLabel,
     title: draft.title || run.topic,
     description: draft.excerpt || "",
-    readTime: "8 min read",
+    readTime: "8 min read", // Layman blog is 8-10 min read
     datePublished: new Date().toISOString().split("T")[0],
     author: "Mr Ricardo J Pacheco",
     authorTitle: "Consultant Orthopedic Surgeon",
     image: imageUrl,
+    imageAlt: featuredImage?.label || draft.title || run.topic,
     takeaways: [],
     sections: [],
-    faqs: [],
+    faqs: draft.faqs || [],
     references: draft.references || [],
-    relatedTopicSlugs: []
+    relatedTopicSlugs: [],
+    contentType: "blog"
   };
 
-  // Attach the markdown body as property so we can easily retrieve/render it
-  (newArticle as any).body_markdown = cleanBody;
-
+  // Attach the markdown body with the link
+  (newArticle as any).body_markdown = blogBodyWithLink;
   await saveDynamicArticle(slug, newArticle);
+
   return slug;
 }
 

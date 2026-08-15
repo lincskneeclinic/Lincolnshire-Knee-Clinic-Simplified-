@@ -10,6 +10,11 @@ export interface ArticleContent {
   author: string;
   authorTitle: string;
   image: string;
+  // Descriptive alt text for the banner/featured image, distinct from the page
+  // title — the AI writer's own image description (from [FEATURED IMAGE
+  // PLACEHOLDER: ...]) is a better alt than reusing the article title. Optional
+  // since existing static entries below pre-date this field.
+  imageAlt?: string;
   takeaways: string[];
   sections: {
     heading?: string;
@@ -24,6 +29,11 @@ export interface ArticleContent {
     answer: string;
   }[];
   references?: string[];
+  // "blog" = layman, 8-10 min patient read. "article" = technical, 12-15 min
+  // evidence-based deep dive. Undefined on existing static entries below (all
+  // pre-date this field) is treated as "blog" everywhere it's read — see
+  // app/education/[category]/page.tsx.
+  contentType?: "blog" | "article";
   // Symptom/condition/treatment/injection topic slugs this article covers,
   // prefixed by type (e.g. "symptom:knee-pain", "treatment:acl-reconstruction").
   // When an "Update" run for this article is approved (see

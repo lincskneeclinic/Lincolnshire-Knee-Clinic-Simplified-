@@ -28,6 +28,14 @@ function computeEngagementRate(m: GraphMetrics): number | null {
   return Math.round((engaged / m.reach) * 1000) / 10; // percent, one decimal place
 }
 
+// Instagram's native "Copy Link" share action appends tracking params
+// (?utm_source=ig_web_copy_link&igsh=...) that the Graph API's own permalink
+// field never includes, so those must be stripped before comparing — not just
+// the trailing slash.
+function normalizePermalink(url: string): string {
+  return url.trim().split(/[?#]/)[0].replace(/\/$/, "");
+}
+
 /** Resolves a manually pasted live post URL to a real media/post ID and stores the link. Throws on failure. */
 export async function linkPostToPermalink(
   sourceType: PostSourceType,
@@ -38,15 +46,15 @@ export async function linkPostToPermalink(
   const account = await getAccountForPlatform(platform);
   if (!account) throw new Error(`No connected ${platform} account. Connect one first.`);
 
-  const normalizedPermalink = permalinkUrl.trim().replace(/\/$/, "");
+  const normalizedPermalink = normalizePermalink(permalinkUrl);
   let mediaId: string | null = null;
 
   if (platform === "instagram") {
     const media = await getRecentInstagramMedia(account.account_id, account.access_token);
-    mediaId = media.find((m) => m.permalink.replace(/\/$/, "") === normalizedPermalink)?.id || null;
+    mediaId = media.find((m) => normalizePermalink(m.permalink) === normalizedPermalink)?.id || null;
   } else {
     const posts = await getRecentFacebookPosts(account.account_id, account.access_token);
-    mediaId = posts.find((p) => p.permalink_url.replace(/\/$/, "") === normalizedPermalink)?.id || null;
+    mediaId = posts.find((p) => normalizePermalink(p.permalink_url) === normalizedPermalink)?.id || null;
   }
 
   if (!mediaId) {
