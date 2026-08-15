@@ -40,6 +40,7 @@ interface SocialPostsTabProps {
   onBatchModeChange: (value: boolean) => void;
   batchTopics: string;
   onBatchTopicsChange: (value: string) => void;
+  batchProgress: { done: number; total: number } | null;
 }
 
 const SUB_TABS: SocialOnlySubTab[] = ["feed", "story", "carousel", "reel", "brandkit"];
@@ -78,6 +79,7 @@ export function SocialPostsTab({
   onBatchModeChange,
   batchTopics,
   onBatchTopicsChange,
+  batchProgress,
 }: SocialPostsTabProps) {
   const toast = useToast();
   const batchTopicCount = batchTopics.split("\n").map((t) => t.trim()).filter(Boolean).length;
@@ -462,10 +464,20 @@ export function SocialPostsTab({
                 autoFocus
               />
               <p className="text-[11px] text-white/60 mt-1.5">
-                {batchTopicCount > 0
-                  ? `Will generate ${batchTopicCount} full post${batchTopicCount === 1 ? "" : "s"} (Instagram, Facebook, LinkedIn, Story, Carousel, Reel script each) — this can take a few minutes.`
-                  : "Add one topic per line — a week's cadence is usually 3-4 topics."}
+                {batchProgress
+                  ? `Generating ${batchProgress.done} of ${batchProgress.total}… each topic is a separate request, so this keeps working even if one topic is slow.`
+                  : batchTopicCount > 0
+                    ? `Will generate ${batchTopicCount} full post${batchTopicCount === 1 ? "" : "s"} (Instagram, Facebook, LinkedIn, Story, Carousel, Reel script each), one at a time — this can take a few minutes.`
+                    : "Add one topic per line — a week's cadence is usually 3-4 topics."}
               </p>
+              {batchProgress && (
+                <div className="w-full bg-dark-overlay-navy border border-white/10 rounded-full h-1.5 mt-2 overflow-hidden">
+                  <div
+                    className="bg-clinical-teal h-full transition-all duration-300"
+                    style={{ width: `${(batchProgress.done / batchProgress.total) * 100}%` }}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -491,7 +503,9 @@ export function SocialPostsTab({
               )}
               {isGenerating
                 ? batchMode
-                  ? `Generating ${batchTopicCount}…`
+                  ? batchProgress
+                    ? `Generating ${batchProgress.done}/${batchProgress.total}…`
+                    : "Generating…"
                   : "Generating…"
                 : batchMode
                   ? `Generate ${batchTopicCount || ""} Post${batchTopicCount === 1 ? "" : "s"}`

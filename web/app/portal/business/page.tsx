@@ -182,6 +182,7 @@ function BusinessDashboardPageInner() {
   const [isGeneratingSocialOnly, setIsGeneratingSocialOnly] = useState(false);
   const [socialOnlyBatchMode, setSocialOnlyBatchMode] = useState(false);
   const [newSocialOnlyBatchTopics, setNewSocialOnlyBatchTopics] = useState("");
+  const [socialOnlyBatchProgress, setSocialOnlyBatchProgress] = useState<{ done: number; total: number } | null>(null);
   const [generatingSocialImageKey, setGeneratingSocialImageKey] = useState<string | null>(null);
   const [isBackfillingFormats, setIsBackfillingFormats] = useState(false);
   const [socialOnlyCopiedKey, setSocialOnlyCopiedKey] = useState<string | null>(null);
@@ -1363,6 +1364,25 @@ function BusinessDashboardPageInner() {
     }
   }, [activeTab, fetchSocialOnlyPosts, socialOnlyPosts.length]);
 
+  // Generates one topic at a time (looping client-side) rather than sending
+  // the whole batch as one request — a single long-lived request generating
+  // 5+ topics sequentially runs past Hostinger's reverse-proxy timeout and
+  // comes back as an HTML error page instead of JSON. Looping keeps every
+  // individual request as fast as the already-reliable single-topic path,
+  // and shows progress as each one lands instead of one long silent wait.
+  const generateOneSocialOnlyTopic = async (topic: string): Promise<SocialOnlyPost> => {
+    const res = await fetch("/api/portal/social-only/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic }),
+    });
+    const data = await res.json();
+    if (!data.success || !data.post) {
+      throw new Error(data.error || "Failed to generate social posts.");
+    }
+    return data.post;
+  };
+
   const handleGenerateSocialOnly = async (e: React.FormEvent) => {
     e.preventDefault();
     const batchTopics = newSocialOnlyBatchTopics
@@ -1374,34 +1394,41 @@ function BusinessDashboardPageInner() {
 
     setIsGeneratingSocialOnly(true);
     try {
-      const res = await fetch("/api/portal/social-only/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isBatch ? { topics: batchTopics } : { topic: newSocialOnlyTopic.trim() }),
-      });
-      const data = await res.json();
-      if (!data.success || !data.post) {
-        throw new Error(data.error || "Failed to generate social posts.");
-      }
-      const newPosts: SocialOnlyPost[] = Array.isArray(data.posts) ? data.posts : [data.post];
-      setSocialOnlyPosts((prev) => [...newPosts, ...prev]);
-      setSelectedSocialOnlyPost(isBatch ? null : newPosts[0]);
-      setIsSocialOnlyModalOpen(false);
-      setNewSocialOnlyTopic("");
-      setNewSocialOnlyBatchTopics("");
-      setSocialOnlyBatchMode(false);
-
-      const failures: Array<{ topic: string; error: string }> = Array.isArray(data.failures) ? data.failures : [];
       if (isBatch) {
-        toast.success(`Generated ${newPosts.length} of ${batchTopics.length} post${batchTopics.length === 1 ? "" : "s"}.`);
-      }
-      if (failures.length > 0) {
-        toast.error(`${failures.length} topic${failures.length === 1 ? "" : "s"} failed: ${failures.map((f) => f.topic).join(", ")}`);
+        setSocialOnlyBatchProgress({ done: 0, total: batchTopics.length });
+        const failures: Array<{ topic: string; error: string }> = [];
+        let successCount = 0;
+        for (const topic of batchTopics) {
+          try {
+            const post = await generateOneSocialOnlyTopic(topic);
+            successCount++;
+            setSocialOnlyPosts((prev) => [post, ...prev]);
+          } catch (err: any) {
+            failures.push({ topic, error: err?.message || "Failed to generate this topic." });
+          }
+          setSocialOnlyBatchProgress((p) => (p ? { ...p, done: p.done + 1 } : p));
+        }
+        setSelectedSocialOnlyPost(null);
+        setIsSocialOnlyModalOpen(false);
+        setNewSocialOnlyTopic("");
+        setNewSocialOnlyBatchTopics("");
+        setSocialOnlyBatchMode(false);
+        toast.success(`Generated ${successCount} of ${batchTopics.length} post${batchTopics.length === 1 ? "" : "s"}.`);
+        if (failures.length > 0) {
+          toast.error(`${failures.length} topic${failures.length === 1 ? "" : "s"} failed: ${failures.map((f) => f.topic).join(", ")}`);
+        }
+      } else {
+        const post = await generateOneSocialOnlyTopic(newSocialOnlyTopic.trim());
+        setSocialOnlyPosts((prev) => [post, ...prev]);
+        setSelectedSocialOnlyPost(post);
+        setIsSocialOnlyModalOpen(false);
+        setNewSocialOnlyTopic("");
       }
     } catch (err: any) {
       toast.error(err?.message || "An error occurred while generating the social posts.");
     } finally {
       setIsGeneratingSocialOnly(false);
+      setSocialOnlyBatchProgress(null);
     }
   };
 
@@ -2935,6 +2962,7 @@ function BusinessDashboardPageInner() {
                 onBatchModeChange={setSocialOnlyBatchMode}
                 batchTopics={newSocialOnlyBatchTopics}
                 onBatchTopicsChange={setNewSocialOnlyBatchTopics}
+                batchProgress={socialOnlyBatchProgress}
               />
             )}
 
