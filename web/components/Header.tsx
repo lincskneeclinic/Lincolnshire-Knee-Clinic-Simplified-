@@ -55,6 +55,7 @@ export const Header: React.FC = () => {
   ];
 
   const desktopNavigation = [
+    { name: "Home", href: "/" },
     { name: "Symptoms", href: "/symptoms" },
     { name: "Conditions", href: "/conditions" },
     { name: "Treatments", href: "/treatments" },
