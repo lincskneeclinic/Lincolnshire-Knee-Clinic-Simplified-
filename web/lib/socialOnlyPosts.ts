@@ -39,6 +39,18 @@ export interface SocialOnlyPost {
   /** Posted content parked out of the active review list for future reuse — see archivePost/unarchivePost. */
   archived?: boolean;
   archived_at?: string;
+  /**
+   * A companion blog/article auto-triggered alongside this post's captions
+   * (via the Content Pipeline) so social traffic has somewhere real to land
+   * — set by createSocialOnlyPost, filled in by syncLinkedSocialOnlyPosts
+   * once the article clears clinical review and goes live.
+   */
+  linkedArticle?: {
+    pipelineRunId: string;
+    status: "pending_review" | "published";
+    url?: string;
+    title?: string;
+  };
 }
 
 const SOCIAL_ONLY_POSTS_KEY = "social-only-posts";
@@ -62,7 +74,8 @@ export async function createSocialOnlyPost(
     instagramStory?: { caption: string; imagePromptSuggestion?: string };
     instagramCarousel?: { caption: string; imagePromptSuggestion: string; slides?: any[] };
     instagramReel?: { caption: string; imagePromptSuggestion: string; script?: string };
-  }
+  },
+  linkedPipelineRunId?: string
 ): Promise<SocialOnlyPost> {
   const posts = await getStoreValue<Record<string, SocialOnlyPost>>(SOCIAL_ONLY_POSTS_KEY, {});
   const now = new Date().toISOString();
@@ -87,6 +100,7 @@ export async function createSocialOnlyPost(
     } : undefined,
     created_at: now,
     updated_at: now,
+    linkedArticle: linkedPipelineRunId ? { pipelineRunId: linkedPipelineRunId, status: "pending_review" } : undefined,
   };
   posts[post.id] = post;
   await setStoreValue(SOCIAL_ONLY_POSTS_KEY, posts);
@@ -131,4 +145,26 @@ export async function unarchiveSocialOnlyPost(id: string): Promise<SocialOnlyPos
     archived: false,
     archived_at: undefined,
   }));
+}
+
+// Called once a companion pipeline run's article clears clinical review and
+// goes live (see contentPipeline.ts's publish_blog handling) — fills in the
+// real URL/title on every social-only post that was auto-linked to that run
+// at generation time, so reviewers have something to copy into a bio link,
+// Facebook comment, or LinkedIn first comment when they post manually.
+export async function syncLinkedSocialOnlyPosts(pipelineRunId: string, url: string, title: string): Promise<void> {
+  const posts = await getStoreValue<Record<string, SocialOnlyPost>>(SOCIAL_ONLY_POSTS_KEY, {});
+  let changed = false;
+  for (const id of Object.keys(posts)) {
+    const post = posts[id];
+    if (post.linkedArticle?.pipelineRunId === pipelineRunId && post.linkedArticle.status !== "published") {
+      posts[id] = {
+        ...post,
+        linkedArticle: { pipelineRunId, status: "published", url, title },
+        updated_at: new Date().toISOString(),
+      };
+      changed = true;
+    }
+  }
+  if (changed) await setStoreValue(SOCIAL_ONLY_POSTS_KEY, posts);
 }

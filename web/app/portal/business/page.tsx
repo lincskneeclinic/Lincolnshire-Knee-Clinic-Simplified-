@@ -1600,6 +1600,12 @@ function BusinessDashboardPageInner() {
     }
   };
 
+  // Jumps to a social post's auto-triggered companion article for clinical review.
+  const handleGoToLinkedArticle = (runId: string) => {
+    setActiveTab("pipeline");
+    fetchRunDetail(runId);
+  };
+
   const handleConfirmArticleVisibility = async (action: "remove" | "restore") => {
     if (!articlePendingRemoval) return;
     setIsUpdatingArticleVisibility(true);
@@ -2978,6 +2984,7 @@ function BusinessDashboardPageInner() {
                 onDeleteSocialOnlyPost={handleDeleteSocialOnlyPost}
                 onArchiveSocialOnlyPost={handleArchiveSocialOnlyPost}
                 onUnarchiveSocialOnlyPost={handleUnarchiveSocialOnlyPost}
+                onGoToLinkedArticle={handleGoToLinkedArticle}
                 showArchived={showArchivedSocialOnly}
                 onShowArchivedChange={setShowArchivedSocialOnly}
                 isModalOpen={isSocialOnlyModalOpen}

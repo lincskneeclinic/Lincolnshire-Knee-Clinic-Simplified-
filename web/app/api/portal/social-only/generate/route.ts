@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { writeSocialCaptions } from "@/lib/socialWriterAgent";
 import { createSocialOnlyPost } from "@/lib/socialOnlyPosts";
+import { createPendingPipelineRun, runPipelineGeneration } from "@/lib/contentPipeline";
 
 export const maxDuration = 60;
 
@@ -20,8 +21,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "A topic is required." }, { status: 400 });
     }
 
+    // Standalone social posts had no landing page for anyone who wanted more
+    // than the caption — every topic now also gets a real companion blog
+    // article, going through the same Content Pipeline clinical review as a
+    // manually-triggered run. createPendingPipelineRun just writes the pending
+    // row; runPipelineGeneration is deliberately unawaited (same reasoning as
+    // the standalone /trigger route) so this request stays as fast as the
+    // caption generation alone. Best-effort: a failure here still lets the
+    // social captions through, just without a linked article.
+    let linkedPipelineRunId: string | undefined;
+    try {
+      const pendingRun = await createPendingPipelineRun(topic.trim(), "social_batch");
+      linkedPipelineRunId = pendingRun.run_id;
+      runPipelineGeneration(pendingRun).catch((err) => {
+        console.error("Background companion-article generation failed:", err);
+      });
+    } catch (err) {
+      console.error("Failed to trigger companion article for social post:", err);
+    }
+
     const captions = await writeSocialCaptions(topic.trim());
-    const post = await createSocialOnlyPost(topic.trim(), captions);
+    const post = await createSocialOnlyPost(topic.trim(), captions, linkedPipelineRunId);
 
     return NextResponse.json({ success: true, post });
   } catch (error: any) {

@@ -8,6 +8,7 @@ export type { ResearchBrief } from "./researchAgent";
 import { writeBlogDraft, writeTechnicalArticleDraft } from "./blogWriterAgent";
 import { linkRunToArticle, getArticleSlugForRun, setArticleOverride, publishBlogDraftToWebsite, cleanClinicalReviewFlags } from "./educationArticles";
 import { writeSocialCaptions, rewriteSocialCaption, rewriteCarouselSlides } from "./socialWriterAgent";
+import { syncLinkedSocialOnlyPosts } from "./socialOnlyPosts";
 import { syncPollTopicsIntoDynamicTopics } from "./pollTopicsSync";
 import { notifyTopicSubscribers } from "./topicNotify";
 import { blogArticles } from "@/data/articles";
@@ -1119,6 +1120,12 @@ export async function submitPipelineReview(
             blog_url: `/education/${category}/${slug}`,
             published_at: now
           };
+          // Best-effort — a standalone social batch may have auto-triggered this
+          // run as its companion article; fill in the real link for reviewers to
+          // use once it's live. Never block publishing on this.
+          syncLinkedSocialOnlyPosts(run.run_id, `${SITE_URL}${run.published_urls.blog_url}`, latestDraft.title).catch(
+            (err) => console.error("Failed to sync linked social-only posts:", err)
+          );
         } catch (err) {
           console.error("Failed to publish dynamic blog to website:", err);
         }

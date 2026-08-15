@@ -32,6 +32,7 @@ interface SocialPostsTabProps {
   onDeleteSocialOnlyPost: (postId: string) => void;
   onArchiveSocialOnlyPost: (postId: string) => void;
   onUnarchiveSocialOnlyPost: (postId: string) => void;
+  onGoToLinkedArticle: (pipelineRunId: string) => void;
   showArchived: boolean;
   onShowArchivedChange: (value: boolean) => void;
   isModalOpen: boolean;
@@ -75,6 +76,7 @@ export function SocialPostsTab({
   onDeleteSocialOnlyPost,
   onArchiveSocialOnlyPost,
   onUnarchiveSocialOnlyPost,
+  onGoToLinkedArticle,
   showArchived,
   onShowArchivedChange,
   isModalOpen,
@@ -158,6 +160,37 @@ export function SocialPostsTab({
               <div className="text-[10px] text-white/50 bg-dark-overlay-navy border border-white/10 rounded-lg px-3 py-2">
                 Archived {selectedPost.archived_at ? formatDateSafe(selectedPost.archived_at) : ""} — content is
                 read-only. Click "Restore to Active" to edit, regenerate, or repost it.
+              </div>
+            )}
+            {selectedPost.linkedArticle && (
+              <div className="text-[10px] bg-dark-overlay-navy border border-white/10 rounded-lg px-3 py-2.5 flex items-center justify-between gap-2 flex-wrap">
+                {selectedPost.linkedArticle.status === "published" ? (
+                  <>
+                    <span className="text-white/70">
+                      🔗 Companion article live: <span className="text-white font-medium">{selectedPost.linkedArticle.title}</span>.
+                      Paste this link into your Instagram bio / Facebook comment / LinkedIn first comment when you post.
+                    </span>
+                    <button
+                      onClick={() => onCopySocialOnly(selectedPost.linkedArticle!.url || "", "linked-article-url")}
+                      className="text-clinical-teal hover:underline cursor-pointer font-semibold shrink-0"
+                    >
+                      {copiedKey === "linked-article-url" ? "✓ Copied" : "📋 Copy Link"}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-white/70">
+                      📝 A companion article for this topic is drafted and awaiting clinical review before it can go
+                      live and be linked here.
+                    </span>
+                    <button
+                      onClick={() => onGoToLinkedArticle(selectedPost.linkedArticle!.pipelineRunId)}
+                      className="text-clinical-teal hover:underline cursor-pointer font-semibold shrink-0"
+                    >
+                      Review it →
+                    </button>
+                  </>
+                )}
               </div>
             )}
             <div className="space-y-4">
@@ -525,7 +558,8 @@ export function SocialPostsTab({
               />
               <p className="text-[11px] text-white/60 mt-1.5">
                 Generates an Instagram, Facebook, and LinkedIn post — each written for that platform's tone, length,
-                and hashtag conventions.
+                and hashtag conventions — plus a companion blog article on the same topic, sent for clinical review
+                in the Content Pipeline tab, so there's somewhere real to send anyone who wants more than the caption.
               </p>
             </div>
           ) : (
@@ -546,8 +580,8 @@ export function SocialPostsTab({
                 {batchProgress
                   ? `Generating ${batchProgress.done} of ${batchProgress.total}… each topic is a separate request, so this keeps working even if one topic is slow.`
                   : batchTopicCount > 0
-                    ? `Will generate ${batchTopicCount} full post${batchTopicCount === 1 ? "" : "s"} (Instagram, Facebook, LinkedIn, Story, Carousel, Reel script each), one at a time — this can take a few minutes.`
-                    : "Add one topic per line — a week's cadence is usually 3-4 topics."}
+                    ? `Will generate ${batchTopicCount} full post${batchTopicCount === 1 ? "" : "s"} (Instagram, Facebook, LinkedIn, Story, Carousel, Reel script each) plus a companion article per topic for clinical review, one at a time — this can take a few minutes.`
+                    : "Add one topic per line — a week's cadence is usually 3-4 topics. Each also gets a companion article sent for clinical review."}
               </p>
               {batchProgress && (
                 <div className="w-full bg-dark-overlay-navy border border-white/10 rounded-full h-1.5 mt-2 overflow-hidden">
