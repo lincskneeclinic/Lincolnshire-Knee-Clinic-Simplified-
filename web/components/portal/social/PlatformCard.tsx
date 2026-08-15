@@ -362,9 +362,12 @@ function computeBaseCropSize(sw: number, sh: number, targetAspect: number): { wi
   return { width: sw, height: sw / targetAspect };
 }
 
-// Replicates the live drag/zoom preview as real pixel cropping, so the
-// reposition is baked into the actual file (what gets downloaded or
-// right-click-saved) rather than only a CSS preview trick.
+// Replicates the live preview (object-fit: cover panned via object-position,
+// then uniformly scaled around its own center for zoom — see the img's style
+// below) as real pixel cropping, so the reposition is baked into the actual
+// file rather than only a CSS preview trick. Both the CSS transform and this
+// crop math scale width/height by the exact same factor, so neither can ever
+// distort the image's proportions.
 async function cropImageToBlob(
   src: string,
   targetAspect: number,
@@ -375,11 +378,15 @@ async function cropImageToBlob(
   const sw = img.naturalWidth;
   const sh = img.naturalHeight;
   const base = computeBaseCropSize(sw, sh, targetAspect);
+  const baseCropX = clamp((sw - base.width) * (position.x / 100), 0, Math.max(0, sw - base.width));
+  const baseCropY = clamp((sh - base.height) * (position.y / 100), 0, Math.max(0, sh - base.height));
+
   const cropWidth = base.width / zoom;
   const cropHeight = base.height / zoom;
-
-  const offsetX = clamp((sw - cropWidth) * (position.x / 100), 0, Math.max(0, sw - cropWidth));
-  const offsetY = clamp((sh - cropHeight) * (position.y / 100), 0, Math.max(0, sh - cropHeight));
+  // Zoom shrinks the crop window around its own center (matches CSS
+  // `transform: scale()` with the default center transform-origin).
+  const offsetX = clamp(baseCropX + (base.width - cropWidth) / 2, 0, Math.max(0, sw - cropWidth));
+  const offsetY = clamp(baseCropY + (base.height - cropHeight) / 2, 0, Math.max(0, sh - cropHeight));
 
   let outW = cropWidth;
   let outH = cropHeight;
@@ -406,11 +413,12 @@ async function cropImageToBlob(
 }
 
 // Drag-to-reposition plus zoom (same interaction as Facebook/Instagram cover
-// photo repositioning) for any image shown through a fixed-aspect crop. The
-// image is positioned with explicit pixel width/height/offset (not CSS
-// object-fit) so the on-screen preview is pixel-identical to what
-// cropImageToBlob later bakes into the saved file — a mismatch there was
-// exactly what made an earlier version look like repositioning "didn't save".
+// photo repositioning) for any image shown through a fixed-aspect crop.
+// Deliberately built on plain object-fit: cover (for pan) + a uniform CSS
+// scale() (for zoom) rather than custom width/height math — both are
+// inherently aspect-preserving, so the image can't come out stretched, and
+// cropImageToBlob mirrors the exact same two operations when baking the
+// final file.
 function RepositionableImage({
   src,
   alt,
@@ -430,8 +438,6 @@ function RepositionableImage({
 }) {
   const toast = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
-  const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
   const [position, setPosition] = useState({ x: 50, y: 50 });
   const [zoom, setZoom] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
@@ -440,34 +446,9 @@ function RepositionableImage({
   useEffect(() => {
     setPosition({ x: 50, y: 50 });
     setZoom(1);
-    setNaturalSize(null);
   }, [src]);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const el = containerRef.current;
-    const update = () => setContainerSize({ w: el.clientWidth, h: el.clientHeight });
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   const hasChanged = zoom !== 1 || position.x !== 50 || position.y !== 50;
-
-  // Base "cover" scale — the minimum zoom needed to fully fill the container
-  // with no gaps, matching plain object-fit: cover at zoom 1.
-  const baseScale =
-    naturalSize && containerSize.w > 0 && containerSize.h > 0
-      ? Math.max(containerSize.w / naturalSize.w, containerSize.h / naturalSize.h)
-      : 0;
-  const effectiveScale = baseScale * zoom;
-  const dispW = naturalSize ? naturalSize.w * effectiveScale : 0;
-  const dispH = naturalSize ? naturalSize.h * effectiveScale : 0;
-  const maxOffsetX = Math.max(0, dispW - containerSize.w);
-  const maxOffsetY = Math.max(0, dispH - containerSize.h);
-  const left = -(maxOffsetX * position.x) / 100;
-  const top = -(maxOffsetY * position.y) / 100;
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (disabled) return;
@@ -476,12 +457,16 @@ function RepositionableImage({
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!draggingRef.current) return;
+    if (!draggingRef.current || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
     const deltaX = e.clientX - draggingRef.current.startX;
     const deltaY = e.clientY - draggingRef.current.startY;
+    // Zoomed in shows a smaller slice of the source, so the same screen-pixel
+    // drag should move a smaller fraction of position% — finer control at
+    // higher zoom instead of the frame jumping around wildly.
+    const deltaPctX = (deltaX / rect.width) * 100 / zoom;
+    const deltaPctY = (deltaY / rect.height) * 100 / zoom;
     // Drag right -> reveal more of the image's left side (grab-the-photo metaphor).
-    const deltaPctX = maxOffsetX > 0 ? (deltaX / maxOffsetX) * 100 : 0;
-    const deltaPctY = maxOffsetY > 0 ? (deltaY / maxOffsetY) * 100 : 0;
     const newX = clamp(draggingRef.current.startPos.x - deltaPctX, 0, 100);
     const newY = clamp(draggingRef.current.startPos.y - deltaPctY, 0, 100);
     setPosition({ x: newX, y: newY });
@@ -521,6 +506,10 @@ function RepositionableImage({
     }
   };
 
+  // Buttons live inside the same pointer-capturing container, so a click
+  // there must not also register as a drag start on the container.
+  const stopForButton = (e: React.PointerEvent | React.MouseEvent) => e.stopPropagation();
+
   return (
     <div
       ref={containerRef}
@@ -534,24 +523,18 @@ function RepositionableImage({
         src={src}
         alt={alt}
         draggable={false}
-        onLoad={(e) => {
-          const el = e.currentTarget;
-          setNaturalSize({ w: el.naturalWidth, h: el.naturalHeight });
+        className={`absolute inset-0 w-full h-full object-cover select-none pointer-events-none ${imgClassName}`}
+        style={{
+          objectPosition: `${position.x}% ${position.y}%`,
+          transform: zoom !== 1 ? `scale(${zoom})` : undefined,
         }}
-        className={`absolute select-none pointer-events-none ${imgClassName}`}
-        style={
-          naturalSize && containerSize.w > 0
-            ? { width: dispW, height: dispH, left, top }
-            : // Before natural size/container measurements are ready, fall back
-              // to plain cover so there's no flash of an unpositioned image.
-              { inset: 0, width: "100%", height: "100%", objectFit: "cover" }
-        }
       />
       {!disabled && (
         <div className="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between gap-1.5 bg-deep-navy/90 backdrop-blur px-1.5 py-1 rounded-md border border-white/10">
           <div className="flex items-center gap-1">
             <button
               type="button"
+              onPointerDown={stopForButton}
               onClick={(e) => {
                 e.stopPropagation();
                 handleZoom(-ZOOM_STEP);
@@ -565,6 +548,7 @@ function RepositionableImage({
             <span className="text-[8px] text-white/50 font-mono w-7 text-center">{Math.round(zoom * 100)}%</span>
             <button
               type="button"
+              onPointerDown={stopForButton}
               onClick={(e) => {
                 e.stopPropagation();
                 handleZoom(ZOOM_STEP);
@@ -580,6 +564,7 @@ function RepositionableImage({
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
+                onPointerDown={stopForButton}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleReset();
@@ -592,6 +577,7 @@ function RepositionableImage({
               <span className="text-white/20">|</span>
               <button
                 type="button"
+                onPointerDown={stopForButton}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleSave();
