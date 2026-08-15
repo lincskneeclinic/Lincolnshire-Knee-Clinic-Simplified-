@@ -36,6 +36,9 @@ export interface SocialOnlyPost {
   };
   created_at: string;
   updated_at: string;
+  /** Posted content parked out of the active review list for future reuse — see archivePost/unarchivePost. */
+  archived?: boolean;
+  archived_at?: string;
 }
 
 const SOCIAL_ONLY_POSTS_KEY = "social-only-posts";
@@ -108,4 +111,24 @@ export async function deleteSocialOnlyPost(id: string): Promise<void> {
   const posts = await getStoreValue<Record<string, SocialOnlyPost>>(SOCIAL_ONLY_POSTS_KEY, {});
   delete posts[id];
   await setStoreValue(SOCIAL_ONLY_POSTS_KEY, posts);
+}
+
+// Distinct from delete — parks already-posted content out of the active
+// review list (so it stops competing with what still needs approving) while
+// keeping every caption/image/script intact for a future refresh-and-repost,
+// e.g. reusing an evergreen topic a year or two later.
+export async function archiveSocialOnlyPost(id: string): Promise<SocialOnlyPost | null> {
+  return updateSocialOnlyPost(id, (post) => ({
+    ...post,
+    archived: true,
+    archived_at: new Date().toISOString(),
+  }));
+}
+
+export async function unarchiveSocialOnlyPost(id: string): Promise<SocialOnlyPost | null> {
+  return updateSocialOnlyPost(id, (post) => ({
+    ...post,
+    archived: false,
+    archived_at: undefined,
+  }));
 }

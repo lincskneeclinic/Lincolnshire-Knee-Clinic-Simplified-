@@ -30,6 +30,10 @@ interface SocialPostsTabProps {
   onGenerateSocialImage: (postId: string, platform: PlatformKey, prompt: string, slideIndex?: number) => void;
   onAttachSocialVideo: (postId: string, url: string, source: "upload" | "ai-broll") => void;
   onDeleteSocialOnlyPost: (postId: string) => void;
+  onArchiveSocialOnlyPost: (postId: string) => void;
+  onUnarchiveSocialOnlyPost: (postId: string) => void;
+  showArchived: boolean;
+  onShowArchivedChange: (value: boolean) => void;
   isModalOpen: boolean;
   onModalOpenChange: (open: boolean) => void;
   newTopic: string;
@@ -69,6 +73,10 @@ export function SocialPostsTab({
   onGenerateSocialImage,
   onAttachSocialVideo,
   onDeleteSocialOnlyPost,
+  onArchiveSocialOnlyPost,
+  onUnarchiveSocialOnlyPost,
+  showArchived,
+  onShowArchivedChange,
   isModalOpen,
   onModalOpenChange,
   newTopic,
@@ -97,13 +105,24 @@ export function SocialPostsTab({
             </p>
           </div>
           {!selectedPost && (
-            <button
-              onClick={() => onModalOpenChange(true)}
-              className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-            >
-              <span>✨</span>
-              <span>New Social Post</span>
-            </button>
+            <div className="flex items-center gap-3 shrink-0">
+              <label className="flex items-center gap-1.5 text-[10px] text-white/60 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={showArchived}
+                  onChange={(e) => onShowArchivedChange(e.target.checked)}
+                  className="accent-clinical-teal"
+                />
+                Show archived
+              </label>
+              <button
+                onClick={() => onModalOpenChange(true)}
+                className="bg-clinical-teal hover:bg-clinical-teal-hover text-white text-xs px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>✨</span>
+                <span>New Social Post</span>
+              </button>
+            </div>
           )}
         </div>
 
@@ -118,8 +137,29 @@ export function SocialPostsTab({
               >
                 ← Back to List
               </button>
-              <h4 className="font-serif text-sm font-bold text-white">{selectedPost.topic}</h4>
+              <h4 className="font-serif text-sm font-bold text-white flex-1 text-center px-2">{selectedPost.topic}</h4>
+              {selectedPost.archived ? (
+                <button
+                  onClick={() => onUnarchiveSocialOnlyPost(selectedPost.id)}
+                  className="bg-clinical-teal/10 hover:bg-clinical-teal/20 text-clinical-teal border border-clinical-teal/40 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+                >
+                  ↩ Restore to Active
+                </button>
+              ) : (
+                <button
+                  onClick={() => onArchiveSocialOnlyPost(selectedPost.id)}
+                  className="bg-dark-overlay-navy hover:bg-white/5 text-white/80 border border-white/20 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+                >
+                  📦 Archive
+                </button>
+              )}
             </div>
+            {selectedPost.archived && (
+              <div className="text-[10px] text-white/50 bg-dark-overlay-navy border border-white/10 rounded-lg px-3 py-2">
+                Archived {selectedPost.archived_at ? formatDateSafe(selectedPost.archived_at) : ""} — content is
+                read-only. Click "Restore to Active" to edit, regenerate, or repost it.
+              </div>
+            )}
             <div className="space-y-4">
               {/* Sub-Tab Navigation for Standalone Social Posts */}
               <div className="flex border-b border-white/10 gap-2 overflow-x-auto pb-px">
@@ -148,7 +188,7 @@ export function SocialPostsTab({
                     borderColor=""
                     caption={selectedPost.instagram.caption}
                     status={selectedPost.instagram.status}
-                    isPublished={false}
+                    isPublished={!!selectedPost.archived}
                     attachedImageUrl={selectedPost.instagram.imageUrl}
                     onApprove={() => onApproveSocialCaption(selectedPost.id, "instagram")}
                     onSaveEdit={(newCaption) => onSaveSocialCaption(selectedPost.id, "instagram", newCaption)}
@@ -171,7 +211,7 @@ export function SocialPostsTab({
                     borderColor=""
                     caption={selectedPost.facebook.caption}
                     status={selectedPost.facebook.status}
-                    isPublished={false}
+                    isPublished={!!selectedPost.archived}
                     attachedImageUrl={selectedPost.facebook.imageUrl}
                     onApprove={() => onApproveSocialCaption(selectedPost.id, "facebook")}
                     onSaveEdit={(newCaption) => onSaveSocialCaption(selectedPost.id, "facebook", newCaption)}
@@ -194,7 +234,7 @@ export function SocialPostsTab({
                     borderColor=""
                     caption={selectedPost.linkedin.caption}
                     status={selectedPost.linkedin.status}
-                    isPublished={false}
+                    isPublished={!!selectedPost.archived}
                     attachedImageUrl={selectedPost.linkedin.imageUrl}
                     onApprove={() => onApproveSocialCaption(selectedPost.id, "linkedin")}
                     onSaveEdit={(newCaption) => onSaveSocialCaption(selectedPost.id, "linkedin", newCaption)}
@@ -220,7 +260,7 @@ export function SocialPostsTab({
                     borderColor=""
                     caption={selectedPost.instagramStory?.caption || `Check out our latest update about "${selectedPost.topic}"!`}
                     status={selectedPost.instagramStory?.status || "pending"}
-                    isPublished={false}
+                    isPublished={!!selectedPost.archived}
                     attachedImageUrl={selectedPost.instagramStory?.imageUrl}
                     onApprove={() => onApproveSocialCaption(selectedPost.id, "instagramStory")}
                     onSaveEdit={(newCaption) => onSaveSocialCaption(selectedPost.id, "instagramStory", newCaption)}
@@ -251,7 +291,7 @@ export function SocialPostsTab({
                     borderColor=""
                     caption={selectedPost.instagramCarousel?.caption || ""}
                     status={selectedPost.instagramCarousel?.status || "pending"}
-                    isPublished={false}
+                    isPublished={!!selectedPost.archived}
                     onApprove={() => onApproveSocialCaption(selectedPost.id, "instagramCarousel")}
                     onSaveEdit={(newCaption) => onSaveSocialCaption(selectedPost.id, "instagramCarousel", newCaption)}
                     onRequestRevision={() => onRequestSocialRevision(selectedPost.id, "instagramCarousel")}
@@ -295,7 +335,7 @@ export function SocialPostsTab({
                     borderColor=""
                     caption={selectedPost.instagramReel?.caption || ""}
                     status={selectedPost.instagramReel?.status || "pending"}
-                    isPublished={false}
+                    isPublished={!!selectedPost.archived}
                     onApprove={() => onApproveSocialCaption(selectedPost.id, "instagramReel")}
                     onSaveEdit={(newScript) => onSaveSocialCaption(selectedPost.id, "instagramReel", { script: newScript } as any)}
                     onRequestRevision={() => onRequestSocialRevision(selectedPost.id, "instagramReel")}
@@ -356,11 +396,19 @@ export function SocialPostsTab({
           </div>
         ) : loading ? (
           <div className="py-8 text-center text-white/60 text-xs">Loading social posts…</div>
-        ) : posts.length === 0 ? (
-          <PortalEmptyState message={'No social posts yet — click "New Social Post" to create one.'} />
+        ) : posts.filter((p) => !!p.archived === showArchived).length === 0 ? (
+          <PortalEmptyState
+            message={
+              showArchived
+                ? "No archived posts yet — archive a post you've already published to save it for a future refresh-and-repost."
+                : 'No social posts yet — click "New Social Post" to create one.'
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {posts.map((post) => {
+            {posts
+              .filter((p) => !!p.archived === showArchived)
+              .map((post) => {
               const allApproved =
                 post.instagram.status === "approved" &&
                 post.facebook.status === "approved" &&
@@ -374,23 +422,54 @@ export function SocialPostsTab({
                   <div className="flex items-center justify-between gap-2">
                     <span
                       className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                        allApproved ? "border-clinical-teal/40 text-clinical-teal" : "border-white/20 text-white/60"
+                        post.archived
+                          ? "border-white/20 text-white/50"
+                          : allApproved
+                            ? "border-clinical-teal/40 text-clinical-teal"
+                            : "border-white/20 text-white/60"
                       }`}
                     >
-                      {allApproved ? "✓ All Approved" : "Needs Review"}
+                      {post.archived ? "📦 Archived" : allApproved ? "✓ All Approved" : "Needs Review"}
                     </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteSocialOnlyPost(post.id);
-                      }}
-                      className="text-[10px] text-status-error/80 hover:text-status-error cursor-pointer"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {post.archived ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onUnarchiveSocialOnlyPost(post.id);
+                          }}
+                          className="text-[10px] text-clinical-teal hover:underline cursor-pointer font-medium"
+                        >
+                          ↩ Restore
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onArchiveSocialOnlyPost(post.id);
+                          }}
+                          className="text-[10px] text-white/60 hover:text-white cursor-pointer"
+                        >
+                          Archive
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteSocialOnlyPost(post.id);
+                        }}
+                        className="text-[10px] text-status-error/80 hover:text-status-error cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                   <h4 className="text-xs font-bold text-white leading-snug">{post.topic}</h4>
-                  <span className="text-[10px] text-white/40 font-mono block">{formatDateSafe(post.updated_at)}</span>
+                  <span className="text-[10px] text-white/40 font-mono block">
+                    {post.archived && post.archived_at
+                      ? `Archived ${formatDateSafe(post.archived_at)}`
+                      : formatDateSafe(post.updated_at)}
+                  </span>
                 </div>
               );
             })}

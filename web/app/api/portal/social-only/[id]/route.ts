@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
-import { getSocialOnlyPost, updateSocialOnlyPost, deleteSocialOnlyPost, SocialOnlyPost } from "@/lib/socialOnlyPosts";
+import {
+  getSocialOnlyPost,
+  updateSocialOnlyPost,
+  deleteSocialOnlyPost,
+  archiveSocialOnlyPost,
+  unarchiveSocialOnlyPost,
+  SocialOnlyPost,
+} from "@/lib/socialOnlyPosts";
 import { rewriteSocialCaption, rewriteCarouselSlides } from "@/lib/socialWriterAgent";
 
 export const maxDuration = 60;
@@ -30,6 +37,17 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
+
+    // Post-level actions — apply to the whole post, not one platform's caption.
+    if (body.action === "archive" || body.action === "unarchive") {
+      const updated =
+        body.action === "archive" ? await archiveSocialOnlyPost(id) : await unarchiveSocialOnlyPost(id);
+      if (!updated) {
+        return NextResponse.json({ success: false, error: "Post not found." }, { status: 404 });
+      }
+      return NextResponse.json({ success: true, post: updated });
+    }
+
     const platform: Platform | undefined = body.platform;
 
     if (!platform || !["instagram", "facebook", "linkedin", "instagramStory", "instagramCarousel", "instagramReel"].includes(platform)) {

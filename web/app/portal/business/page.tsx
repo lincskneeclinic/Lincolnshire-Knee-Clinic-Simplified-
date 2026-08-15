@@ -183,6 +183,7 @@ function BusinessDashboardPageInner() {
   const [socialOnlyBatchMode, setSocialOnlyBatchMode] = useState(false);
   const [newSocialOnlyBatchTopics, setNewSocialOnlyBatchTopics] = useState("");
   const [socialOnlyBatchProgress, setSocialOnlyBatchProgress] = useState<{ done: number; total: number } | null>(null);
+  const [showArchivedSocialOnly, setShowArchivedSocialOnly] = useState(false);
   const [generatingSocialImageKey, setGeneratingSocialImageKey] = useState<string | null>(null);
   const [isBackfillingFormats, setIsBackfillingFormats] = useState(false);
   const [socialOnlyCopiedKey, setSocialOnlyCopiedKey] = useState<string | null>(null);
@@ -1576,6 +1577,29 @@ function BusinessDashboardPageInner() {
     }
   };
 
+  // Archive keeps everything (captions, images, script) for a future
+  // refresh-and-repost — unlike Delete, which is permanent. patchSocialOnlyPost
+  // already updates socialOnlyPosts/selectedSocialOnlyPost from the response;
+  // archiving additionally clears the selection so the view returns to the list.
+  const handleArchiveSocialOnlyPost = async (postId: string) => {
+    try {
+      await patchSocialOnlyPost(postId, { action: "archive" });
+      setSelectedSocialOnlyPost(null);
+      toast.success('Archived — find it under "Show archived" whenever you\'re ready to refresh and repost it.');
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to archive the post.");
+    }
+  };
+
+  const handleUnarchiveSocialOnlyPost = async (postId: string) => {
+    try {
+      await patchSocialOnlyPost(postId, { action: "unarchive" });
+      toast.success("Restored to the active list.");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to restore the post.");
+    }
+  };
+
   const handleConfirmArticleVisibility = async (action: "remove" | "restore") => {
     if (!articlePendingRemoval) return;
     setIsUpdatingArticleVisibility(true);
@@ -2952,6 +2976,10 @@ function BusinessDashboardPageInner() {
                 onGenerateSocialImage={handleGenerateSocialImage}
                 onAttachSocialVideo={handleAttachSocialVideo}
                 onDeleteSocialOnlyPost={handleDeleteSocialOnlyPost}
+                onArchiveSocialOnlyPost={handleArchiveSocialOnlyPost}
+                onUnarchiveSocialOnlyPost={handleUnarchiveSocialOnlyPost}
+                showArchived={showArchivedSocialOnly}
+                onShowArchivedChange={setShowArchivedSocialOnly}
                 isModalOpen={isSocialOnlyModalOpen}
                 onModalOpenChange={setIsSocialOnlyModalOpen}
                 newTopic={newSocialOnlyTopic}
