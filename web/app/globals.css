@@ -36,6 +36,11 @@
 :root {
   --background: #ffffff;
   --foreground: #102A43; /* Primary Text */
+  /* Matches the exact font-family names @fontsource/inter and
+     @fontsource/source-serif-4 declare in their @font-face rules
+     (see app/layout.tsx for why these are self-hosted, not next/font/google). */
+  --font-inter: "Inter";
+  --font-serif: "Source Serif 4";
 }
 
 html {

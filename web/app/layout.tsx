@@ -1,32 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Source_Serif_4 } from "next/font/google";
+// Self-hosted via @fontsource instead of next/font/google — next/font/google
+// (via Turbopack) fetches font files from fonts.gstatic.com at build time,
+// which failed with 404s in Hostinger's build environment and broke every
+// deploy. @fontsource ships the actual font files as npm package assets, so
+// the build only ever needs npm registry access (already required to install
+// any dependency) and never reaches out to Google's font CDN at all.
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/inter/600.css";
+import "@fontsource/inter/700.css";
+import "@fontsource/source-serif-4/600.css";
+import "@fontsource/source-serif-4/700.css";
 import "./globals.css";
 import { LayoutShell } from "@/components/LayoutShell";
 import { SITE_URL } from "@/lib/site";
 import { clinicLocations } from "@/data/clinics";
-
-/**
- * Inter — primary sans-serif body font.
- * Excellent legibility at all sizes; widely used in healthcare UIs.
- * subsets: latin ensures only the characters needed are downloaded.
- */
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-});
-
-/**
- * Source Serif 4 — used for headings (h1, h2).
- * High legibility serif with strong stroke contrast; good for elderly readers.
- */
-const sourceSerif = Source_Serif_4({
-  subsets: ["latin"],
-  variable: "--font-serif",
-  display: "swap",
-  weight: ["600", "700"],
-});
 
 // Bounds how long a static page's cached HTML (and the CDN's copy of it) can
 // possibly stay stale after a deploy. Without this, Next.js's default for a
@@ -111,10 +99,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${inter.variable} ${sourceSerif.variable} h-full antialiased`}
-    >
+    <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-white text-text-primary font-sans overflow-x-hidden">
         <script
           type="application/ld+json"
