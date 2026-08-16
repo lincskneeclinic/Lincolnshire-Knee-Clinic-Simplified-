@@ -219,10 +219,19 @@ export async function publishBlogDraftToWebsite(run: any): Promise<string> {
   const technicalExcerpt = draft.article_excerpt || draft.excerpt || "";
   const technicalCleanBody = technicalBodyCheck;
 
-  const technicalFeaturedImage = (draft.article_suggested_images || []).find(
+  // The technical article always uses the same hero image as its paired blog
+  // post — product requirement, not just a fallback. Technical articles rarely
+  // get their own separately-generated image list filled in, so sourcing the
+  // hero from article_suggested_images (the previous behavior) meant almost
+  // every published technical article silently fell back to the clinic logo
+  // as its "hero image" instead.
+  const blogFeaturedImage = (draft.suggested_images || []).find(
     (img: any) => typeof img === "object" && img !== null && img.isFeatured
   ) as any;
-  const technicalImageUrl = technicalFeaturedImage?.url || (typeof draft.article_suggested_images?.[0] === "string" ? draft.article_suggested_images[0] : "") || "/brand/lkc-logo-k-transparent.png";
+  const blogImageUrl =
+    blogFeaturedImage?.url || (typeof draft.suggested_images?.[0] === "string" ? draft.suggested_images[0] : "");
+  const technicalImageUrl = blogImageUrl || "/brand/lkc-logo-k-transparent.png";
+  const technicalImageAlt = blogFeaturedImage?.label || draft.title || run.topic || technicalTitle;
 
   const technicalArticle: ArticleContent = {
     id: technicalSlug,
@@ -236,7 +245,7 @@ export async function publishBlogDraftToWebsite(run: any): Promise<string> {
     author: "Mr Ricardo J Pacheco",
     authorTitle: "Consultant Orthopedic Surgeon",
     image: technicalImageUrl,
-    imageAlt: technicalFeaturedImage?.label || technicalTitle,
+    imageAlt: technicalImageAlt,
     takeaways: [],
     sections: [],
     faqs: draft.article_faqs || [],
