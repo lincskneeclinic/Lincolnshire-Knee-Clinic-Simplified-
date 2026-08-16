@@ -66,8 +66,8 @@ function NavItem({
           collapsed ? "justify-center" : ""
         } ${
           isActive
-            ? "border-clinical-teal bg-clinical-teal/10 text-white"
-            : "border-transparent text-white/70 hover:bg-white/5 hover:text-white"
+            ? "border-clinical-teal bg-clinical-teal/10 text-portal-text"
+            : "border-transparent text-portal-text/70 hover:bg-portal-text/5 hover:text-portal-text"
         }`}
       >
         <span className="text-[15px] leading-none shrink-0">{tab.icon}</span>
@@ -84,7 +84,7 @@ function NavItem({
       {collapsed && tooltipPos && typeof document !== "undefined"
         ? createPortal(
             <span
-              className="pointer-events-none fixed -translate-y-1/2 whitespace-nowrap rounded-lg border border-clinical-teal/30 bg-dark-overlay-navy px-2.5 py-1.5 text-xs text-white shadow-xl z-[9999]"
+              className="pointer-events-none fixed -translate-y-1/2 whitespace-nowrap rounded-lg border border-clinical-teal/30 bg-portal-surface-alt px-2.5 py-1.5 text-xs text-portal-text shadow-xl z-[9999]"
               style={{ top: tooltipPos.top, left: tooltipPos.left }}
             >
               {tab.label}
@@ -113,12 +113,12 @@ function SidebarNavList({
       {navGroups.map((group, groupIdx) => (
         <div key={group.label || `root-${groupIdx}`}>
           {group.label && !collapsed && (
-            <p className="px-2.5 mb-1.5 text-[10px] uppercase tracking-wider text-white/40 font-bold">
+            <p className="px-2.5 mb-1.5 text-[10px] uppercase tracking-wider text-portal-text/40 font-bold">
               {group.label}
             </p>
           )}
           {group.label && collapsed && groupIdx > 0 && (
-            <div className="mx-2 mb-2 border-t border-white/10" aria-hidden="true" />
+            <div className="mx-2 mb-2 border-t border-portal-border/10" aria-hidden="true" />
           )}
           <div className="space-y-0.5">
             {group.tabs.map((tab) => (
@@ -164,24 +164,24 @@ export function PortalSidebar({ navGroups, activeTab, onNavTabClick, mobileOpen,
     <>
       {/* Desktop / tablet: persistent column */}
       <aside
-        className={`hidden md:flex md:flex-col sticky top-0 h-screen shrink-0 border-r border-white/10 bg-primary-navy transition-[width] duration-200 z-40 ${
+        className={`hidden md:flex md:flex-col sticky top-0 h-screen shrink-0 border-r border-portal-border/10 bg-portal-surface transition-[width] duration-200 z-40 ${
           collapsed ? "w-16" : "w-60"
         }`}
       >
         <div className={`flex items-center py-3.5 ${collapsed ? "justify-center px-2" : "justify-between px-3.5"}`}>
           {!collapsed && (
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 bg-dark-overlay-navy border border-clinical-teal/30 rounded-lg flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 bg-portal-surface-alt border border-clinical-teal/30 rounded-lg flex items-center justify-center shrink-0">
                 <img src="/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" className="w-5 h-5 object-contain" />
               </div>
-              <span className="text-xs font-bold text-white truncate">Practice Intelligence</span>
+              <span className="text-xs font-bold text-portal-text truncate">Practice Intelligence</span>
             </div>
           )}
           <button
             type="button"
             onClick={() => setCollapsed((value) => !value)}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="w-7 h-7 shrink-0 rounded-lg border border-white/10 text-white/60 hover:text-white hover:bg-white/5 flex items-center justify-center text-xs cursor-pointer"
+            className="w-7 h-7 shrink-0 rounded-lg border border-portal-border/10 text-portal-text/60 hover:text-portal-text hover:bg-portal-text/5 flex items-center justify-center text-xs cursor-pointer"
           >
             {collapsed ? "»" : "«"}
           </button>
@@ -197,19 +197,19 @@ export function PortalSidebar({ navGroups, activeTab, onNavTabClick, mobileOpen,
             onClick={onMobileClose}
             aria-hidden="true"
           />
-          <div className="absolute left-0 top-0 bottom-0 w-72 max-w-[80vw] bg-primary-navy border-r border-white/10 shadow-2xl flex flex-col">
-            <div className="flex items-center justify-between px-3.5 py-3.5 border-b border-white/10">
+          <div className="absolute left-0 top-0 bottom-0 w-72 max-w-[80vw] bg-portal-surface border-r border-portal-border/10 shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between px-3.5 py-3.5 border-b border-portal-border/10">
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 bg-dark-overlay-navy border border-clinical-teal/30 rounded-lg flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 bg-portal-surface-alt border border-clinical-teal/30 rounded-lg flex items-center justify-center shrink-0">
                   <img src="/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" className="w-5 h-5 object-contain" />
                 </div>
-                <span className="text-xs font-bold text-white truncate">Practice Intelligence</span>
+                <span className="text-xs font-bold text-portal-text truncate">Practice Intelligence</span>
               </div>
               <button
                 type="button"
                 onClick={onMobileClose}
                 aria-label="Close navigation"
-                className="w-7 h-7 shrink-0 rounded-lg border border-white/10 text-white/60 hover:text-white hover:bg-white/5 flex items-center justify-center text-sm cursor-pointer"
+                className="w-7 h-7 shrink-0 rounded-lg border border-portal-border/10 text-portal-text/60 hover:text-portal-text hover:bg-portal-text/5 flex items-center justify-center text-sm cursor-pointer"
               >
                 ✕
               </button>

@@ -14,7 +14,7 @@ const PADDING_CLASSES: Record<NonNullable<PortalCardProps["padding"]>, string> =
 
 export function PortalCard({ children, className = "", padding = "lg" }: PortalCardProps) {
   return (
-    <div className={`bg-primary-navy border border-white/10 rounded-2xl shadow-lg ${PADDING_CLASSES[padding]} ${className}`}>
+    <div className={`bg-portal-surface border border-portal-border/10 rounded-2xl shadow-lg ${PADDING_CLASSES[padding]} ${className}`}>
       {children}
     </div>
   );

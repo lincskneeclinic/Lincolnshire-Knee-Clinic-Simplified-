@@ -30,6 +30,35 @@
   /* Fonts */
   --font-serif: var(--font-serif), Georgia, serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  /* Business Portal theme tokens — dark values here match the portal's
+     original hardcoded palette exactly (deep-navy/primary-navy/dark-overlay-navy/
+     white), so nothing changes visually until [data-portal-theme="light"] is set.
+     Components use these instead of the literal color names so the same
+     markup renders correctly in both modes. */
+  --color-portal-bg: #082F49;
+  --color-portal-surface: #003B5C;
+  --color-portal-surface-alt: #0B2D4D;
+  --color-portal-text: #FFFFFF;
+  --color-portal-border: #FFFFFF;
+  /* Small teal text (badges, values) needs a darker shade in light mode —
+     brand teal only hits ~2.6:1 contrast on a white card, well under WCAG AA. */
+  --color-portal-accent-text: #00AFC8;
+  /* Same problem for the pale error-toast red, which assumes a dark card. */
+  --color-portal-error-text: #FCA5A5;
+}
+
+/* Light mode override for the business portal — reuses the site's existing
+   light clinical palette (soft-blue/pale-clinical-blue/text-main/status-info)
+   rather than inventing new colors, so it stays on-brand with the public site. */
+[data-portal-theme="light"] {
+  --color-portal-bg: #F3FAFC;
+  --color-portal-surface: #FFFFFF;
+  --color-portal-surface-alt: #EAF6FA;
+  --color-portal-text: #102A43;
+  --color-portal-border: #0B2D4D;
+  --color-portal-accent-text: #0B5E7A;
+  --color-portal-error-text: #B42318;
 }
 
 /* Base resets & styles */

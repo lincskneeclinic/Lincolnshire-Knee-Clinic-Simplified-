@@ -96,15 +96,15 @@ export function DashboardFeedbackProvider({ children }: { children: React.ReactN
             key={t.id}
             className={`pointer-events-auto rounded-xl border px-4 py-3 text-xs font-semibold shadow-2xl backdrop-blur animate-fadeIn flex items-start gap-2 ${
               t.kind === "success"
-                ? "bg-primary-navy border-clinical-teal/40 text-clinical-teal"
-                : "bg-primary-navy border-red-500/40 text-red-300"
+                ? "bg-portal-surface border-clinical-teal/40 text-portal-accent-text"
+                : "bg-portal-surface border-red-500/40 text-portal-error-text"
             }`}
           >
             <span className="shrink-0">{t.kind === "success" ? "✓" : "⚠"}</span>
             <span className="flex-1 leading-relaxed">{t.message}</span>
             <button
               onClick={() => dismissToast(t.id)}
-              className="text-white/40 hover:text-white/80 cursor-pointer shrink-0"
+              className="text-portal-text/40 hover:text-portal-text/80 cursor-pointer shrink-0"
               aria-label="Dismiss"
             >
               ✕
@@ -115,16 +115,16 @@ export function DashboardFeedbackProvider({ children }: { children: React.ReactN
 
       {/* Confirm modal */}
       {confirmState && (
-        <div className="fixed inset-0 z-[110] bg-deep-navy/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-primary-navy border border-white/10 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-5">
-            <p className="text-sm text-white leading-relaxed">{confirmState.message}</p>
+        <div className="fixed inset-0 z-[110] bg-portal-bg/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-portal-surface border border-portal-border/10 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-5">
+            <p className="text-sm text-portal-text leading-relaxed">{confirmState.message}</p>
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => {
                   confirmState.resolve(false);
                   setConfirmState(null);
                 }}
-                className="border border-white/20 text-white/80 hover:bg-white/5 text-xs font-semibold px-4 py-2 rounded-xl transition-colors cursor-pointer"
+                className="border border-portal-border/20 text-portal-text/80 hover:bg-portal-text/5 text-xs font-semibold px-4 py-2 rounded-xl transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -148,9 +148,9 @@ export function DashboardFeedbackProvider({ children }: { children: React.ReactN
 
       {/* Prompt modal */}
       {promptState && (
-        <div className="fixed inset-0 z-[110] bg-deep-navy/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-primary-navy border border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <p className="text-sm text-white leading-relaxed">{promptState.message}</p>
+        <div className="fixed inset-0 z-[110] bg-portal-bg/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-portal-surface border border-portal-border/10 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <p className="text-sm text-portal-text leading-relaxed">{promptState.message}</p>
             {promptState.multiline ? (
               <textarea
                 autoFocus
@@ -158,7 +158,7 @@ export function DashboardFeedbackProvider({ children }: { children: React.ReactN
                 onChange={(e) => setPromptValue(e.target.value)}
                 placeholder={promptState.placeholder}
                 rows={4}
-                className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-lg p-3 text-xs focus:border-clinical-teal focus:outline-none resize-none"
+                className="w-full bg-portal-surface-alt border border-portal-border/20 text-portal-text rounded-lg p-3 text-xs focus:border-clinical-teal focus:outline-none resize-none"
               />
             ) : (
               <input
@@ -167,7 +167,7 @@ export function DashboardFeedbackProvider({ children }: { children: React.ReactN
                 value={promptValue}
                 onChange={(e) => setPromptValue(e.target.value)}
                 placeholder={promptState.placeholder}
-                className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                className="w-full bg-portal-surface-alt border border-portal-border/20 text-portal-text rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     promptState.resolve(promptValue || null);
@@ -182,7 +182,7 @@ export function DashboardFeedbackProvider({ children }: { children: React.ReactN
                   promptState.resolve(null);
                   setPromptState(null);
                 }}
-                className="border border-white/20 text-white/80 hover:bg-white/5 text-xs font-semibold px-4 py-2 rounded-xl transition-colors cursor-pointer"
+                className="border border-portal-border/20 text-portal-text/80 hover:bg-portal-text/5 text-xs font-semibold px-4 py-2 rounded-xl transition-colors cursor-pointer"
               >
                 Cancel
               </button>

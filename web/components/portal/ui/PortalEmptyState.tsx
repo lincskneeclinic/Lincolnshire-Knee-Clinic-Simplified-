@@ -7,7 +7,7 @@ interface PortalEmptyStateProps {
 
 export function PortalEmptyState({ message, className = "" }: PortalEmptyStateProps) {
   return (
-    <div className={`text-center text-white/40 text-xs py-12 border border-dashed border-white/10 rounded-xl ${className}`}>
+    <div className={`text-center text-portal-text/40 text-xs py-12 border border-dashed border-portal-border/10 rounded-xl ${className}`}>
       {message}
     </div>
   );

@@ -8,6 +8,7 @@ import { ARTICLE_CATEGORIES } from "@/lib/articleCategories";
 import { SocialOnlyPost } from "@/lib/socialOnlyPosts";
 import { markdownToEmailHtml } from "@/lib/newsletterMarkdown";
 import { DashboardFeedbackProvider, useToast, useConfirm, usePrompt } from "@/components/portal/DashboardFeedback";
+import { PortalThemeProvider, usePortalTheme } from "@/components/portal/PortalThemeProvider";
 import { PortalSidebar } from "@/components/portal/PortalSidebar";
 import { CommunityReportsTab, CommunityReport } from "@/components/portal/community/CommunityReportsTab";
 import { OverviewTab, NeedsAttentionItem } from "@/components/portal/overview/OverviewTab";
@@ -28,9 +29,11 @@ import { SITE_URL } from "@/lib/site";
 
 export default function BusinessDashboardPage() {
   return (
-    <DashboardFeedbackProvider>
-      <BusinessDashboardPageInner />
-    </DashboardFeedbackProvider>
+    <PortalThemeProvider>
+      <DashboardFeedbackProvider>
+        <BusinessDashboardPageInner />
+      </DashboardFeedbackProvider>
+    </PortalThemeProvider>
   );
 }
 
@@ -38,6 +41,7 @@ function BusinessDashboardPageInner() {
   const toast = useToast();
   const confirmAction = useConfirm();
   const promptAction = usePrompt();
+  const { theme, toggleTheme } = usePortalTheme();
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "newsletter" | "newsletterCreator" | "pipeline" | "clinicalReview" | "community" | "educationHub" | "socialOnly">("overview");
   const [statsData, setStatsData] = useState<any>(null);
@@ -2683,8 +2687,21 @@ function BusinessDashboardPageInner() {
     }
   };
 
+  // Light/dark is currently only wired up for the shell (sidebar, header) and
+  // the Overview tab — other tabs haven't been converted to theme tokens yet,
+  // so they're pinned dark regardless of the toggle to avoid a half-themed
+  // look (light page chrome around still-hardcoded-dark tab content).
+  const shellTheme = activeTab === "overview" ? theme : "dark";
+
+  useEffect(() => {
+    document.body.setAttribute("data-portal-theme", shellTheme);
+    return () => {
+      document.body.removeAttribute("data-portal-theme");
+    };
+  }, [shellTheme]);
+
   return (
-    <div className="min-h-screen bg-deep-navy text-white/80 font-sans flex flex-col md:flex-row">
+    <div data-portal-theme={shellTheme} className="min-h-screen bg-portal-bg text-portal-text/80 font-sans flex flex-col md:flex-row">
       <PortalSidebar
         navGroups={navGroups}
         activeTab={activeTab}
@@ -2694,7 +2711,7 @@ function BusinessDashboardPageInner() {
       />
       <div className="flex-1 min-w-0 flex flex-col">
       {/* Top Header */}
-      <header className="bg-primary-navy border-b border-white/10 sticky top-0 z-30 shadow-lg">
+      <header className="bg-portal-surface border-b border-portal-border/10 sticky top-0 z-30 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-3.5">
           {/* Mobile Header (below md) */}
           <div className="flex md:hidden flex-col gap-2.5">
@@ -2703,23 +2720,23 @@ function BusinessDashboardPageInner() {
                 type="button"
                 onClick={() => setIsMobileNavOpen(true)}
                 aria-label="Open navigation"
-                className="w-10 h-10 bg-dark-overlay-navy border border-white/10 rounded-xl flex items-center justify-center shrink-0 text-white cursor-pointer"
+                className="w-10 h-10 bg-portal-surface-alt border border-portal-border/10 rounded-xl flex items-center justify-center shrink-0 text-portal-text cursor-pointer"
               >
                 ☰
               </button>
-              <div className="w-10 h-10 bg-dark-overlay-navy border border-clinical-teal/30 rounded-xl flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 bg-portal-surface-alt border border-clinical-teal/30 rounded-xl flex items-center justify-center shrink-0">
                 <img src="/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" className="w-7 h-7 object-contain" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center flex-wrap gap-1.5">
-                  <h1 className="font-serif text-base font-bold text-white tracking-tight leading-tight">
+                  <h1 className="font-serif text-base font-bold text-portal-text tracking-tight leading-tight">
                     Lincolnshire Knee Clinic
                   </h1>
-                  <span className="bg-dark-overlay-navy border border-clinical-teal/30 text-clinical-teal text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0">
+                  <span className="bg-portal-surface-alt border border-clinical-teal/30 text-portal-accent-text text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0">
                     Practice Intelligence
                   </span>
                 </div>
-                <p className="text-xs text-white/60 leading-snug mt-0.5">
+                <p className="text-xs text-portal-text/60 leading-snug mt-0.5">
                   Visitor Engagement, Event Telemetry &amp; Content Automation Pipeline
                 </p>
               </div>
@@ -2728,21 +2745,28 @@ function BusinessDashboardPageInner() {
             <div className="grid grid-cols-2 gap-2">
               <Link
                 href="/"
-                className="bg-dark-overlay-navy hover:bg-white/5 border border-clinical-teal/30 text-clinical-teal text-[11px] py-1.5 px-2 rounded-lg transition-colors inline-flex items-center justify-center gap-1"
+                className="bg-portal-surface-alt hover:bg-portal-text/5 border border-clinical-teal/30 text-portal-accent-text text-[11px] py-1.5 px-2 rounded-lg transition-colors inline-flex items-center justify-center gap-1"
               >
                 ← Return to Website
               </Link>
               <button
                 type="button"
                 onClick={() => setIsAdminPasswordOpen((value) => !value)}
-                className="bg-dark-overlay-navy hover:bg-white/5 border border-white/10 text-white/70 text-[11px] py-1.5 px-2 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer"
+                className="bg-portal-surface-alt hover:bg-portal-text/5 border border-portal-border/10 text-portal-text/70 text-[11px] py-1.5 px-2 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer"
               >
                 Change Password
               </button>
               <button
                 type="button"
+                onClick={toggleTheme}
+                className="bg-portal-surface-alt hover:bg-portal-text/5 border border-portal-border/10 text-portal-text/70 text-[11px] py-1.5 px-2 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer"
+              >
+                {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
+              </button>
+              <button
+                type="button"
                 onClick={handleAdminLogout}
-                className="col-span-2 bg-dark-overlay-navy hover:bg-white/5 border border-white/10 text-white/70 text-[11px] py-1.5 px-2 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer"
+                className="bg-portal-surface-alt hover:bg-portal-text/5 border border-portal-border/10 text-portal-text/70 text-[11px] py-1.5 px-2 rounded-lg inline-flex items-center justify-center gap-1 cursor-pointer"
               >
                 Sign Out
               </button>
@@ -2752,42 +2776,51 @@ function BusinessDashboardPageInner() {
           {/* Desktop/Tablet Header (md and up) — unchanged */}
           <div className="hidden md:flex md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-dark-overlay-navy border border-clinical-teal/30 rounded-xl flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 bg-portal-surface-alt border border-clinical-teal/30 rounded-xl flex items-center justify-center shrink-0">
                 <img src="/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" className="w-7 h-7 object-contain" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="font-serif text-base sm:text-lg font-bold text-white tracking-tight">
+                  <h1 className="font-serif text-base sm:text-lg font-bold text-portal-text tracking-tight">
                     Lincolnshire Knee Clinic
                   </h1>
-                  <span className="bg-dark-overlay-navy border border-clinical-teal/30 text-clinical-teal text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                  <span className="bg-portal-surface-alt border border-clinical-teal/30 text-portal-accent-text text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
                     Practice Intelligence
                   </span>
                 </div>
-                <p className="text-xs text-white/60">
+                <p className="text-xs text-portal-text/60">
                   Visitor Engagement, Event Telemetry &amp; Content Automation Pipeline
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                className="bg-portal-surface-alt hover:bg-portal-text/5 border border-portal-border/10 text-portal-text/70 text-xs py-1.5 px-3 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+              >
+                {theme === "dark" ? "🌙" : "☀️"}
+              </button>
               <Link
                 href="/"
-                className="bg-dark-overlay-navy hover:bg-white/5 border border-clinical-teal/30 text-clinical-teal text-xs py-1.5 px-3.5 rounded-xl transition-colors inline-flex items-center gap-1.5"
+                className="bg-portal-surface-alt hover:bg-portal-text/5 border border-clinical-teal/30 text-portal-accent-text text-xs py-1.5 px-3.5 rounded-xl transition-colors inline-flex items-center gap-1.5"
               >
                 ← Return to Website
               </Link>
               <button
                 type="button"
                 onClick={() => setIsAdminPasswordOpen((value) => !value)}
-                className="bg-dark-overlay-navy hover:bg-white/5 border border-white/10 text-white/70 text-xs py-1.5 px-3 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+                className="bg-portal-surface-alt hover:bg-portal-text/5 border border-portal-border/10 text-portal-text/70 text-xs py-1.5 px-3 rounded-xl inline-flex items-center gap-1 cursor-pointer"
               >
                 Change Password
               </button>
               <button
                 type="button"
                 onClick={handleAdminLogout}
-                className="bg-dark-overlay-navy hover:bg-white/5 border border-white/10 text-white/70 text-xs py-1.5 px-3 rounded-xl inline-flex items-center gap-1 cursor-pointer"
+                className="bg-portal-surface-alt hover:bg-portal-text/5 border border-portal-border/10 text-portal-text/70 text-xs py-1.5 px-3 rounded-xl inline-flex items-center gap-1 cursor-pointer"
               >
                 Sign Out
               </button>
@@ -2797,7 +2830,7 @@ function BusinessDashboardPageInner() {
           {isAdminPasswordOpen && (
             <form
               onSubmit={handleAdminPasswordChange}
-              className="mt-3 grid gap-2 rounded-xl border border-white/10 bg-deep-navy/70 p-3 md:grid-cols-[1fr_1fr_auto]"
+              className="mt-3 grid gap-2 rounded-xl border border-portal-border/10 bg-portal-bg/70 p-3 md:grid-cols-[1fr_1fr_auto]"
             >
               <input
                 type="password"
@@ -2806,7 +2839,7 @@ function BusinessDashboardPageInner() {
                 placeholder="New password"
                 value={adminPassword}
                 onChange={(event) => setAdminPassword(event.target.value)}
-                className="rounded-lg border border-white/10 bg-primary-navy px-3 py-2 text-xs text-white placeholder:text-white/40 focus:border-clinical-teal focus:outline-none"
+                className="rounded-lg border border-portal-border/10 bg-portal-surface px-3 py-2 text-xs text-portal-text placeholder:text-portal-text/40 focus:border-clinical-teal focus:outline-none"
               />
               <input
                 type="password"
@@ -2815,7 +2848,7 @@ function BusinessDashboardPageInner() {
                 placeholder="Confirm password"
                 value={adminPasswordConfirm}
                 onChange={(event) => setAdminPasswordConfirm(event.target.value)}
-                className="rounded-lg border border-white/10 bg-primary-navy px-3 py-2 text-xs text-white placeholder:text-white/40 focus:border-clinical-teal focus:outline-none"
+                className="rounded-lg border border-portal-border/10 bg-portal-surface px-3 py-2 text-xs text-portal-text placeholder:text-portal-text/40 focus:border-clinical-teal focus:outline-none"
               />
               <button
                 type="submit"
@@ -2825,7 +2858,7 @@ function BusinessDashboardPageInner() {
                 {adminPasswordSaving ? "Saving..." : "Save Password"}
               </button>
               {(adminPasswordMessage || adminPasswordError) && (
-                <p className={`text-xs md:col-span-3 ${adminPasswordError ? "text-status-error" : "text-clinical-teal"}`}>
+                <p className={`text-xs md:col-span-3 ${adminPasswordError ? "text-status-error" : "text-portal-accent-text"}`}>
                   {adminPasswordError || adminPasswordMessage}
                 </p>
               )}
@@ -2836,16 +2869,16 @@ function BusinessDashboardPageInner() {
 
       {/* Action Toast Feedback */}
       {actionFeedback && (
-        <div className="fixed top-20 right-6 z-50 bg-primary-navy border border-clinical-teal text-clinical-teal px-4 py-3 rounded-xl shadow-2xl text-xs font-normal animate-bounce">
+        <div className="fixed top-20 right-6 z-50 bg-portal-surface border border-clinical-teal text-portal-accent-text px-4 py-3 rounded-xl shadow-2xl text-xs font-normal animate-bounce">
           {actionFeedback}
         </div>
       )}
 
       {actionError && (
-        <div className="fixed top-20 right-6 z-50 bg-primary-navy border border-status-error text-status-error px-4 py-3 rounded-xl shadow-2xl text-xs font-normal flex items-center gap-2 max-w-sm animate-fadeIn">
+        <div className="fixed top-20 right-6 z-50 bg-portal-surface border border-status-error text-status-error px-4 py-3 rounded-xl shadow-2xl text-xs font-normal flex items-center gap-2 max-w-sm animate-fadeIn">
           <span>⚠️</span>
           <div className="flex-1">{actionError}</div>
-          <button onClick={() => setActionError(null)} className="text-white/60 hover:text-white cursor-pointer ml-2">✕</button>
+          <button onClick={() => setActionError(null)} className="text-portal-text/60 hover:text-portal-text cursor-pointer ml-2">✕</button>
         </div>
       )}
 
@@ -2854,7 +2887,7 @@ function BusinessDashboardPageInner() {
         {loading ? (
           <div className="py-20 text-center space-y-4">
             <div className="w-12 h-12 border-4 border-clinical-teal border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-white/60 text-sm">Loading telemetry metrics...</p>
+            <p className="text-portal-text/60 text-sm">Loading telemetry metrics...</p>
           </div>
         ) : (
           <>
