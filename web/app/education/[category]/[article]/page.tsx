@@ -24,41 +24,6 @@ function formatDateSafe(value: string): string {
     : parsed.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-function isDiagram(caption: string): boolean {
-  if (!caption) return false;
-  const lower = caption.toLowerCase();
-  
-  // Exclude common false positives where the text describes a consultation photo or patient/surgeon photo
-  if (
-    lower.includes("photo") || 
-    lower.includes("patient") || 
-    lower.includes("surgeon") || 
-    lower.includes("doctor") || 
-    lower.includes("consultation") || 
-    lower.includes("visit") || 
-    lower.includes("therapist") || 
-    lower.includes("exercises") || 
-    lower.includes("rehabilitation") ||
-    lower.includes("clench") ||
-    lower.includes("slide") ||
-    lower.includes("raise") ||
-    lower.includes("squat") ||
-    lower.includes("curl")
-  ) {
-    return false;
-  }
-  
-  // Must be a schematic/diagram/x-ray/mri
-  return lower.includes("components") || 
-         lower.includes("x-ray") || 
-         lower.includes("mri") || 
-         lower.includes("anatomical changes") || 
-         lower.includes("anatomical view") ||
-         lower.includes("schematic") ||
-         lower.includes("pathway") ||
-         lower.includes("diagram");
-}
-
 // Articles can be removed from the Education Hub via the business dashboard without a
 // redeploy — this page re-checks the removed-article list every `revalidate` seconds
 // (ISR) instead of being purely static forever, so a removal actually takes effect.
@@ -438,14 +403,9 @@ export default async function ArticlePage({ params }: PageProps) {
                     <figure className="my-8 rounded-2xl overflow-hidden border border-border-clinical/30 shadow-md bg-pale-clinical-blue/10">
                       <img
                         src={section.inlineImage}
-                        alt={section.heading || data.title}
+                        alt={section.inlineImageCaption || section.heading || data.title}
                         className="w-full h-auto object-contain max-h-[380px] bg-white"
                       />
-                      {section.inlineImageCaption && isDiagram(section.inlineImageCaption) && (
-                        <figcaption className="text-center text-xs text-text-muted italic p-3 bg-white/90 border-t border-border-clinical/20 font-medium">
-                          {section.inlineImageCaption}
-                        </figcaption>
-                      )}
                     </figure>
                   )}
                 </div>
@@ -593,11 +553,6 @@ function UpdatedArticleBody({ override }: { override: ArticleOverride }) {
             img: ({ src, alt }) => (
               <figure className="my-8 rounded-2xl overflow-hidden border border-border-clinical/30 shadow-md bg-pale-clinical-blue/10">
                 <img src={src || ""} alt={alt || ""} className="w-full h-auto object-contain max-h-[380px] bg-white" />
-                {alt && isDiagram(alt) && (
-                  <figcaption className="text-center text-xs text-text-muted italic p-3 bg-white/90 border-t border-border-clinical/20 font-medium">
-                    {alt}
-                  </figcaption>
-                )}
               </figure>
             ),
           }}

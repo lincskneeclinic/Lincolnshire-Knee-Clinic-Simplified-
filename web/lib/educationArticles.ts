@@ -190,7 +190,9 @@ export async function publishBlogDraftToWebsite(run: any): Promise<string> {
     throw new Error("No blog draft found in the run to publish");
   }
 
-  const technicalBodyCheck = cleanClinicalReviewFlags(draft.article_body_markdown || draft.article_body || "");
+  const technicalBodyCheck = stripUnresolvedImagePlaceholders(
+    cleanClinicalReviewFlags(draft.article_body_markdown || draft.article_body || "")
+  );
   if (technicalBodyCheck.trim().length < MIN_ARTICLE_BODY_LENGTH) {
     throw new Error(
       "The technical article's content is missing or too short to publish (this usually means generation failed silently or the draft lost its article content). Go to the article's editor, regenerate or rewrite the technical article body, then try publishing again."
@@ -258,7 +260,7 @@ export async function publishBlogDraftToWebsite(run: any): Promise<string> {
   await saveDynamicArticle(technicalSlug, technicalArticle);
 
   // 2. Format Layman Blog body and append link to technical article
-  const cleanBody = cleanClinicalReviewFlags(draft.body_markdown || draft.body || "");
+  const cleanBody = stripUnresolvedImagePlaceholders(cleanClinicalReviewFlags(draft.body_markdown || draft.body || ""));
   const readMoreBlock = `\n\n---\n\n### 📖 Deep Dive & Scientific Evidence\nIf you want to know more about the clinical evidence, surgical techniques, and research on this topic, read our in-depth, technical article: **[${technicalTitle}](/education/${category}/${technicalSlug})** (12-15 min read).`;
   const blogBodyWithLink = `${cleanBody}${readMoreBlock}`;
 
@@ -298,5 +300,14 @@ export async function publishBlogDraftToWebsite(run: any): Promise<string> {
 export function cleanClinicalReviewFlags(text: string): string {
   // Removes any line containing [NEEDS CLINICAL REVIEW] (gi handles global, case-insensitive)
   return text.replace(/\[NEEDS CLINICAL REVIEW[^\n\r]*/gi, "").trim();
+}
+
+// The AI writer always inserts [FEATURED IMAGE PLACEHOLDER: ...] / [IMAGE
+// PLACEHOLDER: ...] markers on their own line, meant to be replaced with a
+// real ![alt](url) image during review. Any left unresolved would otherwise
+// render as literal visible text on the live page (exactly what happened on
+// a published article) — strip the whole line rather than publish it as-is.
+export function stripUnresolvedImagePlaceholders(text: string): string {
+  return text.replace(/^[ \t]*\[(?:FEATURED )?IMAGE PLACEHOLDER:[^\]]*\][ \t]*\n?/gim, "").trim();
 }
 
