@@ -372,3 +372,50 @@ BODY:
   }
 }
 
+// Surgical single-passage edit: a reviewer highlights one paragraph in the
+// blog/article editor, writes an instruction (often just the clinical review
+// flag's own wording), and gets back a replacement for only that passage —
+// the caller splices it back into the full body at the same position. This
+// exists specifically so acting on a "[NEEDS CLINICAL REVIEW]" note doesn't
+// require a full-document regeneration (writeBlogDraft/writeTechnicalArticleDraft
+// with revisionNotes) when the fix is really one paragraph.
+export async function reviseTextSelection(
+  topic: string,
+  documentTitle: string,
+  selectedText: string,
+  instruction: string
+): Promise<string> {
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is missing from environment variables.");
+  }
+  if (!selectedText.trim()) {
+    throw new Error("No text was selected to revise.");
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: "gemini-3.5-flash",
+    systemInstruction: `You are a clinical copy editor for Lincolnshire Knee Clinic, an orthopaedic consultant clinic. You are given one passage lifted from a larger patient-facing blog post or technical article (topic: "${topic}", document title: "${documentTitle}") and a reviewer's instruction for how that passage specifically needs to change.
+
+Rewrite ONLY the passage to satisfy the instruction. Preserve everything else about it as much as possible: length in the same ballpark (don't balloon a sentence into three paragraphs unless the instruction asks for that), the same markdown formatting conventions as the surrounding document (## for headers if the passage is a header, plain paragraphs otherwise), the same plain-language/empathetic tone if this is a patient-facing blog passage, or the same clinical-professional tone if it reads like a technical-article passage. Do not invent medical claims or fake statistics. Do not add a new call-to-action or contact details unless the instruction specifically asks for one.
+
+Output ONLY the replacement passage text — no preamble, no explanation of what you changed, no quotation marks wrapping it, no markdown code fences.`,
+  });
+
+  const prompt = `Passage to revise:
+"""
+${selectedText}
+"""
+
+Reviewer's instruction: "${instruction}"
+
+Output the replacement passage now.`;
+
+  const result = await generateContentWithRetry(model, prompt);
+  const revised = (result.response.text() || "").trim();
+  if (!revised) {
+    throw new Error("The AI did not return a revised passage. Please try again.");
+  }
+  return revised;
+}
+

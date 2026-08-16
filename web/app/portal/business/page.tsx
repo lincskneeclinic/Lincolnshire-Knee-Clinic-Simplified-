@@ -610,6 +610,75 @@ function BusinessDashboardPageInner() {
     }
   };
 
+  // Rewrites only the highlighted passage (e.g. the exact sentence a "[NEEDS
+  // CLINICAL REVIEW]" flag is about) instead of regenerating the whole
+  // blog/article — captures the selection range up front since the AI call is
+  // async and the textarea's live selectionStart/End would drift otherwise.
+  const [isRevisingSelection, setIsRevisingSelection] = useState(false);
+  const handleReviseSelection = async () => {
+    const textarea = textareaRef.current;
+    if (!textarea || !selectedRun) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+
+    if (!selectedText.trim()) {
+      toast.error("Highlight the sentence or paragraph you want revised first.");
+      return;
+    }
+
+    const instruction = await promptAction(
+      "What should change about this passage? Pasting the clinical review flag's own wording works well.",
+      {
+        multiline: true,
+        placeholder: "e.g. Soften this claim and mention the NICE guideline on conservative management first...",
+      }
+    );
+    if (!instruction || !instruction.trim()) return;
+
+    setIsRevisingSelection(true);
+    try {
+      const res = await fetch(
+        `/api/portal/content-pipeline/runs/${encodeURIComponent(selectedRun.run_id)}/revise-selection`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            isArticle: activeDraftSubTab === "technical",
+            selectedText,
+            instruction: instruction.trim(),
+          }),
+        }
+      );
+      const data = await res.json();
+      if (!data.success || !data.revisedText) {
+        throw new Error(data.error || "Failed to revise the selected text.");
+      }
+
+      const fullText = textarea.value;
+      const newText = fullText.substring(0, start) + data.revisedText + fullText.substring(end);
+
+      if (activeDraftSubTab === "technical") {
+        setEditArticleBody(newText);
+      } else {
+        setEditBody(newText);
+        pushHistory(newText);
+      }
+
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start, start + data.revisedText.length);
+      }, 0);
+
+      toast.success("Passage revised — review the highlighted change, then Approve/Save when ready.");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to revise the selected text.");
+    } finally {
+      setIsRevisingSelection(false);
+    }
+  };
+
   const handleAttachPlaceholderImage = (placeholderId: string, label: string, url: string, isFeatured?: boolean) => {
     const isArticle = placeholderId.startsWith("article-");
     const imageMarkdown = `![${label}](${url})`;
@@ -3131,6 +3200,8 @@ function BusinessDashboardPageInner() {
                 onTextareaChange={handleTextareaChange}
                 onTextareaKeyDown={handleTextareaKeyDown}
                 insertMarkdown={insertMarkdown}
+                onReviseSelection={handleReviseSelection}
+                isRevisingSelection={isRevisingSelection}
                 history={history}
                 historyIndex={historyIndex}
                 onUndo={handleUndo}

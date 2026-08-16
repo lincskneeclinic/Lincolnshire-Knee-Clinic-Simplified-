@@ -79,6 +79,8 @@ interface PipelineTabProps {
   onTextareaChange: (value: string) => void;
   onTextareaKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   insertMarkdown: (type: "bold" | "italic" | "underline" | "h1" | "h2" | "h3" | "bullet") => void;
+  onReviseSelection: () => void;
+  isRevisingSelection: boolean;
   history: string[];
   historyIndex: number;
   onUndo: () => void;
@@ -176,6 +178,8 @@ export function PipelineTab({
   onTextareaChange,
   onTextareaKeyDown,
   insertMarkdown,
+  onReviseSelection,
+  isRevisingSelection,
   history,
   historyIndex,
   onUndo,
@@ -457,6 +461,8 @@ export function PipelineTab({
                   onTextareaChange={onTextareaChange}
                   onTextareaKeyDown={onTextareaKeyDown}
                   insertMarkdown={insertMarkdown}
+                  onReviseSelection={onReviseSelection}
+                  isRevisingSelection={isRevisingSelection}
                   history={history}
                   historyIndex={historyIndex}
                   onUndo={onUndo}

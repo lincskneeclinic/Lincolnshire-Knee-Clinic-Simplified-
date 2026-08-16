@@ -31,6 +31,8 @@ interface PipelineDraftTabProps {
   onTextareaChange: (value: string) => void;
   onTextareaKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   insertMarkdown: (type: MarkdownInsertType) => void;
+  onReviseSelection: () => void;
+  isRevisingSelection: boolean;
   history: string[];
   historyIndex: number;
   onUndo: () => void;
@@ -74,6 +76,8 @@ export function PipelineDraftTab({
   onTextareaChange,
   onTextareaKeyDown,
   insertMarkdown,
+  onReviseSelection,
+  isRevisingSelection,
   history,
   historyIndex,
   onUndo,
@@ -280,6 +284,18 @@ export function PipelineDraftTab({
                   >
                     ↪ Redo
                   </button>
+
+                  <span className="w-px h-4 bg-white/10 mx-1" />
+
+                  <button
+                    type="button"
+                    onClick={onReviseSelection}
+                    disabled={isRevisingSelection}
+                    className="text-[10px] text-clinical-teal hover:bg-clinical-teal/10 px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-clinical-teal/40 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                    title="Highlight a sentence or paragraph below, then click this to have AI rewrite only that passage per your instruction"
+                  >
+                    {isRevisingSelection ? "Revising…" : "✨ Revise Selection"}
+                  </button>
                 </div>
 
                 <textarea
@@ -379,6 +395,11 @@ export function PipelineDraftTab({
                   <li key={idx}>{flag}</li>
                 ))}
               </ul>
+              <p className="text-[10px] text-white/50 pt-1 border-t border-amber-500/20">
+                To act on one of these without rewriting the whole piece: in the editor below, highlight the exact
+                sentence or paragraph it's about, click "✨ Revise Selection", and paste in the flag's wording (or
+                your own instruction) as the fix.
+              </p>
             </div>
           )}
 
