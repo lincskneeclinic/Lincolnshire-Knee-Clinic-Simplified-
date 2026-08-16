@@ -3,6 +3,92 @@
 import React from "react";
 import { PortalCard, PortalEmptyState } from "@/components/portal/ui";
 
+interface EngagementSettings {
+  whatsappNudgeEnabled: boolean;
+  emailCaptureEnabled: boolean;
+}
+
+// Self-contained kill switch for the two public-site engagement prompts
+// (web/components/ProactivePagePrompt.tsx, web/components/PageInterestCapture.tsx)
+// — reads/writes web/app/api/site-settings/engagement independently of the
+// rest of the dashboard's data flow, same self-fetching pattern used by
+// ArticleCommentsToggle in EducationHubTab.tsx.
+function SitePromptsToggleCard() {
+  const [settings, setSettings] = React.useState<EngagementSettings | null>(null);
+  const [saving, setSaving] = React.useState<"whatsapp" | "email" | null>(null);
+
+  React.useEffect(() => {
+    fetch("/api/site-settings/engagement")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.settings) setSettings(data.settings);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleToggle = async (key: "whatsappNudgeEnabled" | "emailCaptureEnabled") => {
+    if (!settings) return;
+    const previous = settings;
+    const updated = { ...settings, [key]: !settings[key] };
+    setSettings(updated);
+    setSaving(key === "whatsappNudgeEnabled" ? "whatsapp" : "email");
+    try {
+      const res = await fetch("/api/portal/settings/engagement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [key]: updated[key] }),
+      });
+      const data = await res.json();
+      if (!data.success) setSettings(previous);
+    } catch {
+      setSettings(previous);
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  if (!settings) return null;
+
+  return (
+    <PortalCard className="space-y-4">
+      <div className="border-b border-white/10 pb-3">
+        <h3 className="text-xs font-bold text-white uppercase tracking-wider">Site Prompts</h3>
+        <p className="text-[11px] text-white/60 mt-1">
+          Switch off either prompt if it ever feels intrusive to visitors — takes effect on the live site immediately.
+        </p>
+      </div>
+      <div className="space-y-3">
+        <label className="flex items-center justify-between gap-3 cursor-pointer select-none">
+          <span className="text-xs text-white/80">
+            💬 Proactive WhatsApp nudges
+            <span className="block text-[10px] text-white/50">"Need help?" box on booking &amp; treatment pages</span>
+          </span>
+          <input
+            type="checkbox"
+            checked={settings.whatsappNudgeEnabled}
+            disabled={saving === "whatsapp"}
+            onChange={() => handleToggle("whatsappNudgeEnabled")}
+            className="w-9 h-5 rounded-full appearance-none bg-white/20 checked:bg-clinical-teal relative cursor-pointer transition-colors shrink-0 disabled:opacity-50 before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:w-4 before:h-4 before:bg-white before:rounded-full before:transition-transform checked:before:translate-x-4"
+          />
+        </label>
+        <label className="flex items-center justify-between gap-3 cursor-pointer select-none">
+          <span className="text-xs text-white/80">
+            ✉️ Email interest capture box
+            <span className="block text-[10px] text-white/50">Quiet opt-in email card on treatment pages</span>
+          </span>
+          <input
+            type="checkbox"
+            checked={settings.emailCaptureEnabled}
+            disabled={saving === "email"}
+            onChange={() => handleToggle("emailCaptureEnabled")}
+            className="w-9 h-5 rounded-full appearance-none bg-white/20 checked:bg-clinical-teal relative cursor-pointer transition-colors shrink-0 disabled:opacity-50 before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:w-4 before:h-4 before:bg-white before:rounded-full before:transition-transform checked:before:translate-x-4"
+          />
+        </label>
+      </div>
+    </PortalCard>
+  );
+}
+
 export interface NeedsAttentionItem {
   label: string;
   description: string;
@@ -97,6 +183,8 @@ export function OverviewTab({
           </div>
         )}
       </PortalCard>
+
+      <SitePromptsToggleCard />
 
       <PortalCard className="space-y-4">
         <div className="border-b border-white/10 pb-3">

@@ -156,9 +156,16 @@ export async function POST(request: Request) {
     }
 
     // Fire-and-forget — doesn't block the signup response on email delivery.
-    enqueueWelcomeSeries(subscriberRecord.email, subscriberRecord.name || "Patient", subscriberRecord.primaryInterest).catch(
-      (err) => console.error("Failed to enqueue welcome series:", err)
-    );
+    // Page-context captures (PageInterestCapture.tsx) tag their consentSource
+    // with this prefix so nothing gets sent at the exact moment the visitor
+    // was browsing — see enqueueWelcomeSeries's deferStart param.
+    const deferStart = subscriberRecord.consentSource.startsWith("page-context-prompt:");
+    enqueueWelcomeSeries(
+      subscriberRecord.email,
+      subscriberRecord.name || "Patient",
+      subscriberRecord.primaryInterest,
+      deferStart
+    ).catch((err) => console.error("Failed to enqueue welcome series:", err));
 
     return NextResponse.json({
       success: true,

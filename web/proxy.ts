@@ -87,6 +87,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/api/portal/education-articles") ||
     pathname.startsWith("/api/portal/social-only") ||
     pathname.startsWith("/api/portal/newsletter") ||
+    pathname.startsWith("/api/portal/settings") ||
     pathname === "/api/portal/verify-pin" ||
     pathname === "/api/intake";
 

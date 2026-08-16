@@ -10,6 +10,12 @@ const QUEUE_KEY = "welcome-series-queue";
 // signup time (see enqueueWelcomeSeries), so this only covers steps 1-2.
 const STEP_DELAYS_DAYS = [3, 7];
 
+// Used instead of STEP_DELAYS_DAYS for quiet, page-context captures (see
+// enqueueWelcomeSeries's deferStart param) — nothing is sent synchronously at
+// signup, so the visitor never gets an email at the exact moment they browsed.
+// The first email goes out the next day, the second a few days after that.
+const DEFERRED_STEP_DELAYS_DAYS = [1, 4];
+
 interface WelcomeSeriesEntry {
   email: string;
   name: string;
@@ -17,6 +23,8 @@ interface WelcomeSeriesEntry {
   signupDate: string;
   stepsSent: number; // 0 = only the immediate welcome email has gone out
   lastSentAt: string;
+  // true for quiet page-context captures — see enqueueWelcomeSeries's deferStart param
+  deferred?: boolean;
 }
 
 interface InterestContent {
@@ -98,19 +106,31 @@ async function sendWelcomeEmail(email: string, name: string, subject: string, bo
  * Call right after a successful newsletter signup. Sends the immediate
  * welcome email synchronously and queues the two follow-up steps for
  * processDueWelcomeEmails() to pick up later.
+ *
+ * Pass deferStart=true for quiet, page-context captures where the visitor
+ * should not receive anything at the moment they happened to be browsing —
+ * this skips the synchronous send entirely and queues both emails on the
+ * DEFERRED_STEP_DELAYS_DAYS schedule instead (next day, then a few days later).
  */
-export async function enqueueWelcomeSeries(email: string, name: string, primaryInterest: string): Promise<void> {
-  const content = getContentFor(primaryInterest);
+export async function enqueueWelcomeSeries(
+  email: string,
+  name: string,
+  primaryInterest: string,
+  deferStart: boolean = false
+): Promise<void> {
   const now = new Date().toISOString();
 
-  await sendWelcomeEmail(
-    email,
-    name,
-    "Welcome to Lincolnshire Knee Clinic",
-    content.step0Body,
-    content.linkUrl,
-    content.linkLabel
-  );
+  if (!deferStart) {
+    const content = getContentFor(primaryInterest);
+    await sendWelcomeEmail(
+      email,
+      name,
+      "Welcome to Lincolnshire Knee Clinic",
+      content.step0Body,
+      content.linkUrl,
+      content.linkLabel
+    );
+  }
 
   const queue = await getStoreValue<WelcomeSeriesEntry[]>(QUEUE_KEY, []);
   // Avoid duplicate queue entries if someone re-submits the signup form.
@@ -122,6 +142,7 @@ export async function enqueueWelcomeSeries(email: string, name: string, primaryI
     signupDate: now,
     stepsSent: 0,
     lastSentAt: now,
+    deferred: deferStart,
   });
   await setStoreValue(QUEUE_KEY, filtered);
 }
@@ -141,16 +162,25 @@ export async function processDueWelcomeEmails(): Promise<void> {
   let changed = false;
 
   for (const entry of queue) {
-    if (entry.stepsSent >= STEP_DELAYS_DAYS.length) continue;
+    const delays = entry.deferred ? DEFERRED_STEP_DELAYS_DAYS : STEP_DELAYS_DAYS;
+    if (entry.stepsSent >= delays.length) continue;
 
-    const dueAfterMs = STEP_DELAYS_DAYS[entry.stepsSent] * 24 * 60 * 60 * 1000;
+    const dueAfterMs = delays[entry.stepsSent] * 24 * 60 * 60 * 1000;
     const signupMs = new Date(entry.signupDate).getTime();
     if (now - signupMs < dueAfterMs) continue;
 
     const content = getContentFor(entry.primaryInterest);
-    const stepBody = entry.stepsSent === 0 ? content.step1Body : content.step2Body;
-    const subject =
-      entry.stepsSent === 0
+    // Deferred entries never got a synchronous send, so their two queued
+    // emails reuse step0Body/step1Body (the "welcome" + "quick guide"
+    // content) instead of step1Body/step2Body.
+    const stepBody = entry.deferred
+      ? entry.stepsSent === 0 ? content.step0Body : content.step1Body
+      : entry.stepsSent === 0 ? content.step1Body : content.step2Body;
+    const subject = entry.deferred
+      ? entry.stepsSent === 0
+        ? "Thanks for your interest — here's what to expect"
+        : "A quick guide, tailored to what you're interested in"
+      : entry.stepsSent === 0
         ? "A quick guide, tailored to what you're interested in"
         : "Your newsletter starts now — plus how to shape what's next";
 
@@ -164,7 +194,9 @@ export async function processDueWelcomeEmails(): Promise<void> {
 
   if (changed) {
     // Drop fully-completed entries so the queue doesn't grow forever.
-    const remaining = queue.filter((entry) => entry.stepsSent < STEP_DELAYS_DAYS.length);
+    const remaining = queue.filter(
+      (entry) => entry.stepsSent < (entry.deferred ? DEFERRED_STEP_DELAYS_DAYS.length : STEP_DELAYS_DAYS.length)
+    );
     await setStoreValue(QUEUE_KEY, remaining);
   }
 }

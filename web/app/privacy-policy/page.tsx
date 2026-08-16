@@ -91,8 +91,12 @@ export default function PrivacyPolicy() {
           <p className="text-xs text-text-muted italic mt-1">
             This consent is entirely optional. It is not required to book an appointment or to contact the
             clinic. The checkbox is unticked by default and can only be activated by you.
-            No clinical symptoms, diagnoses, treatment interests, or health history are collected or stored
-            for marketing purposes.
+            We do not collect or store any clinical symptoms, diagnoses, or health history for marketing
+            purposes. If you sign up through a specific page of our website (for example, a page about a
+            particular treatment), we record the general topic area you appeared interested in — such as
+            &quot;knee replacement&quot; or &quot;injections&quot; — purely so we can send you more relevant
+            follow-up information. This is a broad marketing category, not clinical or medical data, and is
+            used solely to tailor which educational emails you receive.
           </p>
 
           <h3 className="font-bold text-text-primary mb-1 mt-4">WhatsApp Business</h3>

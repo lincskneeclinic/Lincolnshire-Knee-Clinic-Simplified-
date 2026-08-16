@@ -9,6 +9,12 @@ interface NewsletterSignupProps {
   className?: string;
   title?: string;
   subtitle?: string;
+  /** Overrides the default "Subscribe to Updates" submit button text */
+  submitLabel?: string;
+  /** Topic tag stored on the subscriber record (e.g. "Knee Replacement & Surgery") — drives welcome-series content selection */
+  primaryInterest?: string;
+  /** Overrides the default "newsletter-signup-component" tag so signups from this form can be distinguished by where they came from */
+  consentSource?: string;
 }
 
 export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
@@ -16,6 +22,9 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
   className = "",
   title = "Sign up for knee health updates",
   subtitle = "Receive occasional patient education updates from Lincolnshire Knee Clinic about knee health, clinic services and new educational resources.",
+  submitLabel = "Subscribe to Updates",
+  primaryInterest,
+  consentSource,
 }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -59,7 +68,8 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
           mobile: mobile.trim() || undefined,
           website,
           consentChecked,
-          consentSource: "newsletter-signup-component",
+          consentSource: consentSource || "newsletter-signup-component",
+          primaryInterest,
         }),
       });
 
@@ -220,7 +230,7 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
               : "bg-clinical-teal/30 text-white/50 cursor-not-allowed"
           }`}
         >
-          {loading ? "Submitting..." : "Subscribe to Updates"}
+          {loading ? "Submitting..." : submitLabel}
         </button>
 
         <p className={`text-xs leading-relaxed ${isDark ? "text-[#8BA5B5]" : "text-text-muted"}`}>
