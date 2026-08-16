@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { UrgentAdviceBanner } from "@/components/UrgentAdviceBanner";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { ProactivePagePrompt } from "@/components/ProactivePagePrompt";
 import { ClarityAnalytics } from "@/components/ClarityAnalytics";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
@@ -58,6 +59,9 @@ export const LayoutShell: React.FC<{ children: React.ReactNode }> = ({
 
       {/* Global floating WhatsApp Business button */}
       <WhatsAppButton />
+
+      {/* Proactive "need help?" nudge on specific pages (e.g. booking) */}
+      <ProactivePagePrompt />
 
       {/* UK GDPR Cookie Consent Banner */}
       <CookieConsentBanner />
