@@ -175,10 +175,26 @@ export async function saveDynamicArticle(slug: string, article: ArticleContent):
   await setStoreValue(DYNAMIC_ARTICLES_KEY, articles);
 }
 
+// Below this, a "technical article" is really just the clinic logo, a title,
+// and a references list — not a real page. Guards against publishing that as
+// live content regardless of how the draft ended up empty (a generation
+// failure whose error-placeholder text got stripped by cleanClinicalReviewFlags,
+// a version that lost its article_* fields some other way, etc.) — silently
+// shipping a near-blank "article" page is worse than blocking the publish and
+// telling the reviewer to fix or regenerate it first.
+const MIN_ARTICLE_BODY_LENGTH = 200;
+
 export async function publishBlogDraftToWebsite(run: any): Promise<string> {
   const draft = run.blog_drafts?.[0];
   if (!draft) {
     throw new Error("No blog draft found in the run to publish");
+  }
+
+  const technicalBodyCheck = cleanClinicalReviewFlags(draft.article_body_markdown || draft.article_body || "");
+  if (technicalBodyCheck.trim().length < MIN_ARTICLE_BODY_LENGTH) {
+    throw new Error(
+      "The technical article's content is missing or too short to publish (this usually means generation failed silently or the draft lost its article content). Go to the article's editor, regenerate or rewrite the technical article body, then try publishing again."
+    );
   }
 
   const slug = (draft.title || run.topic)
@@ -201,7 +217,7 @@ export async function publishBlogDraftToWebsite(run: any): Promise<string> {
   const technicalSlug = `${slug}-technical`;
   const technicalTitle = draft.article_title || `${draft.title || run.topic} (Clinical Depth)`;
   const technicalExcerpt = draft.article_excerpt || draft.excerpt || "";
-  const technicalCleanBody = cleanClinicalReviewFlags(draft.article_body_markdown || draft.article_body || "");
+  const technicalCleanBody = technicalBodyCheck;
 
   const technicalFeaturedImage = (draft.article_suggested_images || []).find(
     (img: any) => typeof img === "object" && img !== null && img.isFeatured

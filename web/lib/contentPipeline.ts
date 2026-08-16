@@ -1114,21 +1114,24 @@ export async function submitPipelineReview(
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/(^-|-$)/g, "");
 
-        try {
-          await publishBlogDraftToWebsite(run);
-          run.published_urls = {
-            blog_url: `/education/${category}/${slug}`,
-            published_at: now
-          };
-          // Best-effort — a standalone social batch may have auto-triggered this
-          // run as its companion article; fill in the real link for reviewers to
-          // use once it's live. Never block publishing on this.
-          syncLinkedSocialOnlyPosts(run.run_id, `${SITE_URL}${run.published_urls.blog_url}`, latestDraft.title).catch(
-            (err) => console.error("Failed to sync linked social-only posts:", err)
-          );
-        } catch (err) {
-          console.error("Failed to publish dynamic blog to website:", err);
-        }
+        // Deliberately not caught here — publishBlogDraftToWebsite throws if the
+        // technical article is empty/too short rather than publishing a near-blank
+        // page, and swallowing that error here previously let the run silently
+        // advance to "awaiting_social_approval" as if publishing had succeeded,
+        // with published_urls never actually pointing at real content. Letting it
+        // propagate means submitPipelineReview's caller gets a real error and
+        // nothing about this run's state changes until the article is fixed.
+        await publishBlogDraftToWebsite(run);
+        run.published_urls = {
+          blog_url: `/education/${category}/${slug}`,
+          published_at: now
+        };
+        // Best-effort — a standalone social batch may have auto-triggered this
+        // run as its companion article; fill in the real link for reviewers to
+        // use once it's live. Never block publishing on this.
+        syncLinkedSocialOnlyPosts(run.run_id, `${SITE_URL}${run.published_urls.blog_url}`, latestDraft.title).catch(
+          (err) => console.error("Failed to sync linked social-only posts:", err)
+        );
       }
 
       run.status = "awaiting_social_approval";
@@ -1365,11 +1368,10 @@ export async function submitPipelineReview(
 
       const category = run.blog_drafts[0]?.category || "knee-arthritis";
 
-      try {
-        await publishBlogDraftToWebsite(run);
-      } catch (err) {
-        console.error("Failed to publish dynamic blog to website on final approval:", err);
-      }
+      // Not caught — see the comment on the publish_blog branch above; this is
+      // the same re-publish-on-final-approval path and needs the same guarantee
+      // that published_urls never gets set unless the content actually published.
+      await publishBlogDraftToWebsite(run);
 
       run.published_urls = {
         blog_url: `/education/${category}/${slug}`,

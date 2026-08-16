@@ -1065,10 +1065,15 @@ function BusinessDashboardPageInner() {
   }, [fetchPipelineRuns, fetchRunDetail]);
 
   useEffect(() => {
-    if (activeTab === "pipeline" && pipelineRuns.length === 0) {
+    // Always refetch on switching to this tab, not just when the list is
+    // still empty — runs can appear in the background (weekly automation,
+    // and now the Social Media Posts tab's auto-triggered companion articles)
+    // while the reviewer is on a different tab, and the old "only if empty"
+    // guard left the list stale until a full page reload.
+    if (activeTab === "pipeline") {
       fetchPipelineRuns();
     }
-  }, [activeTab, fetchPipelineRuns, pipelineRuns.length]);
+  }, [activeTab, fetchPipelineRuns]);
 
   // Fetch clinical review pages list
   const fetchClinicalReviewPages = useCallback(async () => {
