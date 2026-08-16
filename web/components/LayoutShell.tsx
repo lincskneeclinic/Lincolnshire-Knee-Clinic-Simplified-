@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { UrgentAdviceBanner } from "@/components/UrgentAdviceBanner";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { ClarityAnalytics } from "@/components/ClarityAnalytics";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 
 // Routes that should render fullscreen without the global header/footer/banner
@@ -24,6 +25,7 @@ export const LayoutShell: React.FC<{ children: React.ReactNode }> = ({
     return (
       <>
         <ClarityAnalytics />
+        <GoogleAnalytics />
         <main id="main-content" className="flex-1 flex flex-col focus:outline-none" tabIndex={-1}>
           {children}
         </main>
@@ -34,6 +36,7 @@ export const LayoutShell: React.FC<{ children: React.ReactNode }> = ({
   return (
     <>
       <ClarityAnalytics />
+      <GoogleAnalytics />
       {/* WCAG 2.1 AA Keyboard Access skip link */}
       <a href="#main-content" className="skip-link">
         Skip to Main Content

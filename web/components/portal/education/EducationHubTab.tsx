@@ -20,6 +20,64 @@ export interface EducationArticleSummary {
   archived: boolean;
 }
 
+// Self-contained expand/fetch for one article's "what could we improve?"
+// comments (only ever left alongside a thumbs-down) — fetched on demand
+// rather than bundled into the main article list, since most articles have
+// none and the text itself is only worth loading when someone asks to see it.
+function ArticleCommentsToggle({ slug, feedbackDown }: { slug: string; feedbackDown: number }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [comments, setComments] = React.useState<Array<{ text: string; date: string }> | null>(null);
+
+  if (feedbackDown === 0) return null;
+
+  const handleToggle = async () => {
+    if (expanded) {
+      setExpanded(false);
+      return;
+    }
+    setExpanded(true);
+    if (comments !== null) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/portal/education-articles/${encodeURIComponent(slug)}/comments`);
+      const data = await res.json();
+      setComments(data.success ? data.comments : []);
+    } catch {
+      setComments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="w-full">
+      <button
+        onClick={handleToggle}
+        className="text-[10px] text-clinical-teal hover:underline cursor-pointer font-medium"
+      >
+        {expanded ? "▲ Hide comments" : "💬 View \"could be improved\" comments"}
+      </button>
+      {expanded && (
+        <div className="mt-1.5 space-y-1.5">
+          {loading ? (
+            <p className="text-[10px] text-white/50">Loading…</p>
+          ) : comments && comments.length > 0 ? (
+            comments.map((c, idx) => (
+              <div key={idx} className="bg-primary-navy/60 border border-white/10 rounded-lg px-2.5 py-2 text-[10px]">
+                <p className="text-white/80">{c.text}</p>
+                <p className="text-white/40 mt-0.5">{formatDateSafe(c.date)}</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-[10px] text-white/50">No written comments — just thumbs-down votes with nothing added.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface EducationHubTabProps {
   articles: EducationArticleSummary[];
   loading: boolean;
@@ -135,12 +193,11 @@ export function EducationHubTab({
                   <span className="text-status-error/80">Removed: {formatDateSafe(article.removedAt)}</span>
                 )}
                 <span>{article.views.toLocaleString()} views</span>
-                {(article.feedbackUp > 0 || article.feedbackDown > 0) && (
-                  <span>
-                    👍 {article.feedbackUp} · 👎 {article.feedbackDown}
-                  </span>
-                )}
+                <span>
+                  👍 {article.feedbackUp} · 👎 {article.feedbackDown}
+                </span>
               </div>
+              <ArticleCommentsToggle slug={article.slug} feedbackDown={article.feedbackDown} />
               <div className="flex justify-end items-center gap-2 pt-1 flex-wrap">
                 {!article.removed && (
                   <>

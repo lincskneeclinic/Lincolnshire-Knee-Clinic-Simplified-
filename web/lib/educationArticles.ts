@@ -145,6 +145,17 @@ export async function getArticleFeedbackCounts(): Promise<Record<string, Article
   return result;
 }
 
+// The "what could we improve?" free-text left alongside a thumbs-down — captured
+// by app/api/education-feedback/[slug]/route.ts since the widget shipped, but
+// never read back anywhere until now, so it only ever existed in raw storage.
+export async function getArticleFeedbackComments(slug: string): Promise<Array<{ text: string; date: string }>> {
+  const feedback = await getStoreValue<Record<string, { up: number; down: number; comments: Array<{ text: string; date: string }> }>>(
+    ARTICLE_FEEDBACK_KEY,
+    {}
+  );
+  return feedback[slug]?.comments || [];
+}
+
 export async function incrementArticleView(slug: string): Promise<number> {
   try {
     const admin = createAdminClient();
