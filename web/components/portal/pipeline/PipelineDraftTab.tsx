@@ -139,13 +139,13 @@ export function PipelineDraftTab({
   return (
     <div className="space-y-6">
       {/* Sub-tab Navigation for Layman Blog vs Technical Article */}
-      <div className="flex border-b border-white/10 gap-6 mb-2">
+      <div className="flex border-b border-portal-border/10 gap-6 mb-2">
         <button
           onClick={() => onActiveDraftSubTabChange("layman")}
           className={`pb-2.5 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
             activeDraftSubTab === "layman"
-              ? "border-clinical-teal text-clinical-teal"
-              : "border-transparent text-white/60 hover:text-white"
+              ? "border-clinical-teal text-portal-accent-text"
+              : "border-transparent text-portal-text/60 hover:text-portal-text"
           }`}
         >
           Layman Blog (8-10 min read)
@@ -154,8 +154,8 @@ export function PipelineDraftTab({
           onClick={() => onActiveDraftSubTabChange("technical")}
           className={`pb-2.5 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
             activeDraftSubTab === "technical"
-              ? "border-clinical-teal text-clinical-teal"
-              : "border-transparent text-white/60 hover:text-white"
+              ? "border-clinical-teal text-portal-accent-text"
+              : "border-transparent text-portal-text/60 hover:text-portal-text"
           }`}
         >
           Technical Article (12-15 min read)
@@ -163,31 +163,31 @@ export function PipelineDraftTab({
       </div>
 
       {isEditMode ? (
-        <div className="space-y-4 bg-dark-overlay-navy p-5 rounded-xl border border-clinical-teal/30 animate-fadeIn">
+        <div className="space-y-4 bg-portal-surface-alt p-5 rounded-xl border border-clinical-teal/30 animate-fadeIn">
           {flags && flags.length > 0 && (
-            <div className="bg-primary-navy/60 border border-amber-500/50 text-amber-200/90 p-4 rounded-xl shadow-md space-y-2.5">
+            <div className="bg-portal-surface/60 border border-amber-500/50 text-amber-200/90 p-4 rounded-xl shadow-md space-y-2.5">
               <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-400/90 font-normal">
                 <span>Action Required: Clinical Items Highlighted</span>
               </div>
               <ul className="space-y-2.5">
                 {flags.map((flag: any, idx: number) => (
-                  <li key={idx} className="text-xs text-white/80 font-normal space-y-1">
+                  <li key={idx} className="text-xs text-portal-text/80 font-normal space-y-1">
                     <p>{flag}</p>
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
                         onClick={() => onResolveFlagWithAI(flag)}
                         disabled={resolvingFlagText === flag}
-                        className="text-[10px] text-clinical-teal hover:underline cursor-pointer font-semibold disabled:opacity-50 disabled:no-underline"
+                        className="text-[10px] text-portal-accent-text hover:underline cursor-pointer font-semibold disabled:opacity-50 disabled:no-underline"
                       >
                         {resolvingFlagText === flag ? "Resolving…" : "✨ Use AI's Judgement"}
                       </button>
-                      <span className="text-white/20">|</span>
+                      <span className="text-portal-text/20">|</span>
                       <button
                         type="button"
                         onClick={() => onResolveFlagWithOwnWording(flag)}
                         disabled={resolvingFlagText === flag}
-                        className="text-[10px] text-clinical-teal hover:underline cursor-pointer font-semibold disabled:opacity-50 disabled:no-underline"
+                        className="text-[10px] text-portal-accent-text hover:underline cursor-pointer font-semibold disabled:opacity-50 disabled:no-underline"
                       >
                         ✍️ I'll Give My Own Wording
                       </button>
@@ -195,7 +195,7 @@ export function PipelineDraftTab({
                   </li>
                 ))}
               </ul>
-              <p className="text-[10px] text-white/50 pt-1.5 border-t border-amber-500/20">
+              <p className="text-[10px] text-portal-text/50 pt-1.5 border-t border-amber-500/20">
                 Either option replaces just this flag with finished text — the rest of the document is untouched.
                 Nothing is saved until you click "Save &amp; Approve Edited Draft" below.
               </p>
@@ -205,31 +205,31 @@ export function PipelineDraftTab({
             {/* Left Column: Markdown editor fields */}
             <div className="space-y-4">
               <div>
-                <label className="block text-xs text-clinical-teal mb-1 font-semibold">
+                <label className="block text-xs text-portal-accent-text mb-1 font-semibold">
                   {isArticle ? "Technical Article Title" : "Layman Blog Title"}
                 </label>
                 <input
                   type="text"
                   value={draftTitle}
                   onChange={(e) => onTitleChange(e.target.value)}
-                  className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                  className="w-full bg-portal-surface border border-portal-border/20 text-portal-text rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs text-clinical-teal mb-1 font-semibold">Excerpt / Meta Summary</label>
+                <label className="block text-xs text-portal-accent-text mb-1 font-semibold">Excerpt / Meta Summary</label>
                 <textarea
                   value={draftExcerpt}
                   onChange={(e) => onExcerptChange(e.target.value)}
                   rows={2}
-                  className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                  className="w-full bg-portal-surface border border-portal-border/20 text-portal-text rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs text-clinical-teal mb-1 font-semibold">Education Hub Category</label>
+                <label className="block text-xs text-portal-accent-text mb-1 font-semibold">Education Hub Category</label>
                 <select
                   value={editCategory}
                   onChange={(e) => onEditCategoryChange(e.target.value)}
-                  className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                  className="w-full bg-portal-surface border border-portal-border/20 text-portal-text rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
                 >
                   <option value="">Select a category…</option>
                   {ARTICLE_CATEGORIES.map((cat) => (
@@ -240,14 +240,14 @@ export function PipelineDraftTab({
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-clinical-teal mb-1 font-semibold">Formatted Body Content (Markdown supported)</label>
+                <label className="block text-xs text-portal-accent-text mb-1 font-semibold">Formatted Body Content (Markdown supported)</label>
 
                 {/* Markdown Toolbar */}
-                <div className="flex flex-wrap items-center gap-1.5 bg-primary-navy border-t border-x border-white/20 rounded-t-lg p-2">
+                <div className="flex flex-wrap items-center gap-1.5 bg-portal-surface border-t border-x border-portal-border/20 rounded-t-lg p-2">
                   <button
                     type="button"
                     onClick={() => insertMarkdown("bold")}
-                    className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-white/10"
+                    className="text-[10px] text-portal-text/80 hover:bg-portal-text/5 hover:text-portal-text px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-portal-border/10"
                     title="Bold text"
                   >
                     <strong>B</strong>
@@ -255,7 +255,7 @@ export function PipelineDraftTab({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("italic")}
-                    className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-white/10"
+                    className="text-[10px] text-portal-text/80 hover:bg-portal-text/5 hover:text-portal-text px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-portal-border/10"
                     title="Italic text"
                   >
                     <em>I</em>
@@ -263,7 +263,7 @@ export function PipelineDraftTab({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("underline")}
-                    className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-white/10 underline"
+                    className="text-[10px] text-portal-text/80 hover:bg-portal-text/5 hover:text-portal-text px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-portal-border/10 underline"
                     title="Underline text"
                   >
                     U
@@ -274,7 +274,7 @@ export function PipelineDraftTab({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("h1")}
-                    className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1.5 rounded transition-colors cursor-pointer border border-white/10"
+                    className="text-[10px] text-portal-text/80 hover:bg-portal-text/5 hover:text-portal-text px-2 py-1.5 rounded transition-colors cursor-pointer border border-portal-border/10"
                     title="H1 Heading"
                   >
                     H1
@@ -282,7 +282,7 @@ export function PipelineDraftTab({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("h2")}
-                    className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1.5 rounded transition-colors cursor-pointer border border-white/10"
+                    className="text-[10px] text-portal-text/80 hover:bg-portal-text/5 hover:text-portal-text px-2 py-1.5 rounded transition-colors cursor-pointer border border-portal-border/10"
                     title="H2 Heading"
                   >
                     H2
@@ -290,7 +290,7 @@ export function PipelineDraftTab({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("h3")}
-                    className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1.5 rounded transition-colors cursor-pointer border border-white/10"
+                    className="text-[10px] text-portal-text/80 hover:bg-portal-text/5 hover:text-portal-text px-2 py-1.5 rounded transition-colors cursor-pointer border border-portal-border/10"
                     title="H3 Heading"
                   >
                     H3
@@ -301,7 +301,7 @@ export function PipelineDraftTab({
                   <button
                     type="button"
                     onClick={() => insertMarkdown("bullet")}
-                    className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2 py-1.5 rounded transition-colors cursor-pointer border border-white/10"
+                    className="text-[10px] text-portal-text/80 hover:bg-portal-text/5 hover:text-portal-text px-2 py-1.5 rounded transition-colors cursor-pointer border border-portal-border/10"
                     title="Bullet List"
                   >
                     • List
@@ -313,7 +313,7 @@ export function PipelineDraftTab({
                     type="button"
                     onClick={onUndo}
                     disabled={isArticle || historyIndex <= 0}
-                    className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-white/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                    className="text-[10px] text-portal-text/80 hover:bg-portal-text/5 hover:text-portal-text px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-portal-border/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                     title="Undo (Ctrl+Z) - Layman Blog Only"
                   >
                     ↩ Undo
@@ -322,7 +322,7 @@ export function PipelineDraftTab({
                     type="button"
                     onClick={onRedo}
                     disabled={isArticle || historyIndex >= history.length - 1}
-                    className="text-[10px] text-white/80 hover:bg-white/5 hover:text-white px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-white/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                    className="text-[10px] text-portal-text/80 hover:bg-portal-text/5 hover:text-portal-text px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-portal-border/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                     title="Redo (Ctrl+Shift+Z) - Layman Blog Only"
                   >
                     ↪ Redo
@@ -334,7 +334,7 @@ export function PipelineDraftTab({
                     type="button"
                     onClick={onReviseSelection}
                     disabled={isRevisingSelection}
-                    className="text-[10px] text-clinical-teal hover:bg-clinical-teal/10 px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-clinical-teal/40 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                    className="text-[10px] text-portal-accent-text hover:bg-clinical-teal/10 px-2.5 py-1.5 rounded transition-colors cursor-pointer border border-clinical-teal/40 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                     title="Highlight a sentence or paragraph below, then click this to have AI rewrite only that passage per your instruction"
                   >
                     {isRevisingSelection ? "Revising…" : "✨ Revise Selection"}
@@ -346,27 +346,27 @@ export function PipelineDraftTab({
                   value={draftBody}
                   onChange={(e) => onTextareaChange(e.target.value)}
                   onKeyDown={onTextareaKeyDown}
-                  className="w-full bg-primary-navy border border-white/20 text-white rounded-b-lg p-3 text-xs font-mono focus:border-clinical-teal focus:outline-none leading-relaxed custom-scrollbar"
+                  className="w-full bg-portal-surface border border-portal-border/20 text-portal-text rounded-b-lg p-3 text-xs font-mono focus:border-clinical-teal focus:outline-none leading-relaxed custom-scrollbar"
                   style={{ height: "320px", overflowY: "auto" }}
                 />
               </div>
             </div>
 
             {/* Right Column: Live Rendered Preview */}
-            <div className="space-y-2 border-t lg:border-t-0 lg:border-l border-white/10 pt-4 lg:pt-0 lg:pl-6 flex flex-col">
-              <label className="block text-xs text-clinical-teal mb-1 font-semibold">Live Preview</label>
+            <div className="space-y-2 border-t lg:border-t-0 lg:border-l border-portal-border/10 pt-4 lg:pt-0 lg:pl-6 flex flex-col">
+              <label className="block text-xs text-portal-accent-text mb-1 font-semibold">Live Preview</label>
               <div
                 ref={livePreviewRef}
-                className="bg-primary-navy/40 p-5 rounded-xl border border-white/10 space-y-4 custom-scrollbar overflow-y-auto text-white/80 leading-relaxed font-sans flex-1"
+                className="bg-portal-surface/40 p-5 rounded-xl border border-portal-border/10 space-y-4 custom-scrollbar overflow-y-auto text-portal-text/80 leading-relaxed font-sans flex-1"
                 style={{ maxHeight: "480px" }}
               >
-                <h1 className="font-serif text-xl font-bold text-white tracking-tight">
+                <h1 className="font-serif text-xl font-bold text-portal-text tracking-tight">
                   {draftTitle || fallbackTitle}
                 </h1>
                 {draftExcerpt && (
-                  <p className="text-[9px] text-white/70 italic border-l-2 border-clinical-teal pl-3 py-1">{draftExcerpt}</p>
+                  <p className="text-[9px] text-portal-text/70 italic border-l-2 border-clinical-teal pl-3 py-1">{draftExcerpt}</p>
                 )}
-                <div className="border-t border-white/10 pt-4">
+                <div className="border-t border-portal-border/10 pt-4">
                   <FormattedContent
                     body={draftBody}
                     suggestedImages={isArticle ? editArticleSuggestedImages : editSuggestedImages}
@@ -386,7 +386,7 @@ export function PipelineDraftTab({
             </div>
           </div>
 
-          <div className="flex justify-between gap-3 pt-4 border-t border-white/10">
+          <div className="flex justify-between gap-3 pt-4 border-t border-portal-border/10">
             <button
               onClick={onDiscardChanges}
               className="border border-status-error/40 text-status-error hover:bg-status-error/10 text-xs px-4 py-2 rounded-xl cursor-pointer font-medium"
@@ -396,7 +396,7 @@ export function PipelineDraftTab({
             <div className="flex items-center gap-2">
               <button
                 onClick={onFinishEditing}
-                className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
+                className="border border-portal-border/20 text-portal-text/70 hover:bg-portal-text/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
                 title="Close the editor and return to read-only view. Your changes are preserved locally."
               >
                 Finish Editing
@@ -404,7 +404,7 @@ export function PipelineDraftTab({
               <button
                 onClick={onSaveProgress}
                 disabled={isSubmittingReview}
-                className="border border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-60 font-medium"
+                className="border border-clinical-teal text-portal-accent-text hover:bg-clinical-teal/10 text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-60 font-medium"
                 title="Save your changes to the database without approving the draft, so you can resume on other devices."
               >
                 {isSubmittingReview ? "Saving..." : "Save Progress"}
@@ -429,16 +429,16 @@ export function PipelineDraftTab({
       ) : (
         <>
           {flags && flags.length > 0 && (
-            <div className="bg-dark-overlay-navy border border-amber-500/50 text-amber-200/90 p-4 rounded-xl shadow-md space-y-2">
+            <div className="bg-portal-surface-alt border border-amber-500/50 text-amber-200/90 p-4 rounded-xl shadow-md space-y-2">
               <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-400/90 font-normal">
                 <span>Action Required: Clinical Items Highlighted</span>
               </div>
-              <ul className="list-disc pl-5 text-xs space-y-1 text-white/80 font-normal">
+              <ul className="list-disc pl-5 text-xs space-y-1 text-portal-text/80 font-normal">
                 {flags.map((flag: any, idx: number) => (
                   <li key={idx}>{flag}</li>
                 ))}
               </ul>
-              <p className="text-[10px] text-white/50 pt-1 border-t border-amber-500/20">
+              <p className="text-[10px] text-portal-text/50 pt-1 border-t border-amber-500/20">
                 To act on one of these without rewriting the whole piece: in the editor below, highlight the exact
                 sentence or paragraph it's about, click "✨ Revise Selection", and paste in the flag's wording (or
                 your own instruction) as the fix.
@@ -447,15 +447,15 @@ export function PipelineDraftTab({
           )}
 
           {faqs.length > 0 && (
-            <div className="bg-dark-overlay-navy border border-white/10 p-4 rounded-xl shadow-md space-y-2">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-clinical-teal font-normal">
+            <div className="bg-portal-surface-alt border border-portal-border/10 p-4 rounded-xl shadow-md space-y-2">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-portal-accent-text font-normal">
                 <span>Generated FAQs (published on the page &amp; FAQ rich-result schema — review before approving)</span>
               </div>
               <div className="space-y-2">
                 {faqs.map((faq, idx) => (
-                  <div key={idx} className="text-xs text-white/80 font-normal">
-                    <p className="font-semibold text-white">Q: {faq.question}</p>
-                    <p className="text-white/70">A: {faq.answer}</p>
+                  <div key={idx} className="text-xs text-portal-text/80 font-normal">
+                    <p className="font-semibold text-portal-text">Q: {faq.question}</p>
+                    <p className="text-portal-text/70">A: {faq.answer}</p>
                   </div>
                 ))}
               </div>
@@ -463,15 +463,15 @@ export function PipelineDraftTab({
           )}
 
           {/* Theme Selector Toggle */}
-          <div className="flex justify-end items-center gap-1.5 bg-dark-overlay-navy border border-white/10 p-2 rounded-xl mb-4 text-xs">
-            <span className="text-white/60 mr-2 font-medium">Preview Style:</span>
+          <div className="flex justify-end items-center gap-1.5 bg-portal-surface-alt border border-portal-border/10 p-2 rounded-xl mb-4 text-xs">
+            <span className="text-portal-text/60 mr-2 font-medium">Preview Style:</span>
             <button
               type="button"
               onClick={() => setPreviewTheme("dashboard")}
               className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer font-bold ${
                 previewTheme === "dashboard"
                   ? "bg-clinical-teal text-deep-navy shadow-sm"
-                  : "bg-primary-navy text-white/70 hover:text-white border border-white/10"
+                  : "bg-portal-surface text-portal-text/70 hover:text-portal-text border border-portal-border/10"
               }`}
             >
               Dashboard Theme (Dark)
@@ -482,7 +482,7 @@ export function PipelineDraftTab({
               className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer font-bold ${
                 previewTheme === "website"
                   ? "bg-clinical-teal text-deep-navy shadow-sm"
-                  : "bg-primary-navy text-white/70 hover:text-white border border-white/10"
+                  : "bg-portal-surface text-portal-text/70 hover:text-portal-text border border-portal-border/10"
               }`}
             >
               Website Theme (Light)
@@ -497,7 +497,7 @@ export function PipelineDraftTab({
               style={{ maxHeight: "620px" }}
             >
               {/* Simulation Header Banner */}
-              <div className="bg-[#f0f9ff] border-b border-border-clinical/20 p-3 text-center text-[10px] text-clinical-teal font-bold uppercase tracking-wider">
+              <div className="bg-[#f0f9ff] border-b border-border-clinical/20 p-3 text-center text-[10px] text-portal-accent-text font-bold uppercase tracking-wider">
                 💻 Website Live Preview Mode
               </div>
               
@@ -506,7 +506,7 @@ export function PipelineDraftTab({
                 <div className="flex items-center gap-1.5 text-[10px] text-text-muted font-bold uppercase tracking-wider">
                   <span>Education & Blog</span>
                   <span>&bull;</span>
-                  <span className="text-clinical-teal">
+                  <span className="text-portal-accent-text">
                     {ARTICLE_CATEGORIES.find((c) => c.value === (editCategory || dbDraft.category))?.label || "General"}
                   </span>
                 </div>
@@ -589,27 +589,27 @@ export function PipelineDraftTab({
             /* DEFAULT DARK DASHBOARD PREVIEW */
             <div
               ref={livePreviewRef}
-              className="bg-dark-overlay-navy p-6 rounded-xl border border-white/10 space-y-4 custom-scrollbar"
+              className="bg-portal-surface-alt p-6 rounded-xl border border-portal-border/10 space-y-4 custom-scrollbar"
               style={{ maxHeight: "620px", overflowY: "auto" }}
             >
-              <h1 className="font-serif text-xl font-bold text-white tracking-tight">
+              <h1 className="font-serif text-xl font-bold text-portal-text tracking-tight">
                 {draftTitle || fallbackTitle}
               </h1>
               {(() => {
                 const categoryValue = editCategory || dbDraft.category;
                 const categoryLabel = ARTICLE_CATEGORIES.find((c) => c.value === categoryValue)?.label;
                 return categoryLabel ? (
-                  <span className="inline-block text-[9px] font-semibold uppercase tracking-wider text-clinical-teal bg-clinical-teal/10 border border-clinical-teal/30 rounded-full px-2.5 py-1">
+                  <span className="inline-block text-[9px] font-semibold uppercase tracking-wider text-portal-accent-text bg-clinical-teal/10 border border-clinical-teal/30 rounded-full px-2.5 py-1">
                     {categoryLabel}
                   </span>
                 ) : null;
               })()}
               {(draftExcerpt || fallbackExcerpt) && (
-                <p className="text-[9px] text-white/70 italic border-l-2 border-clinical-teal pl-3 py-1">
+                <p className="text-[9px] text-portal-text/70 italic border-l-2 border-clinical-teal pl-3 py-1">
                   {draftExcerpt || fallbackExcerpt}
                 </p>
               )}
-              <div className="text-white/80 space-y-4 leading-relaxed font-sans border-t border-white/10 pt-4">
+              <div className="text-portal-text/80 space-y-4 leading-relaxed font-sans border-t border-portal-border/10 pt-4">
                 <FormattedContent
                   body={draftBody || fallbackBody}
                   suggestedImages={

@@ -33,13 +33,13 @@ export function ConnectedAccountsCard() {
   const instagram = accounts.find((a) => a.platform === "instagram");
 
   return (
-    <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3">
+    <div className="bg-portal-surface-alt border border-portal-border/10 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-4">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-white/50">Meta connection:</span>
-        <span className={`text-[11px] font-semibold ${facebook ? "text-clinical-teal" : "text-white/40"}`}>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-portal-text/50">Meta connection:</span>
+        <span className={`text-[11px] font-semibold ${facebook ? "text-portal-accent-text" : "text-portal-text/40"}`}>
           {facebook ? `✓ Facebook — ${facebook.account_name}` : "Facebook not connected"}
         </span>
-        <span className={`text-[11px] font-semibold ${instagram ? "text-clinical-teal" : "text-white/40"}`}>
+        <span className={`text-[11px] font-semibold ${instagram ? "text-portal-accent-text" : "text-portal-text/40"}`}>
           {instagram ? `✓ Instagram — ${instagram.account_name}` : "Instagram not connected"}
         </span>
       </div>

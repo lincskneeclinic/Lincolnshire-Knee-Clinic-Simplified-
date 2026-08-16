@@ -8,9 +8,9 @@ interface PortalButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement
 
 const VARIANT_CLASSES: Record<PortalButtonVariant, string> = {
   primary: "bg-clinical-teal hover:bg-clinical-teal-hover text-deep-navy",
-  secondary: "border border-white/20 text-white/80 hover:bg-white/5",
+  secondary: "border border-portal-border/20 text-portal-text/80 hover:bg-portal-text/5",
   danger: "bg-status-error/90 hover:bg-status-error text-white",
-  ghost: "text-white/60 hover:text-white underline",
+  ghost: "text-portal-text/60 hover:text-portal-text underline",
 };
 
 export function PortalButton({

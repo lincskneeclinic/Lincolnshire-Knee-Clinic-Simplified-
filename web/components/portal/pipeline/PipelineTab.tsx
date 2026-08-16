@@ -240,12 +240,12 @@ export function PipelineTab({
       <PortalCard padding="lg" className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-white">Content Automation Pipeline</h2>
-            <span className="bg-dark-overlay-navy text-clinical-teal border border-clinical-teal/30 text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full">
+            <h2 className="text-lg font-bold text-portal-text">Content Automation Pipeline</h2>
+            <span className="bg-portal-surface-alt text-portal-accent-text border border-clinical-teal/30 text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full">
               Clinical Review Portal
             </span>
           </div>
-          <p className="text-xs text-white/60 mt-1">
+          <p className="text-xs text-portal-text/60 mt-1">
             Review, edit, and approve AI-generated blog posts and multi-platform social captions.
           </p>
         </div>
@@ -254,14 +254,14 @@ export function PipelineTab({
           {selectedRun && (
             <button
               onClick={onBackToList}
-              className="bg-dark-overlay-navy hover:bg-white/5 text-white/80 border border-white/20 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+              className="bg-portal-surface-alt hover:bg-portal-text/5 text-portal-text/80 border border-portal-border/20 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
             >
               ← Back to List
             </button>
           )}
           <button
             onClick={onOpenImportModal}
-            className="bg-dark-overlay-navy hover:bg-white/5 text-white/80 border border-white/20 text-xs px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="bg-portal-surface-alt hover:bg-portal-text/5 text-portal-text/80 border border-portal-border/20 text-xs px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <span>📋</span>
             <span>Import Research</span>
@@ -280,32 +280,32 @@ export function PipelineTab({
       {selectedRun ? (
         <div className="space-y-8">
           {/* Run Summary Banner */}
-          <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
+          <div className="bg-portal-surface border border-portal-border/10 rounded-2xl p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-3">
-                <span className="text-xs font-mono text-white/60">{selectedRun.run_id}</span>
+                <span className="text-xs font-mono text-portal-text/60">{selectedRun.run_id}</span>
                 <StatusBadge status={selectedRun.status} isContinueEditing={isBlogEditInProgress(selectedRun)} />
               </div>
-              <span className="text-xs text-white/60 font-mono">
+              <span className="text-xs text-portal-text/60 font-mono">
                 Created: {new Date(selectedRun.created_at).toLocaleString()}
               </span>
             </div>
-            <h3 className="text-lg font-serif font-bold text-white leading-snug">{selectedRun.topic}</h3>
+            <h3 className="text-lg font-serif font-bold text-portal-text leading-snug">{selectedRun.topic}</h3>
           </div>
 
           {/* RUN REVIEW WORKSPACE */}
-          <div className="bg-primary-navy border border-white/10 rounded-2xl shadow-xl overflow-y-auto custom-scrollbar max-h-[calc(100vh-9rem)]">
-            <div className="sticky top-0 z-30 bg-primary-navy border-b border-white/10 shadow-[0_10px_24px_rgba(0,0,0,0.22)] px-4 sm:px-6 py-4">
+          <div className="bg-portal-surface border border-portal-border/10 rounded-2xl shadow-xl overflow-y-auto custom-scrollbar max-h-[calc(100vh-9rem)]">
+            <div className="sticky top-0 z-30 bg-portal-surface border-b border-portal-border/10 shadow-[0_10px_24px_rgba(0,0,0,0.22)] px-4 sm:px-6 py-4">
               <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-base font-bold text-white">
+                  <h3 className="text-base font-bold text-portal-text">
                     {selectedRun.status === "awaiting_social_approval" ? (
                       "Multi-Platform Social Media Review"
                     ) : (
                       <>Blog Article Draft (Version {selectedRun.blog_drafts[0]?.version || 1})</>
                     )}
                   </h3>
-                  <p className="text-xs text-white/60">
+                  <p className="text-xs text-portal-text/60">
                     {selectedRun.status === "awaiting_social_approval"
                       ? "Approve each platform caption independently or publish all platforms."
                       : "Review clinical accuracy and patient-facing tone."}
@@ -332,13 +332,13 @@ export function PipelineTab({
                         </button>
                         <button
                           onClick={onStartEdit}
-                          className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                          className="border border-clinical-teal/40 hover:border-clinical-teal text-portal-accent-text hover:bg-clinical-teal/10 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
                         >
                           Edit Draft
                         </button>
                         <button
                           onClick={onOpenBlogRevision}
-                          className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                          className="border border-portal-border/20 hover:border-portal-border/40 text-portal-text/80 hover:bg-portal-text/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
                         >
                           Request Revision
                         </button>
@@ -368,7 +368,7 @@ export function PipelineTab({
                       </button>
                       <button
                         onClick={onOpenSocialRevision}
-                        className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
+                        className="border border-portal-border/20 hover:border-portal-border/40 text-portal-text/80 hover:bg-portal-text/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer"
                       >
                         Request Revision
                       </button>
@@ -382,14 +382,14 @@ export function PipelineTab({
                     </div>
 
                     {selectedRun.social_drafts.length > 0 && (
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-3 border-t border-white/10">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-3 border-t border-portal-border/10">
                         {SOCIAL_REVIEW_PLATFORMS.map((platform) => {
                           const platformDraft = selectedRun.social_drafts[0]?.[platform.key];
                           const isApproved = platformDraft?.status === "approved";
 
                           return (
-                            <div key={platform.key} className="bg-dark-overlay-navy border border-white/10 rounded-lg p-2 space-y-2">
-                              <span className="block text-[10px] text-white/70">{platform.label}</span>
+                            <div key={platform.key} className="bg-portal-surface-alt border border-portal-border/10 rounded-lg p-2 space-y-2">
+                              <span className="block text-[10px] text-portal-text/70">{platform.label}</span>
                               <div className="flex flex-wrap gap-1.5">
                                 <button
                                   onClick={() => onApprovePlatform(platform.key)}
@@ -401,13 +401,13 @@ export function PipelineTab({
                                 <button
                                   onClick={() => onEditPlatform(platform.key)}
                                   disabled={isApproved}
-                                  className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-[10px] px-2.5 py-1 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                                  className="border border-clinical-teal/40 hover:border-clinical-teal text-portal-accent-text hover:bg-clinical-teal/10 text-[10px] px-2.5 py-1 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                                 >
                                   Edit
                                 </button>
                                 <button
                                   onClick={() => onOpenPlatformRevision(platform.key)}
-                                  className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[10px] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                                  className="border border-portal-border/20 hover:border-portal-border/40 text-portal-text/80 hover:bg-portal-text/5 text-[10px] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                                 >
                                   Revision
                                 </button>
@@ -423,7 +423,7 @@ export function PipelineTab({
             </div>
 
             <div className="px-4 sm:px-6 pt-4">
-              <div className="flex flex-wrap items-center gap-1 border-b border-white/10 pb-3">
+              <div className="flex flex-wrap items-center gap-1 border-b border-portal-border/10 pb-3">
                 {runDetailTabs.map((tab) => (
                   <button
                     key={tab.id}
@@ -432,7 +432,7 @@ export function PipelineTab({
                       "py-1 px-2 rounded-lg text-[9px] transition-all flex items-center gap-1 cursor-pointer border " +
                       (activeRunDetailTab === tab.id
                         ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-sm"
-                        : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20")
+                        : "bg-portal-bg text-portal-text/70 hover:text-portal-text border-portal-border/10 hover:border-portal-border/20")
                     }
                   >
                     {tab.label}
@@ -528,9 +528,9 @@ export function PipelineTab({
 
           {/* PUBLISHED RUN DETAILS & ASSET DOWNLOADS */}
           {selectedRun.status === "published" && (
-            <div className="bg-primary-navy border border-clinical-teal/30 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="bg-portal-surface border border-clinical-teal/30 rounded-2xl p-6 shadow-xl space-y-4">
               <div className="flex justify-between items-center flex-wrap gap-2">
-                <span className="bg-dark-overlay-navy text-clinical-teal border border-clinical-teal/40 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+                <span className="bg-portal-surface-alt text-portal-accent-text border border-clinical-teal/40 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
                   <span>🚀</span>
                   <span>Published &amp; Ready for Distribution</span>
                 </span>
@@ -554,7 +554,7 @@ export function PipelineTab({
                 <button
                   onClick={onRevertToBlog}
                   disabled={isSubmittingReview}
-                  className="border border-white/20 hover:border-white/40 text-white hover:bg-white/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer disabled:opacity-50 font-sans"
+                  className="border border-portal-border/20 hover:border-portal-border/40 text-portal-text hover:bg-portal-text/5 text-xs px-4 py-2 rounded-xl shadow transition-colors cursor-pointer disabled:opacity-50 font-sans"
                 >
                   ↩ Revert to Blog Review
                 </button>
@@ -562,8 +562,8 @@ export function PipelineTab({
 
               {/* Downloadable Assets */}
               {selectedRun.social_media_assets && selectedRun.social_media_assets.length > 0 && (
-                <div className="pt-3 border-t border-white/10 space-y-2">
-                  <span className="text-xs text-white/70 uppercase tracking-wider block">
+                <div className="pt-3 border-t border-portal-border/10 space-y-2">
+                  <span className="text-xs text-portal-text/70 uppercase tracking-wider block">
                     Media Asset Packages Ready for Manual Posting:
                   </span>
                   <div className="flex flex-wrap gap-3 text-xs">
@@ -572,7 +572,7 @@ export function PipelineTab({
                         key={i}
                         href={asset.asset_url}
                         download
-                        className="bg-dark-overlay-navy hover:bg-white/5 border border-clinical-teal/30 text-clinical-teal px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors font-mono"
+                        className="bg-portal-surface-alt hover:bg-portal-text/5 border border-clinical-teal/30 text-portal-accent-text px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors font-mono"
                       >
                         <span>📥</span>
                         <span>{asset.platform} Asset Package</span>
@@ -585,10 +585,10 @@ export function PipelineTab({
           )}
 
           {/* COLLAPSIBLE VERSION HISTORY ACCORDION */}
-          <div className="bg-primary-navy border border-white/10 rounded-2xl overflow-hidden shadow-lg">
+          <div className="bg-portal-surface border border-portal-border/10 rounded-2xl overflow-hidden shadow-lg">
             <button
               onClick={onToggleVersionHistory}
-              className="w-full text-left px-6 py-4 bg-primary-navy hover:bg-primary-navy/80 flex justify-between items-center text-xs text-white/80 transition-colors cursor-pointer"
+              className="w-full text-left px-6 py-4 bg-portal-surface hover:bg-portal-surface/80 flex justify-between items-center text-xs text-portal-text/80 transition-colors cursor-pointer"
             >
               <span className="flex items-center gap-2">
                 <span>📜</span>
@@ -598,28 +598,28 @@ export function PipelineTab({
             </button>
 
             {isVersionHistoryExpanded && (
-              <div className="p-6 space-y-4 border-t border-white/10 text-xs">
+              <div className="p-6 space-y-4 border-t border-portal-border/10 text-xs">
                 {selectedRunReviews.length === 0 ? (
-                  <p className="text-white/50 italic">No previous revision logs recorded for this run.</p>
+                  <p className="text-portal-text/50 italic">No previous revision logs recorded for this run.</p>
                 ) : (
                   <div className="space-y-3">
                     {selectedRunReviews.map((rev) => (
-                      <div key={rev.id} className="p-3.5 bg-dark-overlay-navy border border-white/10 rounded-xl space-y-1.5">
+                      <div key={rev.id} className="p-3.5 bg-portal-surface-alt border border-portal-border/10 rounded-xl space-y-1.5">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold uppercase text-[10px] tracking-wider px-2 py-0.5 rounded bg-primary-navy text-clinical-teal">
+                            <span className="font-bold uppercase text-[10px] tracking-wider px-2 py-0.5 rounded bg-portal-surface text-portal-accent-text">
                               Stage: {rev.stage}
                             </span>
-                            <span className="font-bold text-[10px] uppercase px-2 py-0.5 rounded bg-primary-navy border border-clinical-teal/30 text-clinical-teal">
+                            <span className="font-bold text-[10px] uppercase px-2 py-0.5 rounded bg-portal-surface border border-clinical-teal/30 text-portal-accent-text">
                               {rev.decision.replace("_", " ")}
                             </span>
                           </div>
-                          <span className="text-[10px] text-white/50 font-mono">
+                          <span className="text-[10px] text-portal-text/50 font-mono">
                             {new Date(rev.created_at).toLocaleString()}
                           </span>
                         </div>
                         {rev.revision_notes && (
-                          <p className="text-white/80 bg-primary-navy p-2.5 rounded border border-white/10 italic">
+                          <p className="text-portal-text/80 bg-portal-surface p-2.5 rounded border border-portal-border/10 italic">
                             "{rev.revision_notes}"
                           </p>
                         )}

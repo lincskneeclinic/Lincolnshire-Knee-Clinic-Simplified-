@@ -30,7 +30,7 @@ function extractPlainText(node: React.ReactNode): string {
 // Subcomponent: Fixed Footer, CTA & Disclaimer Template
 function ArticleFooterTemplate() {
   return (
-    <div className="mt-8 border-t border-white/10 pt-6 space-y-6">
+    <div className="mt-8 border-t border-portal-border/10 pt-6 space-y-6">
       {/* 1. CTA Button */}
       <div className="text-center">
         <Link
@@ -42,8 +42,8 @@ function ArticleFooterTemplate() {
       </div>
 
       {/* 2. Disclaimer */}
-      <div className="border-t border-white/5 pt-4">
-        <p className="text-[10px] text-white/50 leading-relaxed text-center max-w-2xl mx-auto">
+      <div className="border-t border-portal-border/5 pt-4">
+        <p className="text-[10px] text-portal-text/50 leading-relaxed text-center max-w-2xl mx-auto">
           This article is for general informational purposes only and does not constitute medical advice. It is not a substitute for professional diagnosis or treatment. Always consult Mr. Pacheco or another qualified healthcare professional regarding your individual condition.
         </p>
       </div>
@@ -53,14 +53,14 @@ function ArticleFooterTemplate() {
           renders inside a narrow, fixed-width preview pane regardless of how wide the
           browser window is, so a viewport-based breakpoint here caused the two rows to
           collapse into an overlapping single line. */}
-      <div className="border-t border-white/5 pt-4 flex flex-col items-center gap-3 text-[10px] text-white/60">
+      <div className="border-t border-portal-border/5 pt-4 flex flex-col items-center gap-3 text-[10px] text-portal-text/60">
         <div className="flex items-center gap-2">
           <img
             src="/brand/lkc-logo-k-transparent.png"
             alt="Lincolnshire Knee Clinic Logo"
             className="w-6 h-6 object-contain shrink-0"
           />
-          <span className="font-serif font-bold text-white">Lincolnshire Knee Clinic</span>
+          <span className="font-serif font-bold text-portal-text">Lincolnshire Knee Clinic</span>
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 justify-center text-center text-[5px]">
           <span>Lead Consultant: Mr Ricardo J Pacheco (GMC 4145976)</span>
@@ -140,35 +140,35 @@ export function FormattedContent({
         rehypePlugins={[rehypeRaw]}
         components={{
           table: ({ children }) => (
-            <div className={`overflow-x-auto my-4 rounded-lg border ${lightMode ? "border-border-clinical/30" : "border-white/10"}`}>
-              <table className={`min-w-full divide-y text-[9.5px] leading-normal ${lightMode ? "divide-border-clinical/30 text-text-secondary" : "divide-white/10 text-white/80"}`}>
+            <div className={`overflow-x-auto my-4 rounded-lg border ${lightMode ? "border-border-clinical/30" : "border-portal-border/10"}`}>
+              <table className={`min-w-full divide-y text-[9.5px] leading-normal ${lightMode ? "divide-border-clinical/30 text-text-secondary" : "divide-portal-border/10 text-portal-text/80"}`}>
                 {children}
               </table>
             </div>
           ),
-          thead: ({ children }) => <thead className={lightMode ? "bg-[#f0f9ff]" : "bg-primary-navy"}>{children}</thead>,
-          tbody: ({ children }) => <tbody className={`divide-y ${lightMode ? "divide-border-clinical/20 bg-white" : "divide-white/5 bg-dark-overlay-navy/40"}`}>{children}</tbody>,
+          thead: ({ children }) => <thead className={lightMode ? "bg-[#f0f9ff]" : "bg-portal-surface"}>{children}</thead>,
+          tbody: ({ children }) => <tbody className={`divide-y ${lightMode ? "divide-border-clinical/20 bg-white" : "divide-portal-border/5 bg-portal-surface-alt/40"}`}>{children}</tbody>,
           tr: ({ children }) => <tr>{children}</tr>,
           th: ({ children }) => (
-            <th className={`px-3 py-2 text-left font-serif font-bold tracking-wider border-r last:border-r-0 ${lightMode ? "text-deep-navy border-border-clinical/20" : "text-white border-white/10"}`}>
+            <th className={`px-3 py-2 text-left font-serif font-bold tracking-wider border-r last:border-r-0 ${lightMode ? "text-deep-navy border-border-clinical/20" : "text-portal-text border-portal-border/10"}`}>
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className={`px-3 py-2 whitespace-normal border-r last:border-r-0 ${lightMode ? "text-text-secondary border-border-clinical/10" : "text-white/80 border-white/5"}`}>
+            <td className={`px-3 py-2 whitespace-normal border-r last:border-r-0 ${lightMode ? "text-text-secondary border-border-clinical/10" : "text-portal-text/80 border-portal-border/5"}`}>
               {children}
             </td>
           ),
-          h1: ({ children }) => <h1 className={`font-serif font-bold pt-3 border-b pb-1 mb-2 ${lightMode ? "text-xl md:text-2xl text-deep-navy border-border-clinical/30" : "text-base text-white border-white/10"}`}>{children}</h1>,
-          h2: ({ children }) => <h2 className={`font-serif font-bold pt-3 border-b pb-1 mb-2 ${lightMode ? "text-lg md:text-xl text-deep-navy border-border-clinical/30" : "text-sm text-white border-white/10"}`}>{children}</h2>,
-          h3: ({ children }) => <h3 className={`font-serif font-bold pt-2 border-b pb-1 mb-2 ${lightMode ? "text-base md:text-lg text-deep-navy border-border-clinical/30" : "text-xs text-white border-white/10"}`}>{children}</h3>,
-          h4: ({ children }) => <h4 className={`font-serif font-bold pt-2 pb-1 mb-1 ${lightMode ? "text-sm text-deep-navy" : "text-[11px] text-white"}`}>{children}</h4>,
+          h1: ({ children }) => <h1 className={`font-serif font-bold pt-3 border-b pb-1 mb-2 ${lightMode ? "text-xl md:text-2xl text-deep-navy border-border-clinical/30" : "text-base text-portal-text border-portal-border/10"}`}>{children}</h1>,
+          h2: ({ children }) => <h2 className={`font-serif font-bold pt-3 border-b pb-1 mb-2 ${lightMode ? "text-lg md:text-xl text-deep-navy border-border-clinical/30" : "text-sm text-portal-text border-portal-border/10"}`}>{children}</h2>,
+          h3: ({ children }) => <h3 className={`font-serif font-bold pt-2 border-b pb-1 mb-2 ${lightMode ? "text-base md:text-lg text-deep-navy border-border-clinical/30" : "text-xs text-portal-text border-portal-border/10"}`}>{children}</h3>,
+          h4: ({ children }) => <h4 className={`font-serif font-bold pt-2 pb-1 mb-1 ${lightMode ? "text-sm text-deep-navy" : "text-[11px] text-portal-text"}`}>{children}</h4>,
           p: ({ children }) => {
             const text = extractPlainText(children);
 
             if (text.includes("[NEEDS CLINICAL REVIEW]")) {
               return (
-                <div className="bg-dark-overlay-navy border-l-4 border-amber-500/70 text-amber-200/90 p-3.5 rounded-r-lg my-3 flex items-start gap-2.5 shadow-sm">
+                <div className="bg-portal-surface-alt border-l-4 border-amber-500/70 text-amber-200/90 p-3.5 rounded-r-lg my-3 flex items-start gap-2.5 shadow-sm">
                   <span className="text-amber-400/80 shrink-0">⚠️</span>
                   <div className="leading-relaxed text-[9px]">{children}</div>
                 </div>
@@ -191,7 +191,7 @@ export function FormattedContent({
                     <img
                       src={resolvedImage.url}
                       alt={label}
-                      className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-contain bg-white/5"
+                      className="mx-auto rounded-xl border border-portal-border/10 shadow-lg max-h-80 object-contain bg-white/5"
                       style={{ aspectRatio: "16 / 9", width: "100%" }}
                     />
                   </div>
@@ -202,18 +202,18 @@ export function FormattedContent({
               const previewForThis = pendingPreview?.placeholderId === placeholderId ? pendingPreview : null;
 
               return (
-                <div className={`border border-dashed p-4 rounded-xl my-4 text-center space-y-3 ${isFeatured ? "border-amber-400/50 bg-amber-950/10" : "border-clinical-teal/40 bg-primary-navy/40"}`}>
-                  <div className={`text-[10px] uppercase tracking-wider font-semibold ${isFeatured ? "text-amber-300" : "text-clinical-teal"}`}>
+                <div className={`border border-dashed p-4 rounded-xl my-4 text-center space-y-3 ${isFeatured ? "border-amber-400/50 bg-amber-950/10" : "border-clinical-teal/40 bg-portal-surface/40"}`}>
+                  <div className={`text-[10px] uppercase tracking-wider font-semibold ${isFeatured ? "text-amber-300" : "text-portal-accent-text"}`}>
                     {isFeatured ? "🖼️ Featured Image — used as this article's Education Hub card" : "📷 Suggested Image Placement"}
                   </div>
-                  <p className="text-[11px] text-white/90 italic">"{label}"</p>
+                  <p className="text-[11px] text-portal-text/90 italic">"{label}"</p>
 
                   {previewForThis ? (
                     <div className="space-y-2.5">
                       <img
                         src={previewForThis.url}
                         alt={label}
-                        className="mx-auto rounded-xl border border-white/10 shadow-lg object-contain bg-white/5"
+                        className="mx-auto rounded-xl border border-portal-border/10 shadow-lg object-contain bg-white/5"
                         style={{ aspectRatio: "16 / 9", width: "100%", maxHeight: "14rem" }}
                       />
                       {onAttachPlaceholder && (
@@ -226,7 +226,7 @@ export function FormattedContent({
                           </button>
                           <button
                             onClick={() => setActiveGeneratePlaceholder({ placeholderId, label, isFeatured })}
-                            className="border border-white/20 text-white/80 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium disabled:opacity-50"
+                            className="border border-portal-border/20 text-portal-text/80 hover:bg-portal-text/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium disabled:opacity-50"
                           >
                             🔄 Regenerate
                           </button>
@@ -282,13 +282,13 @@ export function FormattedContent({
                               onAttachPlaceholder(placeholderId, label, url, isFeatured);
                             }
                           }}
-                          className="border border-white/20 text-white/80 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium"
+                          className="border border-portal-border/20 text-portal-text/80 hover:bg-portal-text/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium"
                         >
                           Paste URL
                         </button>
                         <button
                           onClick={() => setActiveGeneratePlaceholder({ placeholderId, label, isFeatured })}
-                          className="border border-white/20 text-white/80 hover:bg-white/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium disabled:opacity-50 flex items-center gap-1"
+                          className="border border-portal-border/20 text-portal-text/80 hover:bg-portal-text/5 text-[10px] px-3 py-1 rounded-lg transition-colors font-medium disabled:opacity-50 flex items-center gap-1"
                         >
                           ✨ Generate Image
                         </button>
@@ -307,18 +307,18 @@ export function FormattedContent({
               );
             }
 
-            return <p className={lightMode ? "font-medium text-text-secondary leading-relaxed text-sm md:text-base my-4" : "leading-relaxed mb-3 text-white/80"}>{children}</p>;
+            return <p className={lightMode ? "font-medium text-text-secondary leading-relaxed text-sm md:text-base my-4" : "leading-relaxed mb-3 text-portal-text/80"}>{children}</p>;
           },
-          ul: ({ children }) => <ul className={lightMode ? "space-y-2 bg-soft-blue/30 p-5 rounded-xl border border-border-clinical/30 my-4 text-xs md:text-sm list-disc list-inside" : "list-disc pl-5 space-y-1.5 mb-3 text-white/80"}>{children}</ul>,
-          ol: ({ children }) => <ol className={lightMode ? "space-y-2 bg-soft-blue/30 p-5 rounded-xl border border-border-clinical/30 my-4 text-xs md:text-sm list-decimal list-inside" : "list-decimal pl-5 space-y-1.5 mb-3 text-white/80"}>{children}</ol>,
+          ul: ({ children }) => <ul className={lightMode ? "space-y-2 bg-soft-blue/30 p-5 rounded-xl border border-border-clinical/30 my-4 text-xs md:text-sm list-disc list-inside" : "list-disc pl-5 space-y-1.5 mb-3 text-portal-text/80"}>{children}</ul>,
+          ol: ({ children }) => <ol className={lightMode ? "space-y-2 bg-soft-blue/30 p-5 rounded-xl border border-border-clinical/30 my-4 text-xs md:text-sm list-decimal list-inside" : "list-decimal pl-5 space-y-1.5 mb-3 text-portal-text/80"}>{children}</ol>,
           li: ({ children }) => <li className={lightMode ? "font-medium text-text-secondary leading-relaxed" : "leading-relaxed"}>{children}</li>,
-          hr: () => <hr className={lightMode ? "border-border-clinical/30 my-6" : "border-white/10 my-4"} />,
-          strong: ({ children }) => <strong className={lightMode ? "font-bold text-deep-navy" : "font-bold text-white"}>{children}</strong>,
-          em: ({ children }) => <em className={lightMode ? "italic text-text-secondary" : "italic text-white/80"}>{children}</em>,
+          hr: () => <hr className={lightMode ? "border-border-clinical/30 my-6" : "border-portal-border/10 my-4"} />,
+          strong: ({ children }) => <strong className={lightMode ? "font-bold text-deep-navy" : "font-bold text-portal-text"}>{children}</strong>,
+          em: ({ children }) => <em className={lightMode ? "italic text-text-secondary" : "italic text-portal-text/80"}>{children}</em>,
           blockquote: ({ children }) => (
             <blockquote className={lightMode 
               ? "border-l-4 border-clinical-teal pl-6 my-8 italic text-deep-navy font-medium text-base md:text-lg bg-pale-clinical-blue/20 py-5 pr-6 rounded-r-xl shadow-sm"
-              : "border-l-4 border-clinical-teal bg-dark-overlay-navy pl-4 py-2 italic text-white/80 my-3 rounded-r"}>
+              : "border-l-4 border-clinical-teal bg-portal-surface-alt pl-4 py-2 italic text-portal-text/80 my-3 rounded-r"}>
               {children}
             </blockquote>
           ),
@@ -329,7 +329,7 @@ export function FormattedContent({
                 <img
                   src={src || ""}
                   alt={alt || ""}
-                  className="mx-auto rounded-xl border border-white/10 shadow-lg max-h-80 object-contain bg-white/5"
+                  className="mx-auto rounded-xl border border-portal-border/10 shadow-lg max-h-80 object-contain bg-white/5"
                   style={{ aspectRatio: "16 / 9", width: "100%" }}
                 />
                 {hasChangePermission && onResetPlaceholder && src && typeof src === "string" && (
@@ -358,11 +358,11 @@ export function FormattedContent({
         {content}
       </ReactMarkdown>
       {references && references.length > 0 && (
-        <div className={`mt-6 border-t pt-4 ${lightMode ? "border-border-clinical/30" : "border-white/10"}`}>
-          <span className={`block mb-2 ${lightMode ? "font-serif text-base font-bold text-deep-navy border-b border-border-clinical/20 pb-1" : "text-[10px] font-bold uppercase tracking-wider text-white/50"}`}>
+        <div className={`mt-6 border-t pt-4 ${lightMode ? "border-border-clinical/30" : "border-portal-border/10"}`}>
+          <span className={`block mb-2 ${lightMode ? "font-serif text-base font-bold text-deep-navy border-b border-border-clinical/20 pb-1" : "text-[10px] font-bold uppercase tracking-wider text-portal-text/50"}`}>
             References
           </span>
-          <ol className={`list-decimal pl-5 space-y-1 text-[11px] leading-relaxed ${lightMode ? "text-text-secondary" : "text-white/70"}`}>
+          <ol className={`list-decimal pl-5 space-y-1 text-[11px] leading-relaxed ${lightMode ? "text-text-secondary" : "text-portal-text/70"}`}>
             {references.map((ref, idx) => {
               const urlRegex = /(https?:\/\/[^\s)]+)/g;
               const parts = ref.split(urlRegex);
@@ -376,7 +376,7 @@ export function FormattedContent({
                           href={part}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-clinical-teal hover:underline break-all font-medium"
+                          className="text-portal-accent-text hover:underline break-all font-medium"
                         >
                           {part}
                         </a>

@@ -2404,8 +2404,8 @@ function BusinessDashboardPageInner() {
   };
 
   const renderMissingFormatCta = (label: string) => (
-    <div className="max-w-md mx-auto bg-dark-overlay-navy border border-dashed border-white/20 rounded-xl p-6 text-center space-y-3 animate-fadeIn">
-      <p className="text-xs text-white/60">
+    <div className="max-w-md mx-auto bg-portal-surface-alt border border-dashed border-portal-border/20 rounded-xl p-6 text-center space-y-3 animate-fadeIn">
+      <p className="text-xs text-portal-text/60">
         This run was created before {label} content existed. Generate it now to review and approve it.
       </p>
       <button
@@ -2687,21 +2687,15 @@ function BusinessDashboardPageInner() {
     }
   };
 
-  // Light/dark is currently only wired up for the shell (sidebar, header) and
-  // the Overview tab — other tabs haven't been converted to theme tokens yet,
-  // so they're pinned dark regardless of the toggle to avoid a half-themed
-  // look (light page chrome around still-hardcoded-dark tab content).
-  const shellTheme = activeTab === "overview" ? theme : "dark";
-
   useEffect(() => {
-    document.body.setAttribute("data-portal-theme", shellTheme);
+    document.body.setAttribute("data-portal-theme", theme);
     return () => {
       document.body.removeAttribute("data-portal-theme");
     };
-  }, [shellTheme]);
+  }, [theme]);
 
   return (
-    <div data-portal-theme={shellTheme} className="min-h-screen bg-portal-bg text-portal-text/80 font-sans flex flex-col md:flex-row">
+    <div data-portal-theme={theme} className="min-h-screen bg-portal-bg text-portal-text/80 font-sans flex flex-col md:flex-row">
       <PortalSidebar
         navGroups={navGroups}
         activeTab={activeTab}
@@ -3077,21 +3071,21 @@ function BusinessDashboardPageInner() {
 
             {/* CONFIRM REMOVE/RESTORE ARTICLE MODAL */}
             {articlePendingRemoval && (
-              <div className="fixed inset-0 z-50 bg-deep-navy/80 backdrop-blur-sm flex items-center justify-center p-4">
-                <div className="bg-primary-navy border border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-                  <h3 className="text-sm font-bold text-white">
+              <div className="fixed inset-0 z-50 bg-portal-bg/80 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="bg-portal-surface border border-portal-border/10 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+                  <h3 className="text-sm font-bold text-portal-text">
                     {articlePendingRemoval.removed ? "Restore this article?" : "Remove this article?"}
                   </h3>
-                  <p className="text-xs text-white/70 leading-relaxed">
+                  <p className="text-xs text-portal-text/70 leading-relaxed">
                     {articlePendingRemoval.removed
-                      ? <>Confirm you want to restore <strong className="text-white">&ldquo;{articlePendingRemoval.title}&rdquo;</strong> to the Education Hub. It will become visible on the live site again within a few minutes.</>
-                      : <>Confirm you want to remove <strong className="text-white">&ldquo;{articlePendingRemoval.title}&rdquo;</strong> from the Education Hub. It will disappear from the live site within a few minutes. You can restore it at any time from this screen.</>}
+                      ? <>Confirm you want to restore <strong className="text-portal-text">&ldquo;{articlePendingRemoval.title}&rdquo;</strong> to the Education Hub. It will become visible on the live site again within a few minutes.</>
+                      : <>Confirm you want to remove <strong className="text-portal-text">&ldquo;{articlePendingRemoval.title}&rdquo;</strong> from the Education Hub. It will disappear from the live site within a few minutes. You can restore it at any time from this screen.</>}
                   </p>
                   <div className="flex justify-end gap-3 pt-2">
                     <button
                       onClick={() => setArticlePendingRemoval(null)}
                       disabled={isUpdatingArticleVisibility}
-                      className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50"
+                      className="border border-portal-border/20 text-portal-text/70 hover:bg-portal-text/5 text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50"
                     >
                       Cancel
                     </button>

@@ -29,52 +29,52 @@ export function PipelineListView({
 }: PipelineListViewProps) {
   return (
     <div className="space-y-8">
-      <div className="bg-primary-navy border border-white/10 rounded-2xl p-4 shadow-lg">
+      <div className="bg-portal-surface border border-portal-border/10 rounded-2xl p-4 shadow-lg">
         <input
           type="text"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search runs by topic or ID…"
-          className="bg-dark-overlay-navy border border-white/20 text-white text-xs rounded-lg px-3 py-2 focus:border-clinical-teal focus:outline-none w-full sm:w-72"
+          className="bg-portal-surface-alt border border-portal-border/20 text-portal-text text-xs rounded-lg px-3 py-2 focus:border-clinical-teal focus:outline-none w-full sm:w-72"
         />
       </div>
 
       {/* SECTION 1: Needs Your Review */}
-      <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+      <div className="bg-portal-surface border border-portal-border/10 rounded-2xl p-6 shadow-xl space-y-4">
+        <div className="flex items-center justify-between border-b border-portal-border/10 pb-3">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-clinical-teal animate-ping" />
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+            <h3 className="text-xs font-bold text-portal-text uppercase tracking-wider">
               Needs Your Attention ({visibleReviewNeededRuns.length})
             </h3>
           </div>
-          <span className="text-[11px] text-clinical-teal font-mono">Action Required</span>
+          <span className="text-[11px] text-portal-accent-text font-mono">Action Required</span>
         </div>
 
         {reviewNeededCount === 0 ? (
-          <div className="py-8 text-center text-white/60 text-xs">
+          <div className="py-8 text-center text-portal-text/60 text-xs">
             🎉 No pending drafts require clinical review at this time.
           </div>
         ) : visibleReviewNeededRuns.length === 0 ? (
-          <div className="py-8 text-center text-white/40 text-xs">No runs match "{search}".</div>
+          <div className="py-8 text-center text-portal-text/40 text-xs">No runs match "{search}".</div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {visibleReviewNeededRuns.map((run) => (
               <div
                 key={run.id}
                 onClick={() => onSelectRun(run.run_id)}
-                className="p-5 bg-dark-overlay-navy border border-white/10 hover:border-clinical-teal/50 rounded-xl transition-all shadow-md space-y-3 cursor-pointer group"
+                className="p-5 bg-portal-surface-alt border border-portal-border/10 hover:border-clinical-teal/50 rounded-xl transition-all shadow-md space-y-3 cursor-pointer group"
               >
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <h4 className="font-serif text-sm font-bold text-white group-hover:text-clinical-teal transition-colors">
+                  <h4 className="font-serif text-sm font-bold text-portal-text group-hover:text-portal-accent-text transition-colors">
                     {run.topic}
                   </h4>
                   <StatusBadge status={run.status} isContinueEditing={isBlogEditInProgress(run)} />
                 </div>
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <span className="text-[10px] font-mono text-white/40">{run.run_id}</span>
+                  <span className="text-[10px] font-mono text-portal-text/40">{run.run_id}</span>
                   <span
-                    className="text-[11px] text-white/60 font-mono"
+                    className="text-[11px] text-portal-text/60 font-mono"
                     title={`Created ${new Date(run.created_at).toLocaleString()}`}
                   >
                     Last saved:{" "}
@@ -88,7 +88,7 @@ export function PipelineListView({
                 </div>
 
                 {run.blog_drafts?.[0]?.flags && run.blog_drafts[0].flags.length > 0 && (
-                  <div className="text-[11px] text-amber-300/90 bg-primary-navy border border-amber-500/40 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5">
+                  <div className="text-[11px] text-amber-300/90 bg-portal-surface border border-amber-500/40 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5">
                     <span>⚠️</span>
                     <span>{run.blog_drafts[0].flags.length} Clinical Review Flag(s)</span>
                   </div>
@@ -104,7 +104,7 @@ export function PipelineListView({
                   >
                     Delete
                   </button>
-                  <div className="flex text-xs text-clinical-teal items-center gap-1">
+                  <div className="flex text-xs text-portal-accent-text items-center gap-1">
                     <span>Open Review Workspace</span>
                     <span>→</span>
                   </div>
@@ -116,30 +116,30 @@ export function PipelineListView({
       </div>
 
       {/* SECTION 2: Secondary Section - All Other Runs */}
-      <div className="bg-primary-navy border border-white/10 rounded-2xl p-6 shadow-lg space-y-4">
-        <div className="border-b border-white/10 pb-3">
-          <h3 className="text-xs font-bold text-white/80 uppercase tracking-wider">
+      <div className="bg-portal-surface border border-portal-border/10 rounded-2xl p-6 shadow-lg space-y-4">
+        <div className="border-b border-portal-border/10 pb-3">
+          <h3 className="text-xs font-bold text-portal-text/80 uppercase tracking-wider">
             In Progress, Published &amp; Archived Runs ({visibleOtherRuns.length})
           </h3>
         </div>
 
         {otherCount > 0 && visibleOtherRuns.length === 0 ? (
-          <div className="py-8 text-center text-white/40 text-xs">No runs match "{search}".</div>
+          <div className="py-8 text-center text-portal-text/40 text-xs">No runs match "{search}".</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {visibleOtherRuns.map((run) => (
               <div
                 key={run.id}
                 onClick={() => onSelectRun(run.run_id)}
-                className="p-4 bg-dark-overlay-navy border border-white/10 hover:border-white/20 rounded-xl transition-all space-y-2 cursor-pointer"
+                className="p-4 bg-portal-surface-alt border border-portal-border/10 hover:border-portal-border/20 rounded-xl transition-all space-y-2 cursor-pointer"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <h4 className="text-xs text-white/90 font-semibold line-clamp-2">{run.topic}</h4>
+                  <h4 className="text-xs text-portal-text/90 font-semibold line-clamp-2">{run.topic}</h4>
                   <StatusBadge status={run.status} isContinueEditing={isBlogEditInProgress(run)} />
                 </div>
-                <div className="text-[10px] font-mono text-white/30">{run.run_id}</div>
+                <div className="text-[10px] font-mono text-portal-text/30">{run.run_id}</div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] text-white/40 font-mono">
+                  <span className="text-[10px] text-portal-text/40 font-mono">
                     Last saved:{" "}
                     {new Date(run.updated_at).toLocaleString([], {
                       day: "2-digit",
@@ -154,7 +154,7 @@ export function PipelineListView({
                         e.stopPropagation();
                         onSelectRun(run.run_id);
                       }}
-                      className="text-[10px] text-clinical-teal hover:underline cursor-pointer font-semibold"
+                      className="text-[10px] text-portal-accent-text hover:underline cursor-pointer font-semibold"
                     >
                       ✏️ Edit
                     </button>

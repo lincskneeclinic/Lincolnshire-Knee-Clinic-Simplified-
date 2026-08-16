@@ -54,23 +54,23 @@ function ArticleCommentsToggle({ slug, feedbackDown }: { slug: string; feedbackD
     <div className="w-full">
       <button
         onClick={handleToggle}
-        className="text-[10px] text-clinical-teal hover:underline cursor-pointer font-medium"
+        className="text-[10px] text-portal-accent-text hover:underline cursor-pointer font-medium"
       >
         {expanded ? "▲ Hide comments" : "💬 View \"could be improved\" comments"}
       </button>
       {expanded && (
         <div className="mt-1.5 space-y-1.5">
           {loading ? (
-            <p className="text-[10px] text-white/50">Loading…</p>
+            <p className="text-[10px] text-portal-text/50">Loading…</p>
           ) : comments && comments.length > 0 ? (
             comments.map((c, idx) => (
-              <div key={idx} className="bg-primary-navy/60 border border-white/10 rounded-lg px-2.5 py-2 text-[10px]">
-                <p className="text-white/80">{c.text}</p>
-                <p className="text-white/40 mt-0.5">{formatDateSafe(c.date)}</p>
+              <div key={idx} className="bg-portal-surface/60 border border-portal-border/10 rounded-lg px-2.5 py-2 text-[10px]">
+                <p className="text-portal-text/80">{c.text}</p>
+                <p className="text-portal-text/40 mt-0.5">{formatDateSafe(c.date)}</p>
               </div>
             ))
           ) : (
-            <p className="text-[10px] text-white/50">No written comments — just thumbs-down votes with nothing added.</p>
+            <p className="text-[10px] text-portal-text/50">No written comments — just thumbs-down votes with nothing added.</p>
           )}
         </div>
       )}
@@ -103,7 +103,7 @@ export function EducationHubTab({
 }: EducationHubTabProps) {
   const [showArchived, setShowArchived] = React.useState(false);
   const searchTerm = search.trim().toLowerCase();
-  
+
   const visibleArticles = articles.filter((a) => {
     // If searching, show everything that matches search query
     if (searchTerm) {
@@ -120,10 +120,10 @@ export function EducationHubTab({
 
   return (
     <PortalCard className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-portal-border/10 pb-3">
         <div>
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Education Hub Articles</h3>
-          <p className="text-xs text-white/60 mt-1">
+          <h3 className="text-sm font-bold text-portal-text uppercase tracking-wider">Education Hub Articles</h3>
+          <p className="text-xs text-portal-text/60 mt-1">
             Remove an article if it's outdated or the underlying evidence has changed — it disappears from the live
             site within a few minutes, no code deploy needed. Restoring it is just as instant. Use Edit to revise
             an article's content through the normal draft editor (references, images, wording) — approving it
@@ -131,12 +131,12 @@ export function EducationHubTab({
           </p>
           {archivedCount > 0 && (
             <div className="flex items-center gap-2 mt-3">
-              <label className="inline-flex items-center gap-2 text-xs text-white/80 cursor-pointer select-none">
+              <label className="inline-flex items-center gap-2 text-xs text-portal-text/80 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={showArchived}
                   onChange={(e) => setShowArchived(e.target.checked)}
-                  className="rounded border-white/20 bg-dark-overlay-navy text-clinical-teal focus:ring-0 cursor-pointer"
+                  className="rounded border-portal-border/20 bg-portal-surface-alt text-portal-accent-text focus:ring-0 cursor-pointer"
                 />
                 Show Older & Archived Articles ({archivedCount})
               </label>
@@ -148,12 +148,12 @@ export function EducationHubTab({
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search articles…"
-          className="bg-dark-overlay-navy border border-white/20 text-white text-xs rounded-lg px-3 py-2 focus:border-clinical-teal focus:outline-none w-full sm:w-64 shrink-0"
+          className="bg-portal-surface-alt border border-portal-border/20 text-portal-text text-xs rounded-lg px-3 py-2 focus:border-clinical-teal focus:outline-none w-full sm:w-64 shrink-0"
         />
       </div>
 
       {loading ? (
-        <div className="py-8 text-center text-white/60 text-xs">Loading articles…</div>
+        <div className="py-8 text-center text-portal-text/60 text-xs">Loading articles…</div>
       ) : articles.length === 0 ? (
         <PortalEmptyState message="No Education Hub articles found." />
       ) : visibleArticles.length === 0 ? (
@@ -165,14 +165,14 @@ export function EducationHubTab({
               key={article.slug}
               className={`p-4 rounded-xl border space-y-2 ${
                 article.removed
-                  ? "bg-dark-overlay-navy border-white/10 opacity-60"
+                  ? "bg-portal-surface-alt border-portal-border/10 opacity-60"
                   : article.archived
-                  ? "bg-dark-overlay-navy border-white/10 opacity-75"
-                  : "bg-dark-overlay-navy border-white/10"
+                  ? "bg-portal-surface-alt border-portal-border/10 opacity-75"
+                  : "bg-portal-surface-alt border-portal-border/10"
               }`}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] uppercase tracking-wider text-clinical-teal font-semibold">
+                <span className="text-[10px] uppercase tracking-wider text-portal-accent-text font-semibold">
                   {article.categoryLabel}
                 </span>
                 {article.removed ? (
@@ -180,13 +180,13 @@ export function EducationHubTab({
                     Removed
                   </span>
                 ) : article.archived ? (
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-white/20 text-white/60 bg-white/5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-portal-border/20 text-portal-text/60 bg-white/5">
                     Archived (Older)
                   </span>
                 ) : null}
               </div>
-              <h4 className="text-xs font-bold text-white leading-snug">{article.title}</h4>
-              <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-white/50 font-medium">
+              <h4 className="text-xs font-bold text-portal-text leading-snug">{article.title}</h4>
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-portal-text/50 font-medium">
                 <span>Created: {formatDateSafe(article.datePublished)}</span>
                 {article.updatedAt && <span>Last Updated: {formatDateSafe(article.updatedAt)}</span>}
                 {article.removedAt && (
@@ -204,14 +204,14 @@ export function EducationHubTab({
                     <button
                       onClick={() => onStartUpdate(article)}
                       disabled={isStartingUpdateSlug === article.slug || isStartingRunSlug === article.slug}
-                      className="border border-white/20 text-white/80 hover:bg-white/5 text-[11px] px-3 py-1.5 rounded-lg transition-all cursor-pointer font-medium disabled:opacity-50 flex items-center gap-1"
+                      className="border border-portal-border/20 text-portal-text/80 hover:bg-portal-text/5 text-[11px] px-3 py-1.5 rounded-lg transition-all cursor-pointer font-medium disabled:opacity-50 flex items-center gap-1"
                     >
                       {isStartingUpdateSlug === article.slug ? "Opening Editor…" : "✏️ Edit"}
                     </button>
                     <button
                       onClick={() => onStartRun(article)}
                       disabled={isStartingUpdateSlug === article.slug || isStartingRunSlug === article.slug}
-                      className="border border-clinical-teal/30 text-clinical-teal hover:bg-clinical-teal/5 text-[11px] px-3 py-1.5 rounded-lg transition-all cursor-pointer font-medium disabled:opacity-50 flex items-center gap-1"
+                      className="border border-clinical-teal/30 text-portal-accent-text hover:bg-clinical-teal/5 text-[11px] px-3 py-1.5 rounded-lg transition-all cursor-pointer font-medium disabled:opacity-50 flex items-center gap-1"
                     >
                       {isStartingRunSlug === article.slug ? "Starting Run…" : "🚀 Start Run"}
                     </button>
@@ -220,7 +220,7 @@ export function EducationHubTab({
                 {article.removed ? (
                   <button
                     onClick={() => onRequestRemoval(article)}
-                    className="border border-clinical-teal/40 text-clinical-teal hover:bg-clinical-teal/10 text-[11px] px-3 py-1.5 rounded-lg cursor-pointer font-medium"
+                    className="border border-clinical-teal/40 text-portal-accent-text hover:bg-clinical-teal/10 text-[11px] px-3 py-1.5 rounded-lg cursor-pointer font-medium"
                   >
                     Restore to Education Hub
                   </button>

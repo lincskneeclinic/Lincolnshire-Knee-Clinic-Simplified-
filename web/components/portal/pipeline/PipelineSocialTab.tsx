@@ -44,8 +44,8 @@ function MissingFormatCta({
   onGenerateMissingFormats: () => void;
 }) {
   return (
-    <div className="max-w-md mx-auto bg-dark-overlay-navy border border-dashed border-white/20 rounded-xl p-6 text-center space-y-3 animate-fadeIn">
-      <p className="text-xs text-white/60">
+    <div className="max-w-md mx-auto bg-portal-surface-alt border border-dashed border-portal-border/20 rounded-xl p-6 text-center space-y-3 animate-fadeIn">
+      <p className="text-xs text-portal-text/60">
         This run was created before {label} content existed. Generate it now to review and approve it.
       </p>
       <button
@@ -85,15 +85,15 @@ export function PipelineSocialTab({
           <ConnectedAccountsCard />
 
           {/* Social Formats Sub-Tab Navigation */}
-          <div className="flex border-b border-white/10 gap-2 overflow-x-auto pb-px">
+          <div className="flex border-b border-portal-border/10 gap-2 overflow-x-auto pb-px">
             {(["feed", "story", "carousel", "reel", "brandkit"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => onSubTabChange(tab)}
                 className={`text-xs font-semibold px-4 py-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                   activeSubTab === tab
-                    ? "border-clinical-teal text-clinical-teal font-bold"
-                    : "border-transparent text-white/60 hover:text-white hover:border-white/20"
+                    ? "border-clinical-teal text-portal-accent-text font-bold"
+                    : "border-transparent text-portal-text/60 hover:text-portal-text hover:border-portal-border/20"
                 }`}
               >
                 {tab === "feed" && "Feed Posts"}
@@ -526,19 +526,19 @@ export function PipelineSocialTab({
           )}
 
           {activeSubTab === "brandkit" && (
-            <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-6 shadow-lg animate-fadeIn space-y-6 text-left">
+            <div className="bg-portal-surface-alt border border-portal-border/10 rounded-xl p-6 shadow-lg animate-fadeIn space-y-6 text-left">
               <div>
-                <h4 className="font-serif text-sm font-bold text-white mb-2">LKC Branded Template Backgrounds</h4>
-                <p className="text-xs text-white/70 leading-relaxed">
+                <h4 className="font-serif text-sm font-bold text-portal-text mb-2">LKC Branded Template Backgrounds</h4>
+                <p className="text-xs text-portal-text/70 leading-relaxed">
                   Download these premium, pre-styled background templates with clinic margins and watermarks. Use
                   them as background layers in Canva or directly in social media apps to overlay the generated
                   caption text.
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="border border-white/10 bg-primary-navy/50 p-4 rounded-xl flex flex-col justify-between items-center space-y-4">
-                  <span className="text-xs font-semibold text-clinical-teal font-sans">Square Template (1:1 Posts / Carousels)</span>
-                  <div className="w-32 h-32 relative border border-white/20 rounded shadow-md overflow-hidden bg-slate-900 flex items-center justify-center">
+                <div className="border border-portal-border/10 bg-portal-surface/50 p-4 rounded-xl flex flex-col justify-between items-center space-y-4">
+                  <span className="text-xs font-semibold text-portal-accent-text font-sans">Square Template (1:1 Posts / Carousels)</span>
+                  <div className="w-32 h-32 relative border border-portal-border/20 rounded shadow-md overflow-hidden bg-slate-900 flex items-center justify-center">
                     <img src="/images/templates/square-post-template.png" className="object-cover w-full h-full" alt="Square Post Template" />
                   </div>
                   <button
@@ -549,9 +549,9 @@ export function PipelineSocialTab({
                   </button>
                 </div>
 
-                <div className="border border-white/10 bg-primary-navy/50 p-4 rounded-xl flex flex-col justify-between items-center space-y-4">
-                  <span className="text-xs font-semibold text-clinical-teal font-sans">Vertical Template (9:16 Stories / Reels)</span>
-                  <div className="w-20 h-32 relative border border-white/20 rounded shadow-md overflow-hidden bg-slate-900 flex items-center justify-center">
+                <div className="border border-portal-border/10 bg-portal-surface/50 p-4 rounded-xl flex flex-col justify-between items-center space-y-4">
+                  <span className="text-xs font-semibold text-portal-accent-text font-sans">Vertical Template (9:16 Stories / Reels)</span>
+                  <div className="w-20 h-32 relative border border-portal-border/20 rounded shadow-md overflow-hidden bg-slate-900 flex items-center justify-center">
                     <img src="/images/templates/vertical-story-template.png" className="object-cover w-full h-full" alt="Vertical Story Template" />
                   </div>
                   <button
@@ -564,12 +564,12 @@ export function PipelineSocialTab({
               </div>
 
               {/* Highlights Strategy */}
-              <div className="bg-primary-navy/40 p-4 rounded-xl border border-white/5 space-y-3">
-                <span className="text-clinical-teal uppercase tracking-wider text-[10px] font-bold block">✨ Instagram Highlights Guide</span>
-                <p className="text-[11px] text-white/80 leading-relaxed">
+              <div className="bg-portal-surface/40 p-4 rounded-xl border border-portal-border/5 space-y-3">
+                <span className="text-portal-accent-text uppercase tracking-wider text-[10px] font-bold block">✨ Instagram Highlights Guide</span>
+                <p className="text-[11px] text-portal-text/80 leading-relaxed">
                   Organise your stories into permanent, categorised profiles on your Instagram profile page:
                 </p>
-                <ul className="list-disc pl-4 text-[11px] text-white/70 space-y-2">
+                <ul className="list-disc pl-4 text-[11px] text-portal-text/70 space-y-2">
                   <li><strong>🏥 The Clinic:</strong> Clinical credentials, GMC Specialists registers, consulting locations, and photos of consulting rooms.</li>
                   <li><strong>🦵 Knee Joint Care:</strong> Educational guides explaining knee arthritis, meniscus tears, ACL injuries, and loose bodies.</li>
                   <li><strong>💉 Injections:</strong> Explanatory guides on Corticosteroid, Hyaluronic Acid, PRP, and Arthrosamid treatments.</li>
@@ -580,7 +580,7 @@ export function PipelineSocialTab({
           )}
         </>
       ) : (
-        <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-6 text-xs text-white/60">
+        <div className="bg-portal-surface-alt border border-portal-border/10 rounded-xl p-6 text-xs text-portal-text/60">
           Social captions are not available for this run yet.
         </div>
       )}

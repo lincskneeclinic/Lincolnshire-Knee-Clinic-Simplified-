@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -205,15 +205,15 @@ export function ClinicalReviewTab({
     <div className="space-y-8">
       <PortalCard className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-lg font-bold text-white">Clinical Review Status</h2>
-          <p className="text-xs text-white/60 mt-1">
+          <h2 className="text-lg font-bold text-portal-text">Clinical Review Status</h2>
+          <p className="text-xs text-portal-text/60 mt-1">
             Manage the &quot;Clinically Reviewed&quot; status shown on symptom, condition, treatment and injection pages.
           </p>
         </div>
         {selectedPageId && (
           <button
             onClick={onBackToList}
-            className="bg-dark-overlay-navy hover:bg-white/5 text-white/80 border border-white/20 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+            className="bg-portal-surface-alt hover:bg-portal-text/5 text-portal-text/80 border border-portal-border/20 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
           >
             ← Back to List
           </button>
@@ -221,16 +221,16 @@ export function ClinicalReviewTab({
       </PortalCard>
 
       {loading ? (
-        <div className="text-center text-white/50 text-sm py-12">Loading pages…</div>
+        <div className="text-center text-portal-text/50 text-sm py-12">Loading pages…</div>
       ) : selectedPage ? (
         <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <PortalCard className="space-y-2 shadow-xl">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-clinical-teal">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-portal-accent-text">
               {selectedPage.contentType}
             </span>
-            <h3 className="text-base font-bold text-white">{selectedPage.name}</h3>
-            <Link href={selectedPage.url} target="_blank" className="text-xs text-clinical-teal hover:underline">
+            <h3 className="text-base font-bold text-portal-text">{selectedPage.name}</h3>
+            <Link href={selectedPage.url} target="_blank" className="text-xs text-portal-accent-text hover:underline">
               View page →
             </Link>
           </PortalCard>
@@ -238,8 +238,8 @@ export function ClinicalReviewTab({
           <PortalCard className="space-y-4 flex flex-col shadow-xl">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-bold text-white">Suggested Evidence Sources</h3>
-                <p className="text-[11px] text-white/50 mt-0.5">
+                <h3 className="text-sm font-bold text-portal-text">Suggested Evidence Sources</h3>
+                <p className="text-[11px] text-portal-text/50 mt-0.5">
                   Web search results for &quot;{selectedPage.name}&quot;. Tick any references to move them into
                   Evidence Sources.
                 </p>
@@ -247,15 +247,15 @@ export function ClinicalReviewTab({
               <button
                 onClick={onRefreshSearch}
                 disabled={searchLoading}
-                className="shrink-0 bg-dark-overlay-navy hover:bg-white/5 text-white/80 border border-white/20 text-xs px-3 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-60"
+                className="shrink-0 bg-portal-surface-alt hover:bg-portal-text/5 text-portal-text/80 border border-portal-border/20 text-xs px-3 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-60"
               >
                 {searchLoading ? "Searching…" : "Refresh Search"}
               </button>
             </div>
 
             {addedResults.length > 0 && (
-              <div className="space-y-2 border-b border-white/10 pb-4">
-                <h4 className="text-[10px] font-bold uppercase tracking-wider text-clinical-teal">
+              <div className="space-y-2 border-b border-portal-border/10 pb-4">
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-portal-accent-text">
                   Added to Evidence Sources ({addedResults.length})
                 </h4>
                 <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
@@ -264,7 +264,7 @@ export function ClinicalReviewTab({
                       key={result.url}
                       type="button"
                       onClick={() => onUndoSearchResult(result)}
-                      className="w-full flex items-start gap-2.5 bg-dark-overlay-navy/60 border border-white/5 rounded-xl p-2.5 cursor-pointer hover:border-amber-400/40 transition-colors text-left"
+                      className="w-full flex items-start gap-2.5 bg-portal-surface-alt/60 border border-portal-border/5 rounded-xl p-2.5 cursor-pointer hover:border-amber-400/40 transition-colors text-left"
                     >
                       <span className="w-4 h-4 rounded-sm bg-clinical-teal flex items-center justify-center mt-0.5 shrink-0">
                         <svg viewBox="0 0 16 16" className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -273,35 +273,35 @@ export function ClinicalReviewTab({
                       </span>
                       <div className="min-w-0">
                         {result.source && (
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-white/30 block">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-portal-text/30 block">
                             {result.source}
                           </span>
                         )}
-                        <span className="text-xs font-semibold text-white/50 line-through block truncate">
+                        <span className="text-xs font-semibold text-portal-text/50 line-through block truncate">
                           {result.title}
                         </span>
                       </div>
                     </button>
                   ))}
                 </div>
-                <p className="text-[10px] text-white/40">Click a reference above to move it back to Suggested.</p>
+                <p className="text-[10px] text-portal-text/40">Click a reference above to move it back to Suggested.</p>
               </div>
             )}
 
             {searchLoading ? (
-              <div className="text-center text-white/50 text-xs py-10">Searching…</div>
+              <div className="text-center text-portal-text/50 text-xs py-10">Searching…</div>
             ) : searchError ? (
               <div className="text-center text-xs py-10 space-y-2">
                 <p className="text-amber-400">{searchError}</p>
               </div>
             ) : searchResults.length === 0 ? (
-              <div className="text-center text-white/50 text-xs py-10">No results found.</div>
+              <div className="text-center text-portal-text/50 text-xs py-10">No results found.</div>
             ) : (
               <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
                 {searchResults.map((result) => (
                   <label
                     key={result.url}
-                    className="flex items-start gap-2.5 bg-dark-overlay-navy border border-white/5 rounded-xl p-3 cursor-pointer hover:border-clinical-teal/40 transition-colors"
+                    className="flex items-start gap-2.5 bg-portal-surface-alt border border-portal-border/5 rounded-xl p-3 cursor-pointer hover:border-clinical-teal/40 transition-colors"
                   >
                     <input
                       type="checkbox"
@@ -310,7 +310,7 @@ export function ClinicalReviewTab({
                     />
                     <div className="space-y-1 min-w-0">
                       {result.source && (
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-white/40 block">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-portal-text/40 block">
                           {result.source}
                         </span>
                       )}
@@ -319,11 +319,11 @@ export function ClinicalReviewTab({
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="text-xs font-semibold text-clinical-teal hover:underline block"
+                        className="text-xs font-semibold text-portal-accent-text hover:underline block"
                       >
                         {result.title}
                       </a>
-                      <p className="text-[11px] text-white/60 leading-relaxed">{result.summary}</p>
+                      <p className="text-[11px] text-portal-text/60 leading-relaxed">{result.summary}</p>
                     </div>
                   </label>
                 ))}
@@ -369,9 +369,9 @@ export function ClinicalReviewTab({
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search pages by name…"
-              className="bg-dark-overlay-navy border border-white/20 text-white text-xs rounded-lg px-3 py-2 focus:border-clinical-teal focus:outline-none w-full sm:w-64"
+              className="bg-portal-surface-alt border border-portal-border/20 text-portal-text text-xs rounded-lg px-3 py-2 focus:border-clinical-teal focus:outline-none w-full sm:w-64"
             />
-            <label className="flex items-center gap-2 text-xs text-white/70 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-portal-text/70 cursor-pointer">
               <input
                 type="checkbox"
                 checked={allVisibleSelected}
@@ -388,8 +388,8 @@ export function ClinicalReviewTab({
                 onClick={() => setShowDismissed((v) => !v)}
                 className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors cursor-pointer ${
                   showDismissed
-                    ? "bg-white/10 border-white/30 text-white"
-                    : "bg-dark-overlay-navy border-white/10 text-white/50 hover:text-white/80 hover:border-white/20"
+                    ? "bg-white/10 border-portal-border/30 text-portal-text"
+                    : "bg-portal-surface-alt border-portal-border/10 text-portal-text/50 hover:text-portal-text/80 hover:border-portal-border/20"
                 }`}
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -410,7 +410,7 @@ export function ClinicalReviewTab({
 
             {bulkReviewSelection.size > 0 && (
               <div className="sm:ml-auto flex items-center gap-2">
-                <span className="text-xs text-clinical-teal font-semibold">{bulkReviewSelection.size} selected</span>
+                <span className="text-xs text-portal-accent-text font-semibold">{bulkReviewSelection.size} selected</span>
                 <button
                   onClick={() => onBulkReviewFormOpenChange(true)}
                   className="bg-clinical-teal hover:bg-clinical-teal-hover text-deep-navy text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
@@ -419,7 +419,7 @@ export function ClinicalReviewTab({
                 </button>
                 <button
                   onClick={() => onBulkReviewSelectionChange(new Set())}
-                  className="text-xs text-white/50 hover:text-white/80 cursor-pointer"
+                  className="text-xs text-portal-text/50 hover:text-portal-text/80 cursor-pointer"
                 >
                   Clear
                 </button>
@@ -429,7 +429,7 @@ export function ClinicalReviewTab({
 
           {isBulkReviewFormOpen && (
             <PortalCard className="border-clinical-teal/40 space-y-3">
-              <h4 className="text-sm font-bold text-white">
+              <h4 className="text-sm font-bold text-portal-text">
                 Mark {bulkReviewSelection.size} page{bulkReviewSelection.size === 1 ? "" : "s"} as clinically reviewed
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -438,27 +438,27 @@ export function ClinicalReviewTab({
                   value={bulkReviewerName}
                   onChange={(e) => onBulkReviewerNameChange(e.target.value)}
                   placeholder="Reviewer name"
-                  className="bg-dark-overlay-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                  className="bg-portal-surface-alt border border-portal-border/20 text-portal-text rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
                 />
                 <input
                   type="text"
                   value={bulkReviewerTitle}
                   onChange={(e) => onBulkReviewerTitleChange(e.target.value)}
                   placeholder="Reviewer title"
-                  className="bg-dark-overlay-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                  className="bg-portal-surface-alt border border-portal-border/20 text-portal-text rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
                 />
                 <input
                   type="text"
                   value={bulkReviewDate}
                   onChange={(e) => onBulkReviewDateChange(e.target.value)}
                   placeholder="e.g. August 2026"
-                  className="bg-dark-overlay-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+                  className="bg-portal-surface-alt border border-portal-border/20 text-portal-text rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
                 />
               </div>
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => onBulkReviewFormOpenChange(false)}
-                  className="border border-white/20 text-white/80 hover:bg-white/5 text-xs font-semibold px-4 py-2 rounded-xl transition-colors cursor-pointer"
+                  className="border border-portal-border/20 text-portal-text/80 hover:bg-portal-text/5 text-xs font-semibold px-4 py-2 rounded-xl transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -477,11 +477,11 @@ export function ClinicalReviewTab({
             <PortalEmptyState message={`No pages match "${search}".`} />
           ) : visiblePages.length === 0 && dismissedCount > 0 ? (
             <PortalCard className="text-center py-8 space-y-3">
-              <p className="text-white/50 text-sm">All reviewed pages have been dismissed.</p>
+              <p className="text-portal-text/50 text-sm">All reviewed pages have been dismissed.</p>
               <button
                 type="button"
                 onClick={() => setShowDismissed(true)}
-                className="text-xs text-clinical-teal hover:underline cursor-pointer"
+                className="text-xs text-portal-accent-text hover:underline cursor-pointer"
               >
                 Show {dismissedCount} dismissed page{dismissedCount === 1 ? "" : "s"}
               </button>
@@ -492,17 +492,17 @@ export function ClinicalReviewTab({
               if (pagesOfType.length === 0) return null;
               return (
                 <PortalCard key={contentType} className="space-y-3">
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider capitalize">{contentType}</h3>
+                  <h3 className="text-sm font-bold text-portal-text uppercase tracking-wider capitalize">{contentType}</h3>
                   <div className="space-y-2">
                     {pagesOfType.map((page) => {
                       const isDismissed = dismissedIds.has(page.pageId);
                       return (
                         <div
                           key={page.pageId}
-                          className={`w-full bg-dark-overlay-navy border rounded-xl p-3.5 flex items-center gap-3 transition-colors ${
+                          className={`w-full bg-portal-surface-alt border rounded-xl p-3.5 flex items-center gap-3 transition-colors ${
                             isDismissed
-                              ? "border-white/5 opacity-50"
-                              : "border-white/5 hover:border-clinical-teal/40"
+                              ? "border-portal-border/5 opacity-50"
+                              : "border-portal-border/5 hover:border-clinical-teal/40"
                           }`}
                         >
                           <input
@@ -516,9 +516,9 @@ export function ClinicalReviewTab({
                             onClick={() => onSelectPage(page)}
                             className="flex-1 text-left flex items-center justify-between gap-4 cursor-pointer min-w-0"
                           >
-                            <span className="text-xs text-white/90 font-medium truncate">{page.name}</span>
+                            <span className="text-xs text-portal-text/90 font-medium truncate">{page.name}</span>
                             {page.review.reviewed ? (
-                              <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-clinical-teal/10 text-clinical-teal border border-clinical-teal/30 shrink-0">
+                              <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-clinical-teal/10 text-portal-accent-text border border-clinical-teal/30 shrink-0">
                                 Reviewed{page.review.lastReviewedDate ? ` — ${page.review.lastReviewedDate}` : ""}
                               </span>
                             ) : page.review.staleReview ? (
@@ -550,8 +550,8 @@ export function ClinicalReviewTab({
                               }}
                               className={`shrink-0 w-6 h-6 flex items-center justify-center rounded-md transition-colors cursor-pointer ${
                                 isDismissed
-                                  ? "text-clinical-teal/60 hover:text-clinical-teal hover:bg-clinical-teal/10"
-                                  : "text-white/20 hover:text-white/60 hover:bg-white/5"
+                                  ? "text-portal-accent-text/60 hover:text-portal-accent-text hover:bg-clinical-teal/10"
+                                  : "text-portal-text/20 hover:text-portal-text/60 hover:bg-portal-text/5"
                               }`}
                             >
                               {isDismissed ? (

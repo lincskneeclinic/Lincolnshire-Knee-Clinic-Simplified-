@@ -48,7 +48,7 @@ export function PipelineRevisionModal({
             onChange={(e) => onNotesChange(e.target.value)}
             rows={4}
             placeholder="Specify exact wording adjustments or clinical clarifications required..."
-            className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none"
+            className="w-full bg-portal-surface-alt border border-portal-border/20 text-portal-text rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none"
           />
         </div>
 
@@ -56,7 +56,7 @@ export function PipelineRevisionModal({
           <button
             type="button"
             onClick={onClose}
-            className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
+            className="border border-portal-border/20 text-portal-text/70 hover:bg-portal-text/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
           >
             Cancel
           </button>

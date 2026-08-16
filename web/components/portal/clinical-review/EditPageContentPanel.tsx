@@ -86,12 +86,12 @@ function FieldEditor({
   };
 
   return (
-    <div className="bg-dark-overlay-navy border border-white/5 rounded-xl p-3 space-y-2">
+    <div className="bg-portal-surface-alt border border-portal-border/5 rounded-xl p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-clinical-teal">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-portal-accent-text">
           {FIELD_LABELS[fieldName] || fieldName}
         </span>
-        {type === "string[]" && <span className="text-[9px] text-white/40">One item per line</span>}
+        {type === "string[]" && <span className="text-[9px] text-portal-text/40">One item per line</span>}
       </div>
       <textarea
         value={text}
@@ -100,7 +100,7 @@ function FieldEditor({
           if (status !== "idle") setStatus("idle");
         }}
         rows={type === "string[]" ? 5 : 4}
-        className="w-full bg-primary-navy border border-white/20 text-white text-xs rounded-lg p-2.5 focus:border-clinical-teal focus:outline-none font-sans leading-relaxed"
+        className="w-full bg-portal-surface border border-portal-border/20 text-portal-text text-xs rounded-lg p-2.5 focus:border-clinical-teal focus:outline-none font-sans leading-relaxed"
       />
       <div className="flex items-center gap-2">
         <button
@@ -111,7 +111,7 @@ function FieldEditor({
           {status === "saving" ? "Saving…" : "Save"}
         </button>
         {status === "saved" && !isDirty && (
-          <span className="text-[11px] text-clinical-teal font-semibold">✓ Saved — now live on the page</span>
+          <span className="text-[11px] text-portal-accent-text font-semibold">✓ Saved — now live on the page</span>
         )}
         {status === "error" && <span className="text-[11px] text-status-error">Failed to save — try again.</span>}
       </div>
@@ -129,20 +129,20 @@ export function EditPageContentPanel({ loading, available, fields, fieldTypes, o
         className="w-full flex items-center justify-between gap-3 cursor-pointer"
       >
         <div className="text-left">
-          <h3 className="text-sm font-bold text-white">✏️ Edit Page Content</h3>
-          <p className="text-[11px] text-white/50 mt-0.5">
+          <h3 className="text-sm font-bold text-portal-text">✏️ Edit Page Content</h3>
+          <p className="text-[11px] text-portal-text/50 mt-0.5">
             Directly rewrite any section yourself — changes go live immediately on Save.
           </p>
         </div>
-        <span className="text-white/50 text-xs shrink-0">{expanded ? "▲ Collapse" : "▼ Expand"}</span>
+        <span className="text-portal-text/50 text-xs shrink-0">{expanded ? "▲ Collapse" : "▼ Expand"}</span>
       </button>
 
       {expanded && (
-        <div className="border-t border-white/10 pt-3 space-y-2.5">
+        <div className="border-t border-portal-border/10 pt-3 space-y-2.5">
           {loading ? (
-            <p className="text-xs text-white/50 text-center py-4">Loading page content…</p>
+            <p className="text-xs text-portal-text/50 text-center py-4">Loading page content…</p>
           ) : !available ? (
-            <p className="text-xs text-white/50 italic text-center py-4">
+            <p className="text-xs text-portal-text/50 italic text-center py-4">
               Manual editing isn&apos;t available for this page — it has no structured content to edit.
             </p>
           ) : (

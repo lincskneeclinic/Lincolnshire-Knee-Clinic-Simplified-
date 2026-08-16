@@ -118,7 +118,7 @@ const METRIC_LABELS: Array<{ key: keyof MetricsSnapshot; label: string }> = [
 ];
 
 function scoreColor(score: number): string {
-  if (score >= 65) return "text-clinical-teal border-clinical-teal/40";
+  if (score >= 65) return "text-portal-accent-text border-clinical-teal/40";
   if (score >= 35) return "text-amber-400 border-amber-500/40";
   return "text-status-error border-status-error/40";
 }
@@ -146,7 +146,7 @@ function EstimatedScoreBadge({
         {live ? "Live estimate" : "Estimated"} {score}/100
       </span>
       {delta && delta.before !== delta.after && (
-        <span className="text-[9px] text-white/50">
+        <span className="text-[9px] text-portal-text/50">
           {delta.before} → {delta.after} ({delta.after > delta.before ? "+" : ""}
           {delta.after - delta.before})
         </span>
@@ -251,14 +251,14 @@ function PerformancePanel({
   if (!checked) return null;
 
   return (
-    <div className="bg-primary-navy/50 border border-white/10 rounded-lg p-3 space-y-2.5 text-left">
-      <span className="text-[10px] font-bold uppercase tracking-wider text-clinical-teal">
+    <div className="bg-portal-surface/50 border border-portal-border/10 rounded-lg p-3 space-y-2.5 text-left">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-portal-accent-text">
         Real Performance {platform === "instagram" ? "(Instagram)" : "(Facebook)"}
       </span>
 
       {!linked ? (
         <div className="space-y-2">
-          <p className="text-[10px] text-white/60 leading-relaxed">
+          <p className="text-[10px] text-portal-text/60 leading-relaxed">
             Once you've posted this manually, paste the live post URL to pull real reach and engagement numbers.
           </p>
           <div className="flex gap-1.5">
@@ -267,7 +267,7 @@ function PerformancePanel({
               value={permalinkInput}
               onChange={(e) => setPermalinkInput(e.target.value)}
               placeholder={platform === "instagram" ? "https://www.instagram.com/p/..." : "https://www.facebook.com/.../posts/..."}
-              className="flex-1 bg-dark-overlay-navy border border-white/20 text-white text-[10px] rounded-lg px-2 py-1.5 focus:border-clinical-teal focus:outline-none"
+              className="flex-1 bg-portal-surface-alt border border-portal-border/20 text-portal-text text-[10px] rounded-lg px-2 py-1.5 focus:border-clinical-teal focus:outline-none"
             />
             <button
               onClick={linkAndAnalyze}
@@ -283,9 +283,9 @@ function PerformancePanel({
           {metrics && (
             <div className="grid grid-cols-3 gap-1.5">
               {METRIC_LABELS.filter((m) => metrics[m.key] !== null && metrics[m.key] !== undefined).map((m) => (
-                <div key={m.key} className="bg-dark-overlay-navy border border-white/5 rounded-lg px-2 py-1.5 text-center">
-                  <div className="text-[13px] font-bold text-white">{metrics[m.key]}</div>
-                  <div className="text-[8px] text-white/50 uppercase tracking-wide">{m.label}</div>
+                <div key={m.key} className="bg-portal-surface-alt border border-portal-border/5 rounded-lg px-2 py-1.5 text-center">
+                  <div className="text-[13px] font-bold text-portal-text">{metrics[m.key]}</div>
+                  <div className="text-[8px] text-portal-text/50 uppercase tracking-wide">{m.label}</div>
                 </div>
               ))}
             </div>
@@ -297,11 +297,11 @@ function PerformancePanel({
                 <span className={`text-sm font-bold px-2 py-0.5 rounded-full border ${scoreColor(performance.score)}`}>
                   {performance.score}/100
                 </span>
-                <span className="text-[9px] text-white/40">real, measured vs. this account's own history</span>
+                <span className="text-[9px] text-portal-text/40">real, measured vs. this account's own history</span>
               </div>
-              <p className="text-[10px] text-white/80 leading-relaxed">{performance.assessment}</p>
+              <p className="text-[10px] text-portal-text/80 leading-relaxed">{performance.assessment}</p>
               {performance.suggestions.length > 0 && (
-                <ul className="text-[10px] text-white/70 leading-relaxed list-disc list-inside space-y-0.5">
+                <ul className="text-[10px] text-portal-text/70 leading-relaxed list-disc list-inside space-y-0.5">
                   {performance.suggestions.map((s, i) => (
                     <li key={i}>{s}</li>
                   ))}
@@ -313,7 +313,7 @@ function PerformancePanel({
           <button
             onClick={refreshMetrics}
             disabled={isBusy}
-            className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[10px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+            className="border border-portal-border/20 hover:border-portal-border/40 text-portal-text/80 hover:bg-portal-text/5 text-[10px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
           >
             {isBusy ? "Refreshing…" : performance ? "🔄 Refresh & Re-analyze" : "Fetch Real Performance"}
           </button>
@@ -530,7 +530,7 @@ function RepositionableImage({
         }}
       />
       {!disabled && (
-        <div className="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between gap-1.5 bg-deep-navy/90 backdrop-blur px-1.5 py-1 rounded-md border border-white/10">
+        <div className="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between gap-1.5 bg-portal-bg/90 backdrop-blur px-1.5 py-1 rounded-md border border-portal-border/10">
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -540,12 +540,12 @@ function RepositionableImage({
                 handleZoom(-ZOOM_STEP);
               }}
               disabled={isSaving || zoom <= MIN_ZOOM}
-              className="w-4 h-4 flex items-center justify-center text-[10px] text-white/80 hover:text-white cursor-pointer disabled:opacity-30 leading-none"
+              className="w-4 h-4 flex items-center justify-center text-[10px] text-portal-text/80 hover:text-portal-text cursor-pointer disabled:opacity-30 leading-none"
               aria-label="Zoom out"
             >
               −
             </button>
-            <span className="text-[8px] text-white/50 font-mono w-7 text-center">{Math.round(zoom * 100)}%</span>
+            <span className="text-[8px] text-portal-text/50 font-mono w-7 text-center">{Math.round(zoom * 100)}%</span>
             <button
               type="button"
               onPointerDown={stopForButton}
@@ -554,7 +554,7 @@ function RepositionableImage({
                 handleZoom(ZOOM_STEP);
               }}
               disabled={isSaving || zoom >= MAX_ZOOM}
-              className="w-4 h-4 flex items-center justify-center text-[10px] text-white/80 hover:text-white cursor-pointer disabled:opacity-30 leading-none"
+              className="w-4 h-4 flex items-center justify-center text-[10px] text-portal-text/80 hover:text-portal-text cursor-pointer disabled:opacity-30 leading-none"
               aria-label="Zoom in"
             >
               +
@@ -570,11 +570,11 @@ function RepositionableImage({
                   handleReset();
                 }}
                 disabled={isSaving}
-                className="text-[9px] text-white/70 hover:text-white cursor-pointer disabled:opacity-50"
+                className="text-[9px] text-portal-text/70 hover:text-portal-text cursor-pointer disabled:opacity-50"
               >
                 Reset
               </button>
-              <span className="text-white/20">|</span>
+              <span className="text-portal-text/20">|</span>
               <button
                 type="button"
                 onPointerDown={stopForButton}
@@ -583,7 +583,7 @@ function RepositionableImage({
                   handleSave();
                 }}
                 disabled={isSaving}
-                className="text-[9px] text-clinical-teal hover:underline font-semibold cursor-pointer disabled:opacity-50"
+                className="text-[9px] text-portal-accent-text hover:underline font-semibold cursor-pointer disabled:opacity-50"
               >
                 {isSaving ? "Saving…" : "✓ Save"}
               </button>
@@ -592,7 +592,7 @@ function RepositionableImage({
         </div>
       )}
       {!disabled && !hasChanged && (
-        <div className="absolute top-1.5 right-1.5 bg-deep-navy/80 backdrop-blur text-[8px] text-white/60 px-1.5 py-0.5 rounded pointer-events-none">
+        <div className="absolute top-1.5 right-1.5 bg-portal-bg/80 backdrop-blur text-[8px] text-portal-text/60 px-1.5 py-0.5 rounded pointer-events-none">
           Drag to reposition
         </div>
       )}
@@ -759,18 +759,18 @@ export function PlatformCard({
   };
 
   return (
-    <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4 animate-fadeIn">
+    <div className="bg-portal-surface-alt border border-portal-border/10 rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4 animate-fadeIn">
       <div className="space-y-3">
         <div className="flex justify-between items-center">
-          <span className="text-xs text-white/90 flex items-center gap-1.5 font-semibold">
+          <span className="text-xs text-portal-text/90 flex items-center gap-1.5 font-semibold">
             <span className="shrink-0">{icon}</span>
             <span>{platformLabel}</span>
           </span>
           <span
             className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${
               status === "approved" || isPublished
-                ? "bg-primary-navy text-clinical-teal border-clinical-teal/30"
-                : "bg-primary-navy text-white/70 border-white/20"
+                ? "bg-portal-surface text-portal-accent-text border-clinical-teal/30"
+                : "bg-portal-surface text-portal-text/70 border-portal-border/20"
             }`}
           >
             {status === "approved" || isPublished ? "✓ Approved" : "Pending Review"}
@@ -781,7 +781,7 @@ export function PlatformCard({
 
         {/* Custom Formats Renders */}
         {isStory && (
-          <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md bg-gradient-to-b from-slate-900 to-slate-950 w-full aspect-[9/16] max-w-[210px] mx-auto group">
+          <div className="relative rounded-lg overflow-hidden border border-portal-border/10 shadow-md bg-gradient-to-b from-slate-900 to-slate-950 w-full aspect-[9/16] max-w-[210px] mx-auto group">
             <RepositionableImage
               src={attachedImageUrl || "/images/templates/vertical-story-template.png"}
               alt="Story Preview Background"
@@ -792,12 +792,12 @@ export function PlatformCard({
               disabled={isPublished || !attachedImageUrl}
             />
             <div className="absolute inset-0 bg-black/40 pointer-events-none" />
-            <div className="absolute bottom-6 left-2 right-2 bg-black/70 backdrop-blur-md border border-white/10 p-2.5 rounded-lg text-center shadow-lg">
-              <p className="text-[10px] font-sans text-white/90 font-medium leading-relaxed">
+            <div className="absolute bottom-6 left-2 right-2 bg-black/70 backdrop-blur-md border border-portal-border/10 p-2.5 rounded-lg text-center shadow-lg">
+              <p className="text-[10px] font-sans text-portal-text/90 font-medium leading-relaxed">
                 {caption || "New update from Lincolnshire Knee Clinic"}
               </p>
             </div>
-            <div className="absolute top-2 left-2 bg-primary-navy/95 backdrop-blur text-[9px] text-clinical-teal font-mono px-2 py-0.5 rounded border border-white/10">
+            <div className="absolute top-2 left-2 bg-portal-surface/95 backdrop-blur text-[9px] text-portal-accent-text font-mono px-2 py-0.5 rounded border border-portal-border/10">
               📱 Story Preview
             </div>
           </div>
@@ -811,7 +811,7 @@ export function PlatformCard({
                   imageUrl: attachedImageUrl || "/images/templates/vertical-story-template.png",
                 })
               }
-              className="text-[10px] text-clinical-teal hover:underline cursor-pointer font-medium"
+              className="text-[10px] text-portal-accent-text hover:underline cursor-pointer font-medium"
             >
               🔍 Preview in new window
             </button>
@@ -819,19 +819,19 @@ export function PlatformCard({
         )}
 
         {isCarousel && currentSlide && (
-          <div className="space-y-3 bg-primary-navy/50 p-4 rounded-xl border border-white/5 animate-fadeIn">
+          <div className="space-y-3 bg-portal-surface/50 p-4 rounded-xl border border-portal-border/5 animate-fadeIn">
             <div className="flex justify-between items-center text-[10px] text-[#A8C0CC]">
-              <span className="font-semibold text-clinical-teal">Slide {activeSlide + 1} of {slides!.length}</span>
+              <span className="font-semibold text-portal-accent-text">Slide {activeSlide + 1} of {slides!.length}</span>
               <button
                 onClick={() => openSocialPreview("carousel", { slides })}
-                className="text-clinical-teal hover:underline cursor-pointer font-medium"
+                className="text-portal-accent-text hover:underline cursor-pointer font-medium"
               >
                 🔍 Preview all slides
               </button>
             </div>
 
             {currentSlide.imageUrl ? (
-              <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md group aspect-[4/5] max-w-[220px] mx-auto">
+              <div className="relative rounded-lg overflow-hidden border border-portal-border/10 shadow-md group aspect-[4/5] max-w-[220px] mx-auto">
                 <RepositionableImage
                   src={currentSlide.imageUrl}
                   alt={`Slide ${activeSlide + 1} Visual`}
@@ -843,14 +843,14 @@ export function PlatformCard({
                 />
               </div>
             ) : (
-              <div className="bg-primary-navy/70 border border-dashed border-white/20 rounded-lg p-3 text-center text-[10px] text-white/40 italic">
+              <div className="bg-portal-surface/70 border border-dashed border-portal-border/20 rounded-lg p-3 text-center text-[10px] text-portal-text/40 italic">
                 No image attached for Slide {activeSlide + 1}
               </div>
             )}
 
             {!isPublished && (
               <div className="flex justify-end gap-1.5">
-                <label className="bg-white/10 hover:bg-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors cursor-pointer font-medium border border-white/10">
+                <label className="bg-white/10 hover:bg-portal-text/20 text-[#A8C0CC] hover:text-portal-text text-[9px] px-2 py-1 rounded transition-colors cursor-pointer font-medium border border-portal-border/10">
                   Upload Slide
                   <input
                     type="file"
@@ -879,7 +879,7 @@ export function PlatformCard({
                 {onGenerateImage && (
                   <button
                     onClick={() => setIsGenerateModalOpen(true)}
-                    className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
+                    className="border border-portal-border/20 text-[#A8C0CC] hover:text-portal-text text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
                   >
                     ✨ Generate
                   </button>
@@ -891,20 +891,20 @@ export function PlatformCard({
               <div className="flex justify-end">
                 <button
                   onClick={() => downloadImageFile(currentSlide.imageUrl!, `instagramCarousel-slide-${activeSlide + 1}`, toast.error)}
-                  className="text-[9px] text-clinical-teal hover:underline cursor-pointer font-medium"
+                  className="text-[9px] text-portal-accent-text hover:underline cursor-pointer font-medium"
                 >
                   ⬇ Download Slide Image
                 </button>
               </div>
             )}
 
-            <div className="text-[10px] text-white/60 italic bg-primary-navy/80 p-2 rounded border border-white/5 leading-relaxed">
+            <div className="text-[10px] text-portal-text/60 italic bg-portal-surface/80 p-2 rounded border border-portal-border/5 leading-relaxed">
               <strong>Visual Concept:</strong> {currentSlide.imagePromptSuggestion}
             </div>
 
             <div className="space-y-1">
-              <span className="text-[9px] font-bold uppercase tracking-wider text-clinical-teal">Slide Text Overlay:</span>
-              <div className="bg-primary-navy border border-white/10 p-2.5 rounded-lg text-xs text-white font-sans leading-normal font-semibold text-center select-all cursor-pointer" title="Click to select all">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-portal-accent-text">Slide Text Overlay:</span>
+              <div className="bg-portal-surface border border-portal-border/10 p-2.5 rounded-lg text-xs text-portal-text font-sans leading-normal font-semibold text-center select-all cursor-pointer" title="Click to select all">
                 "{currentSlide.text}"
               </div>
             </div>
@@ -913,14 +913,14 @@ export function PlatformCard({
               <button
                 disabled={activeSlide === 0}
                 onClick={() => setActiveSlide(prev => Math.max(0, prev - 1))}
-                className="bg-white/5 hover:bg-white/10 text-white text-[10px] px-3 py-1 rounded disabled:opacity-30 cursor-pointer"
+                className="bg-white/5 hover:bg-portal-text/10 text-portal-text text-[10px] px-3 py-1 rounded disabled:opacity-30 cursor-pointer"
               >
                 ◀ Prev
               </button>
               <button
                 disabled={activeSlide === slides!.length - 1}
                 onClick={() => setActiveSlide(prev => Math.min(slides!.length - 1, prev + 1))}
-                className="bg-white/5 hover:bg-white/10 text-white text-[10px] px-3 py-1 rounded disabled:opacity-30 cursor-pointer"
+                className="bg-white/5 hover:bg-portal-text/10 text-portal-text text-[10px] px-3 py-1 rounded disabled:opacity-30 cursor-pointer"
               >
                 Next ▶
               </button>
@@ -929,32 +929,32 @@ export function PlatformCard({
         )}
 
         {isReel && (
-          <div className="space-y-3 bg-primary-navy/50 p-4 rounded-xl border border-white/5 text-xs animate-fadeIn">
+          <div className="space-y-3 bg-portal-surface/50 p-4 rounded-xl border border-portal-border/5 text-xs animate-fadeIn">
             <div className="flex items-center justify-between gap-1.5">
-              <span className="flex items-center gap-1.5 text-clinical-teal uppercase tracking-wider text-[10px] font-bold">
+              <span className="flex items-center gap-1.5 text-portal-accent-text uppercase tracking-wider text-[10px] font-bold">
                 <span>🎬</span>
                 <span>Reel script outline</span>
               </span>
               <button
                 onClick={() => openSocialPreview("reel", { caption, imageUrl: attachedImageUrl || undefined, script })}
-                className="text-[10px] text-clinical-teal hover:underline cursor-pointer font-medium"
+                className="text-[10px] text-portal-accent-text hover:underline cursor-pointer font-medium"
               >
                 🔍 Preview
               </button>
             </div>
 
-            <div className="bg-primary-navy p-3 rounded-lg border border-white/10 text-[11px] text-white/80 leading-relaxed font-sans whitespace-pre-wrap max-h-60 overflow-y-auto font-mono">
+            <div className="bg-portal-surface p-3 rounded-lg border border-portal-border/10 text-[11px] text-portal-text/80 leading-relaxed font-sans whitespace-pre-wrap max-h-60 overflow-y-auto font-mono">
               {script || caption || "No script outline available."}
             </div>
 
-            <div className="space-y-2 pt-1 border-t border-white/5">
-              <span className="flex items-center gap-1.5 text-clinical-teal uppercase tracking-wider text-[10px] font-bold">
+            <div className="space-y-2 pt-1 border-t border-portal-border/5">
+              <span className="flex items-center gap-1.5 text-portal-accent-text uppercase tracking-wider text-[10px] font-bold">
                 <span>🖼️</span>
                 <span>Reel Cover Image</span>
               </span>
 
               {attachedImageUrl ? (
-                <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md aspect-[9/16] max-w-[210px] mx-auto">
+                <div className="relative rounded-lg overflow-hidden border border-portal-border/10 shadow-md aspect-[9/16] max-w-[210px] mx-auto">
                   <RepositionableImage
                     src={attachedImageUrl}
                     alt="Reel cover"
@@ -965,14 +965,14 @@ export function PlatformCard({
                   />
                 </div>
               ) : (
-                <div className="bg-primary-navy/70 border border-dashed border-white/20 rounded-lg p-3 text-center text-[10px] text-white/40 italic">
+                <div className="bg-portal-surface/70 border border-dashed border-portal-border/20 rounded-lg p-3 text-center text-[10px] text-portal-text/40 italic">
                   No cover image attached
                 </div>
               )}
 
               {!isPublished && (
                 <div className="flex justify-center gap-1.5">
-                  <label className="bg-white/10 hover:bg-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1.5 rounded transition-colors cursor-pointer font-medium border border-white/10">
+                  <label className="bg-white/10 hover:bg-portal-text/20 text-[#A8C0CC] hover:text-portal-text text-[9px] px-2.5 py-1.5 rounded transition-colors cursor-pointer font-medium border border-portal-border/10">
                     {attachedImageUrl ? "Change Cover" : "Upload Cover"}
                     <input
                       type="file"
@@ -1001,7 +1001,7 @@ export function PlatformCard({
                   {onGenerateImage && (
                     <button
                       onClick={() => setIsGenerateModalOpen(true)}
-                      className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1.5 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
+                      className="border border-portal-border/20 text-[#A8C0CC] hover:text-portal-text text-[9px] px-2.5 py-1.5 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
                     >
                       ✨ Generate
                     </button>
@@ -1013,7 +1013,7 @@ export function PlatformCard({
                 <div className="flex justify-center">
                   <button
                     onClick={() => downloadImageFile(attachedImageUrl, "instagramReel-cover-image", toast.error)}
-                    className="text-[9px] text-clinical-teal hover:underline cursor-pointer font-medium"
+                    className="text-[9px] text-portal-accent-text hover:underline cursor-pointer font-medium"
                   >
                     ⬇ Download Cover Image
                   </button>
@@ -1021,27 +1021,27 @@ export function PlatformCard({
               )}
             </div>
 
-            <div className="space-y-2 pt-1 border-t border-white/5">
-              <span className="flex items-center gap-1.5 text-clinical-teal uppercase tracking-wider text-[10px] font-bold">
+            <div className="space-y-2 pt-1 border-t border-portal-border/5">
+              <span className="flex items-center gap-1.5 text-portal-accent-text uppercase tracking-wider text-[10px] font-bold">
                 <span>🎥</span>
                 <span>Reel Video</span>
               </span>
 
               {attachedVideoUrl ? (
                 <div className="space-y-2">
-                  <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md max-w-[210px] mx-auto">
+                  <div className="relative rounded-lg overflow-hidden border border-portal-border/10 shadow-md max-w-[210px] mx-auto">
                     <video
                       src={attachedVideoUrl}
                       controls
                       className="w-full aspect-[9/16] object-cover bg-black"
                     />
-                    <div className="absolute top-2 left-2 bg-primary-navy/95 backdrop-blur text-[9px] text-clinical-teal font-mono px-2 py-0.5 rounded border border-white/10">
+                    <div className="absolute top-2 left-2 bg-portal-surface/95 backdrop-blur text-[9px] text-portal-accent-text font-mono px-2 py-0.5 rounded border border-portal-border/10">
                       {videoSource === "ai-broll" ? "🎞️ AI B-Roll" : "📤 Uploaded"}
                     </div>
                   </div>
                   {!isPublished && (
                     <div className="flex justify-end gap-1.5">
-                      <label className="bg-white/10 hover:bg-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors cursor-pointer font-medium border border-white/10">
+                      <label className="bg-white/10 hover:bg-portal-text/20 text-[#A8C0CC] hover:text-portal-text text-[9px] px-2 py-1 rounded transition-colors cursor-pointer font-medium border border-portal-border/10">
                         {isUploadingVideo ? "Uploading..." : "Replace with Upload"}
                         <input
                           type="file"
@@ -1057,7 +1057,7 @@ export function PlatformCard({
                       <button
                         disabled={isGeneratingBroll}
                         onClick={handleGenerateBroll}
-                        className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
+                        className="border border-portal-border/20 text-[#A8C0CC] hover:text-portal-text text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
                       >
                         {isGeneratingBroll ? "Generating... (~1-2 min)" : "🎞️ Regenerate B-Roll"}
                       </button>
@@ -1067,11 +1067,11 @@ export function PlatformCard({
               ) : (
                 !isPublished && (
                   <div className="space-y-2">
-                    <div className="bg-primary-navy/70 border border-dashed border-white/20 rounded-lg p-3 text-center text-[10px] text-white/40 italic">
+                    <div className="bg-portal-surface/70 border border-dashed border-portal-border/20 rounded-lg p-3 text-center text-[10px] text-portal-text/40 italic">
                       No video attached yet
                     </div>
                     <div className="flex justify-center gap-1.5">
-                      <label className="bg-white/10 hover:bg-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1.5 rounded transition-colors cursor-pointer font-medium border border-white/10">
+                      <label className="bg-white/10 hover:bg-portal-text/20 text-[#A8C0CC] hover:text-portal-text text-[9px] px-2.5 py-1.5 rounded transition-colors cursor-pointer font-medium border border-portal-border/10">
                         {isUploadingVideo ? "Uploading..." : "📤 Upload Video"}
                         <input
                           type="file"
@@ -1087,7 +1087,7 @@ export function PlatformCard({
                       <button
                         disabled={isGeneratingBroll}
                         onClick={handleGenerateBroll}
-                        className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1.5 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
+                        className="border border-portal-border/20 text-[#A8C0CC] hover:text-portal-text text-[9px] px-2.5 py-1.5 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
                       >
                         {isGeneratingBroll ? "Generating... (~1-2 min)" : "🎞️ Generate AI B-Roll"}
                       </button>
@@ -1110,7 +1110,7 @@ export function PlatformCard({
           <>
             {attachedImageUrl ? (
               <div className="space-y-2">
-                <div className="relative rounded-lg overflow-hidden border border-white/10 shadow-md group aspect-[4/5] max-w-[260px] mx-auto">
+                <div className="relative rounded-lg overflow-hidden border border-portal-border/10 shadow-md group aspect-[4/5] max-w-[260px] mx-auto">
                   <RepositionableImage
                     src={attachedImageUrl}
                     alt={`${platformLabel} Visual Asset`}
@@ -1120,13 +1120,13 @@ export function PlatformCard({
                     onCropped={(url) => onAttachImage?.(url)}
                     disabled={isPublished && !isCardEditing}
                   />
-                  <div className="absolute top-1.5 left-1.5 bg-primary-navy/90 backdrop-blur text-[9px] text-clinical-teal font-mono px-1.5 py-0.5 rounded border border-white/10 pointer-events-none">
+                  <div className="absolute top-1.5 left-1.5 bg-portal-surface/90 backdrop-blur text-[9px] text-portal-accent-text font-mono px-1.5 py-0.5 rounded border border-portal-border/10 pointer-events-none">
                     📷 Attached
                   </div>
                 </div>
                 {(!isPublished || isCardEditing) && (
                   <div className="flex justify-end gap-1.5">
-                    <label className="bg-white/10 hover:bg-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors cursor-pointer font-medium border border-white/10">
+                    <label className="bg-white/10 hover:bg-portal-text/20 text-[#A8C0CC] hover:text-portal-text text-[9px] px-2 py-1 rounded transition-colors cursor-pointer font-medium border border-portal-border/10">
                       Change Image
                       <input
                         type="file"
@@ -1159,14 +1159,14 @@ export function PlatformCard({
                           onAttachImage?.(url);
                         }
                       }}
-                      className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer"
+                      className="border border-portal-border/20 text-[#A8C0CC] hover:text-portal-text text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer"
                     >
                       Paste URL
                     </button>
                     {onGenerateImage && (
                       <button
                         onClick={() => setIsGenerateModalOpen(true)}
-                        className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
+                        className="border border-portal-border/20 text-[#A8C0CC] hover:text-portal-text text-[9px] px-2 py-1 rounded transition-colors font-medium cursor-pointer disabled:opacity-50"
                       >
                         ✨ Generate
                       </button>
@@ -1177,7 +1177,7 @@ export function PlatformCard({
                   <div className="flex justify-end">
                     <button
                       onClick={() => downloadImageFile(attachedImageUrl, `${platformKey}-post-image`, toast.error)}
-                      className="text-[9px] text-clinical-teal hover:underline cursor-pointer font-medium"
+                      className="text-[9px] text-portal-accent-text hover:underline cursor-pointer font-medium"
                     >
                       ⬇ Download Image
                     </button>
@@ -1185,8 +1185,8 @@ export function PlatformCard({
                 )}
               </div>
             ) : (
-              <div className="bg-primary-navy/70 border border-dashed border-white/20 rounded-lg p-4 text-center space-y-2">
-                <div className="text-[10px] text-white/50">No platform-specific image attached</div>
+              <div className="bg-portal-surface/70 border border-dashed border-portal-border/20 rounded-lg p-4 text-center space-y-2">
+                <div className="text-[10px] text-portal-text/50">No platform-specific image attached</div>
                 {(!isPublished || isCardEditing) && (
                   <div className="flex items-center justify-center gap-1.5">
                     <label className="bg-clinical-teal hover:bg-clinical-teal-hover text-deep-navy text-[9px] px-2.5 py-1 rounded-lg cursor-pointer transition-colors font-medium">
@@ -1222,14 +1222,14 @@ export function PlatformCard({
                           onAttachImage?.(url);
                         }
                       }}
-                      className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1 rounded-lg transition-colors font-medium cursor-pointer"
+                      className="border border-portal-border/20 text-[#A8C0CC] hover:text-portal-text text-[9px] px-2.5 py-1 rounded-lg transition-colors font-medium cursor-pointer"
                     >
                       Paste URL
                     </button>
                     {onGenerateImage && (
                       <button
                         onClick={() => setIsGenerateModalOpen(true)}
-                        className="border border-white/20 text-[#A8C0CC] hover:text-white text-[9px] px-2.5 py-1 rounded-lg transition-colors font-medium cursor-pointer disabled:opacity-50"
+                        className="border border-portal-border/20 text-[#A8C0CC] hover:text-portal-text text-[9px] px-2.5 py-1 rounded-lg transition-colors font-medium cursor-pointer disabled:opacity-50"
                       >
                         ✨ Generate
                       </button>
@@ -1247,7 +1247,7 @@ export function PlatformCard({
               value={editedText}
               onChange={(e) => setEditedText(e.target.value)}
               rows={isStory ? 3 : 6}
-              className="w-full bg-primary-navy border border-white/20 text-white text-xs rounded-lg p-2.5 focus:border-clinical-teal focus:outline-none font-sans leading-relaxed"
+              className="w-full bg-portal-surface border border-portal-border/20 text-portal-text text-xs rounded-lg p-2.5 focus:border-clinical-teal focus:outline-none font-sans leading-relaxed"
             />
             <EstimatedScoreBadge score={liveEstimated.score} tips={liveEstimated.tips} live />
             <div className="flex justify-end gap-1.5">
@@ -1259,7 +1259,7 @@ export function PlatformCard({
                     onCancelExternalEdit?.();
                     onRequestRevision();
                   }}
-                  className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[11px] px-3 py-1 rounded-lg transition-colors cursor-pointer font-sans"
+                  className="border border-portal-border/20 hover:border-portal-border/40 text-portal-text/80 hover:bg-portal-text/5 text-[11px] px-3 py-1 rounded-lg transition-colors cursor-pointer font-sans"
                 >
                   🔄 Revision
                 </button>
@@ -1269,7 +1269,7 @@ export function PlatformCard({
                   setIsEditing(false);
                   onCancelExternalEdit?.();
                 }}
-                className="border border-white/20 hover:bg-white/5 text-white text-[11px] px-3 py-1 rounded-lg cursor-pointer"
+                className="border border-portal-border/20 hover:bg-portal-text/5 text-portal-text text-[11px] px-3 py-1 rounded-lg cursor-pointer"
               >
                 Cancel
               </button>
@@ -1287,27 +1287,27 @@ export function PlatformCard({
           </div>
         ) : (
           !isCarousel && !isReel && (
-            <div className="bg-primary-navy/80 p-3.5 rounded-lg border border-white/10 text-xs text-white/80 font-sans leading-relaxed whitespace-pre-wrap">
+            <div className="bg-portal-surface/80 p-3.5 rounded-lg border border-portal-border/10 text-xs text-portal-text/80 font-sans leading-relaxed whitespace-pre-wrap">
               {caption || "No content generated yet."}
             </div>
           )
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-portal-border/10">
         {!isCardEditing && (
           <div className="flex items-center gap-1.5">
             {status !== "approved" && !isPublished ? (
               <>
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                  className="border border-clinical-teal/40 hover:border-clinical-teal text-portal-accent-text hover:bg-clinical-teal/10 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
                 >
                   ✏️ Edit
                 </button>
                 <button
                   onClick={onRequestRevision}
-                  className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                  className="border border-portal-border/20 hover:border-portal-border/40 text-portal-text/80 hover:bg-portal-text/5 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
                 >
                   🔄 Revision
                 </button>
@@ -1321,7 +1321,7 @@ export function PlatformCard({
             ) : (
               <button
                 onClick={() => setIsEditing(true)}
-                className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                className="border border-clinical-teal/40 hover:border-clinical-teal text-portal-accent-text hover:bg-clinical-teal/10 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
               >
                 ✏️ Edit {isPublished ? "Published" : "Approved"} Post
               </button>
@@ -1331,18 +1331,18 @@ export function PlatformCard({
 
         <button
           onClick={onCopy}
-          className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+          className="border border-portal-border/20 hover:border-portal-border/40 text-portal-text/80 hover:bg-portal-text/5 text-[11px] px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
         >
           <span>{isCopied ? "✓ Copied!" : "📋 Copy Template Text"}</span>
         </button>
       </div>
 
       {showManualUploadGuide && status === "approved" && (
-        <div className="bg-primary-navy/60 border border-clinical-teal/20 rounded-lg p-3 space-y-1.5 text-left">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-clinical-teal">
+        <div className="bg-portal-surface/60 border border-clinical-teal/20 rounded-lg p-3 space-y-1.5 text-left">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-portal-accent-text">
             Ready to post — do it manually in {platformLabel}
           </span>
-          <ol className="text-[10px] text-white/70 leading-relaxed list-decimal list-inside space-y-0.5">
+          <ol className="text-[10px] text-portal-text/70 leading-relaxed list-decimal list-inside space-y-0.5">
             {isCarousel ? (
               <>
                 <li>Click slide navigation buttons to copy and compile your slides.</li>

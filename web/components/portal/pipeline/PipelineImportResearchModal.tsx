@@ -44,15 +44,15 @@ export function PipelineImportResearchModal({
       }
     >
       <form onSubmit={onSubmit} className="space-y-4">
-        <p className="text-[11px] text-white/60">
-          Paste the <code className="text-clinical-teal">research-brief.json</code> produced by running the{" "}
-          <code className="text-clinical-teal">lincoln-knee-clinic-blog-research</code> skill for a topic. This skips
+        <p className="text-[11px] text-portal-text/60">
+          Paste the <code className="text-portal-accent-text">research-brief.json</code> produced by running the{" "}
+          <code className="text-portal-accent-text">lincoln-knee-clinic-blog-research</code> skill for a topic. This skips
           the automated PubMed/Gemini research stage and drafts the blog directly from what you researched — the
           draft then goes through the normal review &amp; approval flow.
         </p>
 
         <div>
-          <label className="block text-xs text-white/80 mb-1">Topic / Clinical Question</label>
+          <label className="block text-xs text-portal-text/80 mb-1">Topic / Clinical Question</label>
           <input
             type="text"
             required
@@ -60,12 +60,12 @@ export function PipelineImportResearchModal({
             onChange={(e) => onTopicChange(e.target.value)}
             disabled={isImporting}
             placeholder="e.g. Partial vs total knee replacement: how surgeons decide"
-            className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-portal-surface-alt border border-portal-border/20 text-portal-text rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
 
         <div>
-          <label className="block text-xs text-white/80 mb-1">research-brief.json contents</label>
+          <label className="block text-xs text-portal-text/80 mb-1">research-brief.json contents</label>
           <textarea
             required
             value={researchBriefJson}
@@ -73,26 +73,26 @@ export function PipelineImportResearchModal({
             disabled={isImporting}
             rows={10}
             placeholder='{"summary": "...", "key_points": ["..."], "sources": ["..."], "target_audience": "..."}'
-            className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-xl p-3 text-[11px] font-mono focus:border-clinical-teal focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-portal-surface-alt border border-portal-border/20 text-portal-text rounded-xl p-3 text-[11px] font-mono focus:border-clinical-teal focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
 
         {isImporting && (
-          <div className="bg-dark-overlay-navy p-4 rounded-xl border border-clinical-teal/30 space-y-3 my-2 shadow-lg">
+          <div className="bg-portal-surface-alt p-4 rounded-xl border border-clinical-teal/30 space-y-3 my-2 shadow-lg">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-clinical-teal flex items-center gap-2 truncate pr-2">
+              <span className="text-portal-accent-text flex items-center gap-2 truncate pr-2">
                 <span className="inline-block w-2 h-2 rounded-full bg-clinical-teal animate-ping shrink-0" />
                 <span className="truncate">{importStep || "Starting drafting..."}</span>
               </span>
-              <span className="text-white/80 font-mono shrink-0">{importProgress}%</span>
+              <span className="text-portal-text/80 font-mono shrink-0">{importProgress}%</span>
             </div>
-            <div className="w-full bg-primary-navy h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-portal-surface h-2 rounded-full overflow-hidden">
               <div
                 className="bg-clinical-teal h-full rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${importProgress}%` }}
               />
             </div>
-            <p className="text-[11px] text-white/60 italic text-center">
+            <p className="text-[11px] text-portal-text/60 italic text-center">
               Please wait while the AI Medical Writer drafts from your researched brief — or close this window and
               it'll keep generating in the background; check the run list shortly.
             </p>
@@ -103,7 +103,7 @@ export function PipelineImportResearchModal({
           <button
             type="button"
             onClick={handleClose}
-            className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
+            className="border border-portal-border/20 text-portal-text/70 hover:bg-portal-text/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
           >
             {isImporting ? "Run in Background" : "Cancel"}
           </button>

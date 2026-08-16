@@ -25,40 +25,40 @@ export function PipelineImagesTab({
 
   return (
     <div className="space-y-6">
-      <div className="bg-dark-overlay-navy p-5 rounded-xl border border-white/10 space-y-4">
+      <div className="bg-portal-surface-alt p-5 rounded-xl border border-portal-border/10 space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <span className="text-clinical-teal uppercase tracking-wider text-xs">
+          <span className="text-portal-accent-text uppercase tracking-wider text-xs">
             Attached Media Asset &amp; Image Controls
           </span>
           {renderableImageUrl ? (
-            <span className="text-[11px] text-clinical-teal bg-primary-navy border border-clinical-teal/30 px-2.5 py-0.5 rounded-full">
+            <span className="text-[11px] text-portal-accent-text bg-portal-surface border border-clinical-teal/30 px-2.5 py-0.5 rounded-full">
               Active Image Attached
             </span>
           ) : (
-            <span className="text-[11px] text-white/70 bg-primary-navy border border-white/20 px-2.5 py-0.5 rounded-full">
+            <span className="text-[11px] text-portal-text/70 bg-portal-surface border border-portal-border/20 px-2.5 py-0.5 rounded-full">
               No Image Attached
             </span>
           )}
         </div>
 
         {renderableImageUrl ? (
-          <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-lg bg-white/5" style={{ aspectRatio: "16 / 9" }}>
+          <div className="relative rounded-xl overflow-hidden border border-portal-border/10 shadow-lg bg-white/5" style={{ aspectRatio: "16 / 9" }}>
             <img src={renderableImageUrl} alt="Attached Blog Visual" className="w-full h-full object-contain" />
-            <div className="absolute bottom-3 left-3 bg-dark-overlay-navy/90 backdrop-blur text-[11px] text-clinical-teal px-3 py-1 rounded-full border border-white/10">
+            <div className="absolute bottom-3 left-3 bg-portal-surface-alt/90 backdrop-blur text-[11px] text-portal-accent-text px-3 py-1 rounded-full border border-portal-border/10">
               Attached Featured Image
             </div>
           </div>
         ) : (
-          <div className="bg-primary-navy/60 p-3.5 rounded-xl border border-dashed border-white/20 text-white/70 text-xs">
-            <span className="block text-white/90">No image attached yet</span>
-            <span className="text-white/60 text-[11px]">
+          <div className="bg-portal-surface/60 p-3.5 rounded-xl border border-dashed border-portal-border/20 text-portal-text/70 text-xs">
+            <span className="block text-portal-text/90">No image attached yet</span>
+            <span className="text-portal-text/60 text-[11px]">
               Upload an image or paste a URL below to attach it to this blog post and all social media cards.
             </span>
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t border-white/10">
-          <label className="border border-clinical-teal/40 hover:border-clinical-teal text-clinical-teal hover:bg-clinical-teal/10 text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-colors inline-flex items-center justify-center gap-2 shrink-0 shadow">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t border-portal-border/10">
+          <label className="border border-clinical-teal/40 hover:border-clinical-teal text-portal-accent-text hover:bg-clinical-teal/10 text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-colors inline-flex items-center justify-center gap-2 shrink-0 shadow">
             <span>{isUploadingImage ? "Uploading to Storage..." : "Upload Image File"}</span>
             <input type="file" accept="image/*" disabled={isUploadingImage} onChange={onFileUpload} className="hidden" />
           </label>
@@ -69,7 +69,7 @@ export function PipelineImagesTab({
               value={imageUrlInput}
               onChange={(e) => onImageUrlInputChange(e.target.value)}
               placeholder="Or paste direct image URL (https://...)"
-              className="flex-1 bg-primary-navy border border-white/20 text-white rounded-xl p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+              className="flex-1 bg-portal-surface border border-portal-border/20 text-portal-text rounded-xl p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
             />
             <button
               type="button"
@@ -80,7 +80,7 @@ export function PipelineImagesTab({
                   onImageUrlInputChange("");
                 }
               }}
-              className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+              className="border border-portal-border/20 hover:border-portal-border/40 text-portal-text/80 hover:bg-portal-text/5 text-xs px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
             >
               Attach URL
             </button>
@@ -89,9 +89,9 @@ export function PipelineImagesTab({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-        <div className="bg-dark-overlay-navy p-4 rounded-xl border border-white/10 space-y-2">
-          <span className="text-clinical-teal uppercase tracking-wider text-[10px] block">Suggested Visual Prompts</span>
-          <ul className="list-disc pl-4 text-white/70 space-y-1">
+        <div className="bg-portal-surface-alt p-4 rounded-xl border border-portal-border/10 space-y-2">
+          <span className="text-portal-accent-text uppercase tracking-wider text-[10px] block">Suggested Visual Prompts</span>
+          <ul className="list-disc pl-4 text-portal-text/70 space-y-1">
             {selectedRun.blog_drafts[0]?.suggested_images
               ?.filter((img) => typeof img === "string")
               .map((img, i) => (
@@ -99,9 +99,9 @@ export function PipelineImagesTab({
               ))}
           </ul>
         </div>
-        <div className="bg-dark-overlay-navy p-4 rounded-xl border border-white/10 space-y-2">
-          <span className="text-clinical-teal uppercase tracking-wider text-[10px] block">References &amp; Citations</span>
-          <ul className="list-disc pl-4 text-white/70 space-y-1 font-mono text-[11px]">
+        <div className="bg-portal-surface-alt p-4 rounded-xl border border-portal-border/10 space-y-2">
+          <span className="text-portal-accent-text uppercase tracking-wider text-[10px] block">References &amp; Citations</span>
+          <ul className="list-disc pl-4 text-portal-text/70 space-y-1 font-mono text-[11px]">
             {selectedRun.blog_drafts[0]?.references?.map((ref, i) => {
               const urlRegex = /(https?:\/\/[^\s)]+)/g;
               const parts = ref.split(urlRegex);
@@ -115,7 +115,7 @@ export function PipelineImagesTab({
                           href={part}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-clinical-teal hover:underline break-all"
+                          className="text-portal-accent-text hover:underline break-all"
                         >
                           {part}
                         </a>

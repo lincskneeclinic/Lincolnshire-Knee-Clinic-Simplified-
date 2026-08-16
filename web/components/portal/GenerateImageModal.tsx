@@ -176,14 +176,14 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-deep-navy/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-primary-navy border border-white/10 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto custom-scrollbar">
-        <div className="flex justify-between items-center border-b border-white/10 pb-3">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+    <div className="fixed inset-0 z-50 bg-portal-bg/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-portal-surface border border-portal-border/10 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <div className="flex justify-between items-center border-b border-portal-border/10 pb-3">
+          <h3 className="text-sm font-bold text-portal-text flex items-center gap-2">
             <span>🖼️</span>
             <span>Generate Image</span>
           </h3>
-          <button onClick={onClose} className="text-white/60 hover:text-white text-sm cursor-pointer">✕</button>
+          <button onClick={onClose} className="text-portal-text/60 hover:text-portal-text text-sm cursor-pointer">✕</button>
         </div>
 
         {loadError && (
@@ -193,25 +193,25 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
         )}
 
         {isLoadingPrompt ? (
-          <div className="text-center text-white/50 text-xs py-10">Reading medical imagery guidelines…</div>
+          <div className="text-center text-portal-text/50 text-xs py-10">Reading medical imagery guidelines…</div>
         ) : !loadError ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 text-[11px]">
-              <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-3">
-                <span className="block text-white/50 uppercase tracking-wider text-[10px] mb-1">Detected Context</span>
-                <span className="text-white/90">
+              <div className="bg-portal-surface-alt border border-portal-border/10 rounded-xl p-3">
+                <span className="block text-portal-text/50 uppercase tracking-wider text-[10px] mb-1">Detected Context</span>
+                <span className="text-portal-text/90">
                   {[contextHints.topic, contextHints.pageTitle, contextHints.placeholderLabel, contextHints.imageTitle]
                     .filter(Boolean)[0] || "—"}
                 </span>
               </div>
-              <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-3">
-                <span className="block text-white/50 uppercase tracking-wider text-[10px] mb-1">Prompt Category</span>
-                <span className="text-clinical-teal font-medium">{categoryLabel} — {subjectTitle}</span>
+              <div className="bg-portal-surface-alt border border-portal-border/10 rounded-xl p-3">
+                <span className="block text-portal-text/50 uppercase tracking-wider text-[10px] mb-1">Prompt Category</span>
+                <span className="text-portal-accent-text font-medium">{categoryLabel} — {subjectTitle}</span>
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-white/80">Style</label>
+              <label className="block text-xs font-semibold text-portal-text/80">Style</label>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -219,8 +219,8 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
                   disabled={isLoadingPrompt}
                   className={`flex-1 text-xs font-semibold px-3 py-2 rounded-xl border cursor-pointer transition-colors disabled:opacity-50 ${
                     style === "photo"
-                      ? "bg-clinical-teal/15 border-clinical-teal text-clinical-teal"
-                      : "border-white/15 text-white/70 hover:border-white/30"
+                      ? "bg-clinical-teal/15 border-clinical-teal text-portal-accent-text"
+                      : "border-portal-border/15 text-portal-text/70 hover:border-portal-border/30"
                   }`}
                 >
                   📷 Photograph
@@ -231,8 +231,8 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
                   disabled={isLoadingPrompt}
                   className={`flex-1 text-xs font-semibold px-3 py-2 rounded-xl border cursor-pointer transition-colors disabled:opacity-50 ${
                     style === "illustration"
-                      ? "bg-clinical-teal/15 border-clinical-teal text-clinical-teal"
-                      : "border-white/15 text-white/70 hover:border-white/30"
+                      ? "bg-clinical-teal/15 border-clinical-teal text-portal-accent-text"
+                      : "border-portal-border/15 text-portal-text/70 hover:border-portal-border/30"
                   }`}
                 >
                   🎨 Illustration
@@ -241,41 +241,41 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-white/80">Image Prompt (editable)</label>
+              <label className="block text-xs font-semibold text-portal-text/80">Image Prompt (editable)</label>
               <textarea
                 rows={5}
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                className="w-full bg-dark-overlay-navy border border-white/15 text-white text-xs rounded-xl p-3 focus:outline-none focus:border-clinical-teal resize-none"
+                className="w-full bg-portal-surface-alt border border-portal-border/15 text-portal-text text-xs rounded-xl p-3 focus:outline-none focus:border-clinical-teal resize-none"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-white/80">Negative Prompt</label>
+              <label className="block text-xs font-semibold text-portal-text/80">Negative Prompt</label>
               <textarea
                 rows={2}
                 value={negativePrompt}
                 onChange={(e) => setNegativePrompt(e.target.value)}
-                className="w-full bg-dark-overlay-navy border border-white/15 text-white/80 text-[11px] rounded-xl p-3 focus:outline-none focus:border-clinical-teal resize-none"
+                className="w-full bg-portal-surface-alt border border-portal-border/15 text-portal-text/80 text-[11px] rounded-xl p-3 focus:outline-none focus:border-clinical-teal resize-none"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-white/80">Filename</label>
+                <label className="block text-xs font-semibold text-portal-text/80">Filename</label>
                 <input
                   type="text"
                   value={filename}
                   onChange={(e) => setFilename(e.target.value)}
-                  className="w-full bg-dark-overlay-navy border border-white/15 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-clinical-teal"
+                  className="w-full bg-portal-surface-alt border border-portal-border/15 text-portal-text text-xs rounded-xl p-2.5 focus:outline-none focus:border-clinical-teal"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-white/80">Format</label>
+                <label className="block text-xs font-semibold text-portal-text/80">Format</label>
                 <select
                   value={format}
                   onChange={(e) => setFormat(e.target.value as ImageFormat)}
-                  className="w-full bg-dark-overlay-navy border border-white/15 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-clinical-teal cursor-pointer"
+                  className="w-full bg-portal-surface-alt border border-portal-border/15 text-portal-text text-xs rounded-xl p-2.5 focus:outline-none focus:border-clinical-teal cursor-pointer"
                 >
                   {FORMAT_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -285,12 +285,12 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-white/80">Alt Text</label>
+              <label className="block text-xs font-semibold text-portal-text/80">Alt Text</label>
               <textarea
                 rows={2}
                 value={altText}
                 onChange={(e) => setAltText(e.target.value)}
-                className="w-full bg-dark-overlay-navy border border-white/15 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-clinical-teal resize-none"
+                className="w-full bg-portal-surface-alt border border-portal-border/15 text-portal-text text-xs rounded-xl p-2.5 focus:outline-none focus:border-clinical-teal resize-none"
               />
             </div>
 
@@ -301,7 +301,7 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
                 onChange={(e) => setTransparentBackground(e.target.checked)}
                 className="w-4 h-4 accent-clinical-teal cursor-pointer"
               />
-              <span className="text-xs text-white/90">Transparent background asset (best effort — not guaranteed by the model)</span>
+              <span className="text-xs text-portal-text/90">Transparent background asset (best effort — not guaranteed by the model)</span>
             </label>
 
             <label className="flex items-center gap-2.5 cursor-pointer py-1 select-none">
@@ -311,7 +311,7 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
                 onChange={(e) => setAddLogo(e.target.checked)}
                 className="w-4 h-4 accent-clinical-teal cursor-pointer"
               />
-              <span className="text-xs text-white/90">Add Lincolnshire Knee Clinic logo (top-right)</span>
+              <span className="text-xs text-portal-text/90">Add Lincolnshire Knee Clinic logo (top-right)</span>
             </label>
 
             {overwriteInfo && (
@@ -327,7 +327,7 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
                   </button>
                   <button
                     onClick={() => setOverwriteInfo(null)}
-                    className="border border-white/20 hover:border-white/40 text-white/80 text-[11px] px-3 py-1.5 rounded-lg cursor-pointer"
+                    className="border border-portal-border/20 hover:border-portal-border/40 text-portal-text/80 text-[11px] px-3 py-1.5 rounded-lg cursor-pointer"
                   >
                     Choose a different filename
                   </button>
@@ -341,11 +341,11 @@ export default function GenerateImageModal({ isOpen, onClose, contextHints, cont
               </div>
             )}
 
-            <div className="flex justify-end gap-3 pt-2 border-t border-white/10">
+            <div className="flex justify-end gap-3 pt-2 border-t border-portal-border/10">
               <button
                 type="button"
                 onClick={onClose}
-                className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
+                className="border border-portal-border/20 text-portal-text/70 hover:bg-portal-text/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
               >
                 Cancel
               </button>

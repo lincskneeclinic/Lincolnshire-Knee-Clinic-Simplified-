@@ -41,37 +41,37 @@ export function PipelineTriggerModal({
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <label className="block text-xs text-white/80 mb-1">Custom Topic / Patient Question (Optional)</label>
+          <label className="block text-xs text-portal-text/80 mb-1">Custom Topic / Patient Question (Optional)</label>
           <input
             type="text"
             value={topic}
             onChange={(e) => onTopicChange(e.target.value)}
             disabled={isTriggering}
             placeholder="e.g. Can I kneel after partial knee replacement?"
-            className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-portal-surface-alt border border-portal-border/20 text-portal-text rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           />
-          <p className="text-[11px] text-white/60 mt-1.5">
+          <p className="text-[11px] text-portal-text/60 mt-1.5">
             If left blank, the pipeline will automatically select the highest-trending patient question from
             contact enquiries.
           </p>
         </div>
 
         {isTriggering && (
-          <div className="bg-dark-overlay-navy p-4 rounded-xl border border-clinical-teal/30 space-y-3 my-2 shadow-lg">
+          <div className="bg-portal-surface-alt p-4 rounded-xl border border-clinical-teal/30 space-y-3 my-2 shadow-lg">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-clinical-teal flex items-center gap-2 truncate pr-2">
+              <span className="text-portal-accent-text flex items-center gap-2 truncate pr-2">
                 <span className="inline-block w-2 h-2 rounded-full bg-clinical-teal animate-ping shrink-0" />
                 <span className="truncate">{triggerStep || "Initializing pipeline..."}</span>
               </span>
-              <span className="text-white/80 font-mono shrink-0">{triggerProgress}%</span>
+              <span className="text-portal-text/80 font-mono shrink-0">{triggerProgress}%</span>
             </div>
-            <div className="w-full bg-primary-navy h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-portal-surface h-2 rounded-full overflow-hidden">
               <div
                 className="bg-clinical-teal h-full rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${triggerProgress}%` }}
               />
             </div>
-            <p className="text-[11px] text-white/60 italic text-center">
+            <p className="text-[11px] text-portal-text/60 italic text-center">
               Please wait while our AI clinical agents analyze medical literature and synthesize your draft — or
               close this window and it'll keep generating in the background; check the run list shortly.
             </p>
@@ -82,7 +82,7 @@ export function PipelineTriggerModal({
           <button
             type="button"
             onClick={handleClose}
-            className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
+            className="border border-portal-border/20 text-portal-text/70 hover:bg-portal-text/5 text-xs px-4 py-2 rounded-xl cursor-pointer"
           >
             {isTriggering ? "Run in Background" : "Cancel"}
           </button>

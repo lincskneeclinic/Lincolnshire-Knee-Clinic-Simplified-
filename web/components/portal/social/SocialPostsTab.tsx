@@ -97,10 +97,10 @@ export function SocialPostsTab({
   return (
     <>
       <PortalCard className="space-y-4">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3 flex-wrap gap-3">
+        <div className="flex items-center justify-between border-b border-portal-border/10 pb-3 flex-wrap gap-3">
           <div>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Social Media Posts</h3>
-            <p className="text-xs text-white/60 mt-1">
+            <h3 className="text-sm font-bold text-portal-text uppercase tracking-wider">Social Media Posts</h3>
+            <p className="text-xs text-portal-text/60 mt-1">
               Generate Instagram, Facebook &amp; LinkedIn posts from a topic — no blog article needed. Edit,
               regenerate, attach or generate an image, then approve and post manually using the download + copy
               steps on each card.
@@ -108,7 +108,7 @@ export function SocialPostsTab({
           </div>
           {!selectedPost && (
             <div className="flex items-center gap-3 shrink-0">
-              <label className="flex items-center gap-1.5 text-[10px] text-white/60 cursor-pointer select-none">
+              <label className="flex items-center gap-1.5 text-[10px] text-portal-text/60 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={showArchived}
@@ -135,57 +135,57 @@ export function SocialPostsTab({
             <div className="flex items-center justify-between flex-wrap gap-2">
               <button
                 onClick={() => onSelectPost(null)}
-                className="bg-dark-overlay-navy hover:bg-white/5 text-white/80 border border-white/20 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+                className="bg-portal-surface-alt hover:bg-portal-text/5 text-portal-text/80 border border-portal-border/20 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
               >
                 ← Back to List
               </button>
-              <h4 className="font-serif text-sm font-bold text-white flex-1 text-center px-2">{selectedPost.topic}</h4>
+              <h4 className="font-serif text-sm font-bold text-portal-text flex-1 text-center px-2">{selectedPost.topic}</h4>
               {selectedPost.archived ? (
                 <button
                   onClick={() => onUnarchiveSocialOnlyPost(selectedPost.id)}
-                  className="bg-clinical-teal/10 hover:bg-clinical-teal/20 text-clinical-teal border border-clinical-teal/40 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+                  className="bg-clinical-teal/10 hover:bg-clinical-teal/20 text-portal-accent-text border border-clinical-teal/40 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
                 >
                   ↩ Restore to Active
                 </button>
               ) : (
                 <button
                   onClick={() => onArchiveSocialOnlyPost(selectedPost.id)}
-                  className="bg-dark-overlay-navy hover:bg-white/5 text-white/80 border border-white/20 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+                  className="bg-portal-surface-alt hover:bg-portal-text/5 text-portal-text/80 border border-portal-border/20 text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
                 >
                   📦 Archive
                 </button>
               )}
             </div>
             {selectedPost.archived && (
-              <div className="text-[10px] text-white/50 bg-dark-overlay-navy border border-white/10 rounded-lg px-3 py-2">
+              <div className="text-[10px] text-portal-text/50 bg-portal-surface-alt border border-portal-border/10 rounded-lg px-3 py-2">
                 Archived {selectedPost.archived_at ? formatDateSafe(selectedPost.archived_at) : ""} — content is
                 read-only. Click "Restore to Active" to edit, regenerate, or repost it.
               </div>
             )}
             {selectedPost.linkedArticle && (
-              <div className="text-[10px] bg-dark-overlay-navy border border-white/10 rounded-lg px-3 py-2.5 flex items-center justify-between gap-2 flex-wrap">
+              <div className="text-[10px] bg-portal-surface-alt border border-portal-border/10 rounded-lg px-3 py-2.5 flex items-center justify-between gap-2 flex-wrap">
                 {selectedPost.linkedArticle.status === "published" ? (
                   <>
-                    <span className="text-white/70">
-                      🔗 Companion article live: <span className="text-white font-medium">{selectedPost.linkedArticle.title}</span>.
+                    <span className="text-portal-text/70">
+                      🔗 Companion article live: <span className="text-portal-text font-medium">{selectedPost.linkedArticle.title}</span>.
                       Paste this link into your Instagram bio / Facebook comment / LinkedIn first comment when you post.
                     </span>
                     <button
                       onClick={() => onCopySocialOnly(selectedPost.linkedArticle!.url || "", "linked-article-url")}
-                      className="text-clinical-teal hover:underline cursor-pointer font-semibold shrink-0"
+                      className="text-portal-accent-text hover:underline cursor-pointer font-semibold shrink-0"
                     >
                       {copiedKey === "linked-article-url" ? "✓ Copied" : "📋 Copy Link"}
                     </button>
                   </>
                 ) : (
                   <>
-                    <span className="text-white/70">
+                    <span className="text-portal-text/70">
                       📝 A companion article for this topic is drafted and awaiting clinical review before it can go
                       live and be linked here.
                     </span>
                     <button
                       onClick={() => onGoToLinkedArticle(selectedPost.linkedArticle!.pipelineRunId)}
-                      className="text-clinical-teal hover:underline cursor-pointer font-semibold shrink-0"
+                      className="text-portal-accent-text hover:underline cursor-pointer font-semibold shrink-0"
                     >
                       Review it →
                     </button>
@@ -195,15 +195,15 @@ export function SocialPostsTab({
             )}
             <div className="space-y-4">
               {/* Sub-Tab Navigation for Standalone Social Posts */}
-              <div className="flex border-b border-white/10 gap-2 overflow-x-auto pb-px">
+              <div className="flex border-b border-portal-border/10 gap-2 overflow-x-auto pb-px">
                 {SUB_TABS.map((tab) => (
                   <button
                     key={tab}
                     onClick={() => onSubTabChange(tab)}
                     className={`text-xs font-semibold px-4 py-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                       activeSubTab === tab
-                        ? "border-clinical-teal text-clinical-teal font-bold"
-                        : "border-transparent text-white/60 hover:text-white hover:border-white/20"
+                        ? "border-clinical-teal text-portal-accent-text font-bold"
+                        : "border-transparent text-portal-text/60 hover:text-portal-text hover:border-portal-border/20"
                     }`}
                   >
                     {SUB_TAB_LABELS[tab]}
@@ -282,13 +282,13 @@ export function SocialPostsTab({
                       showManualUploadGuide
                     />
                     {selectedPost.linkedArticle?.status === "published" && selectedPost.linkedArticle.technicalUrl && (
-                      <div className="text-[10px] bg-dark-overlay-navy border border-white/10 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-                        <span className="text-white/70">
-                          🎓 For referring clinicians: <span className="text-white font-medium">{selectedPost.linkedArticle.technicalTitle}</span> (clinical-depth article)
+                      <div className="text-[10px] bg-portal-surface-alt border border-portal-border/10 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+                        <span className="text-portal-text/70">
+                          🎓 For referring clinicians: <span className="text-portal-text font-medium">{selectedPost.linkedArticle.technicalTitle}</span> (clinical-depth article)
                         </span>
                         <button
                           onClick={() => onCopySocialOnly(selectedPost.linkedArticle!.technicalUrl || "", "linked-technical-article-url")}
-                          className="text-clinical-teal hover:underline cursor-pointer font-semibold shrink-0"
+                          className="text-portal-accent-text hover:underline cursor-pointer font-semibold shrink-0"
                         >
                           {copiedKey === "linked-technical-article-url" ? "✓ Copied" : "📋 Copy Link"}
                         </button>
@@ -402,19 +402,19 @@ export function SocialPostsTab({
               )}
 
               {activeSubTab === "brandkit" && (
-                <div className="bg-dark-overlay-navy border border-white/10 rounded-xl p-6 shadow-lg animate-fadeIn space-y-6 text-left">
+                <div className="bg-portal-surface-alt border border-portal-border/10 rounded-xl p-6 shadow-lg animate-fadeIn space-y-6 text-left">
                   <div>
-                    <h4 className="font-serif text-sm font-bold text-white mb-2">LKC Branded Template Backgrounds</h4>
-                    <p className="text-xs text-white/70 leading-relaxed">
+                    <h4 className="font-serif text-sm font-bold text-portal-text mb-2">LKC Branded Template Backgrounds</h4>
+                    <p className="text-xs text-portal-text/70 leading-relaxed">
                       Download these premium, pre-styled background templates with clinic margins and watermarks.
                       Use them as background layers in Canva or directly in social media apps to overlay the
                       generated caption text.
                     </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="border border-white/10 bg-primary-navy/50 p-4 rounded-xl flex flex-col justify-between items-center space-y-4">
-                      <span className="text-xs font-semibold text-clinical-teal font-sans">Square Template (1:1 Posts / Carousels)</span>
-                      <div className="w-32 h-32 relative border border-white/20 rounded shadow-md overflow-hidden bg-slate-900 flex items-center justify-center">
+                    <div className="border border-portal-border/10 bg-portal-surface/50 p-4 rounded-xl flex flex-col justify-between items-center space-y-4">
+                      <span className="text-xs font-semibold text-portal-accent-text font-sans">Square Template (1:1 Posts / Carousels)</span>
+                      <div className="w-32 h-32 relative border border-portal-border/20 rounded shadow-md overflow-hidden bg-slate-900 flex items-center justify-center">
                         <img src="/images/templates/square-post-template.png" className="object-cover w-full h-full" alt="Square Post Template" />
                       </div>
                       <button
@@ -425,9 +425,9 @@ export function SocialPostsTab({
                       </button>
                     </div>
 
-                    <div className="border border-white/10 bg-primary-navy/50 p-4 rounded-xl flex flex-col justify-between items-center space-y-4">
-                      <span className="text-xs font-semibold text-clinical-teal font-sans">Vertical Template (9:16 Stories / Reels)</span>
-                      <div className="w-20 h-32 relative border border-white/20 rounded shadow-md overflow-hidden bg-slate-900 flex items-center justify-center">
+                    <div className="border border-portal-border/10 bg-portal-surface/50 p-4 rounded-xl flex flex-col justify-between items-center space-y-4">
+                      <span className="text-xs font-semibold text-portal-accent-text font-sans">Vertical Template (9:16 Stories / Reels)</span>
+                      <div className="w-20 h-32 relative border border-portal-border/20 rounded shadow-md overflow-hidden bg-slate-900 flex items-center justify-center">
                         <img src="/images/templates/vertical-story-template.png" className="object-cover w-full h-full" alt="Vertical Story Template" />
                       </div>
                       <button
@@ -443,7 +443,7 @@ export function SocialPostsTab({
             </div>
           </div>
         ) : loading ? (
-          <div className="py-8 text-center text-white/60 text-xs">Loading social posts…</div>
+          <div className="py-8 text-center text-portal-text/60 text-xs">Loading social posts…</div>
         ) : posts.filter((p) => !!p.archived === showArchived).length === 0 ? (
           <PortalEmptyState
             message={
@@ -464,17 +464,17 @@ export function SocialPostsTab({
               return (
                 <div
                   key={post.id}
-                  className="p-4 bg-dark-overlay-navy border border-white/10 hover:border-clinical-teal/40 rounded-xl transition-all space-y-2 cursor-pointer"
+                  className="p-4 bg-portal-surface-alt border border-portal-border/10 hover:border-clinical-teal/40 rounded-xl transition-all space-y-2 cursor-pointer"
                   onClick={() => onSelectPost(post)}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span
                       className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                         post.archived
-                          ? "border-white/20 text-white/50"
+                          ? "border-portal-border/20 text-portal-text/50"
                           : allApproved
-                            ? "border-clinical-teal/40 text-clinical-teal"
-                            : "border-white/20 text-white/60"
+                            ? "border-clinical-teal/40 text-portal-accent-text"
+                            : "border-portal-border/20 text-portal-text/60"
                       }`}
                     >
                       {post.archived ? "📦 Archived" : allApproved ? "✓ All Approved" : "Needs Review"}
@@ -486,7 +486,7 @@ export function SocialPostsTab({
                             e.stopPropagation();
                             onUnarchiveSocialOnlyPost(post.id);
                           }}
-                          className="text-[10px] text-clinical-teal hover:underline cursor-pointer font-medium"
+                          className="text-[10px] text-portal-accent-text hover:underline cursor-pointer font-medium"
                         >
                           ↩ Restore
                         </button>
@@ -496,7 +496,7 @@ export function SocialPostsTab({
                             e.stopPropagation();
                             onArchiveSocialOnlyPost(post.id);
                           }}
-                          className="text-[10px] text-white/60 hover:text-white cursor-pointer"
+                          className="text-[10px] text-portal-text/60 hover:text-portal-text cursor-pointer"
                         >
                           Archive
                         </button>
@@ -512,8 +512,8 @@ export function SocialPostsTab({
                       </button>
                     </div>
                   </div>
-                  <h4 className="text-xs font-bold text-white leading-snug">{post.topic}</h4>
-                  <span className="text-[10px] text-white/40 font-mono block">
+                  <h4 className="text-xs font-bold text-portal-text leading-snug">{post.topic}</h4>
+                  <span className="text-[10px] text-portal-text/40 font-mono block">
                     {post.archived && post.archived_at
                       ? `Archived ${formatDateSafe(post.archived_at)}`
                       : formatDateSafe(post.updated_at)}
@@ -536,13 +536,13 @@ export function SocialPostsTab({
         }
       >
         <form onSubmit={onGenerateSubmit} className="space-y-4">
-          <div className="flex border-b border-white/10 gap-1">
+          <div className="flex border-b border-portal-border/10 gap-1">
             <button
               type="button"
               onClick={() => onBatchModeChange(false)}
               disabled={isGenerating}
               className={`text-xs font-semibold px-3 py-2 border-b-2 transition-all cursor-pointer disabled:opacity-50 ${
-                !batchMode ? "border-clinical-teal text-clinical-teal" : "border-transparent text-white/60 hover:text-white"
+                !batchMode ? "border-clinical-teal text-portal-accent-text" : "border-transparent text-portal-text/60 hover:text-portal-text"
               }`}
             >
               Single Topic
@@ -552,7 +552,7 @@ export function SocialPostsTab({
               onClick={() => onBatchModeChange(true)}
               disabled={isGenerating}
               className={`text-xs font-semibold px-3 py-2 border-b-2 transition-all cursor-pointer disabled:opacity-50 ${
-                batchMode ? "border-clinical-teal text-clinical-teal" : "border-transparent text-white/60 hover:text-white"
+                batchMode ? "border-clinical-teal text-portal-accent-text" : "border-transparent text-portal-text/60 hover:text-portal-text"
               }`}
             >
               Batch (Week's Worth)
@@ -561,17 +561,17 @@ export function SocialPostsTab({
 
           {!batchMode ? (
             <div>
-              <label className="block text-xs text-white/80 mb-1">Topic / Patient Question</label>
+              <label className="block text-xs text-portal-text/80 mb-1">Topic / Patient Question</label>
               <input
                 type="text"
                 value={newTopic}
                 onChange={(e) => onNewTopicChange(e.target.value)}
                 disabled={isGenerating}
                 placeholder="e.g. 5 signs your knee pain needs a specialist"
-                className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none disabled:opacity-50"
+                className="w-full bg-portal-surface-alt border border-portal-border/20 text-portal-text rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none disabled:opacity-50"
                 autoFocus
               />
-              <p className="text-[11px] text-white/60 mt-1.5">
+              <p className="text-[11px] text-portal-text/60 mt-1.5">
                 Generates an Instagram, Facebook, and LinkedIn post — each written for that platform's tone, length,
                 and hashtag conventions — plus a companion blog article on the same topic, sent for clinical review
                 in the Content Pipeline tab, so there's somewhere real to send anyone who wants more than the caption.
@@ -579,7 +579,7 @@ export function SocialPostsTab({
             </div>
           ) : (
             <div>
-              <label className="block text-xs text-white/80 mb-1">Topics — one per line</label>
+              <label className="block text-xs text-portal-text/80 mb-1">Topics — one per line</label>
               <textarea
                 value={batchTopics}
                 onChange={(e) => onBatchTopicsChange(e.target.value)}
@@ -588,10 +588,10 @@ export function SocialPostsTab({
                 placeholder={
                   "e.g.\n5 signs your knee pain needs a specialist\nIs running bad for your knees?\nWhat to expect after a knee replacement\nStretches to do before a 5k"
                 }
-                className="w-full bg-dark-overlay-navy border border-white/20 text-white rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none disabled:opacity-50 resize-y"
+                className="w-full bg-portal-surface-alt border border-portal-border/20 text-portal-text rounded-xl p-3 text-xs focus:border-clinical-teal focus:outline-none disabled:opacity-50 resize-y"
                 autoFocus
               />
-              <p className="text-[11px] text-white/60 mt-1.5">
+              <p className="text-[11px] text-portal-text/60 mt-1.5">
                 {batchProgress
                   ? `Generating ${batchProgress.done} of ${batchProgress.total}… each topic is a separate request, so this keeps working even if one topic is slow.`
                   : batchTopicCount > 0
@@ -599,7 +599,7 @@ export function SocialPostsTab({
                     : "Add one topic per line — a week's cadence is usually 3-4 topics. Each also gets a companion article sent for clinical review."}
               </p>
               {batchProgress && (
-                <div className="w-full bg-dark-overlay-navy border border-white/10 rounded-full h-1.5 mt-2 overflow-hidden">
+                <div className="w-full bg-portal-surface-alt border border-portal-border/10 rounded-full h-1.5 mt-2 overflow-hidden">
                   <div
                     className="bg-clinical-teal h-full transition-all duration-300"
                     style={{ width: `${(batchProgress.done / batchProgress.total) * 100}%` }}
@@ -614,7 +614,7 @@ export function SocialPostsTab({
               type="button"
               onClick={() => onModalOpenChange(false)}
               disabled={isGenerating}
-              className="border border-white/20 text-white/70 hover:bg-white/5 text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50"
+              className="border border-portal-border/20 text-portal-text/70 hover:bg-portal-text/5 text-xs px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>

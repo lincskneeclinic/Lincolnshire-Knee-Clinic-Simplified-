@@ -29,7 +29,7 @@ interface AiContentReviewPanelProps {
 const SEVERITY_STYLES: Record<"high" | "medium" | "low", string> = {
   high: "bg-status-error/10 text-status-error border-status-error/30",
   medium: "bg-amber-500/10 text-amber-400 border-amber-500/30",
-  low: "bg-white/5 text-white/60 border-white/10",
+  low: "bg-white/5 text-portal-text/60 border-portal-border/10",
 };
 
 type FindingStatus = "pending" | "applying" | "applied" | "declined" | "error";
@@ -38,12 +38,12 @@ function StringDiff({ current, suggested }: { current: string; suggested: string
   return (
     <div className="space-y-2 text-xs">
       <div>
-        <span className="text-[9px] font-bold uppercase tracking-wider text-white/40 block mb-1">Current</span>
-        <p className="text-white/50 line-through leading-relaxed">{current || "(empty)"}</p>
+        <span className="text-[9px] font-bold uppercase tracking-wider text-portal-text/40 block mb-1">Current</span>
+        <p className="text-portal-text/50 line-through leading-relaxed">{current || "(empty)"}</p>
       </div>
       <div>
-        <span className="text-[9px] font-bold uppercase tracking-wider text-clinical-teal block mb-1">Suggested</span>
-        <p className="text-white/90 leading-relaxed">{suggested}</p>
+        <span className="text-[9px] font-bold uppercase tracking-wider text-portal-accent-text block mb-1">Suggested</span>
+        <p className="text-portal-text/90 leading-relaxed">{suggested}</p>
       </div>
     </div>
   );
@@ -56,12 +56,12 @@ function ArrayDiff({ current, suggested }: { current: string[]; suggested: strin
   return (
     <div className="space-y-1 text-xs">
       {removed.map((item, i) => (
-        <div key={`removed-${i}`} className="text-white/40 line-through">
+        <div key={`removed-${i}`} className="text-portal-text/40 line-through">
           {item}
         </div>
       ))}
       {suggested.map((item, i) => (
-        <div key={`item-${i}`} className={currentSet.has(item) ? "text-white/80" : "text-clinical-teal font-medium"}>
+        <div key={`item-${i}`} className={currentSet.has(item) ? "text-portal-text/80" : "text-portal-accent-text font-medium"}>
           {currentSet.has(item) ? "" : "+ "}
           {item}
         </div>
@@ -110,8 +110,8 @@ export function AiContentReviewPanel({
     <PortalCard className="space-y-4 shadow-xl">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h3 className="text-sm font-bold text-white">AI Content Review</h3>
-          <p className="text-[11px] text-white/50 mt-0.5">
+          <h3 className="text-sm font-bold text-portal-text">AI Content Review</h3>
+          <p className="text-[11px] text-portal-text/50 mt-0.5">
             Sends this page&apos;s own text to AI for an advisory read-through — a starting point only. Always apply
             your own clinical judgement before marking this page as reviewed.
           </p>
@@ -132,11 +132,11 @@ export function AiContentReviewPanel({
       )}
 
       {result && (
-        <div className="space-y-3 border-t border-white/10 pt-4">
-          <p className="text-xs text-white/80 leading-relaxed">{result.overall_assessment}</p>
+        <div className="space-y-3 border-t border-portal-border/10 pt-4">
+          <p className="text-xs text-portal-text/80 leading-relaxed">{result.overall_assessment}</p>
 
           {result.findings.length === 0 ? (
-            <p className="text-xs text-white/50 italic">
+            <p className="text-xs text-portal-text/50 italic">
               No issues flagged — page reads clinically sound to the AI reviewer.
             </p>
           ) : (
@@ -147,21 +147,21 @@ export function AiContentReviewPanel({
                 if (status === "declined") return null;
 
                 return (
-                  <div key={idx} className="bg-dark-overlay-navy border border-white/5 rounded-xl p-3 space-y-2">
+                  <div key={idx} className="bg-portal-surface-alt border border-portal-border/5 rounded-xl p-3 space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span
                         className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border shrink-0 ${SEVERITY_STYLES[finding.severity]}`}
                       >
                         {finding.severity}
                       </span>
-                      <span className="text-[10px] font-semibold text-white/70 uppercase tracking-wide">
+                      <span className="text-[10px] font-semibold text-portal-text/70 uppercase tracking-wide">
                         {finding.category}
                       </span>
                     </div>
-                    <p className="text-xs text-white/80 leading-relaxed">{finding.note}</p>
+                    <p className="text-xs text-portal-text/80 leading-relaxed">{finding.note}</p>
 
                     {hasFix && (
-                      <div className="bg-primary-navy/50 border border-white/10 rounded-lg p-3 space-y-2">
+                      <div className="bg-portal-surface/50 border border-portal-border/10 rounded-lg p-3 space-y-2">
                         {Array.isArray(finding.suggested_value) ? (
                           <ArrayDiff
                             current={Array.isArray(finding.current_value) ? finding.current_value : []}
@@ -176,7 +176,7 @@ export function AiContentReviewPanel({
 
                         <div className="flex items-center gap-2 pt-1">
                           {status === "applied" ? (
-                            <span className="text-[11px] text-clinical-teal font-semibold">✓ Applied — now live on the page</span>
+                            <span className="text-[11px] text-portal-accent-text font-semibold">✓ Applied — now live on the page</span>
                           ) : (
                             <>
                               <button
@@ -189,7 +189,7 @@ export function AiContentReviewPanel({
                               <button
                                 onClick={() => handleDecline(idx)}
                                 disabled={status === "applying"}
-                                className="border border-white/20 hover:border-white/40 text-white/70 hover:bg-white/5 text-[11px] px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-60"
+                                className="border border-portal-border/20 hover:border-portal-border/40 text-portal-text/70 hover:bg-portal-text/5 text-[11px] px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-60"
                               >
                                 Decline
                               </button>
@@ -209,8 +209,8 @@ export function AiContentReviewPanel({
         </div>
       )}
 
-      <div className="space-y-4 border-t border-white/10 pt-4">
-        <h3 className="text-sm font-bold text-white">Approve this page</h3>
+      <div className="space-y-4 border-t border-portal-border/10 pt-4">
+        <h3 className="text-sm font-bold text-portal-text">Approve this page</h3>
 
         <label className="flex items-center gap-2.5 cursor-pointer">
           <input
@@ -219,50 +219,50 @@ export function AiContentReviewPanel({
             onChange={(e) => onFormReviewedChange(e.target.checked)}
             className="w-4 h-4 accent-clinical-teal cursor-pointer"
           />
-          <span className="text-sm font-semibold text-white">Mark as clinically reviewed</span>
+          <span className="text-sm font-semibold text-portal-text">Mark as clinically reviewed</span>
         </label>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <div className="text-xs text-clinical-teal mb-1 font-semibold">Reviewer Name</div>
+            <div className="text-xs text-portal-accent-text mb-1 font-semibold">Reviewer Name</div>
             <input
               type="text"
               value={formReviewerName}
               onChange={(e) => onFormReviewerNameChange(e.target.value)}
-              className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+              className="w-full bg-portal-surface border border-portal-border/20 text-portal-text rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
             />
           </div>
 
           <div>
-            <div className="text-xs text-clinical-teal mb-1 font-semibold">Reviewer Title</div>
+            <div className="text-xs text-portal-accent-text mb-1 font-semibold">Reviewer Title</div>
             <input
               type="text"
               value={formReviewerTitle}
               onChange={(e) => onFormReviewerTitleChange(e.target.value)}
-              className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+              className="w-full bg-portal-surface border border-portal-border/20 text-portal-text rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
             />
           </div>
         </div>
 
         <div>
-          <div className="text-xs text-clinical-teal mb-1 font-semibold">Last Reviewed Date</div>
+          <div className="text-xs text-portal-accent-text mb-1 font-semibold">Last Reviewed Date</div>
           <input
             type="text"
             placeholder="e.g. July 2026"
             value={formLastReviewedDate}
             onChange={(e) => onFormLastReviewedDateChange(e.target.value)}
-            className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+            className="w-full bg-portal-surface border border-portal-border/20 text-portal-text rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
           />
         </div>
 
         <div>
-          <div className="text-xs text-clinical-teal mb-1 font-semibold">Evidence Sources</div>
+          <div className="text-xs text-portal-accent-text mb-1 font-semibold">Evidence Sources</div>
           <textarea
             rows={3}
             placeholder="e.g. NICE clinical knowledge summaries and British Orthopaedic Association (BOA) guidelines."
             value={formEvidenceSource}
             onChange={(e) => onFormEvidenceSourceChange(e.target.value)}
-            className="w-full bg-primary-navy border border-white/20 text-white rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
+            className="w-full bg-portal-surface border border-portal-border/20 text-portal-text rounded-lg p-2.5 text-xs focus:border-clinical-teal focus:outline-none"
           />
         </div>
 
@@ -284,7 +284,7 @@ export function AiContentReviewPanel({
           )}
           <button
             onClick={onBackToList}
-            className="border border-white/20 hover:border-white/40 text-white/80 hover:bg-white/5 text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer"
+            className="border border-portal-border/20 hover:border-portal-border/40 text-portal-text/80 hover:bg-portal-text/5 text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer"
           >
             Cancel
           </button>
