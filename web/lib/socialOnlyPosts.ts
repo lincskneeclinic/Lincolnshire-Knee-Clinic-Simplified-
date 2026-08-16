@@ -50,6 +50,12 @@ export interface SocialOnlyPost {
     status: "pending_review" | "published";
     url?: string;
     title?: string;
+    // The clinical-depth technical article published alongside the patient
+    // blog — surfaced specifically on the LinkedIn card, since that audience
+    // skews toward referring GPs/physios who want the deeper version rather
+    // than the patient-facing blog everywhere else links to.
+    technicalUrl?: string;
+    technicalTitle?: string;
   };
 }
 
@@ -152,7 +158,13 @@ export async function unarchiveSocialOnlyPost(id: string): Promise<SocialOnlyPos
 // real URL/title on every social-only post that was auto-linked to that run
 // at generation time, so reviewers have something to copy into a bio link,
 // Facebook comment, or LinkedIn first comment when they post manually.
-export async function syncLinkedSocialOnlyPosts(pipelineRunId: string, url: string, title: string): Promise<void> {
+export async function syncLinkedSocialOnlyPosts(
+  pipelineRunId: string,
+  url: string,
+  title: string,
+  technicalUrl?: string,
+  technicalTitle?: string
+): Promise<void> {
   const posts = await getStoreValue<Record<string, SocialOnlyPost>>(SOCIAL_ONLY_POSTS_KEY, {});
   let changed = false;
   for (const id of Object.keys(posts)) {
@@ -160,7 +172,7 @@ export async function syncLinkedSocialOnlyPosts(pipelineRunId: string, url: stri
     if (post.linkedArticle?.pipelineRunId === pipelineRunId && post.linkedArticle.status !== "published") {
       posts[id] = {
         ...post,
-        linkedArticle: { pipelineRunId, status: "published", url, title },
+        linkedArticle: { pipelineRunId, status: "published", url, title, technicalUrl, technicalTitle },
         updated_at: new Date().toISOString(),
       };
       changed = true;

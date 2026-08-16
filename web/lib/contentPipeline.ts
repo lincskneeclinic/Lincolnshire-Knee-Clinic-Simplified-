@@ -1127,11 +1127,20 @@ export async function submitPipelineReview(
           published_at: now
         };
         // Best-effort — a standalone social batch may have auto-triggered this
-        // run as its companion article; fill in the real link for reviewers to
-        // use once it's live. Never block publishing on this.
-        syncLinkedSocialOnlyPosts(run.run_id, `${SITE_URL}${run.published_urls.blog_url}`, latestDraft.title).catch(
-          (err) => console.error("Failed to sync linked social-only posts:", err)
-        );
+        // run as its companion article; fill in the real link (blog + the
+        // technical article, the latter surfaced specifically for LinkedIn
+        // since that audience skews toward referring clinicians who want the
+        // clinical-depth version) for reviewers to use once it's live. Never
+        // block publishing on this.
+        const technicalUrl = `${SITE_URL}/education/${category}/${slug}-technical`;
+        const technicalTitle = latestDraft.article_title || `${latestDraft.title || run.topic} (Clinical Depth)`;
+        syncLinkedSocialOnlyPosts(
+          run.run_id,
+          `${SITE_URL}${run.published_urls.blog_url}`,
+          latestDraft.title,
+          technicalUrl,
+          technicalTitle
+        ).catch((err) => console.error("Failed to sync linked social-only posts:", err));
       }
 
       run.status = "awaiting_social_approval";

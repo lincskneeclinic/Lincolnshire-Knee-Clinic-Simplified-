@@ -259,27 +259,42 @@ export function SocialPostsTab({
                     sourceType="social_only"
                     sourceId={selectedPost.id}
                   />
-                  <PlatformCard
-                    platformKey="linkedin"
-                    platformLabel="LinkedIn Post"
-                    icon={<FaLinkedin className="w-4 h-4 text-[#0A66C2]" />}
-                    color=""
-                    borderColor=""
-                    caption={selectedPost.linkedin.caption}
-                    status={selectedPost.linkedin.status}
-                    isPublished={!!selectedPost.archived}
-                    attachedImageUrl={selectedPost.linkedin.imageUrl}
-                    onApprove={() => onApproveSocialCaption(selectedPost.id, "linkedin")}
-                    onSaveEdit={(newCaption) => onSaveSocialCaption(selectedPost.id, "linkedin", newCaption)}
-                    onRequestRevision={() => onRequestSocialRevision(selectedPost.id, "linkedin")}
-                    onCopy={() => onCopySocialOnly(selectedPost.linkedin.caption, "social-only-li")}
-                    isCopied={copiedKey === "social-only-li"}
-                    onAttachImage={(url) => onAttachSocialImage(selectedPost.id, "linkedin", url)}
-                    imagePromptSuggestion={selectedPost.linkedin.imagePromptSuggestion}
-                    onGenerateImage={(prompt) => onGenerateSocialImage(selectedPost.id, "linkedin", prompt)}
-                    isGeneratingImage={generatingImageKey === `${selectedPost.id}-linkedin`}
-                    showManualUploadGuide
-                  />
+                  <div className="space-y-2">
+                    <PlatformCard
+                      platformKey="linkedin"
+                      platformLabel="LinkedIn Post"
+                      icon={<FaLinkedin className="w-4 h-4 text-[#0A66C2]" />}
+                      color=""
+                      borderColor=""
+                      caption={selectedPost.linkedin.caption}
+                      status={selectedPost.linkedin.status}
+                      isPublished={!!selectedPost.archived}
+                      attachedImageUrl={selectedPost.linkedin.imageUrl}
+                      onApprove={() => onApproveSocialCaption(selectedPost.id, "linkedin")}
+                      onSaveEdit={(newCaption) => onSaveSocialCaption(selectedPost.id, "linkedin", newCaption)}
+                      onRequestRevision={() => onRequestSocialRevision(selectedPost.id, "linkedin")}
+                      onCopy={() => onCopySocialOnly(selectedPost.linkedin.caption, "social-only-li")}
+                      isCopied={copiedKey === "social-only-li"}
+                      onAttachImage={(url) => onAttachSocialImage(selectedPost.id, "linkedin", url)}
+                      imagePromptSuggestion={selectedPost.linkedin.imagePromptSuggestion}
+                      onGenerateImage={(prompt) => onGenerateSocialImage(selectedPost.id, "linkedin", prompt)}
+                      isGeneratingImage={generatingImageKey === `${selectedPost.id}-linkedin`}
+                      showManualUploadGuide
+                    />
+                    {selectedPost.linkedArticle?.status === "published" && selectedPost.linkedArticle.technicalUrl && (
+                      <div className="text-[10px] bg-dark-overlay-navy border border-white/10 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+                        <span className="text-white/70">
+                          🎓 For referring clinicians: <span className="text-white font-medium">{selectedPost.linkedArticle.technicalTitle}</span> (clinical-depth article)
+                        </span>
+                        <button
+                          onClick={() => onCopySocialOnly(selectedPost.linkedArticle!.technicalUrl || "", "linked-technical-article-url")}
+                          className="text-clinical-teal hover:underline cursor-pointer font-semibold shrink-0"
+                        >
+                          {copiedKey === "linked-technical-article-url" ? "✓ Copied" : "📋 Copy Link"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
