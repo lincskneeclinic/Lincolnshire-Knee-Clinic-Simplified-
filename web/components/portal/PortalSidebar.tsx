@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { createPortal } from "react-dom";
 
 interface NavTab {
   id: string;
@@ -35,35 +36,64 @@ function NavItem({
   collapsed: boolean;
   onClick: () => void;
 }) {
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
+  const [tooltipPos, setTooltipPos] = React.useState<{ top: number; left: number } | null>(null);
+
+  // The sidebar's <nav> has overflow-y-auto, which per the CSS spec forces
+  // overflow-x to clip too — an absolutely-positioned tooltip anchored to
+  // this button would render outside that box and get silently cut off.
+  // Portaling to <body> and positioning with the button's own rect sidesteps
+  // the clipping entirely.
+  const showTooltip = (rect: DOMRect) => {
+    setTooltipPos({ top: rect.top + rect.height / 2, left: rect.right + 8 });
+  };
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`group/item relative w-full flex items-center gap-2.5 rounded-lg border-l-2 pl-2.5 pr-2 py-2 text-[13px] transition-colors cursor-pointer ${
-        collapsed ? "justify-center" : ""
-      } ${
-        isActive
-          ? "border-clinical-teal bg-clinical-teal/10 text-white"
-          : "border-transparent text-white/70 hover:bg-white/5 hover:text-white"
-      }`}
-    >
-      <span className="text-[15px] leading-none shrink-0">{tab.icon}</span>
-      {!collapsed && <span className="flex-1 text-left truncate">{tab.label}</span>}
-      {!collapsed && tab.badge ? (
-        <span className="bg-clinical-teal text-deep-navy text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
-          {tab.badge}
-        </span>
-      ) : null}
-      {collapsed && tab.badge ? (
-        <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-clinical-teal" aria-hidden="true" />
-      ) : null}
-      {collapsed && (
-        <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded-lg border border-clinical-teal/30 bg-dark-overlay-navy px-2.5 py-1.5 text-xs text-white opacity-0 shadow-xl transition-opacity group-hover/item:opacity-100 z-50">
-          {tab.label}
-          {tab.badge ? ` (${tab.badge})` : ""}
-        </span>
-      )}
-    </button>
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={onClick}
+        onMouseEnter={(event) => {
+          if (collapsed) showTooltip(event.currentTarget.getBoundingClientRect());
+        }}
+        onFocus={(event) => {
+          if (collapsed) showTooltip(event.currentTarget.getBoundingClientRect());
+        }}
+        onMouseLeave={() => setTooltipPos(null)}
+        onBlur={() => setTooltipPos(null)}
+        className={`relative w-full flex items-center gap-2.5 rounded-lg border-l-2 pl-2.5 pr-2 py-2 text-[13px] transition-colors cursor-pointer ${
+          collapsed ? "justify-center" : ""
+        } ${
+          isActive
+            ? "border-clinical-teal bg-clinical-teal/10 text-white"
+            : "border-transparent text-white/70 hover:bg-white/5 hover:text-white"
+        }`}
+      >
+        <span className="text-[15px] leading-none shrink-0">{tab.icon}</span>
+        {!collapsed && <span className="flex-1 text-left truncate">{tab.label}</span>}
+        {!collapsed && tab.badge ? (
+          <span className="bg-clinical-teal text-deep-navy text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+            {tab.badge}
+          </span>
+        ) : null}
+        {collapsed && tab.badge ? (
+          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-clinical-teal" aria-hidden="true" />
+        ) : null}
+      </button>
+      {collapsed && tooltipPos && typeof document !== "undefined"
+        ? createPortal(
+            <span
+              className="pointer-events-none fixed -translate-y-1/2 whitespace-nowrap rounded-lg border border-clinical-teal/30 bg-dark-overlay-navy px-2.5 py-1.5 text-xs text-white shadow-xl z-[9999]"
+              style={{ top: tooltipPos.top, left: tooltipPos.left }}
+            >
+              {tab.label}
+              {tab.badge ? ` (${tab.badge})` : ""}
+            </span>,
+            document.body
+          )
+        : null}
+    </>
   );
 }
 
