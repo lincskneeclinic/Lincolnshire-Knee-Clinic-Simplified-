@@ -81,6 +81,9 @@ interface PipelineTabProps {
   insertMarkdown: (type: "bold" | "italic" | "underline" | "h1" | "h2" | "h3" | "bullet") => void;
   onReviseSelection: () => void;
   isRevisingSelection: boolean;
+  onResolveFlagWithAI: (flagText: string) => void;
+  onResolveFlagWithOwnWording: (flagText: string) => void;
+  resolvingFlagText: string | null;
   history: string[];
   historyIndex: number;
   onUndo: () => void;
@@ -180,6 +183,9 @@ export function PipelineTab({
   insertMarkdown,
   onReviseSelection,
   isRevisingSelection,
+  onResolveFlagWithAI,
+  onResolveFlagWithOwnWording,
+  resolvingFlagText,
   history,
   historyIndex,
   onUndo,
@@ -463,6 +469,9 @@ export function PipelineTab({
                   insertMarkdown={insertMarkdown}
                   onReviseSelection={onReviseSelection}
                   isRevisingSelection={isRevisingSelection}
+                  onResolveFlagWithAI={onResolveFlagWithAI}
+                  onResolveFlagWithOwnWording={onResolveFlagWithOwnWording}
+                  resolvingFlagText={resolvingFlagText}
                   history={history}
                   historyIndex={historyIndex}
                   onUndo={onUndo}

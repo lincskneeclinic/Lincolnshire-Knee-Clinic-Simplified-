@@ -419,3 +419,64 @@ Output the replacement passage now.`;
   return revised;
 }
 
+// Resolves one "[NEEDS CLINICAL REVIEW] ..." marker directly — the caller
+// locates the exact flag text in the body (flags are extracted from the body
+// via regex, so they're always a literal substring) and replaces that
+// substring with whatever this returns, removing the flag. Two modes:
+// reviewerDecision omitted -> the AI resolves it using its own clinical
+// judgement; reviewerDecision provided -> the AI writes the consultant's own
+// decision up as proper, well-formatted prose rather than inserting it
+// verbatim, since a reviewer's raw note ("yes include NJR figures") isn't
+// meant to be pasted into the page as-is.
+export async function resolveClinicalFlag(
+  topic: string,
+  documentTitle: string,
+  flagText: string,
+  precedingContext: string,
+  reviewerDecision?: string
+): Promise<string> {
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is missing from environment variables.");
+  }
+  if (!flagText.trim()) {
+    throw new Error("No clinical review flag text was provided.");
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: "gemini-3.5-flash",
+    systemInstruction: `You are a clinical copy editor for Lincolnshire Knee Clinic, an orthopaedic consultant clinic. You are resolving one "[NEEDS CLINICAL REVIEW]" note left in a patient-facing blog post or technical article (topic: "${topic}", document title: "${documentTitle}") by the AI writer that originally drafted it, asking the reviewing consultant a specific question.
+
+You are given the text immediately before the flag (for context on what point the surrounding paragraph is making) and the flag's own question/instruction text.
+
+${
+  reviewerDecision
+    ? `The consultant has answered: "${reviewerDecision}". Write the replacement text so it incorporates and reflects that decision, phrased as clear, well-formatted, natural prose that continues the surrounding paragraph's flow and tone (plain patient-facing language for a blog passage, clinical-professional language for a technical-article passage) — do not just insert the consultant's raw note verbatim, turn it into a proper finished sentence or short passage.`
+    : `The consultant has not given a specific answer — use your own best clinical judgement, drawing on standard evidence-based UK orthopaedic practice and guidelines (e.g. NICE, professional body consensus) where relevant, and write a reasonable, appropriately hedged resolution.`
+}
+
+The output REPLACES the flag entirely — it must not contain "[NEEDS CLINICAL REVIEW]" or any other reviewer-facing marker, since this is the final resolved text. Keep it roughly the same length as a typical sentence or two continuing that paragraph, not a new section. Do not invent medical claims, fake statistics, or numbers that weren't given to you.
+
+Output ONLY the replacement text — no preamble, no explanation, no quotation marks, no markdown code fences.`,
+  });
+
+  const prompt = `Text immediately before the flag (context only, do not repeat it):
+"""
+${precedingContext}
+"""
+
+The flag to resolve:
+"""
+${flagText}
+"""
+
+Output the replacement text now.`;
+
+  const result = await generateContentWithRetry(model, prompt);
+  const resolved = (result.response.text() || "").trim();
+  if (!resolved) {
+    throw new Error("The AI did not return a resolution. Please try again.");
+  }
+  return resolved;
+}
+

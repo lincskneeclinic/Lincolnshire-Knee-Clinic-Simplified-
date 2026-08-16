@@ -679,6 +679,72 @@ function BusinessDashboardPageInner() {
     }
   };
 
+  // Resolves a "[NEEDS CLINICAL REVIEW]" flag directly: flags are extracted
+  // from the body via regex, so flagText is always a literal substring —
+  // locate it, replace it with the AI's resolution, and stop. useOwnWording
+  // prompts for the reviewer's decision first; the AI still writes it up as
+  // proper prose rather than inserting the raw note verbatim.
+  const [resolvingFlagText, setResolvingFlagText] = useState<string | null>(null);
+  const applyFlagResolution = async (flagText: string, reviewerDecision?: string) => {
+    if (!selectedRun) return;
+    const isArticle = activeDraftSubTab === "technical";
+    const currentBody = isArticle ? editArticleBody : editBody;
+    const flagIndex = currentBody.indexOf(flagText);
+    if (flagIndex === -1) {
+      toast.error("Couldn't find that flag in the current draft text — it may already have been edited or resolved.");
+      return;
+    }
+
+    setResolvingFlagText(flagText);
+    try {
+      const precedingContext = currentBody.slice(Math.max(0, flagIndex - 600), flagIndex);
+      const res = await fetch(
+        `/api/portal/content-pipeline/runs/${encodeURIComponent(selectedRun.run_id)}/resolve-flag`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isArticle, flagText, precedingContext, reviewerDecision }),
+        }
+      );
+      const data = await res.json();
+      if (!data.success || !data.resolvedText) {
+        throw new Error(data.error || "Failed to resolve the flag.");
+      }
+
+      const newText =
+        currentBody.slice(0, flagIndex) + data.resolvedText + currentBody.slice(flagIndex + flagText.length);
+
+      if (isArticle) {
+        setEditArticleBody(newText);
+      } else {
+        setEditBody(newText);
+        pushHistory(newText);
+      }
+
+      toast.success("Flag resolved — review the change, then Approve/Save when ready.");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to resolve the flag.");
+    } finally {
+      setResolvingFlagText(null);
+    }
+  };
+
+  const handleResolveFlagWithAI = (flagText: string) => {
+    applyFlagResolution(flagText);
+  };
+
+  const handleResolveFlagWithOwnWording = async (flagText: string) => {
+    const decision = await promptAction(
+      "What's your decision or wording for this? I'll turn it into well-written, properly formatted text that fits the surrounding paragraph.",
+      {
+        multiline: true,
+        placeholder: "e.g. Yes, include the 10-year National Joint Registry revision rates for partial vs total knee replacement...",
+      }
+    );
+    if (!decision || !decision.trim()) return;
+    await applyFlagResolution(flagText, decision.trim());
+  };
+
   const handleAttachPlaceholderImage = (placeholderId: string, label: string, url: string, isFeatured?: boolean) => {
     const isArticle = placeholderId.startsWith("article-");
     const imageMarkdown = `![${label}](${url})`;
@@ -3202,6 +3268,9 @@ function BusinessDashboardPageInner() {
                 insertMarkdown={insertMarkdown}
                 onReviseSelection={handleReviseSelection}
                 isRevisingSelection={isRevisingSelection}
+                onResolveFlagWithAI={handleResolveFlagWithAI}
+                onResolveFlagWithOwnWording={handleResolveFlagWithOwnWording}
+                resolvingFlagText={resolvingFlagText}
                 history={history}
                 historyIndex={historyIndex}
                 onUndo={handleUndo}

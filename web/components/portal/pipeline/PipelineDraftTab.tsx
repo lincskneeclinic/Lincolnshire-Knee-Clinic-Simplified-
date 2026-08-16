@@ -33,6 +33,9 @@ interface PipelineDraftTabProps {
   insertMarkdown: (type: MarkdownInsertType) => void;
   onReviseSelection: () => void;
   isRevisingSelection: boolean;
+  onResolveFlagWithAI: (flagText: string) => void;
+  onResolveFlagWithOwnWording: (flagText: string) => void;
+  resolvingFlagText: string | null;
   history: string[];
   historyIndex: number;
   onUndo: () => void;
@@ -78,6 +81,9 @@ export function PipelineDraftTab({
   insertMarkdown,
   onReviseSelection,
   isRevisingSelection,
+  onResolveFlagWithAI,
+  onResolveFlagWithOwnWording,
+  resolvingFlagText,
   history,
   historyIndex,
   onUndo,
@@ -158,6 +164,43 @@ export function PipelineDraftTab({
 
       {isEditMode ? (
         <div className="space-y-4 bg-dark-overlay-navy p-5 rounded-xl border border-clinical-teal/30 animate-fadeIn">
+          {flags && flags.length > 0 && (
+            <div className="bg-primary-navy/60 border border-amber-500/50 text-amber-200/90 p-4 rounded-xl shadow-md space-y-2.5">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-400/90 font-normal">
+                <span>Action Required: Clinical Items Highlighted</span>
+              </div>
+              <ul className="space-y-2.5">
+                {flags.map((flag: any, idx: number) => (
+                  <li key={idx} className="text-xs text-white/80 font-normal space-y-1">
+                    <p>{flag}</p>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => onResolveFlagWithAI(flag)}
+                        disabled={resolvingFlagText === flag}
+                        className="text-[10px] text-clinical-teal hover:underline cursor-pointer font-semibold disabled:opacity-50 disabled:no-underline"
+                      >
+                        {resolvingFlagText === flag ? "Resolving…" : "✨ Use AI's Judgement"}
+                      </button>
+                      <span className="text-white/20">|</span>
+                      <button
+                        type="button"
+                        onClick={() => onResolveFlagWithOwnWording(flag)}
+                        disabled={resolvingFlagText === flag}
+                        className="text-[10px] text-clinical-teal hover:underline cursor-pointer font-semibold disabled:opacity-50 disabled:no-underline"
+                      >
+                        ✍️ I'll Give My Own Wording
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-[10px] text-white/50 pt-1.5 border-t border-amber-500/20">
+                Either option replaces just this flag with finished text — the rest of the document is untouched.
+                Nothing is saved until you click "Save &amp; Approve Edited Draft" below.
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column: Markdown editor fields */}
             <div className="space-y-4">
