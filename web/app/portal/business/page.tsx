@@ -8,6 +8,7 @@ import { ARTICLE_CATEGORIES } from "@/lib/articleCategories";
 import { SocialOnlyPost } from "@/lib/socialOnlyPosts";
 import { markdownToEmailHtml } from "@/lib/newsletterMarkdown";
 import { DashboardFeedbackProvider, useToast, useConfirm, usePrompt } from "@/components/portal/DashboardFeedback";
+import { PortalSidebar } from "@/components/portal/PortalSidebar";
 import { CommunityReportsTab, CommunityReport } from "@/components/portal/community/CommunityReportsTab";
 import { OverviewTab, NeedsAttentionItem } from "@/components/portal/overview/OverviewTab";
 import { SubscribersTab } from "@/components/portal/subscribers/SubscribersTab";
@@ -45,6 +46,7 @@ function BusinessDashboardPageInner() {
   const [pipelineSearch, setPipelineSearch] = useState("");
   const [educationSearch, setEducationSearch] = useState("");
   const [isAdminPasswordOpen, setIsAdminPasswordOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
   const [adminPasswordConfirm, setAdminPasswordConfirm] = useState("");
   const [adminPasswordSaving, setAdminPasswordSaving] = useState(false);
@@ -2682,13 +2684,29 @@ function BusinessDashboardPageInner() {
   };
 
   return (
-    <div className="min-h-screen bg-deep-navy text-white/80 font-sans flex flex-col">
-      {/* Top Header Navigation */}
-      <header className="bg-primary-navy border-b border-white/10 sticky top-0 z-40 shadow-lg">
+    <div className="min-h-screen bg-deep-navy text-white/80 font-sans flex flex-col md:flex-row">
+      <PortalSidebar
+        navGroups={navGroups}
+        activeTab={activeTab}
+        onNavTabClick={handleNavTabClick}
+        mobileOpen={isMobileNavOpen}
+        onMobileClose={() => setIsMobileNavOpen(false)}
+      />
+      <div className="flex-1 min-w-0 flex flex-col">
+      {/* Top Header */}
+      <header className="bg-primary-navy border-b border-white/10 sticky top-0 z-30 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-3.5">
           {/* Mobile Header (below md) */}
           <div className="flex md:hidden flex-col gap-2.5">
             <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsMobileNavOpen(true)}
+                aria-label="Open navigation"
+                className="w-10 h-10 bg-dark-overlay-navy border border-white/10 rounded-xl flex items-center justify-center shrink-0 text-white cursor-pointer"
+              >
+                ☰
+              </button>
               <div className="w-10 h-10 bg-dark-overlay-navy border border-clinical-teal/30 rounded-xl flex items-center justify-center shrink-0">
                 <img src="/brand/lkc-logo-k-transparent.png" alt="Lincolnshire Knee Clinic" className="w-7 h-7 object-contain" />
               </div>
@@ -2814,76 +2832,6 @@ function BusinessDashboardPageInner() {
             </form>
           )}
         </div>
-
-        {/* Tab Navigation */}
-        <div className="py-2.5 border-t border-white/10">
-          {/* Mobile: horizontal scrollable strip */}
-          <div className="relative md:hidden">
-            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide px-4">
-              {navGroups.map((group, groupIdx) => (
-                <React.Fragment key={group.label || "root"}>
-                  {groupIdx > 0 && <span className="shrink-0 w-px h-5 bg-white/10 mx-0.5" aria-hidden="true" />}
-                  {group.tabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => handleNavTabClick(tab.id)}
-                      className={`py-2 px-3 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer border shrink-0 whitespace-nowrap ${
-                        activeTab === tab.id
-                          ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-md"
-                          : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20"
-                      }`}
-                    >
-                      <span className="text-xs">{tab.icon}</span>
-                      <span>{tab.label}</span>
-                      {tab.badge && (
-                        <span className="bg-clinical-teal text-deep-navy text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                          {tab.badge}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </React.Fragment>
-              ))}
-              <span className="shrink-0 w-1" aria-hidden="true" />
-            </div>
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-primary-navy to-transparent" />
-          </div>
-
-          {/* Desktop/Tablet: horizontal-scrollable, never wraps */}
-          <div className="hidden md:block relative">
-            <div className="overflow-x-auto scrollbar-hide">
-              <div className="flex items-center justify-center gap-1.5 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-                {navGroups.map((group, groupIdx) => (
-                  <React.Fragment key={group.label || "root"}>
-                    {groupIdx > 0 && <span className="shrink-0 w-px h-5 bg-white/10 mx-1" aria-hidden="true" />}
-                    {group.tabs.map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => handleNavTabClick(tab.id)}
-                        className={`py-1.5 px-2 rounded-lg text-[13px] transition-all flex items-center gap-1 cursor-pointer border shrink-0 whitespace-nowrap ${
-                          activeTab === tab.id
-                            ? "bg-clinical-teal text-deep-navy border-clinical-teal shadow-md"
-                            : "bg-deep-navy text-white/70 hover:text-white border-white/10 hover:border-white/20"
-                        }`}
-                      >
-                        <span className="text-[13px]">{tab.icon}</span>
-                        <span>{tab.label}</span>
-                        {tab.badge && (
-                          <span className="bg-clinical-teal text-deep-navy text-[13px] font-bold px-1.5 py-0.5 rounded-full">
-                            {tab.badge}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
-            {/* Scroll hints — justify-center means an overflowing bar can clip both edges at once, with no scrollbar (scrollbar-hide) to signal it */}
-            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-primary-navy to-transparent" />
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-primary-navy to-transparent" />
-          </div>
-        </div>
       </header>
 
       {/* Action Toast Feedback */}
@@ -2910,57 +2858,6 @@ function BusinessDashboardPageInner() {
           </div>
         ) : (
           <>
-            {/* KPI Summary Cards (Visible across all tabs) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg relative">
-                <span className="text-[10px] uppercase tracking-wider text-white/60 block mb-1">
-                  Tracked Click Events
-                </span>
-                <div className="text-xl xl:text-2xl font-bold text-white font-mono">
-                  {totalClicks}
-                </div>
-                <p className="text-[11px] text-white/60 mt-2">
-                  {clickEvents.callNowClicks} Calls | {clickEvents.bookAppointmentClicks} Bookings | {clickEvents.whatsappClicks} WhatsApp
-                </p>
-              </div>
-
-              <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg relative">
-                <span className="text-[10px] uppercase tracking-wider text-white/60 block mb-1">
-                  Verified Contact Signups
-                </span>
-                <div className="text-xl xl:text-2xl font-bold text-white font-mono">
-                  {totalSignups}
-                </div>
-                <p className="text-[11px] text-white/60 mt-2">
-                  100% Consent Confirmed &amp; Timestamped
-                </p>
-              </div>
-
-              <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg relative">
-                <span className="text-[10px] uppercase tracking-wider text-white/60 block mb-1">
-                  Content Runs Needing Action
-                </span>
-                <div className="text-xl xl:text-2xl font-bold text-white font-mono">
-                  {reviewNeededRuns.length}
-                </div>
-                <p className="text-[11px] text-white/60 mt-2">
-                  Blog &amp; Social drafts awaiting approval
-                </p>
-              </div>
-
-              <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg relative">
-                <span className="text-[10px] uppercase tracking-wider text-white/60 block mb-1">
-                  Published Content Assets
-                </span>
-                <div className="text-xl xl:text-2xl font-bold text-white font-mono">
-                  {pipelineRuns.filter((r) => r.status === "published").length}
-                </div>
-                <p className="text-[11px] text-white/60 mt-2">
-                  Live articles &amp; social packages
-                </p>
-              </div>
-            </div>
-
             {/* TAB: OVERVIEW */}
             {activeTab === "overview" && (
               <OverviewTab
@@ -2970,6 +2867,10 @@ function BusinessDashboardPageInner() {
                 pollVotes={pollResults.votes || {}}
                 pollVotesTotal={Number(pollVotesTotal) || 0}
                 clickEvents={clickEvents}
+                totalClicks={totalClicks}
+                totalSignups={totalSignups}
+                reviewNeededRunsCount={reviewNeededRuns.length}
+                publishedAssetsCount={pipelineRuns.filter((r) => r.status === "published").length}
                 onNavigate={handleNavTabClick}
                 onTriggerTopic={(label) => {
                   setActiveTab("pipeline");
@@ -3357,6 +3258,7 @@ function BusinessDashboardPageInner() {
           onSubmit={() => handleReviewSubmission(revisionStage, "revision_requested", undefined, revisionPlatform)}
         />
       </main>
+      </div>
     </div>
   );
 }

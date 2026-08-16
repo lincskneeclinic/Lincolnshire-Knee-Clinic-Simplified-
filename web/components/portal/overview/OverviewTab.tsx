@@ -117,6 +117,10 @@ interface OverviewTabProps {
   pollVotes: Record<string, number>;
   pollVotesTotal: number;
   clickEvents: ClickEvents;
+  totalClicks: number;
+  totalSignups: number;
+  reviewNeededRunsCount: number;
+  publishedAssetsCount: number;
   onNavigate: (tabId: string) => void;
   onTriggerTopic: (label: string) => void;
 }
@@ -128,6 +132,10 @@ export function OverviewTab({
   pollVotes,
   pollVotesTotal,
   clickEvents,
+  totalClicks,
+  totalSignups,
+  reviewNeededRunsCount,
+  publishedAssetsCount,
   onNavigate,
   onTriggerTopic,
 }: OverviewTabProps) {
@@ -135,6 +143,57 @@ export function OverviewTab({
 
   return (
     <div className="space-y-8">
+      {/* KPI Summary Cards — Overview-only (used to render on every tab) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg relative">
+          <span className="text-[10px] uppercase tracking-wider text-white/60 block mb-1">
+            Tracked Click Events
+          </span>
+          <div className="text-xl xl:text-2xl font-bold text-white font-mono">
+            {totalClicks}
+          </div>
+          <p className="text-[11px] text-white/60 mt-2">
+            {clickEvents.callNowClicks} Calls | {clickEvents.bookAppointmentClicks} Bookings | {clickEvents.whatsappClicks} WhatsApp
+          </p>
+        </div>
+
+        <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg relative">
+          <span className="text-[10px] uppercase tracking-wider text-white/60 block mb-1">
+            Verified Contact Signups
+          </span>
+          <div className="text-xl xl:text-2xl font-bold text-white font-mono">
+            {totalSignups}
+          </div>
+          <p className="text-[11px] text-white/60 mt-2">
+            100% Consent Confirmed &amp; Timestamped
+          </p>
+        </div>
+
+        <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg relative">
+          <span className="text-[10px] uppercase tracking-wider text-white/60 block mb-1">
+            Content Runs Needing Action
+          </span>
+          <div className="text-xl xl:text-2xl font-bold text-white font-mono">
+            {reviewNeededRunsCount}
+          </div>
+          <p className="text-[11px] text-white/60 mt-2">
+            Blog &amp; Social drafts awaiting approval
+          </p>
+        </div>
+
+        <div className="bg-primary-navy border border-white/10 rounded-2xl p-5 shadow-lg relative">
+          <span className="text-[10px] uppercase tracking-wider text-white/60 block mb-1">
+            Published Content Assets
+          </span>
+          <div className="text-xl xl:text-2xl font-bold text-white font-mono">
+            {publishedAssetsCount}
+          </div>
+          <p className="text-[11px] text-white/60 mt-2">
+            Live articles &amp; social packages
+          </p>
+        </div>
+      </div>
+
       <PortalCard className="space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
